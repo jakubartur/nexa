@@ -15,6 +15,20 @@
 
 typedef std::vector<uint8_t> valtype;
 
+#ifdef ANDROID // log sighash calculations
+#include <android/log.h>
+#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "bu.sig", __VA_ARGS__)
+#else
+#define p(...)
+// tinyformat::format(std::cout, __VA_ARGS__)
+#endif
+
+using namespace std;
+
+const unsigned char vchDummyPubKey[33] = {
+    2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+const CPubKey DummySizeOnlyKeyStore::dummyPubKey(vchDummyPubKey, vchDummyPubKey + 33);
+
 TransactionSignatureCreator::TransactionSignatureCreator(const CKeyStore *keystoreIn,
     const CTransaction *txToIn,
     unsigned int nInIn,
@@ -23,14 +37,27 @@ TransactionSignatureCreator::TransactionSignatureCreator(const CKeyStore *keysto
     uint32_t nSigTypeIn)
     : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), nHashType(nHashTypeIn),
       nSigType(nSigTypeIn),
-      checker(txTo, nIn, amount, (nHashTypeIn & SIGHASH_FORKID) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0)
+      checker(txTo,
+          nIn,
+          amount,
+          STANDARD_SCRIPT_VERIFY_FLAGS | ((nHashTypeIn & SIGHASH_FORKID) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
 {
+    for (unsigned int i = 0; i < txToIn->vin.size(); i++) // catch uninitialized amounts
+    {
+        assert(txTo->vin[i].amount != -1);
+    }
 }
 
 bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
     const CKeyID &address,
     const CScript &scriptCode) const
 {
+    // Bad tx info
+    if (txTo == nullptr || nIn >= txTo->vin.size())
+        return false;
+    // The transaction input has a different amount than reported by the previous out
+    if (amount != txTo->vin[nIn].amount)
+        return false;
     CKey key;
     if (!keystore->GetKey(address, key))
     {
@@ -38,26 +65,17 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
     }
 
     uint256 hash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount);
-    if (nSigType == SIGTYPE_ECDSA)
-    {
-        if (!key.SignECDSA(hash, vchSig))
-        {
-            return false;
-        }
-    }
-    else if (nSigType == SIGTYPE_SCHNORR)
-    {
-        if (!key.SignSchnorr(hash, vchSig))
-        {
-            return false;
-        }
-    }
-    else
+    if (nSigType != SIGTYPE_SCHNORR)
     {
         LOGA("CreateSig(): Invalid signature type requested \n");
         return false;
     }
-    vchSig.push_back((uint8_t)nHashType);
+    if (!key.SignSchnorr(hash, vchSig))
+        return false;
+    vchSig.push_back((unsigned char)nHashType);
+
+    CPubKey pub = key.GetPubKey();
+    p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig), HexStr(pub.begin(), pub.end()), hash.GetHex());
     return true;
 }
 
@@ -130,6 +148,7 @@ static bool SignStep(const BaseSignatureCreator &creator,
         return Sign1(keyID, creator, scriptPubKey, scriptSigRet);
 
     case TX_PUBKEYHASH:
+    case TX_GRP_PUBKEYHASH:
         keyID = CKeyID(uint160(vSolutions[0]));
         if (!Sign1(keyID, creator, scriptPubKey, scriptSigRet))
         {
@@ -138,12 +157,17 @@ static bool SignStep(const BaseSignatureCreator &creator,
         else
         {
             CPubKey vch;
-            creator.KeyStore().GetPubKey(keyID, vch);
+            bool ok = creator.KeyStore().GetPubKey(keyID, vch);
+            if (!ok)
+            {
+                return false;
+            }
             scriptSigRet << ToByteVector(vch);
         }
         return true;
 
     case TX_SCRIPTHASH:
+    case TX_GRP_SCRIPTHASH:
         return creator.KeyStore().GetCScript(uint160(vSolutions[0]), scriptSigRet);
 
     case TX_MULTISIG:
@@ -154,7 +178,7 @@ static bool SignStep(const BaseSignatureCreator &creator,
     return false;
 }
 
-bool ProduceSignature(const BaseSignatureCreator &creator, const CScript &fromPubKey, CScript &scriptSig)
+bool ProduceSignature(const BaseSignatureCreator &creator, const CScript &fromPubKey, CScript &scriptSig, bool verify)
 {
     txnouttype whichType;
     if (!SignStep(creator, fromPubKey, scriptSig, whichType))
@@ -162,7 +186,7 @@ bool ProduceSignature(const BaseSignatureCreator &creator, const CScript &fromPu
         return false;
     }
 
-    if (whichType == TX_SCRIPTHASH)
+    if ((whichType == TX_SCRIPTHASH) || (whichType == TX_GRP_SCRIPTHASH))
     {
         // Solver returns the subscript that need to be evaluated;
         // the final scriptSig is the signatures from that
@@ -183,9 +207,22 @@ bool ProduceSignature(const BaseSignatureCreator &creator, const CScript &fromPu
     // We can hard-code maxOps because this client has no templates capable of producing and signing longer scripts.
     // Additionally, while this constant is currently being raised it will eventually settle to a very high const
     // value.  There is no reason to break layering by using the tweak only to take that out later.
-    ScriptImportedState sis(&creator.Checker(), CTransactionRef(nullptr), std::vector<CTxOut>(), 0, 0);
-    return VerifyScript(
-        scriptSig, fromPubKey, STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID, MAX_OPS_PER_SCRIPT, sis);
+
+    // We don't have the capability of signing with tx context dependent instructions so ScriptImportedState can be
+    // degenrate.
+    if (verify)
+    {
+        ScriptImportedState sis(
+            &creator.Checker(), CTransactionRef(nullptr), std::vector<CTxOut>(), (unsigned int)-1, 0);
+        ScriptError serror;
+        bool ret = VerifyScript(scriptSig, fromPubKey, sis.checker->flags(), MAX_OPS_PER_SCRIPT, sis, &serror);
+        if (!ret)
+        {
+            LOGA("Internal sign verification failed with error %s\n", ScriptErrorString(serror));
+        }
+        return ret;
+    }
+    return true;
 }
 
 bool SignSignature(const CKeyStore &keystore,
@@ -206,7 +243,7 @@ bool SignSignature(const CKeyStore &keystore,
 }
 
 bool SignSignature(const CKeyStore &keystore,
-    const CTransaction &txFrom,
+    const CTxOut &spendingThis,
     CMutableTransaction &txTo,
     unsigned int nIn,
     uint32_t nHashType,
@@ -214,42 +251,37 @@ bool SignSignature(const CKeyStore &keystore,
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
-    assert(txin.prevout.n < txFrom.vout.size());
-    const CTxOut &txout = txFrom.vout[txin.prevout.n];
-
-    return SignSignature(keystore, txout.scriptPubKey, txTo, nIn, txout.nValue, nHashType);
+    if (spendingThis.nValue != txin.amount)
+        return false;
+    return SignSignature(keystore, spendingThis.scriptPubKey, txTo, nIn, txin.amount, nHashType);
 }
 
-static CScript PushAll(const std::vector<valtype> &values)
+static CScript PushAll(const Stack &values)
 {
     CScript result;
-    for (const valtype &v : values)
-    {
-        result << v;
-    }
+    for (const StackItem &v : values)
+        result << v.data(); // Every item must be a vch or data() throws
     return result;
 }
 
 static CScript CombineMultisig(const CScript &scriptPubKey,
     const BaseSignatureChecker &checker,
-    const std::vector<valtype> &vSolutions,
-    const std::vector<valtype> &sigs1,
-    const std::vector<valtype> &sigs2)
+    const vector<valtype> &vSolutions,
+    const Stack &sigs1,
+    const Stack &sigs2)
 {
     // Combine all the signatures we've got:
-    std::set<valtype> allsigs;
-    for (const valtype &v : sigs1)
+    set<valtype> allsigs;
+    for (const StackItem &v : sigs1)
     {
         if (!v.empty())
-        {
-            allsigs.insert(v);
-        }
+            allsigs.insert(v.data());
     }
-    for (const valtype &v : sigs2)
+    for (const StackItem &v : sigs2)
     {
         if (!v.empty())
         {
-            allsigs.insert(v);
+            allsigs.insert(v.data());
         }
     }
 
@@ -297,9 +329,9 @@ static CScript CombineMultisig(const CScript &scriptPubKey,
 static CScript CombineSignatures(const CScript &scriptPubKey,
     const BaseSignatureChecker &checker,
     const txnouttype txType,
-    const std::vector<valtype> &vSolutions,
-    std::vector<valtype> &sigs1,
-    std::vector<valtype> &sigs2)
+    const vector<valtype> &vSolutions,
+    Stack &sigs1,
+    Stack &sigs2)
 {
     switch (txType)
     {
@@ -314,12 +346,14 @@ static CScript CombineSignatures(const CScript &scriptPubKey,
     case TX_CLTV: // Freeze CLTV contains pubkey
     case TX_PUBKEY:
     case TX_PUBKEYHASH:
+    case TX_GRP_PUBKEYHASH:
         // Signatures are bigger than placeholders or empty scripts:
         if (sigs1.empty() || sigs1[0].empty())
         {
             return PushAll(sigs2);
         }
         return PushAll(sigs1);
+    case TX_GRP_SCRIPTHASH:
     case TX_SCRIPTHASH:
         if (sigs1.empty() || sigs1.back().empty())
         {
@@ -332,7 +366,7 @@ static CScript CombineSignatures(const CScript &scriptPubKey,
         else
         {
             // Recur to combine:
-            valtype spk = sigs1.back();
+            valtype spk = sigs1.back().data();
             CScript pubKey2(spk.begin(), spk.end());
 
             txnouttype txType2;
@@ -363,11 +397,11 @@ CScript CombineSignatures(const CScript &scriptPubKey,
     std::vector<std::vector<uint8_t> > vSolutions;
     Solver(scriptPubKey, txType, vSolutions);
 
-    std::vector<valtype> stack1;
+    Stack stack1;
     // scriptSig should have no ops in them, only data pushes.  Send MAX_OPS_PER_SCRIPT to mirror existing
     // behavior exactly.
     EvalScript(stack1, scriptSig1, SCRIPT_VERIFY_STRICTENC, MAX_OPS_PER_SCRIPT, ScriptImportedState());
-    std::vector<valtype> stack2;
+    Stack stack2;
     EvalScript(stack2, scriptSig2, SCRIPT_VERIFY_STRICTENC, MAX_OPS_PER_SCRIPT, ScriptImportedState());
 
     return CombineSignatures(scriptPubKey, checker, txType, vSolutions, stack1, stack2);
@@ -396,16 +430,13 @@ bool DummySignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
     const CScript &scriptCode) const
 {
     // Create a dummy signature that is a valid DER-encoding
-    vchSig.assign(72, '\000');
+    // This is a validly-encoded 64 byte DER sig; also a valid Schnorr encoding.
+    vchSig.assign(65, 0x44);
     vchSig[0] = 0x30;
-    vchSig[1] = 69;
+    vchSig[1] = 0x3e;
     vchSig[2] = 0x02;
-    vchSig[3] = 33;
-    vchSig[4] = 0x01;
-    vchSig[4 + 33] = 0x02;
-    vchSig[5 + 33] = 32;
-    vchSig[6 + 33] = 0x01;
-    vchSig[6 + 33 + 32] = SIGHASH_ALL;
+    vchSig[33] = 0x02;
+    vchSig[64] = SIGHASH_ALL | SIGHASH_FORKID;
     return true;
 }
 

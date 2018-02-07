@@ -57,7 +57,7 @@ bool CScriptCheck::operator()()
     }
     if (resourceTracker)
     {
-        resourceTracker->Update(ptxTo->GetHash(), checker.GetNumSigops(), checker.GetBytesHashed());
+        resourceTracker->Update(ptxTo->GetId(), checker.GetNumSigops(), checker.GetBytesHashed());
         resourceTracker->UpdateConsensusSigChecks(smRes.consensusSigCheckCount);
     }
     if (nFlags & SCRIPT_VERIFY_INPUT_SIGCHECKS)
@@ -142,7 +142,7 @@ bool CParallelValidation::Initialize(const boost::thread::id this_id, const CBlo
     {
         // If the chain tip has passed this block by, its an orphan.  It cannot be connected to the active chain, so
         // return.
-        if (chainActive.Tip()->nChainWork > pindex->nChainWork)
+        if (chainActive.Tip()->chainWork() > pindex->chainWork())
         {
             LOGA("returning because chainactive tip is now ahead of chainwork for this block\n");
             return false;
@@ -178,8 +178,7 @@ bool CParallelValidation::Initialize(const boost::thread::id this_id, const CBlo
             iter++;
         }
 
-        // Assign the nSequenceId for the block being validated in this thread. cs_main must be locked for lookup on
-        // pindex.
+        // Assign the nSequenceId for the block being validated in this thread.
         {
             READLOCK(cs_mapBlockIndex);
             if (pindex->nSequenceId > 0)
@@ -220,10 +219,9 @@ void CParallelValidation::Cleanup(const ConstCBlockRef pblock, CBlockIndex *pind
             if (pindex->nSequenceId > (*riter).first)
             {
                 uint32_t nId = pindex->nSequenceId;
-                if (nId == 0)
-                    nId = 1;
-                if ((*riter).first == 0)
-                    (*riter).first = 1;
+                DbgAssert(nId > 0, nId = 1);
+                DbgAssert((*riter).first > 0, (*riter).first = 1);
+
                 LOG(PARALLEL, "swapping sequence id for block %s before %d after %d\n", pblock->GetHash().ToString(),
                     pindex->nSequenceId, (*riter).first);
                 pindex->nSequenceId = (*riter).first;
@@ -386,10 +384,10 @@ bool CParallelValidation::QuitReceived(const boost::thread::id this_id, const bo
 
 bool CParallelValidation::ChainWorkHasChanged(const arith_uint256 &nStartingChainWork)
 {
-    if (chainActive.Tip()->nChainWork != nStartingChainWork)
+    if (chainActive.Tip()->chainWork() != nStartingChainWork)
     {
         LOG(PARALLEL, "Quitting - Chain Work %s is not the same as the starting Chain Work %s\n",
-            chainActive.Tip()->nChainWork.ToString(), nStartingChainWork.ToString());
+            chainActive.Tip()->chainWork().ToString(), nStartingChainWork.ToString());
         return true;
     }
     return false;
@@ -603,8 +601,6 @@ void HandleBlockMessageThread(CNodeRef noderef, const string strCommand, ConstCB
 
         if (!state.IsInvalid())
         {
-            LargestBlockSeen(nSizeBlock); // update largest block seen
-
             double nValidationTime = (double)(GetStopwatchMicros() - startTime) / 1000000.0;
             if ((strCommand != NetMsgType::BLOCK) &&
                 (IsThinBlocksEnabled() || IsGrapheneBlockEnabled() || IsCompactBlocksEnabled()))

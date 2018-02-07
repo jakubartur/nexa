@@ -13,6 +13,9 @@
 #include "util.h"
 #include "utilstrencodings.h"
 
+extern CTweak<uint32_t> dataCarrierSize;
+extern CTweak<bool> dataCarrier;
+
 /**
  * Check transaction inputs to mitigate two
  * potential denial-of-service attacks:
@@ -56,7 +59,7 @@ bool IsStandard(const CScript &scriptPubKey, txnouttype &whichType)
     }
     else if (whichType == TX_NULL_DATA || whichType == TX_LABELPUBLIC)
     {
-        if (!fAcceptDatacarrier || scriptPubKey.size() > nMaxDatacarrierBytes)
+        if (!dataCarrier.Value() || scriptPubKey.size() > dataCarrierSize.Value())
             return false;
     }
 
@@ -65,7 +68,7 @@ bool IsStandard(const CScript &scriptPubKey, txnouttype &whichType)
 
 bool IsStandardTx(const CTransactionRef tx, std::string &reason)
 {
-    if (tx->nVersion > CTransaction::MAX_STANDARD_VERSION || tx->nVersion < 1)
+    if (tx->nVersion > CTransaction::MAX_STANDARD_VERSION)
     {
         reason = "version";
         return false;
@@ -131,7 +134,7 @@ bool IsStandardTx(const CTransactionRef tx, std::string &reason)
     }
 
     // total size of all OP_RETURNs combined must be less than maximum allowed size
-    if (nDataSize > nMaxDatacarrierBytes)
+    if (nDataSize > dataCarrierSize.Value())
     {
         reason = "oversize-op-return";
         return false;
@@ -140,7 +143,7 @@ bool IsStandardTx(const CTransactionRef tx, std::string &reason)
     return true;
 }
 
-bool AreInputsStandard(const CTransactionRef tx, const CCoinsViewCache &mapInputs, bool may2020Enabled)
+bool AreInputsStandard(const CTransactionRef tx, const CCoinsViewCache &mapInputs)
 {
     if (tx->IsCoinBase())
         return true; // Coinbases don't use vin normally
@@ -161,28 +164,16 @@ bool AreInputsStandard(const CTransactionRef tx, const CCoinsViewCache &mapInput
 
         if (whichType == TX_SCRIPTHASH)
         {
-            std::vector<std::vector<uint8_t> > stack;
+            Stack stack;
             // convert the scriptSig into a stack, so we can inspect the redeemScript
             // This is only parsing the scriptSig which should not have any non-push opcodes in it anyway,
             // and it matches the P2SH script template, so we know that it won't have any ops, only pushes
             // so pass MAX_OPS_PER_SCRIPT for the max number of ops to match prior behavior exactly
             if (!EvalScript(
                     stack, tx->vin[i].scriptSig, SCRIPT_VERIFY_NONE, MAX_OPS_PER_SCRIPT, ScriptImportedState(), 0))
-            {
                 return false;
-            }
             if (stack.empty())
-            {
                 return false;
-            }
-            if (!may2020Enabled)
-            {
-                CScript subscript(stack.back().begin(), stack.back().end());
-                if (subscript.GetSigOpCount(STANDARD_SCRIPT_VERIFY_FLAGS, true) > MAX_P2SH_SIGOPS)
-                {
-                    return false;
-                }
-            }
         }
     }
 

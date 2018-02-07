@@ -25,8 +25,8 @@ struct CompareBlocksByHeight
         /* Make sure that unequal blocks with the same height do not compare
            equal. Use the pointers themselves to make a distinction. */
 
-        if (a->nHeight != b->nHeight)
-            return (a->nHeight > b->nHeight);
+        if (a->height() != b->height())
+            return (a->height() > b->height());
 
         return a < b;
     }
@@ -46,7 +46,7 @@ std::string RollBackChain(int nRollBackHeight, bool fOverride);
 std::string ReconsiderMostWorkChain(bool fOverride);
 std::set<CBlockIndex *, CompareBlocksByHeight> GetChainTips();
 
-UniValue mempoolToJSON(bool fVerbose = false);
+UniValue mempoolToJSON(bool fVerbose = false, bool idem = false);
 UniValue blockToJSON(const CBlock &block, const CBlockIndex *blockindex, bool txDetails = false, bool listTxns = true);
 
 #endif

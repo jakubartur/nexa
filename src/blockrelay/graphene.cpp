@@ -50,19 +50,14 @@ CGrapheneBlock::CGrapheneBlock(const ConstCBlockRef pblock,
     std::vector<uint256> blockHashes;
     for (auto &tx : pblock->vtx)
     {
-        blockHashes.push_back(tx->GetHash());
+        blockHashes.push_back(tx->GetId());
 
         if (tx->IsCoinBase())
             vAdditionalTxs.push_back(tx);
     }
 
-    if (fCanonicalTxsOrder)
-        pGrapheneSet =
-            std::make_shared<CGrapheneSet>(CGrapheneSet(nReceiverMemPoolTx, nSenderMempoolPlusBlock, blockHashes,
-                shorttxidk0, shorttxidk1, grapheneSetVersion, (uint32_t)sipHashNonce, computeOptimized, false));
-    else
-        pGrapheneSet = std::make_shared<CGrapheneSet>(CGrapheneSet(nReceiverMemPoolTx, nSenderMempoolPlusBlock,
-            blockHashes, shorttxidk0, shorttxidk1, grapheneSetVersion, (uint32_t)sipHashNonce, computeOptimized, true));
+    pGrapheneSet = std::make_shared<CGrapheneSet>(CGrapheneSet(nReceiverMemPoolTx, nSenderMempoolPlusBlock, blockHashes,
+        shorttxidk0, shorttxidk1, grapheneSetVersion, (uint32_t)sipHashNonce, computeOptimized, false));
     fpr = pGrapheneSet->GetBloomFPR();
 }
 
@@ -84,9 +79,8 @@ void CGrapheneBlock::AddNewTransactions(std::vector<CTransaction> vMissingTx, CN
     if (vMissingTx.size() == 0)
         return;
 
-    // If canonical ordering is activated, locate empty indexes in vTxHashes256 to be used in sorting
+    // Locate empty indexes in vTxHashes256 to be used in sorting
     std::vector<size_t> missingTxIdxs;
-    if (fCanonicalTxsOrder && NegotiateGrapheneVersion(pfrom) >= 1)
     {
         uint256 nullhash;
         for (size_t idx = 0; idx < vTxHashes256.size(); idx++)
@@ -102,24 +96,17 @@ void CGrapheneBlock::AddNewTransactions(std::vector<CTransaction> vMissingTx, CN
     size_t idx = 0;
     for (const CTransaction &tx : vMissingTx)
     {
-        mapMissingTx[GetShortID(pfrom->gr_shorttxidk0.load(), pfrom->gr_shorttxidk1.load(), tx.GetHash(),
+        mapMissingTx[GetShortID(pfrom->gr_shorttxidk0.load(), pfrom->gr_shorttxidk1.load(), tx.GetId(),
             NegotiateGrapheneVersion(pfrom))] = MakeTransactionRef(tx);
 
-        uint256 hash = tx.GetHash();
+        uint256 hash = tx.GetId();
         uint64_t cheapHash = GetShortID(
             pfrom->gr_shorttxidk0.load(), pfrom->gr_shorttxidk1.load(), hash, NegotiateGrapheneVersion(pfrom));
 
-        // Insert in arbitrary order if canonical ordering is enabled and xversion is recent enough
-        if (fCanonicalTxsOrder && NegotiateGrapheneVersion(pfrom) >= 1)
-        {
-            if (idx >= missingTxIdxs.size())
-                throw std::runtime_error("Range exceeded in missingTxIdxs");
-            vTxHashes256[missingTxIdxs[idx]] = hash;
-            idx++;
-        }
-        // Otherwise, use ordering information
-        else
-            vTxHashes256[mapHashOrderIndex[cheapHash]] = hash;
+        if (idx >= missingTxIdxs.size())
+            throw std::runtime_error("Range exceeded in missingTxIdxs");
+        vTxHashes256[missingTxIdxs[idx]] = hash;
+        idx++;
     }
 }
 
@@ -130,28 +117,9 @@ void CGrapheneBlock::OrderTxHashes(CNode *pfrom)
         throw std::runtime_error("Cannot OrderTxHashes if size of vTxHashes256 unequal to nBlockTxs");
     }
 
-    // Sort order transactions if canonical order is enabled and graphene version is late enough
-    if (fCanonicalTxsOrder && NegotiateGrapheneVersion(pfrom) >= 1)
-    {
-        // coinbase is always first
-        std::sort(vTxHashes256.begin() + 1, vTxHashes256.end());
-        LOG(GRAPHENE, "Using canonical order for block from peer=%s\n", pfrom->GetLogName());
-    }
-    else
-    {
-        uint256 nullhash;
-        std::vector<uint256> orderedTxHashes256(nBlockTxs, nullhash);
-        for (auto &hash : vTxHashes256)
-        {
-            uint64_t cheapHash = GetShortID(
-                pfrom->gr_shorttxidk0.load(), pfrom->gr_shorttxidk1.load(), hash, NegotiateGrapheneVersion(pfrom));
-            const auto &orderIdx = mapHashOrderIndex.find(cheapHash);
-            if (orderIdx == mapHashOrderIndex.end())
-                throw std::runtime_error("Could not locate cheapHash in mapHashOrderIndex");
-            orderedTxHashes256[orderIdx->second] = hash;
-        }
-        std::copy(orderedTxHashes256.begin(), orderedTxHashes256.end(), vTxHashes256.begin());
-    }
+    // Sort order transactions if canonical order (coinbase is always first)
+    std::sort(vTxHashes256.begin() + 1, vTxHashes256.end());
+    LOG(GRAPHENE, "Using canonical order for block from peer=%s\n", pfrom->GetLogName());
 }
 
 bool CGrapheneBlock::ValidateAndRecontructBlock(uint256 blockhash,
@@ -297,7 +265,7 @@ bool CGrapheneBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
     // Add full transactions included in the block
     for (auto &tx : grapheneBlock->vAdditionalTxs)
     {
-        const uint256 &hash = tx->GetHash();
+        const uint256 &hash = tx->GetId();
         uint64_t cheapHash = grapheneBlock->pGrapheneSet->GetShortID(hash);
         mapPartialTxHash.insert(std::make_pair(cheapHash, tx));
     }
@@ -305,7 +273,7 @@ bool CGrapheneBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
     // Add full transactions collected during failure recovery
     for (auto &tx : grapheneBlock->vRecoveredTxs)
     {
-        const uint256 &hash = tx->GetHash();
+        const uint256 &hash = tx->GetId();
         uint64_t cheapHash = grapheneBlock->pGrapheneSet->GetShortID(hash);
         mapPartialTxHash.insert(std::make_pair(cheapHash, tx));
     }
@@ -314,7 +282,7 @@ bool CGrapheneBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
     for (auto &tx : grapheneBlockTx.vMissingTx)
     {
         CTransactionRef txRef = MakeTransactionRef(tx);
-        const uint256 &hash = tx.GetHash();
+        const uint256 &hash = tx.GetId();
         uint64_t cheapHash = grapheneBlock->pGrapheneSet->GetShortID(hash);
         mapPartialTxHash.insert(std::make_pair(cheapHash, txRef));
     }
@@ -374,7 +342,7 @@ bool CRequestGrapheneBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
 bool CGrapheneBlock::CheckBlockHeader(const CBlockHeader &block, CValidationState &state)
 {
     // Check proof of work matches claimed amount
-    if (!CheckProofOfWork(header.GetHash(), header.nBits, Params().GetConsensus()))
+    if (!CheckProofOfWork(header.GetMiningHash(), header.nBits, Params().GetConsensus()))
         return state.DoS(50, error("CheckBlockHeader(): proof of work failed"), REJECT_INVALID, "high-hash");
 
     // Check timestamp
@@ -463,7 +431,7 @@ bool CGrapheneBlock::HandleMessage(CDataStream &vRecv, CNode *pfrom, std::string
         }
 
         // Request full block if this one isn't extending the best chain
-        if (pIndex->nChainWork <= chainActive.Tip()->nChainWork)
+        if (pIndex->chainWork() <= chainActive.Tip()->chainWork())
         {
             thinrelay.RequestBlock(pfrom, inv.hash);
             thinrelay.ClearAllBlockData(pfrom, grapheneBlock->header.GetHash());
@@ -517,7 +485,7 @@ void CGrapheneBlock::FillTxMapFromPools(std::map<uint64_t, CTransactionRef> &map
     }
 
     std::vector<uint256> memPoolHashes;
-    mempool.queryHashes(memPoolHashes);
+    mempool.queryIds(memPoolHashes);
 
     for (const uint256 &hash : memPoolHashes)
     {
@@ -533,10 +501,10 @@ void CGrapheneBlock::SituateCoinbase(std::vector<uint64_t> blockCheapHashes,
     uint64_t grapheneVersion)
 {
     // Ensure coinbase is first
-    if (blockCheapHashes[0] != GetShortID(shorttxidk0, shorttxidk1, coinbase->GetHash(), version))
+    if (blockCheapHashes[0] != GetShortID(shorttxidk0, shorttxidk1, coinbase->GetId(), version))
     {
         auto it = std::find(blockCheapHashes.begin(), blockCheapHashes.end(),
-            GetShortID(shorttxidk0, shorttxidk1, coinbase->GetHash(), version));
+            GetShortID(shorttxidk0, shorttxidk1, coinbase->GetId(), version));
 
         if (it == blockCheapHashes.end())
             throw std::runtime_error("No coinbase transaction found in graphene block");
@@ -544,13 +512,13 @@ void CGrapheneBlock::SituateCoinbase(std::vector<uint64_t> blockCheapHashes,
         auto idx = std::distance(blockCheapHashes.begin(), it);
 
         blockCheapHashes[idx] = blockCheapHashes[0];
-        blockCheapHashes[0] = GetShortID(shorttxidk0, shorttxidk1, coinbase->GetHash(), version);
+        blockCheapHashes[0] = GetShortID(shorttxidk0, shorttxidk1, coinbase->GetId(), version);
     }
 }
 
 void CGrapheneBlock::SituateCoinbase(CTransactionRef coinbase)
 {
-    std::vector<uint256>::iterator it = std::find(vTxHashes256.begin(), vTxHashes256.end(), coinbase->GetHash());
+    std::vector<uint256>::iterator it = std::find(vTxHashes256.begin(), vTxHashes256.end(), coinbase->GetId());
 
     if (it == vTxHashes256.end())
         return;
@@ -571,17 +539,12 @@ std::set<uint64_t> CGrapheneBlock::UpdateResolvedTxsAndIdentifyMissing(
     {
         uint64_t cheapHash = blockCheapHashes[i];
 
-        // If canonical order is not enabled or xversion is less than 1, update mapHashOrderIndex so
-        // it is available if we later receive missing txs
-        if (!fCanonicalTxsOrder || grapheneVersion < 1)
-            mapHashOrderIndex[cheapHash] = i;
-
         const auto &elem = mapPartialTxHash.find(cheapHash);
         if ((elem != mapPartialTxHash.end()) && (elem->second != nullptr))
         {
-            const auto repeat = std::find(vTxHashes256.begin(), vTxHashes256.end(), elem->second->GetHash());
+            const auto repeat = std::find(vTxHashes256.begin(), vTxHashes256.end(), elem->second->GetId());
             if (repeat == vTxHashes256.end())
-                vTxHashes256.push_back(elem->second->GetHash());
+                vTxHashes256.push_back(elem->second->GetId());
         }
         else
         {
@@ -609,12 +572,7 @@ bool CGrapheneBlock::process(CNode *pfrom, std::string strCommand, std::shared_p
         return false;
     }
 
-    pblock->nVersion = header.nVersion;
-    pblock->nBits = header.nBits;
-    pblock->nNonce = header.nNonce;
-    pblock->nTime = header.nTime;
-    pblock->hashMerkleRoot = header.hashMerkleRoot;
-    pblock->hashPrevBlock = header.hashPrevBlock;
+    *((CBlockHeader *)(pblock.get())) = header;
     pfrom->gr_shorttxidk0.store(shorttxidk0);
     pfrom->gr_shorttxidk1.store(shorttxidk1);
 
@@ -633,7 +591,7 @@ bool CGrapheneBlock::process(CNode *pfrom, std::string strCommand, std::shared_p
         CTransactionRef coinbase = nullptr;
         for (auto &tx : vAdditionalTxs)
         {
-            const uint256 &hash = tx->GetHash();
+            const uint256 &hash = tx->GetId();
             uint64_t cheapHash = GetShortID(shorttxidk0, shorttxidk1, hash, version);
             mapPartialTxHash.insert(std::make_pair(cheapHash, tx));
 
@@ -664,11 +622,11 @@ bool CGrapheneBlock::process(CNode *pfrom, std::string strCommand, std::shared_p
                 }
                 else
                 {
-                    if ((grSetComputeOpt && pGrapheneSet->GetFastFilter()->contains(entry.second->GetHash())) ||
-                        (!grSetComputeOpt && pGrapheneSet->GetRegularFilter()->contains(entry.second->GetHash())))
+                    if ((grSetComputeOpt && pGrapheneSet->GetFastFilter()->contains(entry.second->GetId())) ||
+                        (!grSetComputeOpt && pGrapheneSet->GetRegularFilter()->contains(entry.second->GetId())))
                     {
                         setSenderFilterPositiveCheapHashes.insert(entry.first);
-                        vSenderFilterPositiveHahses.push_back(entry.second->GetHash());
+                        vSenderFilterPositiveHahses.push_back(entry.second->GetId());
                     }
                 }
             }
@@ -678,13 +636,9 @@ bool CGrapheneBlock::process(CNode *pfrom, std::string strCommand, std::shared_p
                 mapPartialTxHash, blockCheapHashes, NegotiateGrapheneVersion(pfrom));
             grapheneBlock->SituateCoinbase(coinbase);
 
-            // Sort order transactions if canonical order is enabled and graphene version is late enough
-            if (fCanonicalTxsOrder && NegotiateGrapheneVersion(pfrom) >= 1)
-            {
-                // coinbase is always first
-                std::sort(grapheneBlock->vTxHashes256.begin() + 1, grapheneBlock->vTxHashes256.end());
-                LOG(GRAPHENE, "Using canonical order for block from peer=%s\n", pfrom->GetLogName());
-            }
+            // coinbase is always first
+            std::sort(grapheneBlock->vTxHashes256.begin() + 1, grapheneBlock->vTxHashes256.end());
+            LOG(GRAPHENE, "Using canonical order for block from peer=%s\n", pfrom->GetLogName());
         }
         catch (const std::runtime_error &e)
         {
@@ -810,15 +764,15 @@ static bool ReconstructBlock(CNode *pfrom,
     }
     for (auto &tx : grapheneBlock->vAdditionalTxs)
     {
-        toVerify.insert(tx->GetHash());
+        toVerify.insert(tx->GetId());
     }
     for (auto &tx : grapheneBlock->vRecoveredTxs)
     {
-        toVerify.insert(tx->GetHash());
+        toVerify.insert(tx->GetId());
     }
     for (auto &kv : grapheneBlock->mapMissingTx)
     {
-        toVerify.insert(kv.second->GetHash());
+        toVerify.insert(kv.second->GetId());
     }
 
     // Locate each transaction in pre-populated mapTxFromPools.
@@ -1361,7 +1315,7 @@ void SendGrapheneBlock(ConstCBlockRef pblock, CNode *pfrom, const CInv &inv, con
                 // First add transaction hashes to local graphene block
                 for (auto &tx : pblock->vtx)
                 {
-                    grapheneBlock.vTxHashes256.push_back(tx->GetHash());
+                    grapheneBlock.vTxHashes256.push_back(tx->GetId());
                 }
                 // Next store graphene block in case receiver attempts failure recovery
                 thinrelay.SetSentGrapheneBlocks(pfrom->GetId(), grapheneBlock);
@@ -1397,7 +1351,7 @@ bool IsGrapheneBlockValid(CNode *pfrom, const CBlockHeader &header)
 {
     // check block header
     CValidationState state;
-    if (!CheckBlockHeader(header, state, true))
+    if (!CheckBlockHeader(Params().GetConsensus(), header, state, true))
     {
         return error("Received invalid header for graphene block %s from peer %s", header.GetHash().ToString(),
             pfrom->GetLogName());
@@ -1486,7 +1440,7 @@ bool HandleGrapheneBlockRecoveryResponse(CDataStream &vRecv, CNode *pfrom, const
     CTransactionRef coinbase = nullptr;
     for (auto &tx : pblock->grapheneblock->vAdditionalTxs)
     {
-        const uint256 &hash = tx->GetHash();
+        const uint256 &hash = tx->GetId();
         uint64_t cheapHash = pblock->grapheneblock->pGrapheneSet->GetShortID(hash);
 
         mapTxFromPools.insert(std::make_pair(cheapHash, tx));
@@ -1504,7 +1458,7 @@ bool HandleGrapheneBlockRecoveryResponse(CDataStream &vRecv, CNode *pfrom, const
     // Insert latest transactions just sent over
     for (auto &tx : recoveryResponse.vMissingTxs)
     {
-        const uint256 &hash = tx.GetHash();
+        const uint256 &hash = tx.GetId();
         uint64_t cheapHash = pblock->grapheneblock->pGrapheneSet->GetShortID(hash);
 
         CTransactionRef txRef = MakeTransactionRef(tx);
@@ -1519,9 +1473,9 @@ bool HandleGrapheneBlockRecoveryResponse(CDataStream &vRecv, CNode *pfrom, const
     for (auto &pair : mapTxFromPools)
     {
         if ((pblock->grapheneblock->pGrapheneSet->GetComputeOptimized() &&
-                pblock->grapheneblock->pGrapheneSet->GetFastFilter()->contains(pair.second->GetHash())) ||
+                pblock->grapheneblock->pGrapheneSet->GetFastFilter()->contains(pair.second->GetId())) ||
             (!pblock->grapheneblock->pGrapheneSet->GetComputeOptimized() &&
-                pblock->grapheneblock->pGrapheneSet->GetRegularFilter()->contains(pair.second->GetHash())))
+                pblock->grapheneblock->pGrapheneSet->GetRegularFilter()->contains(pair.second->GetId())))
         {
             localIblt.insert(pair.first, IBLT_NULL_VALUE);
             setSenderFilterPositiveCheapHashes.insert(pair.first);
@@ -1710,7 +1664,7 @@ std::vector<CTransaction> TransactionsFromBlockByCheapHash(std::set<uint64_t> &v
     }
     else
     {
-        if (hdr->nHeight < (chainActive.Tip()->nHeight - (int)thinrelay.MAX_THINTYPE_BLOCKS_IN_FLIGHT))
+        if (hdr->height() < (chainActive.Tip()->height() - (int)thinrelay.MAX_THINTYPE_BLOCKS_IN_FLIGHT))
             throw std::runtime_error("get_grblocktx request too far from the tip");
 
         const Consensus::Params &consensusParams = Params().GetConsensus();
@@ -1727,8 +1681,8 @@ std::vector<CTransaction> TransactionsFromBlockByCheapHash(std::set<uint64_t> &v
         {
             for (auto &tx : pblock->vtx)
             {
-                uint64_t cheapHash = GetShortID(pfrom->gr_shorttxidk0.load(), pfrom->gr_shorttxidk1.load(),
-                    tx->GetHash(), NegotiateGrapheneVersion(pfrom));
+                uint64_t cheapHash = GetShortID(pfrom->gr_shorttxidk0.load(), pfrom->gr_shorttxidk1.load(), tx->GetId(),
+                    NegotiateGrapheneVersion(pfrom));
 
                 if (vCheapHashes.count(cheapHash))
                     vTx.push_back(*tx);

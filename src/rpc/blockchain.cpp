@@ -12,7 +12,9 @@
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "coins.h"
+#include "consensus/grouptokens.h"
 #include "consensus/validation.h"
+#include "dstencode.h"
 #include "hashwrapper.h"
 #include "main.h"
 #include "policy/policy.h"
@@ -31,6 +33,7 @@
 #include "utilstrencodings.h"
 #include "validation/validation.h"
 #include "validation/verifydb.h"
+#include "wallet/grouptokenwallet.h"
 
 #include <stdint.h>
 
@@ -38,6 +41,9 @@
 
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/thread.hpp> // boost::thread::interrupt
+#include <mutex>
+
+extern CTweak<int> maxReorgDepth;
 
 // In case of operator error, limit the rollback of a chain to 100 blocks
 static uint32_t nDefaultRollbackLimit = 100;
@@ -58,9 +64,9 @@ double GetDifficulty(const CBlockIndex *blockindex)
             blockindex = chainActive.Tip();
     }
 
-    int nShift = (blockindex->nBits >> 24) & 0xff;
+    int nShift = (blockindex->tgtBits() >> 24) & 0xff;
 
-    double dDiff = (double)0x0000ffff / (double)(blockindex->nBits & 0x00ffffff);
+    double dDiff = (double)0x0000ffff / (double)(blockindex->tgtBits() & 0x00ffffff);
 
     while (nShift < 29)
     {
@@ -76,31 +82,43 @@ double GetDifficulty(const CBlockIndex *blockindex)
     return dDiff;
 }
 
-UniValue blockheaderToJSON(const CBlockIndex *blockindex)
+
+UniValue blockheaderToJSON(const CBlockIndex *blockindex, UniValue &result)
 {
-    UniValue result(UniValue::VOBJ);
     result.pushKV("hash", blockindex->GetBlockHash().GetHex());
     int confirmations = -1;
     // Only report confirmations if the block is on the main chain
     if (chainActive.Contains(blockindex))
-        confirmations = chainActive.Height() - blockindex->nHeight + 1;
+        confirmations = chainActive.Height() - blockindex->height() + 1;
     result.pushKV("confirmations", confirmations);
-    result.pushKV("height", blockindex->nHeight);
-    result.pushKV("version", blockindex->nVersion);
-    result.pushKV("versionHex", strprintf("%08x", blockindex->nVersion));
-    result.pushKV("merkleroot", blockindex->hashMerkleRoot.GetHex());
-    result.pushKV("time", (int64_t)blockindex->nTime);
+    result.pushKV("height", (uint64_t)blockindex->height());
+    result.pushKV("size", blockindex->header.size);
+    result.pushKV("maxSize", blockindex->header.maxSize);
+    result.pushKV("feePoolAmt", blockindex->header.feePoolAmt);
+    result.pushKV("merkleroot", blockindex->hashMerkleRoot().GetHex());
+    result.pushKV("time", (int64_t)blockindex->time());
     result.pushKV("mediantime", (int64_t)blockindex->GetMedianTimePast());
-    result.pushKV("nonce", (uint64_t)blockindex->nNonce);
-    result.pushKV("bits", strprintf("%08x", blockindex->nBits));
+    result.pushKV("nonce", HexStr(blockindex->nonce()));
+    result.pushKV("bits", strprintf("%08x", blockindex->tgtBits()));
     result.pushKV("difficulty", GetDifficulty(blockindex));
-    result.pushKV("chainwork", blockindex->nChainWork.GetHex());
+    result.pushKV("chainwork", blockindex->chainWork().GetHex());
+    result.pushKV("utxoCommitment", HexStr(blockindex->header.utxoCommitment));
+    result.pushKV("minerData", HexStr(blockindex->header.minerData));
 
     if (blockindex->pprev)
         result.pushKV("previousblockhash", blockindex->pprev->GetBlockHash().GetHex());
+    result.pushKV("ancestorhash", blockindex->header.hashAncestor.GetHex());
+
     CBlockIndex *pnext = chainActive.Next(blockindex);
     if (pnext)
         result.pushKV("nextblockhash", pnext->GetBlockHash().GetHex());
+    return result;
+}
+
+UniValue blockheaderToJSON(const CBlockIndex *blockindex)
+{
+    UniValue result(UniValue::VOBJ);
+    blockheaderToJSON(blockindex, result);
     return result;
 }
 
@@ -110,18 +128,10 @@ UniValue blockToJSON(const CBlock &block,
     bool listTxns /* = true */)
 {
     UniValue result(UniValue::VOBJ);
-    result.pushKV("hash", blockindex->GetBlockHash().GetHex());
-    int confirmations = -1;
-    // Only report confirmations if the block is on the main chain
-    if (chainActive.Contains(blockindex))
-        confirmations = chainActive.Height() - blockindex->nHeight + 1;
-    result.pushKV("confirmations", confirmations);
-    result.pushKV("size", (int)::GetSerializeSize(block, SER_NETWORK, PROTOCOL_VERSION));
-    result.pushKV("height", blockindex->nHeight);
-    result.pushKV("version", block.nVersion);
-    result.pushKV("versionHex", strprintf("%08x", block.nVersion));
-    result.pushKV("merkleroot", block.hashMerkleRoot.GetHex());
+    blockheaderToJSON(blockindex, result);
+
     UniValue txs(UniValue::VARR);
+    UniValue txidems(UniValue::VARR);
     if (listTxns)
     {
         int64_t txTime = -1; // Don't display the time in the tx because its in the block data.
@@ -135,27 +145,24 @@ UniValue blockToJSON(const CBlock &block,
             }
             else
             {
-                txs.push_back(tx->GetHash().GetHex());
+                txs.push_back(tx->GetId().GetHex());
+                txidems.push_back(tx->GetIdem().GetHex());
             }
         }
-        result.pushKV("tx", txs);
+        if (txDetails) // Details contains both id an idem
+        {
+            result.pushKV("tx", txs);
+        }
+        else
+        {
+            result.pushKV("txid", txs);
+            result.pushKV("txidem", txidems);
+        }
     }
     else
     {
         result.pushKV("txcount", (uint64_t)block.vtx.size());
     }
-    result.pushKV("time", block.GetBlockTime());
-    result.pushKV("mediantime", (int64_t)blockindex->GetMedianTimePast());
-    result.pushKV("nonce", (uint64_t)block.nNonce);
-    result.pushKV("bits", strprintf("%08x", block.nBits));
-    result.pushKV("difficulty", GetDifficulty(blockindex));
-    result.pushKV("chainwork", blockindex->nChainWork.GetHex());
-
-    if (blockindex->pprev)
-        result.pushKV("previousblockhash", blockindex->pprev->GetBlockHash().GetHex());
-    CBlockIndex *pnext = chainActive.Next(blockindex);
-    if (pnext)
-        result.pushKV("nextblockhash", pnext->GetBlockHash().GetHex());
     return result;
 }
 
@@ -194,6 +201,9 @@ UniValue getfinalizedblockhash(const UniValue &params, bool fHelp)
                                  "\"hex\"      (string) the block hash hex encoded\n");
     }
 
+    if (maxReorgDepth.Value() < 0)
+        throw JSONRPCError(RPC_INVALID_REQUEST, "Block finalization is not enabled");
+
     LOCK(cs_main);
     const CBlockIndex *blockIndexFinalized = GetFinalizedBlock();
     if (blockIndexFinalized)
@@ -228,16 +238,16 @@ std::string EntryDescriptionString()
            "GMT\n"
            "    \"height\" : n,           (numeric) block height when transaction entered pool\n"
            "    \"startingpriority\" : n, (numeric) priority when transaction entered pool\n"
-           "    \"currentpriority\" : n,  (numeric) transaction priority now\n"
+           "    \"currentpriority\" : n,  (numeric) transaction priority now (including manual adjustments)\n"
            "    \"ancestorcount\" : n,    (numeric) number of in-mempool ancestor transactions (including this one)\n"
            "    \"ancestorsize\" : n,     (numeric) size of in-mempool ancestors (including this one)\n"
            "    \"ancestorfees\" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this "
            "one)\n"
            "    \"depends\" : [           (array) unconfirmed transactions used as inputs for this transaction\n"
-           "        \"transactionid\",    (string) parent transaction id\n"
+           "        \"transactionid\",    (string) parent transaction idem\n"
            "       ... ]\n"
            "    \"spentby\" : [           (array) unconfirmed transactions spending outputs from this transaction\n"
-           "        \"transactionid\",    (string) child transaction id\n"
+           "        \"transactionidem\",    (string) child transaction idem\n"
            "       ... ]\n";
 }
 
@@ -252,16 +262,22 @@ void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
     info.pushKV("height", (int)e.GetHeight());
     info.pushKV("doublespent", (e.dsproof == 1 ? true : false));
     info.pushKV("startingpriority", e.GetPriority(e.GetHeight()));
-    info.pushKV("currentpriority", e.GetPriority(chainActive.Height()));
+
+    double priority = e.GetPriority(chainActive.Height());
+    CAmount dummy = 0;
+    // Adjust the priority by any CLI changes
+    mempool._ApplyDeltas(e.GetTx().GetId(), priority, dummy);
+    mempool._ApplyDeltas(e.GetTx().GetIdem(), priority, dummy);
+    info.pushKV("currentpriority", priority);
     info.pushKV("ancestorcount", e.GetCountWithAncestors());
     info.pushKV("ancestorsize", e.GetSizeWithAncestors());
     info.pushKV("ancestorfees", e.GetModFeesWithAncestors());
     const CTransaction &tx = e.GetTx();
     set<string> setDepends;
-    for (const CTxIn &txin : tx.vin)
+    const CTxMemPool::setEntries &parents = mempool.GetMemPoolParents(tx);
+    for (const auto &p : parents)
     {
-        if (mempool._exists(txin.prevout.hash))
-            setDepends.insert(txin.prevout.hash.ToString());
+        setDepends.insert(p->GetTx().GetIdem().GetHex());
     }
 
     UniValue depends(UniValue::VARR);
@@ -272,16 +288,16 @@ void entryToJSON(UniValue &info, const CTxMemPoolEntry &e)
     info.pushKV("depends", depends);
 
     UniValue spent(UniValue::VARR);
-    const CTxMemPool::txiter &it = mempool.mapTx.find(tx.GetHash());
+    const CTxMemPool::TxIdIter &it = mempool.mapTx.find(tx.GetId());
     const CTxMemPool::setEntries &setChildren = mempool.GetMemPoolChildren(it);
-    for (const CTxMemPool::txiter &childiter : setChildren)
+    for (const CTxMemPool::TxIdIter &childiter : setChildren)
     {
-        spent.push_back(childiter->GetTx().GetHash().ToString());
+        spent.push_back(childiter->GetTx().GetIdem().ToString());
     }
     info.pushKV("spentby", spent);
 }
 
-UniValue mempoolToJSON(bool fVerbose /* = false */)
+UniValue mempoolToJSON(bool fVerbose /* = false */, bool idem /* = false */)
 {
     if (fVerbose)
     {
@@ -289,7 +305,7 @@ UniValue mempoolToJSON(bool fVerbose /* = false */)
         UniValue o(UniValue::VOBJ);
         for (const CTxMemPoolEntry &e : mempool.mapTx)
         {
-            const uint256 &hash = e.GetTx().GetHash();
+            const uint256 &hash = (idem) ? e.GetTx().GetIdem() : e.GetTx().GetId();
             UniValue info(UniValue::VOBJ);
             entryToJSON(info, e);
             o.pushKV(hash.ToString(), info);
@@ -299,7 +315,10 @@ UniValue mempoolToJSON(bool fVerbose /* = false */)
     else
     {
         vector<uint256> vtxid;
-        mempool.queryHashes(vtxid);
+        if (idem)
+            mempool.queryIdems(vtxid);
+        else
+            mempool.queryIds(vtxid);
 
         UniValue a(UniValue::VARR);
         for (const uint256 &hash : vtxid)
@@ -312,7 +331,7 @@ UniValue mempoolToJSON(bool fVerbose /* = false */)
 UniValue orphanpoolToJSON()
 {
     vector<uint256> vHashes;
-    orphanpool.QueryHashes(vHashes);
+    orphanpool.QueryIds(vHashes);
 
     UniValue a(UniValue::VARR);
     for (const uint256 &hash : vHashes)
@@ -320,14 +339,59 @@ UniValue orphanpoolToJSON()
 
     return a;
 }
+
 UniValue getrawmempool(const UniValue &params, bool fHelp)
 {
-    if (fHelp || params.size() > 1)
+    if (fHelp || params.size() > 2)
         throw runtime_error(
-            "getrawmempool ( verbose )\n"
+            "getrawmempool ( verbose ) (id or idem)\n"
             "\nReturns all transaction ids in memory pool as a json array of string transaction ids.\n"
             "\nArguments:\n"
             "1. verbose           (boolean, optional, default=false) true for a json object, false for array of "
+            "2. id or idem        (string, optional, default=idem) return transaction idem or id"
+            "transaction ids\n"
+            "\nResult: (for verbose = false):\n"
+            "[                     (json array of string)\n"
+            "  \"transactionid\"     (string) The transaction id\n"
+            "  ,...\n"
+            "]\n"
+            "\nResult: (for verbose = true):\n"
+            "{                           (json object)\n"
+            "  \"transactionid\" : {       (json object)\n" +
+            EntryDescriptionString() +
+            "  }, ...\n"
+            "}\n"
+            "\nExamples\n" +
+            HelpExampleCli("getrawmempool", "true") + HelpExampleRpc("getrawmempool", "true"));
+
+    LOCK(cs_main);
+
+    bool idem = true;
+    bool fVerbose = false;
+    if (params.size() > 0)
+        fVerbose = params[0].get_bool();
+    if (params.size() > 1)
+    {
+        std::string s = params[1].get_str();
+        makeLowercase(s);
+        if (s == "id")
+            idem = false;
+        else if (s != "idem")
+            throw JSONRPCError(RPC_INVALID_PARAMS, "2nd parameter must be 'id' or 'idem'");
+    }
+
+    return mempoolToJSON(fVerbose, idem);
+}
+
+UniValue getrawmempoolbyid(const UniValue &params, bool fHelp)
+{
+    if (fHelp || params.size() > 1)
+        throw runtime_error(
+            "getrawmempool ( verbose ) ( id or idem)\n"
+            "\nReturns all transaction ids in memory pool as a json array of string transaction ids.\n"
+            "\nArguments:\n"
+            "1. verbose           (boolean, optional, default=false) true for a json object, false for array of "
+            "2. id or idem           (string, optional, default=idem) return transaction idem or id"
             "transaction ids\n"
             "\nResult: (for verbose = false):\n"
             "[                     (json array of string)\n"
@@ -346,10 +410,20 @@ UniValue getrawmempool(const UniValue &params, bool fHelp)
     LOCK(cs_main);
 
     bool fVerbose = false;
+    bool idem = true;
     if (params.size() > 0)
         fVerbose = params[0].get_bool();
+    if (params.size() > 1)
+    {
+        std::string s = params[1].get_str();
+        makeLowercase(s);
+        if (s == "id")
+            idem = false;
+        else if (s != "idem")
+            throw JSONRPCError(RPC_INVALID_PARAMS, "2nd parameter must be 'id' or 'idem'");
+    }
 
-    return mempoolToJSON(fVerbose);
+    return mempoolToJSON(fVerbose, idem);
 }
 
 UniValue getraworphanpool(const UniValue &params, bool fHelp)
@@ -402,7 +476,7 @@ UniValue getmempoolancestors(const UniValue &params, bool fHelp)
 
     READLOCK(mempool.cs_txmempool);
 
-    CTxMemPool::txiter it = mempool.mapTx.find(paramhash);
+    CTxMemPool::TxIdIter it = mempool._getIdIter(paramhash);
     if (it == mempool.mapTx.end())
     {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
@@ -416,9 +490,9 @@ UniValue getmempoolancestors(const UniValue &params, bool fHelp)
     if (!fVerbose)
     {
         UniValue o(UniValue::VARR);
-        for (CTxMemPool::txiter ancestorIt : setAncestors)
+        for (CTxMemPool::TxIdIter ancestorIt : setAncestors)
         {
-            o.push_back(ancestorIt->GetTx().GetHash().ToString());
+            o.push_back(ancestorIt->GetTx().GetId().ToString());
         }
 
         return o;
@@ -426,10 +500,10 @@ UniValue getmempoolancestors(const UniValue &params, bool fHelp)
     else
     {
         UniValue o(UniValue::VOBJ);
-        for (CTxMemPool::txiter ancestorIt : setAncestors)
+        for (CTxMemPool::TxIdIter ancestorIt : setAncestors)
         {
             const CTxMemPoolEntry &e = *ancestorIt;
-            const uint256 &hash = e.GetTx().GetHash();
+            const uint256 &hash = e.GetTx().GetId();
             UniValue info(UniValue::VOBJ);
             entryToJSON(info, e);
             o.pushKV(hash.ToString(), info);
@@ -473,7 +547,7 @@ UniValue getmempooldescendants(const UniValue &params, bool fHelp)
 
     WRITELOCK(mempool.cs_txmempool);
 
-    CTxMemPool::txiter it = mempool.mapTx.find(paramhash);
+    CTxMemPool::TxIdIter it = mempool._getIdIter(paramhash);
     if (it == mempool.mapTx.end())
     {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
@@ -487,9 +561,9 @@ UniValue getmempooldescendants(const UniValue &params, bool fHelp)
     if (!fVerbose)
     {
         UniValue o(UniValue::VARR);
-        for (CTxMemPool::txiter descendantIt : setDescendants)
+        for (auto descendantIt : setDescendants)
         {
-            o.push_back(descendantIt->GetTx().GetHash().ToString());
+            o.push_back(descendantIt->GetTx().GetId().ToString());
         }
 
         return o;
@@ -497,10 +571,10 @@ UniValue getmempooldescendants(const UniValue &params, bool fHelp)
     else
     {
         UniValue o(UniValue::VOBJ);
-        for (CTxMemPool::txiter descendantIt : setDescendants)
+        for (auto descendantIt : setDescendants)
         {
             const CTxMemPoolEntry &e = *descendantIt;
-            const uint256 &hash = e.GetTx().GetHash();
+            const uint256 &hash = e.GetTx().GetId();
             UniValue info(UniValue::VOBJ);
             entryToJSON(info, e);
             o.pushKV(hash.ToString(), info);
@@ -530,7 +604,7 @@ UniValue getmempoolentry(const UniValue &params, bool fHelp)
 
     READLOCK(mempool.cs_txmempool);
 
-    CTxMemPool::txiter it = mempool.mapTx.find(hash);
+    CTxMemPool::TxIdIter it = mempool._getIdIter(hash);
     if (it == mempool.mapTx.end())
     {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
@@ -585,8 +659,6 @@ UniValue getblockheader(const UniValue &params, bool fHelp)
             "  \"confirmations\" : n,   (numeric) The number of confirmations, or -1 if the block is not on the main "
             "chain\n"
             "  \"height\" : n,          (numeric) The block height or index\n"
-            "  \"version\" : n,         (numeric) The block version\n"
-            "  \"versionHex\" : \"00000000\", (string) The block version formatted in hexadecimal\n"
             "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
             "  \"time\" : ttt,          (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)\n"
             "  \"mediantime\" : ttt,    (numeric) The median block time in seconds since epoch (Jan 1 1970 GMT)\n"
@@ -659,7 +731,7 @@ UniValue getblockheader(const UniValue &params, bool fHelp)
         }
         LOG(RPC, "%s for height %d (tip is at %d)", __func__, height, current_tip);
         pindex = chainActive[height];
-        DbgAssert(pindex && pindex->nHeight == height, throw std::runtime_error(__func__));
+        DbgAssert(pindex && pindex->height() == height, throw std::runtime_error(__func__));
     }
 
     DbgAssert(pindex != nullptr, throw std::runtime_error(__func__));
@@ -832,7 +904,7 @@ static UniValue getblock(const UniValue &params, bool fHelp)
         }
         LOG(RPC, "%s for height %d (tip is at %d)", __func__, height, current_tip);
         pindex = chainActive[height];
-        DbgAssert(pindex && pindex->nHeight == height, throw std::runtime_error(__func__));
+        DbgAssert(pindex && pindex->height() == height, throw std::runtime_error(__func__));
     }
 
     DbgAssert(pindex != nullptr, throw std::runtime_error(__func__));
@@ -855,10 +927,7 @@ static UniValue getblock(const UniValue &params, bool fHelp)
 
     if (nVerbose == 0 && fListTxns == true)
     {
-        CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
-        ssBlock << block;
-        std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
-        return strHex;
+        return block.GetHex();
     }
 
     bool fVerbose = false;
@@ -870,25 +939,12 @@ static UniValue getblock(const UniValue &params, bool fHelp)
     return blockToJSON(block, pindex, fVerbose, fListTxns);
 }
 
-static void ApplyStats(CCoinsStats &stats,
-    CHashWriter &ss,
-    const uint256 &hash,
-    const std::map<uint32_t, Coin> &outputs)
+static void ApplyStats(CCoinsStats &stats, CHashWriter &ss, const COutPoint &outpt, const Coin &coin)
 {
-    DbgAssert(!outputs.empty(), throw std::runtime_error(__func__));
-    ss << hash;
-    ss << VARINT(
-        outputs.begin()->second.nHeight * 2 + outputs.begin()->second.fCoinBase, VarIntMode::NONNEGATIVE_SIGNED);
-    stats.nTransactions++;
-    for (const auto output : outputs)
-    {
-        ss << VARINT(output.first + 1);
-        ss << *(const CScriptBase *)(&output.second.out.scriptPubKey);
-        ss << VARINT(output.second.out.nValue, VarIntMode::NONNEGATIVE_SIGNED);
-        stats.nTransactionOutputs++;
-        stats.nTotalAmount += output.second.out.nValue;
-    }
-    ss << VARINT(0u);
+    ss << outpt;
+    ss << coin;
+    stats.nTransactionOutputs++;
+    stats.nTotalAmount += coin.GetValue();
 }
 
 //! Calculate statistics about the unspent transaction output set
@@ -899,12 +955,13 @@ static bool GetUTXOStats(CCoinsView *view, CCoinsStats &stats)
 
     CHashWriter ss(SER_GETHASH, PROTOCOL_VERSION);
     stats.hashBlock = pcursor->GetBestBlock();
+    stats.nTransactionOutputs = 0;
+    stats.nTotalAmount = 0;
 
     CBlockIndex *pindex = LookupBlockIndex(stats.hashBlock);
-    stats.nHeight = pindex->nHeight;
+    stats.nHeight = pindex->height();
     ss << stats.hashBlock;
-    uint256 prevkey;
-    std::map<uint32_t, Coin> outputs;
+    COutPoint prevkey;
     while (pcursor->Valid())
     {
         boost::this_thread::interruption_point();
@@ -912,23 +969,13 @@ static bool GetUTXOStats(CCoinsView *view, CCoinsStats &stats)
         Coin coin;
         if (pcursor->GetKey(key) && pcursor->GetValue(coin))
         {
-            if (!outputs.empty() && key.hash != prevkey)
-            {
-                ApplyStats(stats, ss, prevkey, outputs);
-                outputs.clear();
-            }
-            prevkey = key.hash;
-            outputs[key.n] = std::move(coin);
+            ApplyStats(stats, ss, key, coin);
         }
         else
         {
             return error("%s: unable to read value", __func__);
         }
         pcursor->Next();
-    }
-    if (!outputs.empty())
-    {
-        ApplyStats(stats, ss, prevkey, outputs);
     }
     stats.hashSerialized = ss.GetHash();
     stats.nDiskSize = view->EstimateSize();
@@ -946,9 +993,8 @@ UniValue gettxoutsetinfo(const UniValue &params, bool fHelp)
                             "{\n"
                             "  \"height\":n,     (numeric) The current block height (index)\n"
                             "  \"bestblock\": \"hex\",   (string) the best block hash hex\n"
-                            "  \"transactions\": n,      (numeric) The number of transactions\n"
                             "  \"txouts\": n,            (numeric) The number of output transactions\n"
-                            "  \"hash_serialized\": \"hash\",   (string) The serialized hash\n"
+                            "  \"hash_serialized\": \"hash\",   (string) The hash of the serialized UTXO (commitment)\n"
                             "  \"disk_size\": n,         (numeric) The estimated size of the chainstate on disk\n"
                             "  \"total_amount\": x.xxx          (numeric) The total amount\n"
                             "}\n"
@@ -963,9 +1009,8 @@ UniValue gettxoutsetinfo(const UniValue &params, bool fHelp)
     {
         ret.pushKV("height", (int64_t)stats.nHeight);
         ret.pushKV("bestblock", stats.hashBlock.GetHex());
-        ret.pushKV("transactions", (int64_t)stats.nTransactions);
         ret.pushKV("txouts", (int64_t)stats.nTransactionOutputs);
-        ret.pushKV("hash_serialized_2", stats.hashSerialized.GetHex());
+        ret.pushKV("hash_serialized", stats.hashSerialized.GetHex());
         ret.pushKV("disk_size", stats.nDiskSize);
         ret.pushKV("total_amount", ValueFromAmount(stats.nTotalAmount));
     }
@@ -977,17 +1022,17 @@ UniValue evicttransaction(const UniValue &params, bool fHelp)
     if (fHelp || params.size() < 1)
         throw runtime_error(
             "evicttransaction \"txid\"\n"
-            "\nRemove transaction from mempool.  Note that it could be readded quickly if relayed by another node\n"
+            "\nRemove transaction from mempool.  Note that it could be re-added quickly if relayed by another node\n"
             "\nArguments:\n"
             "1. \"txid\"       (string, required) The transaction id\n"
             "\nResult:\n"
+            "The number of transactions removed (children must also be removed)\n"
             "\nExamples:\n" +
             HelpExampleCli("evicttransaction", "\"txid\"") + HelpExampleRpc("evicttransaction", "\"txid\""));
 
     std::string strHash = params[0].get_str();
     uint256 hash(uint256S(strHash));
-    mempool.Remove(hash);
-    return UniValue();
+    return UniValue(mempool.Remove(hash));
 }
 
 UniValue gettxout(const UniValue &params, bool fHelp)
@@ -1065,7 +1110,7 @@ UniValue gettxout(const UniValue &params, bool fHelp)
     }
     else
     {
-        ret.pushKV("confirmations", (int64_t)(pindex->nHeight - coin.nHeight + 1));
+        ret.pushKV("confirmations", (int64_t)(pindex->height() - coin.nHeight + 1));
     }
     ret.pushKV("value", ValueFromAmount(coin.out.nValue));
     UniValue o(UniValue::VOBJ);
@@ -1112,15 +1157,10 @@ static UniValue SoftForkMajorityDesc(int version, CBlockIndex *pindex, const Con
     bool activated = false;
     switch (version)
     {
-    case 2:
-        activated = pindex->nHeight >= consensusParams.BIP34Height;
-        break;
-    case 3:
-        activated = pindex->nHeight >= consensusParams.BIP66Height;
-        break;
-    case 4:
-        activated = pindex->nHeight >= consensusParams.BIP65Height;
-        break;
+        // Kept as an example
+        // case 3:
+        //    activated = pindex->height() >= consensusParams.BIP66Height;
+        //    break;
     }
     rv.pushKV("status", activated);
     return rv;
@@ -1271,14 +1311,14 @@ UniValue getblockchaininfo(const UniValue &params, bool fHelp)
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("chain", Params().NetworkIDString());
     obj.pushKV("blocks", (int)chainActive.Height());
-    obj.pushKV("headers", pindexBestHeader ? pindexBestHeader.load()->nHeight : -1);
+    obj.pushKV("headers", pindexBestHeader ? pindexBestHeader.load()->height() : -1);
     obj.pushKV("bestblockhash", chainActive.Tip()->GetBlockHash().GetHex());
     obj.pushKV("difficulty", (double)GetDifficulty());
     obj.pushKV("mediantime", (int64_t)chainActive.Tip()->GetMedianTimePast());
     obj.pushKV("verificationprogress",
         Checkpoints::GuessVerificationProgress(Params().Checkpoints(), chainActive.Tip(), !fCheckpointsEnabled));
     obj.pushKV("initialblockdownload", IsInitialBlockDownload());
-    obj.pushKV("chainwork", chainActive.Tip()->nChainWork.GetHex());
+    obj.pushKV("chainwork", chainActive.Tip()->chainWork().GetHex());
     obj.pushKV("size_on_disk", CalculateCurrentUsage());
     obj.pushKV("pruned", fPruneMode);
     if (fPruneMode)
@@ -1295,7 +1335,7 @@ UniValue getblockchaininfo(const UniValue &params, bool fHelp)
 
         if (block != nullptr)
         {
-            obj.pushKV("pruneheight", block->nHeight);
+            obj.pushKV("pruneheight", block->height());
         }
         else
         {
@@ -1306,13 +1346,9 @@ UniValue getblockchaininfo(const UniValue &params, bool fHelp)
     }
 
     const Consensus::Params &consensusParams = Params().GetConsensus();
-    CBlockIndex *tip = chainActive.Tip();
     UniValue softforks(UniValue::VARR);
     UniValue bip9_softforks(UniValue::VOBJ);
     UniValue bip135_forks(UniValue::VOBJ); // bip135 added
-    softforks.push_back(SoftForkDesc("bip34", 2, tip, consensusParams));
-    softforks.push_back(SoftForkDesc("bip66", 3, tip, consensusParams));
-    softforks.push_back(SoftForkDesc("bip65", 4, tip, consensusParams));
     // bip135 begin : add all the configured forks
     for (int i = 0; i < Consensus::MAX_VERSION_BITS_DEPLOYMENTS; i++)
     {
@@ -1416,11 +1452,11 @@ UniValue getchaintips(const UniValue &params, bool fHelp)
     for (const CBlockIndex *block : setTips)
     {
         UniValue obj(UniValue::VOBJ);
-        obj.pushKV("height", block->nHeight);
-        obj.pushKV("chainwork", block->nChainWork.GetHex());
+        obj.pushKV("height", block->height());
+        obj.pushKV("chainwork", block->chainWork().GetHex());
         obj.pushKV("hash", block->phashBlock->GetHex());
 
-        const int branchLen = block->nHeight - chainActive.FindFork(block)->nHeight;
+        const int branchLen = block->height() - chainActive.FindFork(block)->height();
         obj.pushKV("branchlen", branchLen);
 
         string status;
@@ -1601,6 +1637,9 @@ UniValue finalizeblock(const UniValue &params, bool fHelp)
     uint256 hash(uint256S(strHash));
     CValidationState state;
 
+    if (maxReorgDepth.Value() < 0)
+        throw JSONRPCError(RPC_INVALID_REQUEST, "Block finalization is not enabled");
+    else
     {
         CBlockIndex *pblockindex;
         {
@@ -1754,7 +1793,7 @@ std::string ReconsiderMostWorkChain(bool fOverride)
     std::string error;
 
     // Find pindex of most work chain regardless of whether is is valid or not.
-    LOCK(cs_main);
+    AssertLockHeld(cs_main);
 
     // Get the set of chaintips
     std::set<CBlockIndex *, CompareBlocksByHeight> setTips;
@@ -1764,7 +1803,7 @@ std::string ReconsiderMostWorkChain(bool fOverride)
     CBlockIndex *pMostWork = chainActive.Tip();
     for (CBlockIndex *pTip : setTips)
     {
-        if (pMostWork->nChainWork < pTip->nChainWork)
+        if (pMostWork->chainWork() < pTip->chainWork())
             pMostWork = pTip;
     }
     std::set<CBlockIndex *, CompareBlocksByHeight> setTipsToVerify;
@@ -1777,7 +1816,7 @@ std::string ReconsiderMostWorkChain(bool fOverride)
         // parse though chaintips again to find if there are duplicates
         for (CBlockIndex *pTip : setTips)
         {
-            if (pMostWork->nChainWork == pTip->nChainWork)
+            if (pMostWork->chainWork() == pTip->chainWork())
                 setTipsToVerify.insert(pTip);
         }
     }
@@ -1785,7 +1824,7 @@ std::string ReconsiderMostWorkChain(bool fOverride)
     for (CBlockIndex *pTipToVerify : setTipsToVerify)
     {
         // if no duplicates then return since there is nothing to do. We are already on the correct chain
-        if (pTipToVerify->nChainWork == chainActive.Tip()->nChainWork)
+        if (pTipToVerify->chainWork() == chainActive.Tip()->chainWork())
         {
             LOGA("Nothing to do. Already on the correct chain.");
             return "Nothing to do. Already on the correct chain.";
@@ -1796,7 +1835,7 @@ std::string ReconsiderMostWorkChain(bool fOverride)
         pFork = chainActive.FindFork(pTipToVerify);
 
         // Rollback to the common forkheight so that both chains will be invalidated.
-        error = RollBackChain(pFork->nHeight, fOverride);
+        error = RollBackChain(pFork->height(), fOverride);
         if (error.size() > 0)
             return error;
 
@@ -1807,14 +1846,14 @@ std::string ReconsiderMostWorkChain(bool fOverride)
         ReconsiderBlock(state, pTipToVerify);
         if (state.IsValid())
         {
-            ActivateBestChain(state, Params());
+            _ActivateBestChain(state, Params());
         }
         if (!state.IsValid())
         {
             return "RPC_DATABASE_ERROR: " + state.GetRejectReason();
         }
 
-        if (pTipToVerify->nChainWork == chainActive.Tip()->nChainWork)
+        if (pTipToVerify->chainWork() == chainActive.Tip()->chainWork())
         {
             LOGA("Active chain has been successfully moved to a new chaintip.");
         }
@@ -1844,7 +1883,11 @@ UniValue reconsidermostworkchain(const UniValue &params, bool fHelp)
     if (params.size() > 0)
         fOverride = params[0].get_bool();
 
-    error = ReconsiderMostWorkChain(fOverride);
+    {
+        TxAdmissionPause txlock;
+        LOCK(cs_main);
+        error = ReconsiderMostWorkChain(fOverride);
+    }
 
     if (error.size() > 0)
         throw runtime_error(error.c_str());
@@ -1943,6 +1986,8 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
             "  \"avgfeerate\": xxxxx,      (numeric) Average feerate (in satoshis per virtual byte)\n"
             "  \"avgtxsize\": xxxxx,       (numeric) Average transaction size\n"
             "  \"blockhash\": xxxxx,       (string) The block hash (to check for potential reorgs)\n"
+            "  \"blocksize\": xxxxx,       (numeric) The block size in bytes\n"
+            "  \"nextmaxblocksize\": xxxxx,(numeric) The next maximum block size that can be mined, in bytes\n"
             "  \"feerate_percentiles\": [  (array of numeric) Feerates at the 10th, 25th, 50th, 75th, and 90th "
             "percentile weight unit (in satoshis per virtual byte)\n"
             "      \"10th_percentile_feerate\",      (numeric) The 10th percentile feerate\n"
@@ -1963,8 +2008,10 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
             "  \"minfeerate\": xxxxx,      (numeric) Minimum feerate (in satoshis per virtual byte)\n"
             "  \"mintxsize\": xxxxx,       (numeric) Minimum transaction size\n"
             "  \"outs\": xxxxx,            (numeric) The number of outputs\n"
+            "  \"sequence_id\": xxxxx,     (numeric) The arrival order of a block at any given height\n"
             "  \"subsidy\": xxxxx,         (numeric) The block subsidy\n"
             "  \"time\": xxxxx,            (numeric) The block time\n"
+            "  \"time_received\": xxxxx,   (numeric) The first time either the header or block was received\n"
             "  \"total_out\": xxxxx,       (numeric) Total amount in all outputs (excluding coinbase and thus reward "
             "[ie subsidy + totalfee])\n"
             "  \"total_size\": xxxxx,      (numeric) Total size of all non-coinbase transactions\n"
@@ -2036,7 +2083,7 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
         }
         LOG(RPC, "%s for height %d (tip is at %d)", __func__, height, current_tip);
         pindex = chainActive[height];
-        DbgAssert(pindex && pindex->nHeight == height, throw std::runtime_error(__func__));
+        DbgAssert(pindex && pindex->height() == height, throw std::runtime_error(__func__));
     }
 
     DbgAssert(pindex != nullptr, throw std::runtime_error(__func__));
@@ -2065,7 +2112,8 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
     const bool loop_inputs = do_all || do_medianfee || do_feerate_percentiles ||
                              SetHasKeys(stats, "utxo_size_inc", "totalfee", "avgfee", "avgfeerate", "minfee", "maxfee",
                                  "minfeerate", "maxfeerate");
-    const bool loop_outputs = do_all || loop_inputs || stats.count("total_out");
+    const bool loop_outputs = do_all || loop_inputs || stats.count("total_out") || stats.count("num_data_only") ||
+                              stats.count("utxo_increase");
     const bool do_calculate_size =
         do_mediantxsize || SetHasKeys(stats, "total_size", "avgtxsize", "mintxsize", "maxtxsize", "avgfeerate",
                                "feerate_percentiles", "minfeerate", "maxfeerate");
@@ -2080,6 +2128,7 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
     int64_t maxtxsize = 0;
     int64_t mintxsize = std::numeric_limits<int64_t>::max();
     int64_t outputs = 0;
+    int64_t dataOutputs = 0;
     int64_t total_size = 0;
     int64_t utxo_size_inc = 0;
     std::vector<CAmount> fee_array;
@@ -2097,7 +2146,12 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
             for (const CTxOut &out : tx->vout)
             {
                 tx_total_out += out.nValue;
-                utxo_size_inc += GetSerializeSize(out, SER_NETWORK, PROTOCOL_VERSION) + PER_UTXO_OVERHEAD;
+                if (out.IsDataOnly())
+                    dataOutputs++;
+                else
+                {
+                    utxo_size_inc += GetSerializeSize(out, SER_NETWORK, PROTOCOL_VERSION) + PER_UTXO_OVERHEAD;
+                }
             }
         }
 
@@ -2168,8 +2222,10 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
     ret_all.pushKV("avgfeerate", ValueFromAmount(total_size ? totalfee / total_size : 0)); // Unit: sat/byte
     ret_all.pushKV("avgtxsize", (block.vtx.size() > 1) ? total_size / (block.vtx.size() - 1) : 0);
     ret_all.pushKV("blockhash", pindex->GetBlockHash().GetHex());
+    ret_all.pushKV("blocksize", pindex->GetBlockSize());
+    ret_all.pushKV("nextmaxblocksize", pindex->GetNextMaxBlockSize());
     ret_all.pushKV("feerate_percentiles", feerates_res);
-    ret_all.pushKV("height", (int64_t)pindex->nHeight);
+    ret_all.pushKV("height", (int64_t)pindex->height());
     ret_all.pushKV("ins", inputs);
     ret_all.pushKV("maxfee", ValueFromAmount(maxfee));
     ret_all.pushKV("maxfeerate", ValueFromAmount(maxfeerate));
@@ -2181,13 +2237,22 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
     ret_all.pushKV("minfeerate", ValueFromAmount((minfeerate == MAX_MONEY) ? 0 : minfeerate));
     ret_all.pushKV("mintxsize", mintxsize == std::numeric_limits<int64_t>::max() ? 0 : mintxsize);
     ret_all.pushKV("outs", outputs);
-    ret_all.pushKV("subsidy", ValueFromAmount(GetBlockSubsidy(pindex->nHeight, Params().GetConsensus())));
+    {
+        READLOCK(cs_mapBlockIndex);
+        ret_all.pushKV("sequence_id", pindex->nSequenceId);
+    }
+    ret_all.pushKV("subsidy", ValueFromAmount(GetBlockSubsidy(pindex->height(), Params().GetConsensus())));
     ret_all.pushKV("time", pindex->GetBlockTime());
+    {
+        READLOCK(cs_mapBlockIndex);
+        ret_all.pushKV("time_received", pindex->nTimeReceived);
+    }
     ret_all.pushKV("total_out", ValueFromAmount(total_out));
     ret_all.pushKV("total_size", total_size);
     ret_all.pushKV("totalfee", ValueFromAmount(totalfee));
     ret_all.pushKV("txs", (int64_t)block.vtx.size());
-    ret_all.pushKV("utxo_increase", outputs - inputs);
+    ret_all.pushKV("num_data_only", dataOutputs);
+    ret_all.pushKV("utxo_increase", outputs - dataOutputs - inputs);
     ret_all.pushKV("utxo_size_inc", utxo_size_inc);
 
     if (do_all)
@@ -2308,21 +2373,21 @@ UniValue getchaintxstats(const UniValue &params, bool fHelp)
 
     DbgAssert(pindex != nullptr, throw std::runtime_error(__func__));
 
-    if (blockcount < 1 || blockcount >= pindex->nHeight)
+    if (blockcount < 1 || blockcount >= pindex->height())
     {
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid block count: should be between 1 and the block's height");
     }
 
-    const CBlockIndex *pindexPast = pindex->GetAncestor(pindex->nHeight - blockcount);
+    const CBlockIndex *pindexPast = pindex->GetAncestor(pindex->height() - blockcount);
     int nTimeDiff = pindex->GetMedianTimePast() - pindexPast->GetMedianTimePast();
     int nTxDiff = pindex->nChainTx - pindexPast->nChainTx;
 
     UniValue ret(UniValue::VOBJ);
-    ret.pushKV("time", (int64_t)pindex->nTime);
+    ret.pushKV("time", (int64_t)pindex->time());
     ret.pushKV("txcount", (int64_t)pindex->nChainTx);
     ret.pushKV("txrate", ((double)nTxDiff) / nTimeDiff);
     ret.pushKV("window_final_block_hash", pindex->GetBlockHash().GetHex());
-    ret.pushKV("window_final_block_height", pindex->nHeight);
+    ret.pushKV("window_final_block_height", pindex->height());
     ret.pushKV("window_block_count", blockcount);
     if (blockcount > 0)
     {
@@ -2336,6 +2401,228 @@ UniValue getchaintxstats(const UniValue &params, bool fHelp)
     return ret;
 }
 
+
+//! Search for a given set of pubkey scripts
+bool FindGroupTokenID(std::atomic<int> &scan_progress,
+    const std::atomic<bool> &should_abort,
+    int64_t &count,
+    CCoinsViewCursor *cursor,
+    const CGroupTokenID &needle,
+    std::map<COutPoint, Coin> &out_results)
+{
+    scan_progress = 0;
+    count = 0;
+    while (cursor->Valid())
+    {
+        COutPoint key;
+        Coin coins;
+        if (!cursor->GetKey(key) || !cursor->GetValue(coins))
+            return false;
+
+        const CTxOut &out = coins.out;
+        if (!out.IsNull())
+        {
+            if (++count % 8192 == 0)
+            {
+                boost::this_thread::interruption_point();
+                if (should_abort)
+                {
+                    // allow to abort the scan via the abort reference
+                    return false;
+                }
+            }
+            if (count % 256 == 0)
+            {
+                // update progress reference every 256 item
+                uint32_t high = 0x100 * *key.hash.begin() + *(key.hash.begin() + 1);
+                scan_progress = (int)(high * 100.0 / 65536.0 + 0.5);
+            }
+            CGroupTokenInfo tokenGrp(out.scriptPubKey);
+            // must be sitting in any group address
+            if ((tokenGrp.associatedGroup != NoGroup) && !tokenGrp.isAuthority() && tokenGrp.associatedGroup == needle)
+            {
+                out_results.emplace(key, coins);
+            }
+        }
+        cursor->Next();
+    }
+    scan_progress = 100;
+    return true;
+}
+
+/** RAII object to prevent concurrency issue when scanning the txout set */
+static std::mutex g_utxosetscan;
+static std::atomic<int> g_scan_progress;
+static std::atomic<bool> g_scan_in_progress;
+static std::atomic<bool> g_should_abort_scan;
+class CoinsViewScanReserver
+{
+private:
+    bool m_could_reserve;
+
+public:
+    explicit CoinsViewScanReserver() : m_could_reserve(false) {}
+    bool reserve()
+    {
+        assert(!m_could_reserve);
+        std::lock_guard<std::mutex> lock(g_utxosetscan);
+        if (g_scan_in_progress)
+        {
+            return false;
+        }
+        g_scan_in_progress = true;
+        m_could_reserve = true;
+        return true;
+    }
+
+    ~CoinsViewScanReserver()
+    {
+        if (m_could_reserve)
+        {
+            std::lock_guard<std::mutex> lock(g_utxosetscan);
+            g_scan_in_progress = false;
+        }
+    }
+};
+
+enum class OutputScriptType
+{
+    UNKNOWN,
+    P2PK,
+    P2PKH,
+    P2SH_P2WPKH,
+    P2WPKH
+};
+
+UniValue scantokens(const UniValue &params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 2)
+        throw std::runtime_error(
+            "scantokens <action> ( <scanobjects> )\n"
+            "\nScans the unspent transaction output set for possible entries that belong to a specified token group.\n"
+            "\nArguments:\n"
+            "1. \"action\"                     (string, required) The action to execute\n"
+            "                                      \"start\" for starting a scan\n"
+            "                                      \"abort\" for aborting the current scan (returns true when abort "
+            "was successful)\n"
+            "                                      \"status\" for progress report (in %) of the current scan\n"
+            "2. \"tokenGroupID\"               (string, optional) Token group identifier\n"
+            "\n"
+            "\nResult:\n"
+            "{\n"
+            "  \"unspents\": [\n"
+            "    {\n"
+            "    \"txid\" : \"transactionid\",   (string) The transaction id\n"
+            "    \"vout\" : n,                 (numeric) the vout value\n"
+            "    \"address\" : \"address\",      (string) the address that received the tokens\n"
+            "    \"scriptPubKey\" : \"script\",  (string) the script key\n"
+            "    \"tokenAmount\" : xxx,       (numeric) The total token amount of the unspent output\n"
+            "    \"height\" : n,               (numeric) Height of the unspent transaction output\n"
+            "   }\n"
+            "   ,...], \n"
+            " \"totalAmount\" : xxx,          (numeric) The total token amount of all found unspent outputs\n"
+            "]\n");
+
+    RPCTypeCheck(params, {UniValue::VSTR, UniValue::VSTR});
+
+    UniValue result(UniValue::VOBJ);
+    if (params[0].get_str() == "status")
+    {
+        CoinsViewScanReserver reserver;
+        if (reserver.reserve())
+        {
+            // no scan in progress
+            return NullUniValue;
+        }
+        result.pushKV("progress", g_scan_progress);
+        return result;
+    }
+    else if (params[0].get_str() == "abort")
+    {
+        CoinsViewScanReserver reserver;
+        if (reserver.reserve())
+        {
+            // reserve was possible which means no scan was running
+            return false;
+        }
+        // set the abort flag
+        g_should_abort_scan = true;
+        return true;
+    }
+    else if (params[0].get_str() == "start")
+    {
+        CoinsViewScanReserver reserver;
+        if (!reserver.reserve())
+        {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Scan already in progress, use action \"abort\" or \"status\"");
+        }
+        CAmount total_in = 0;
+
+        if (!params[1].isStr())
+        {
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "No token group ID specified");
+        }
+
+        CGroupTokenID needle = GetGroupToken(params[1].get_str());
+        if (!needle.isUserGroup())
+        {
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid group specified");
+        }
+
+        // Scan the unspent transaction output set for inputs
+        UniValue unspents(UniValue::VARR);
+        std::vector<CTxOut> input_txos;
+        std::map<COutPoint, Coin> coins;
+        g_should_abort_scan = false;
+        g_scan_progress = 0;
+        int64_t count = 0;
+        std::unique_ptr<CCoinsViewCursor> pcursor;
+        {
+            LOCK(cs_main);
+            FlushStateToDisk();
+            pcursor = std::unique_ptr<CCoinsViewCursor>(pcoinsdbview->Cursor());
+            assert(pcursor);
+        }
+        bool res = FindGroupTokenID(g_scan_progress, g_should_abort_scan, count, pcursor.get(), needle, coins);
+        result.pushKV("success", res);
+        result.pushKV("searchedItems", count);
+
+        for (const auto &it : coins)
+        {
+            const COutPoint &outpoint = it.first;
+            const Coin &coin = it.second;
+            const CTxOut &txo = coin.out;
+            const CGroupTokenInfo &tokenGroupInfo = CGroupTokenInfo(txo.scriptPubKey);
+            CTxDestination dest;
+            ExtractDestination(txo.scriptPubKey, dest);
+
+            input_txos.push_back(txo);
+            total_in += tokenGroupInfo.quantity;
+
+            UniValue unspent(UniValue::VOBJ);
+            unspent.pushKV("outpoint", outpoint.hash.GetHex());
+            if (IsValidDestination(dest))
+            {
+                unspent.pushKV("address", EncodeDestination(dest));
+            }
+            unspent.pushKV("scriptPubKey", HexStr(txo.scriptPubKey.begin(), txo.scriptPubKey.end()));
+            unspent.pushKV("amount", ValueFromAmount(txo.nValue));
+            unspent.pushKV("satoshis", txo.nValue);
+            unspent.pushKV("tokenAmount", tokenGroupInfo.quantity);
+            unspent.pushKV("height", (int32_t)coin.nHeight);
+
+            unspents.push_back(unspent);
+        }
+
+        result.pushKV("unspents", unspents);
+        result.pushKV("totalAmount", total_in);
+    }
+    else
+    {
+        throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid command");
+    }
+    return result;
+}
 
 static const CRPCCommand commands[] = {
     //  category              name                      actor (function)         okSafeMode
@@ -2356,6 +2643,7 @@ static const CRPCCommand commands[] = {
     {"blockchain", "getorphanpoolinfo", &getorphanpoolinfo, true},
     {"blockchain", "evicttransaction", &evicttransaction, true},
     {"blockchain", "getrawmempool", &getrawmempool, true},
+    {"blockchain", "getrawmempoolbyid", &getrawmempoolbyid, true},
     {"blockchain", "getraworphanpool", &getraworphanpool, true},
     {"blockchain", "gettxout", &gettxout, true},
     {"blockchain", "gettxoutsetinfo", &gettxoutsetinfo, true},
@@ -2363,7 +2651,7 @@ static const CRPCCommand commands[] = {
     {"blockchain", "saveorphanpool", &saveorphanpool, true},
     {"blockchain", "verifychain", &verifychain, true},
     {"blockchain", "getblockstats", &getblockstats, true},
-
+    {"blockchain", "scantokens", &scantokens, true},
     /* Not shown in help */
     {"hidden", "invalidateblock", &invalidateblock, true},
     {"hidden", "reconsiderblock", &reconsiderblock, true},

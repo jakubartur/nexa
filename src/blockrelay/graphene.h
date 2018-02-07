@@ -77,7 +77,6 @@ public:
     std::map<uint64_t, CTransactionRef> mapMissingTx; // Map of transactions that were re-requested
     std::vector<CTransactionRef> vAdditionalTxs; // vector of transactions receiver probably does not have
     std::set<CTransactionRef> vRecoveredTxs; // set of transactions collected during failure recovery
-    std::map<uint64_t, uint32_t> mapHashOrderIndex;
 
 public:
     // These describe, in two parts, the 128-bit secret key used for SipHash
@@ -158,15 +157,15 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream &s, Operation ser_action)
     {
+        READWRITE(header);
+        READWRITE(vAdditionalTxs);
+        READWRITE(nBlockTxs);
         if (version >= 2)
         {
             READWRITE(shorttxidk0);
             READWRITE(shorttxidk1);
             READWRITE(sipHashNonce);
         }
-        READWRITE(header);
-        READWRITE(vAdditionalTxs);
-        READWRITE(nBlockTxs);
         // This logic assumes a smallest transaction size of MIN_TX_SIZE bytes.  This is optimistic for realistic
         // transactions and the downside for pathological blocks is just that graphene won't work so we fall back
         // to xthin

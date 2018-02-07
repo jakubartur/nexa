@@ -9,6 +9,7 @@
 
 #include "hashwrapper.h"
 #include "key.h"
+#include "keystore.h"
 #include "script/interpreter.h"
 
 #include <vector>
@@ -20,6 +21,11 @@ class CScript;
 class CTransaction;
 
 struct CMutableTransaction;
+
+extern uint256 GetPrevoutHash(const CTransaction &txTo);
+extern uint256 GetInputAmountHash(const CTransaction &txTo);
+extern uint256 GetSequenceHash(const CTransaction &txTo);
+extern uint256 GetOutputsHash(const CTransaction &txTo);
 
 /** Virtual base class for signature creators. */
 class BaseSignatureCreator
@@ -55,22 +61,90 @@ public:
         unsigned int nInIn,
         const CAmount &amountIn,
         uint32_t nHashTypeIn = SIGHASH_ALL,
-        uint32_t nSigType = SIGTYPE_ECDSA);
+        uint32_t nSigType = SIGTYPE_SCHNORR);
     const BaseSignatureChecker &Checker() const { return checker; }
     bool CreateSig(std::vector<unsigned char> &vchSig, const CKeyID &keyid, const CScript &scriptCode) const;
 };
 
+
+/** Pretends that all keys exist, but always returns the same dummy public key.  Used for sizing satisfier scripts,
+    and for building the script, with "blanks" in the data fields.
+*/
+class DummySizeOnlyKeyStore : public CKeyStore
+{
+public:
+    static const CPubKey dummyPubKey;
+    virtual ~DummySizeOnlyKeyStore() {}
+    //! Add a key to the store.
+    virtual bool AddKeyPubKey(const CKey &key, const CPubKey &pubkey) { return true; }
+    virtual bool AddKey(const CKey &key) { return true; };
+
+    //! Check whether a key corresponding to a given address is present in the store.
+    virtual bool HaveKey(const CKeyID &address) const { return true; }
+    //! Check whether a key corresponding to a given address is present in the store, caller must hold cs_KeyStore
+    virtual bool _HaveKey(const CKeyID &address) const { return true; }
+
+    virtual bool GetKey(const CKeyID &address, CKey &keyOut) const
+    {
+        keyOut = CKey();
+        return true;
+    }
+    virtual void GetKeys(std::set<CKeyID> &setAddress) const {}
+    virtual bool GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
+    {
+        vchPubKeyOut = dummyPubKey;
+        return true;
+    }
+
+    //! Support for BIP 0013 : see https://github.com/bitcoin/bips/blob/master/bip-0013.mediawiki
+    virtual bool AddCScript(const CScript &redeemScript) { return true; }
+    virtual bool HaveCScript(const CScriptID &hash) const { return true; }
+    virtual bool GetCScript(const CScriptID &hash, CScript &redeemScriptOut) const { return true; }
+
+    //! Support for Watch-only addresses
+    virtual bool AddWatchOnly(const CScript &dest) { return true; }
+    virtual bool RemoveWatchOnly(const CScript &dest) { return true; }
+    virtual bool HaveWatchOnly(const CScript &dest) const { return true; }
+    virtual bool HaveWatchOnly() const { return true; }
+
+    class CheckTxDestination : public boost::static_visitor<bool>
+    {
+        const CKeyStore *keystore;
+
+    public:
+        CheckTxDestination(const CKeyStore *_keystore) : keystore(_keystore) {}
+        bool operator()(const CKeyID &id) const { return keystore->HaveKey(id); }
+        bool operator()(const CScriptID &id) const { return keystore->HaveCScript(id); }
+        bool operator()(const CNoDestination &) const { return false; }
+    };
+
+    virtual bool HaveTxDestination(const CTxDestination &addr)
+    {
+        return boost::apply_visitor(CheckTxDestination(this), addr);
+    }
+};
+
+
 /** A signature creator that just produces 72-byte empty signatyres. */
 class DummySignatureCreator : public BaseSignatureCreator
 {
+    DummySizeOnlyKeyStore ks;
+
 public:
+    // Gives empty signatures and empty pubkeys
+    DummySignatureCreator() : BaseSignatureCreator(&ks) {}
+    // Gives empty signatures for actual pubkeys (useful for watch only addresses)
     DummySignatureCreator(const CKeyStore *keystoreIn) : BaseSignatureCreator(keystoreIn) {}
     const BaseSignatureChecker &Checker() const;
     bool CreateSig(std::vector<unsigned char> &vchSig, const CKeyID &keyid, const CScript &scriptCode) const;
 };
 
-/** Produce a script signature using a generic signature creator. */
-bool ProduceSignature(const BaseSignatureCreator &creator, const CScript &scriptPubKey, CScript &scriptSig);
+/** Produce a script signature using a generic signature creator.
+    if verify is true, the created signature script is executed against the passed scriptpubkey to ensure it works */
+bool ProduceSignature(const BaseSignatureCreator &creator,
+    const CScript &scriptPubKey,
+    CScript &scriptSig,
+    bool verify = true);
 
 /** Produce a script signature for a transaction. */
 bool SignSignature(const CKeyStore &keystore,
@@ -79,13 +153,13 @@ bool SignSignature(const CKeyStore &keystore,
     unsigned int nIn,
     const CAmount &amount,
     uint32_t nHashType = SIGHASH_ALL | SIGHASH_FORKID,
-    uint32_t nSigType = SIGTYPE_ECDSA);
+    uint32_t nSigType = SIGTYPE_SCHNORR);
 bool SignSignature(const CKeyStore &keystore,
-    const CTransaction &txFrom,
+    const CTxOut &spendingThis,
     CMutableTransaction &txTo,
     unsigned int nIn,
     uint32_t nHashType = SIGHASH_ALL | SIGHASH_FORKID,
-    uint32_t nSigType = SIGTYPE_ECDSA);
+    uint32_t nSigType = SIGTYPE_SCHNORR);
 
 /** Combine two script signatures using a generic signature checker, intelligently, possibly with OP_0 placeholders. */
 CScript CombineSignatures(const CScript &scriptPubKey,

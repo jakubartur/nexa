@@ -26,6 +26,8 @@
 #include "extversionkeys.h"
 #include "hashwrapper.h"
 #include "iblt.h"
+#include "policy/policy.h"
+#include "primitives/block.h"
 #include "primitives/transaction.h"
 #include "requestManager.h"
 #include "ui_interface.h"
@@ -615,8 +617,7 @@ void CNode::copyStats(CNodeStats &stats)
 
 static bool IsMessageOversized(CNetMessage &msg)
 {
-    if (maxMessageSizeMultiplier && msg.in_data && (msg.hdr.nMessageSize > BLOCKSTREAM_CORE_MAX_BLOCK_SIZE) &&
-        (msg.hdr.nMessageSize > (maxMessageSizeMultiplier * excessiveBlockSize)))
+    if (msg.in_data && (msg.hdr.nMessageSize > GetMaxAllowedNetMessage()))
     {
         // TODO: warn if too many nodes are doing this
         return true;
@@ -672,6 +673,11 @@ void CNode::LookAhead()
         strCommand == NetMsgType::CMPCTBLOCK || strCommand == NetMsgType::XTHINBLOCK ||
         strCommand == NetMsgType::THINBLOCK)
     {
+        /* padding of 8 bytes for each of four VARINTs found in the header */
+        static const uint32_t padding = 4 * 8;
+        /* The expected size of a serialized block header plus padding for various VARINTs plus nonce padding */
+        static const uint32_t SERIALIZED_HEADER_SIZE =
+            ::GetSerializeSize(CBlockHeader(), SER_NETWORK, PROTOCOL_VERSION) + padding + CBlockHeader::MAX_NONCE_SIZE;
         if (msg.nDataPos >= SERIALIZED_HEADER_SIZE)
         {
             CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
@@ -2955,14 +2961,7 @@ void NetCleanup()
 
 void RelayTransaction(const CTransactionRef ptx)
 {
-    if (ptx->GetTxSize() > maxTxSize.Value())
-    {
-        LOGA("Will not announce (INV) excessive transaction %s.  Size: %llu, Limit: %llu\n", ptx->GetHash().ToString(),
-            ptx->GetTxSize(), (uint64_t)maxTxSize.Value());
-        return;
-    }
-
-    CInv inv(MSG_TX, ptx->GetHash());
+    CInv inv(MSG_TX, ptx->GetId());
     {
         LOCK(cs_mapRelay);
         // Expire old relay messages
@@ -3021,7 +3020,7 @@ void CNode::RecordBytesSent(uint64_t bytes)
 
 void CNode::SetMaxOutboundTarget(uint64_t limit)
 {
-    uint64_t nRecommendedMinimum = (nMaxOutboundTimeframe * excessiveBlockSize) / 600;
+    uint64_t nRecommendedMinimum = (nMaxOutboundTimeframe * chainActive.Tip()->GetNextMaxBlockSize()) / 600;
     nMaxOutboundLimit = limit;
 
     if (limit > 0 && limit < nRecommendedMinimum)
@@ -3064,7 +3063,7 @@ bool CNode::OutboundTargetReached(bool fHistoricalBlockServingLimit)
     {
         // keep a large enough buffer to at least relay each block once
         uint64_t timeLeftInCycle = GetMaxOutboundTimeLeftInCycle();
-        uint64_t buffer = (timeLeftInCycle * excessiveBlockSize) / 600;
+        uint64_t buffer = (timeLeftInCycle * chainActive.Tip()->GetNextMaxBlockSize()) / 600;
         if (buffer >= nMaxOutboundLimit || nMaxOutboundTotalBytesSentInCycle >= nMaxOutboundLimit - buffer)
             return true;
     }

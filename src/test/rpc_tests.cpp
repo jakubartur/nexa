@@ -81,6 +81,8 @@ BOOST_AUTO_TEST_CASE(rpc_rawparams)
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction null"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("decoderawtransaction DEADBEEF"), runtime_error);
+
+#if 0 // TODO create a raw transaction
     string rawtx = "0100000001a15d57094aa7a21a28cb20b59aab8fc7d1149a3bdbcddba9c622e4f5f6a99ece010000006c493046022100f93"
                    "bb0e7d8db7bd46e40132d1f8242026e045f03a0efe71bbb8e3f475e970d790221009337cd7f1f929f00cc6ff01f03729b06"
                    "9a7c21b59b1736ddfee5db5946c5da8c0121033b9b137ee87d5a812d6f506efdd37f0affa7ffc310711c06c7f3e097c9447"
@@ -98,24 +100,27 @@ BOOST_AUTO_TEST_CASE(rpc_rawparams)
     BOOST_CHECK_NO_THROW(CallRPC(string("signrawtransaction ") + rawtx + " null null NONE|ANYONECANPAY"));
     BOOST_CHECK_NO_THROW(CallRPC(string("signrawtransaction ") + rawtx + " [] [] NONE|ANYONECANPAY"));
     BOOST_CHECK_THROW(CallRPC(string("signrawtransaction ") + rawtx + " null null badenum"), runtime_error);
+#endif
 
     // Only check failure cases for sendrawtransaction, there's no network to send to...
     BOOST_CHECK_THROW(CallRPC("sendrawtransaction"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("sendrawtransaction null"), runtime_error);
     BOOST_CHECK_THROW(CallRPC("sendrawtransaction DEADBEEF"), runtime_error);
+#if 0 // TODO create a raw transaction
     BOOST_CHECK_THROW(CallRPC(string("sendrawtransaction ") + rawtx + " extra"), runtime_error);
+#endif
 }
 
 BOOST_AUTO_TEST_CASE(rpc_rawsign)
 {
     UniValue r;
     // input is a 1-of-2 multisig (so is output):
-    string prevout = "[{\"txid\":\"b4cc287e58f87cdae59417329f710f3ecd75a4ee1d2872b7248f50977c8493f3\","
-                     "\"vout\":1,\"scriptPubKey\":\"a914b10c9df5f7edf436c697f02f1efdba4cf399615187\","
+    string prevout = "[{\"outpoint\":\"b4cc287e58f87cdae59417329f710f3ecd75a4ee1d2872b7248f50977c8493f3\","
+                     "\"amount\":4,\"scriptPubKey\":\"a914b10c9df5f7edf436c697f02f1efdba4cf399615187\","
                      "\"redeemScript\":"
                      "\"512103debedc17b3df2badbcdd86d5feb4562b86fe182e5998abd8bcd4f122c6155b1b21027e940bb73ab8732bfdf7f"
                      "9216ecefca5b94d6df834e77e108f68e66f126044c052ae\","
-                     "\"amount\":3.14159"
+                     "\"amount\":3.14"
                      "}]";
     r = CallRPC(string("createrawtransaction ") + prevout + " " + "{\"3HqAe9LtNBjnsfM4CyYaWTnvCaUYT7v4oZ\":11}");
     string notsigned = r.get_str();
@@ -131,34 +136,46 @@ BOOST_AUTO_TEST_CASE(rpc_rawsign)
 BOOST_AUTO_TEST_CASE(rpc_createraw_op_return)
 {
     BOOST_CHECK_NO_THROW(CallRPC("createrawtransaction "
-                                 "[{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
-                                 "\"vout\":0}] {\"data\":\"68656c6c6f776f726c64\"}"));
+                                 "[{\"outpoint\":\"b3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
+                                 "\"amount\":100}] {\"data\":\"68656c6c6f776f726c64\"}"));
 
     // Allow more than one data transaction output
-    BOOST_CHECK_NO_THROW(CallRPC("createrawtransaction "
-                                 "[{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
-                                 "\"vout\":0}] {\"data\":\"68656c6c6f776f726c64\",\"data\":\"68656c6c6f776f726c64\"}"));
+    BOOST_CHECK_NO_THROW(
+        CallRPC("createrawtransaction "
+                "[{\"outpoint\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"amount\":100}] "
+                "{\"data\":\"68656c6c6f776f726c64\",\"data\":\"68656c6c6f776f726c64\"}"));
 
     // Key not "data" (bad address)
     BOOST_CHECK_THROW(CallRPC("createrawtransaction "
-                              "[{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
-                              "\"vout\":0}] {\"somedata\":\"68656c6c6f776f726c64\"}"),
+                              "[{\"outpoint\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
+                              "\"amount\":100}] {\"somedata\":\"68656c6c6f776f726c64\"}"),
         runtime_error);
 
     // Bad hex encoding of data output
     BOOST_CHECK_THROW(CallRPC("createrawtransaction "
-                              "[{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
-                              "\"vout\":0}] {\"data\":\"12345\"}"),
+                              "[{\"outpoint\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
+                              "\"amount\":100}] {\"data\":\"12345\"}"),
         runtime_error);
     BOOST_CHECK_THROW(CallRPC("createrawtransaction "
-                              "[{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
-                              "\"vout\":0}] {\"data\":\"12345g\"}"),
+                              "[{\"outpoint\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
+                              "\"amount\":100}] {\"data\":\"12345g\"}"),
+        runtime_error);
+
+    // No amount
+    BOOST_CHECK_THROW(CallRPC("createrawtransaction "
+                              "[{\"outpoint\":\"z3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\"}] "
+                              "{\"data\":\"12345g\"}"),
+        runtime_error);
+    // Negative amount
+    BOOST_CHECK_THROW(CallRPC("createrawtransaction "
+                              "[{\"outpoint\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\","
+                              "\"amount\":-100 }] {\"data\":\"12345g\"}"),
         runtime_error);
 
     // Data 81 bytes long
     BOOST_CHECK_NO_THROW(
         CallRPC("createrawtransaction "
-                "[{\"txid\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"vout\":0}] "
+                "[{\"outpoint\":\"a3b807410df0b60fcb9736768df5823938b2f838694939ba45f3c0a1bff150ed\",\"amount\":100}] "
                 "{\"data\":"
                 "\"0102030405060708091011121314151617181920212223242526272829303132333435363738394041424344454647484950"
                 "51525354555657585960616263646566676869707172737475767778798081\"}"));
@@ -166,37 +183,37 @@ BOOST_AUTO_TEST_CASE(rpc_createraw_op_return)
 
 BOOST_AUTO_TEST_CASE(rpc_format_monetary_values)
 {
-    BOOST_CHECK(ValueFromAmount(0LL).write() == "0.00000000");
-    BOOST_CHECK(ValueFromAmount(1LL).write() == "0.00000001");
-    BOOST_CHECK(ValueFromAmount(17622195LL).write() == "0.17622195");
-    BOOST_CHECK(ValueFromAmount(50000000LL).write() == "0.50000000");
-    BOOST_CHECK(ValueFromAmount(89898989LL).write() == "0.89898989");
-    BOOST_CHECK(ValueFromAmount(100000000LL).write() == "1.00000000");
-    BOOST_CHECK(ValueFromAmount(2099999999999990LL).write() == "20999999.99999990");
-    BOOST_CHECK(ValueFromAmount(2099999999999999LL).write() == "20999999.99999999");
+    BOOST_CHECK(ValueFromAmount(0LL).write() == "0.00");
+    BOOST_CHECK(ValueFromAmount(1LL).write() == "0.01");
+    BOOST_CHECK(ValueFromAmount(17622195LL).write() == "176221.95");
+    BOOST_CHECK(ValueFromAmount(50000000LL).write() == "500000.00");
+    BOOST_CHECK(ValueFromAmount(89898989LL).write() == "898989.89");
+    BOOST_CHECK(ValueFromAmount(100000000LL).write() == "1000000.00");
+    BOOST_CHECK(ValueFromAmount(2099999999999990LL).write() == "20999999999999.90");
+    BOOST_CHECK(ValueFromAmount(2099999999999999LL).write() == "20999999999999.99");
 
-    BOOST_CHECK_EQUAL(ValueFromAmount(0).write(), "0.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount((COIN / 10000) * 123456789).write(), "12345.67890000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(-COIN).write(), "-1.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(-COIN / 10).write(), "-0.10000000");
+    BOOST_CHECK_EQUAL(ValueFromAmount(0).write(), "0.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount((COIN / 100) * 123456789).write(), "1234567.89");
+    BOOST_CHECK_EQUAL(ValueFromAmount(-COIN).write(), "-1.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(-COIN / 10).write(), "-0.10");
 
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 100000000).write(), "100000000.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 10000000).write(), "10000000.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 1000000).write(), "1000000.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 100000).write(), "100000.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 10000).write(), "10000.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 1000).write(), "1000.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 100).write(), "100.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 10).write(), "10.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN).write(), "1.00000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 10).write(), "0.10000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 100).write(), "0.01000000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 1000).write(), "0.00100000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 10000).write(), "0.00010000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 100000).write(), "0.00001000");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 1000000).write(), "0.00000100");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 10000000).write(), "0.00000010");
-    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 100000000).write(), "0.00000001");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 100000000).write(), "100000000.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 10000000).write(), "10000000.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 1000000).write(), "1000000.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 100000).write(), "100000.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 10000).write(), "10000.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 1000).write(), "1000.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 100).write(), "100.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN * 10).write(), "10.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN).write(), "1.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 10).write(), "0.10");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 100).write(), "0.01");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 1000).write(), "0.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 10000).write(), "0.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 100000).write(), "0.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 1000000).write(), "0.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 10000000).write(), "0.00");
+    BOOST_CHECK_EQUAL(ValueFromAmount(COIN / 100000000).write(), "0.00");
 }
 
 static UniValue ValueFromString(const std::string &str)
@@ -208,24 +225,22 @@ static UniValue ValueFromString(const std::string &str)
 
 BOOST_AUTO_TEST_CASE(rpc_parse_monetary_values)
 {
-    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("-0.00000001")), UniValue);
+    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("-0.01")), UniValue);
     BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0")), 0LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.00000000")), 0LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.00000001")), 1LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.17622195")), 17622195LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.5")), 50000000LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.50000000")), 50000000LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.89898989")), 89898989LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("1.00000000")), 100000000LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("20999999.9999999")), 2099999999999990LL);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("20999999.99999999")), 2099999999999999LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.00")), 0LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.01")), 1LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.17")), 17LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.5")), 50LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.50")), 50LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.89")), 89LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("1.00000000")), 100LL);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("20999999.99")), 2099999999LL);
 
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("1e-8")), COIN / 100000000);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.1e-7")), COIN / 100000000);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.01e-6")), COIN / 100000000);
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString(
-                          "0.0000000000000000000000000000000000000000000000000000000000000000000000000001e+68")),
-        COIN / 100000000);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("1e-2")), COIN / 100);
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.1e-1")), COIN / 100);
+    BOOST_CHECK_EQUAL(
+        AmountFromValue(ValueFromString("0.00000000000000000000000000000000000000000000000000000000000000000001e+68")),
+        COIN);
     BOOST_CHECK_EQUAL(
         AmountFromValue(ValueFromString("10000000000000000000000000000000000000000000000000000000000000000e-64")),
         COIN);
@@ -235,15 +250,16 @@ BOOST_AUTO_TEST_CASE(rpc_parse_monetary_values)
         COIN);
 
     BOOST_CHECK_THROW(AmountFromValue(ValueFromString("1e-9")), UniValue); // should fail
-    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("0.000000019")), UniValue); // should fail
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.00000001000000")), 1LL); // should pass, cut trailing 0
+    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("0.0019")), UniValue); // should fail
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.01000000")), 1LL); // should pass, cut trailing 0
     BOOST_CHECK_THROW(AmountFromValue(ValueFromString("19e-9")), UniValue); // should fail
-    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.19e-6")), 19); // should pass, leading 0 is present
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("0.19")), 19); // should pass, leading 0 is present
+    BOOST_CHECK_EQUAL(AmountFromValue(ValueFromString("1.9e-1")), 19); // should pass
 
     BOOST_CHECK_THROW(AmountFromValue(ValueFromString("92233720368.54775808")), UniValue); // overflow error
-    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("1e+11")), UniValue); // overflow error
-    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("1e11")), UniValue); // overflow error signless
-    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("93e+9")), UniValue); // overflow error
+    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("1e+17")), UniValue); // overflow error
+    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("1e17")), UniValue); // overflow error signless
+    BOOST_CHECK_THROW(AmountFromValue(ValueFromString("93e+15")), UniValue); // overflow error
 }
 
 BOOST_AUTO_TEST_CASE(json_parse_errors)
@@ -256,7 +272,7 @@ BOOST_AUTO_TEST_CASE(json_parse_errors)
 
     // should fail, missing leading 0, therefore invalid JSON
     BOOST_CHECK_THROW(AmountFromValue(ParseNonRFCJSONValue(".19e-6")), std::runtime_error);
-    BOOST_CHECK_EQUAL(AmountFromValue(ParseNonRFCJSONValue("0.00000000000000000000000000000000000001e+30 ")), 1);
+    BOOST_CHECK_EQUAL(AmountFromValue(ParseNonRFCJSONValue("0.000000000000000000000000000001e+30 ")), COIN);
     // Invalid, initial garbage
     BOOST_CHECK_THROW(ParseNonRFCJSONValue("[1.0"), std::runtime_error);
     BOOST_CHECK_THROW(ParseNonRFCJSONValue("a1.0"), std::runtime_error);

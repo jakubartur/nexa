@@ -8,6 +8,7 @@
 #include "dstencode.h"
 #include "primitives/transaction.h"
 #include "script/script.h"
+#include "script/stackitem.h"
 #include "script/standard.h"
 #include "serialize.h"
 #include "streams.h"
@@ -26,8 +27,8 @@ string FormatScript(const CScript &script)
     while (it != script.end())
     {
         CScript::const_iterator it2 = it;
-        vector<unsigned char> vch;
-        if (script.GetOp2(it, op, &vch))
+        StackItem data;
+        if (script.GetOp2(it, op, &data))
         {
             if (op == OP_0)
             {
@@ -49,8 +50,9 @@ string FormatScript(const CScript &script)
                     continue;
                 }
             }
-            if (vch.size() > 0)
+            if (data.size() > 0)
             {
+                const vector<unsigned char> &vch = data.data();
                 ret += strprintf("0x%x 0x%x ", HexStr(it2, it - vch.size()), HexStr(it - vch.size(), it));
             }
             else
@@ -189,7 +191,8 @@ void ScriptPubKeyToUniv(const CScript &scriptPubKey, UniValue &out, bool fInclud
 
 void TxToUniv(const CTransaction &tx, const uint256 &hashBlock, UniValue &entry)
 {
-    entry.pushKV("txid", tx.GetHash().GetHex());
+    entry.pushKV("txid", tx.GetId().GetHex());
+    entry.pushKV("txidem", tx.GetIdem().GetHex());
     entry.pushKV("version", tx.nVersion);
     entry.pushKV("locktime", (int64_t)tx.nLockTime);
 
@@ -201,8 +204,7 @@ void TxToUniv(const CTransaction &tx, const uint256 &hashBlock, UniValue &entry)
             in.pushKV("coinbase", HexStr(txin.scriptSig.begin(), txin.scriptSig.end()));
         else
         {
-            in.pushKV("txid", txin.prevout.hash.GetHex());
-            in.pushKV("vout", (int64_t)txin.prevout.n);
+            in.pushKV("outpoint", txin.prevout.GetHex());
             UniValue o(UniValue::VOBJ);
             o.pushKV("asm", ScriptToAsmStr(txin.scriptSig, true));
             o.pushKV("hex", HexStr(txin.scriptSig.begin(), txin.scriptSig.end()));

@@ -14,17 +14,14 @@
 
 #include <vector>
 
-// November 15, 2021 upgrade activation time in unix epoch styel
-const uint64_t NOV2020_ACTIVATION_TIME = 1605441600;
-// Next protocol upgrade will be activated once MTP >= May 15 12:00:00 UTC 2022
-const uint64_t MAY2022_ACTIVATION_TIME = 1652616000;
-
+// Next protocol upgrade will be activated once MTP >= (date)
+const uint64_t NEXT_FORK_ACTIVATION_TIME = 0;
 /** Default for -minrelaytxfee, minimum relay fee for transactions */
 static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 1000;
 //! -maxtxfee default
-static const CAmount DEFAULT_TRANSACTION_MAXFEE = 0.1 * COIN;
+static const CAmount DEFAULT_TRANSACTION_MAXFEE = 10000 * COIN;
 //! Discourage users to set fees higher than this amount (in satoshis) per kB
-static const CAmount HIGH_TX_FEE_PER_KB = 0.01 * COIN;
+static const CAmount HIGH_TX_FEE_PER_KB = 1000 * COIN;
 //! -maxtxfee will warn if called with a higher fee than this amount (in satoshis)
 static const CAmount HIGH_MAX_TX_FEE = 100 * HIGH_TX_FEE_PER_KB;
 /** Default for -maxorphantx, maximum number of orphan transactions kept in memory.
@@ -108,7 +105,7 @@ public:
     const CBlock &GenesisBlock() const { return genesis; }
     /** Make miner wait to have peers to avoid wasting work */
     bool MiningRequiresPeers() const { return fMiningRequiresPeers; }
-    /** Default value for -checkmempool and -checkblockindex argument */
+    /** Default value for -checkmempool and -checkblockindex argument and checkwallet */
     bool DefaultConsistencyChecks() const { return fDefaultConsistencyChecks; }
     /** Policy: Filter transactions that do not match well-defined patterns */
     bool RequireStandard() const;
@@ -124,9 +121,6 @@ public:
     const std::string &CashAddrPrefix() const { return cashaddrPrefix; }
     const std::vector<SeedSpec6> &FixedSeeds() const { return vFixedSeeds; }
     const CCheckpointData &Checkpoints() const { return checkpointData; }
-    uint64_t DefaultExcessiveBlockSize() const { return nDefaultExcessiveBlockSize; }
-    uint64_t MinMaxBlockSize() const { return nMinMaxBlockSize; }
-    uint64_t DefaultMaxBlockMiningSize() const { return nDefaultMaxBlockMiningSize; }
 
 protected:
     CChainParams() {}
@@ -147,9 +141,6 @@ protected:
     bool fMineBlocksOnDemand;
     bool fTestnetToBeDeprecatedFieldRPC;
     CCheckpointData checkpointData;
-    uint64_t nDefaultExcessiveBlockSize;
-    uint64_t nMinMaxBlockSize;
-    uint64_t nDefaultMaxBlockMiningSize;
 };
 
 /**
@@ -169,7 +160,7 @@ CChainParams &Params(const std::string &chain);
  */
 void SelectParams(const std::string &chain);
 
-CBlock CreateGenesisBlock(CScript prefix,
+SatoshiBlock CreateGenesisBlock(CScript prefix,
     const std::string &comment,
     const CScript &genesisOutputScript,
     uint32_t nTime,

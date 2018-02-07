@@ -146,7 +146,7 @@ void TxIndex::ThreadSync()
             int64_t current_time = GetTime();
             if (last_log_time + SYNC_LOG_INTERVAL < current_time)
             {
-                LOGA("Syncing txindex with block chain from height %d\n", pindex->nHeight);
+                LOGA("Syncing txindex with block chain from height %d\n", pindex->height());
                 last_log_time = current_time;
             }
 
@@ -173,7 +173,7 @@ void TxIndex::ThreadSync()
 
     if (pindex)
     {
-        LOGA("txindex is enabled at height %d\n", pindex->nHeight);
+        LOGA("txindex is enabled at height %d\n", pindex->height());
     }
     else
     {
@@ -184,14 +184,24 @@ void TxIndex::ThreadSync()
 bool TxIndex::WriteBlock(const CBlock &block, const CBlockIndex *pindex)
 {
     CDiskTxPos pos(pindex->GetBlockPos(), GetSizeOfCompactSize(block.vtx.size()));
-    std::vector<std::pair<uint256, CDiskTxPos> > vPos;
-    vPos.reserve(block.vtx.size());
+    std::vector<std::pair<uint256, CDiskTxPos> > idPos;
+    std::vector<std::pair<uint256, CDiskTxPos> > idemPos;
+    std::vector<std::pair<uint256, CDiskTxPos> > prevoutPos;
+    idPos.reserve(block.vtx.size());
+    idemPos.reserve(block.vtx.size());
+    prevoutPos.reserve(10 * block.vtx.size());
     for (const auto &tx : block.vtx)
     {
-        vPos.emplace_back(tx->GetHash(), pos);
+        idPos.emplace_back(tx->GetId(), pos);
+        auto idem = tx->GetIdem();
+        idemPos.emplace_back(idem, pos);
+        for (unsigned int i = 0; i < tx->vout.size(); i++)
+        {
+            prevoutPos.emplace_back(COutPoint(idem, i).hash, pos);
+        }
         pos.nTxOffset += ::GetSerializeSize(*tx, SER_DISK, CLIENT_VERSION);
     }
-    return db->WriteTxs(vPos);
+    return db->WriteTxs(idPos, idemPos, prevoutPos);
 }
 
 bool TxIndex::WriteBestBlock(CBlockIndex *block_index)
@@ -210,7 +220,7 @@ void TxIndex::BlockConnected(const CBlock &block, CBlockIndex *pindex)
         return;
 
     // If we're reindexing we need to write the transaction from the genesis block here
-    if (fReindex && pindex->nHeight == 1)
+    if (fReindex && pindex->height() == 1)
         WriteGenesisTransaction();
 
     if (WriteBlock(block, pindex))
@@ -233,8 +243,11 @@ bool TxIndex::IsSynced() { return fSynced.load(); }
 bool TxIndex::FindTx(const uint256 &txhash, uint256 &blockhash, CTransactionRef &ptx, int32_t &txTime) const
 {
     CDiskTxPos postx;
-    if (!db->ReadTxPos(txhash, postx))
-        return false;
+    if (!db->ReadTxIdPos(txhash, postx))
+    {
+        if (!db->ReadTxIdemPos(txhash, postx))
+            return false;
+    }
 
     CAutoFile file(OpenBlockFile(postx, true), SER_DISK, CLIENT_VERSION);
     if (file.IsNull())
@@ -251,7 +264,7 @@ bool TxIndex::FindTx(const uint256 &txhash, uint256 &blockhash, CTransactionRef 
         return error("%s: Deserialize or I/O error - %s", __func__, e.what());
     }
     blockhash = header.GetHash();
-    if (ptx->GetHash() != txhash)
+    if (ptx->GetId() != txhash)
         return error("%s: txid mismatch", __func__);
     txTime = header.nTime;
 

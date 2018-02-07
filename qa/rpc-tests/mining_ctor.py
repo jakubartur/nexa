@@ -29,7 +29,7 @@ class CTORMiningTest(BitcoinTestFramework):
         # it errors out if it is not connected to other nodes
         self.nodes = []
 
-        opts = ['-spendzeroconfchange=0', '-debug', '-whitelist=127.0.0.1', '-consensus.enableCanonicalTxOrder=1']
+        opts = ['-spendzeroconfchange=0', '-debug', '-whitelist=127.0.0.1']
         for i in range(2):
             self.nodes.append(start_node(i, self.options.tmpdir, opts))
 
@@ -59,8 +59,8 @@ class CTORMiningTest(BitcoinTestFramework):
                 txin = unspent.pop()
 
                 inputs.append({
-                    'txid': txin['txid'],
-                    'vout': 0,  # This is a coinbase
+                    'outpoint': txin['outpoint'],
+                    'amount': txin["amount"],
 
                     # keep track of coinbase value in extra field that should
                     # otherwise be ignored
@@ -72,7 +72,7 @@ class CTORMiningTest(BitcoinTestFramework):
             outputs = {}
             # Calculate a unique fee for this transaction
             fee = decimal.Decimal(random.randint(
-                1000, 2000)) / decimal.Decimal(1e8)
+                1000, 2000)) / decimal.Decimal(1e2)
             # Spend to the same number of outputs as inputs, so we can leave
             # the amounts unchanged and avoid rounding errors.
             #
@@ -95,7 +95,8 @@ class CTORMiningTest(BitcoinTestFramework):
 
             rawtx = mining_node.createrawtransaction(inputs, outputs)
             signedtx = mining_node.signrawtransaction(rawtx)
-            txid = mining_node.sendrawtransaction(signedtx['hex'])
+            txidem = mining_node.sendrawtransaction(signedtx['hex'])
+            txid = signedtx["txid"]
             # number of outputs is the same as the number of sigchecks in this
             # case
             transactions.update({txid: {'fee': fee, 'sigchecks': len(outputs)}})
@@ -109,7 +110,7 @@ class CTORMiningTest(BitcoinTestFramework):
         for txn in tmpl['transactions'][1:]:
             txid = txn['hash']
             txnMetadata = transactions[txid]
-            expectedFeeSats = int(txnMetadata['fee'] * 10**8)
+            expectedFeeSats = int(txnMetadata['fee'] * 10**2)
             expectedSigChecks = txnMetadata['sigchecks']
 
             txid_decoded = int(txid, 16)
@@ -125,3 +126,12 @@ class CTORMiningTest(BitcoinTestFramework):
 
 if __name__ == '__main__':
     CTORMiningTest().main()
+
+def Test():
+    t = CTORMiningTest()
+    t.drop_to_pdb = True
+    bitcoinConf = {
+        "debug": ["rpc", "net", "blk", "thin", "mempool", "req", "bench", "evict"],
+    }
+    flags = standardFlags()
+    t.main(flags, bitcoinConf, None)

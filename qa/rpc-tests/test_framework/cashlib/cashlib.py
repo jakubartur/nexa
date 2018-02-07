@@ -20,6 +20,11 @@ BCH = 100000000
 
 cashlib = None
 
+# match this with value in stackitem.h
+class StackItemType(IntEnum):
+    BYTES = 0
+    BIGNUM = 1
+
 class Error(BaseException):
     pass
 
@@ -84,7 +89,7 @@ def signData(data, key):
     siglen = cashlib.SignData(data,len(data),key, result, 100)
     return result.raw[0:siglen]
 
-def signTxInput(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_FORKID | SIGHASH_ALL):
+def signTxInputECDSA(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_FORKID | SIGHASH_ALL):
     """Signs one input of a transaction.  Signature is returned.  You must use this signature to construct the spend script
     Parameters:
     tx: Transaction in object, hex or binary format
@@ -105,11 +110,15 @@ def signTxInput(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHA
         inputAmount = int(inputAmount * BCH)
 
     result = create_string_buffer(100)
-    siglen = cashlib.SignTx(tx, len(tx), inputIdx, c_longlong(inputAmount), prevoutScript,
+    siglen = cashlib.SignTxECDSA(tx, len(tx), inputIdx, c_longlong(inputAmount), prevoutScript,
                             len(prevoutScript), sigHashType, key, result, 100)
     if siglen == 0:
         raise Error("cashlib signtx error")
     return result.raw[0:siglen]
+
+def signTxInput(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_FORKID | SIGHASH_ALL):
+    """Default signing is now Schnorr"""
+    return signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType)
 
 def signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_FORKID | SIGHASH_ALL):
     """Signs one input of a transaction.  Schnorr signature is returned.  You must use this signature to construct the spend script
@@ -190,7 +199,29 @@ def txid(txbin):
         txbin = unhexlify(txbin)
     elif type(txbin) != bytes:
         txbin = txbin.serialize()
-    return sha256(sha256(txbin))
+    result = create_string_buffer(32)
+    ret = cashlib.txid(txbin, len(txbin), result)
+    if ret:
+        return bytes(result)
+    assert ret, "transaction decode error"
+
+    # Bitcoin/BitcoinCash
+    # return sha256(sha256(txbin))
+
+def txidem(txbin):
+    """Return a transaction id, given a transaction in hex, object or binary form.
+       The returned binary txid is not reversed.  Do: hexlify(cashlib.txid(txhex)[::-1]).decode("utf-8") to convert to
+       bitcoind's hex format.
+    """
+    if type(txbin) == str:
+        txbin = unhexlify(txbin)
+    elif type(txbin) != bytes:
+        txbin = txbin.serialize()
+    result = create_string_buffer(32)
+    ret = cashlib.txidem(txbin, len(txbin), result)
+    if ret:
+        return bytes(result)
+    assert ret, "transaction decode error"
 
 
 def spendscript(*data):
@@ -223,36 +254,50 @@ class ScriptError(IntEnum):
     SCRIPT_ERR_UNKNOWN_ERROR = 1
     SCRIPT_ERR_EVAL_FALSE = 2
     SCRIPT_ERR_OP_RETURN = 3
+
+    # Max sizes
     SCRIPT_ERR_SCRIPT_SIZE = 4
     SCRIPT_ERR_PUSH_SIZE = 5
     SCRIPT_ERR_OP_COUNT = 6
     SCRIPT_ERR_STACK_SIZE = 7
     SCRIPT_ERR_SIG_COUNT = 8
     SCRIPT_ERR_PUBKEY_COUNT = 9
+
+    # Operands checks
     SCRIPT_ERR_INVALID_OPERAND_SIZE = 10
     SCRIPT_ERR_INVALID_NUMBER_RANGE = 11
     SCRIPT_ERR_IMPOSSIBLE_ENCODING = 12
     SCRIPT_ERR_INVALID_SPLIT_RANGE = 13
     SCRIPT_ERR_INVALID_BIT_COUNT = 14
+
+    # Failed verify operations
     SCRIPT_ERR_VERIFY = 15
     SCRIPT_ERR_EQUALVERIFY = 16
     SCRIPT_ERR_CHECKMULTISIGVERIFY = 17
     SCRIPT_ERR_CHECKSIGVERIFY = 18
     SCRIPT_ERR_CHECKDATASIGVERIFY = 19
     SCRIPT_ERR_NUMEQUALVERIFY = 20
-    SCRIPT_ERR_BAD_OPCODE = 21
 
+    # Logical/Format/Canonical errors
+    SCRIPT_ERR_BAD_OPCODE = 21
     SCRIPT_ERR_DISABLED_OPCODE = 22
     SCRIPT_ERR_INVALID_STACK_OPERATION = 23
     SCRIPT_ERR_INVALID_ALTSTACK_OPERATION = 24
     SCRIPT_ERR_UNBALANCED_CONDITIONAL = 25
+
+    #  Divisor errors
     SCRIPT_ERR_DIV_BY_ZERO = 26
     SCRIPT_ERR_MOD_BY_ZERO = 27
 
+    # Bitfield errors
     SCRIPT_ERR_INVALID_BITFIELD_SIZE = 28
     SCRIPT_ERR_INVALID_BIT_RANGE = 29
+
+    # CHECKLOCKTIMEVERIFY and CHECKSEQUENCEVERIFY
     SCRIPT_ERR_NEGATIVE_LOCKTIME = 30
     SCRIPT_ERR_UNSATISFIED_LOCKTIME = 31
+
+    # BIP62 (Malleability)
     SCRIPT_ERR_SIG_HASHTYPE = 32
     SCRIPT_ERR_SIG_DER = 33
     SCRIPT_ERR_MINIMALDATA = 34
@@ -261,21 +306,30 @@ class ScriptError(IntEnum):
     SCRIPT_ERR_PUBKEYTYPE = 37
     SCRIPT_ERR_CLEANSTACK = 38
     SCRIPT_ERR_SIG_NULLFAIL = 39
+
+    # Schnorr
     SCRIPT_ERR_SIG_BADLENGTH = 40
-    SCRIPT_ERR_MUST_USE_FORKID = 41
-    SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS = 42
-    SCRIPT_ERR_NONCOMPRESSED_PUBKEY = 43
-    SCRIPT_ERR_NUMBER_OVERFLOW = 44
-    SCRIPT_ERR_NUMBER_BAD_ENCODING = 45
-    SCRIPT_ERR_SIGCHECKS_LIMIT_EXCEEDED = 46
+    SCRIPT_ERR_SIG_NONSCHNORR = 41
+    SCRIPT_ERR_MUST_USE_FORKID = 42
+    SCRIPT_ERR_DISCOURAGE_UPGRADABLE_NOPS = 43
+    SCRIPT_ERR_NONCOMPRESSED_PUBKEY = 44
+    SCRIPT_ERR_NUMBER_OVERFLOW = 45
+    SCRIPT_ERR_NUMBER_BAD_ENCODING = 46
+    SCRIPT_ERR_SIGCHECKS_LIMIT_EXCEEDED = 47
 
-    SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT = 47
+    SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT = 48
 
-    SCRIPT_ERR_DATA_REQUIRED = 48
-    SCRIPT_ERR_INVALID_TX_INPUT_INDEX = 49
-    SCRIPT_ERR_INVALID_TX_OUTPUT_INDEX = 50
+    SCRIPT_ERR_DATA_REQUIRED = 49
+    SCRIPT_ERR_INVALID_TX_INPUT_INDEX = 50
+    SCRIPT_ERR_INVALID_TX_OUTPUT_INDEX = 51
 
-    SCRIPT_ERR_ERROR_COUNT = 41
+    # Nextchain
+    SCRIPT_ERR_TEMPLATE = 100,
+    SCRIPT_ERR_EXEC_DEPTH_EXCEEDED = 101,
+    SCRIPT_ERR_EXEC_COUNT_EXCEEDED = 102,
+    SCRIPT_ERR_BAD_OPERATION_ON_TYPE = 103,
+    SCRIPT_ERR_STACK_LIMIT_EXCEEDED = 104,
+    SCRIPT_ERR_ERROR_COUNT = 105
 
 class ScriptFlags(IntFlag):
     SCRIPT_VERIFY_P2SH = 1
@@ -293,7 +347,8 @@ class ScriptFlags(IntFlag):
     SCRIPT_ENABLE_REPLAY_PROTECTION = (1 << 17)
     SCRIPT_ENABLE_CHECKDATASIG = (1 << 18)
     SCRIPT_DISALLOW_SEGWIT_RECOVERY = (1 << 20)
-    SCRIPT_ENABLE_MUL_SHIFT_INVERT = (1 << 21)
+    SCRIPT_ENABLE_SCHNORR_MULTISIG = (1 << 21)
+    SCRIPT_VERIFY_INPUT_SIGCHECKS = (1 << 22)
     SCRIPT_ENABLE_OP_REVERSEBYTES = (1 << 23)
     SCRIPT_64_BIT_INTEGERS = (1 << 24)
     SCRIPT_NATIVE_INTROSPECTION = (1 << 25)
@@ -404,22 +459,29 @@ class ScriptMachine:
         stk = []
         idx  = 0
         item = create_string_buffer(MAX_STACK_ITEM_LENGTH)
+        itemType = create_string_buffer(1)
         while 1:
-            result = cashlib.SmGetStackItem(self.smId, which, idx, item)
+            result = cashlib.SmGetStackItem(self.smId, which, idx, itemType, item)
             if result == -1: break
-            stk.append(item[0:result])
+            if itemType[0] == b'\x00':
+                itemTyp = StackItemType.BYTES
+            elif itemType[0] == b'\x01':
+                itemTyp = StackItemType.BIGNUM
+            else:
+                raise Error("Bad stack item type")
+            stk.append((itemTyp, item[0:result]))
             idx+=1
         return stk
 
-    def setAltStackItem(self, idx, value):
+    def setAltStackItem(self, idx, itemType, value):
         """Set an item on the stack to a value, index 0 is the top.  index -1 means push"""
-        self.setStackItem(idx, value, self.ALTSTACK)
+        self.setStackItem(idx, itemType, value, self.ALTSTACK)
 
-    def setStackItem(self, idx, value, which = None):
+    def setStackItem(self, idx, itemType, value, which = None):
         """Set an item on the stack to a value, index 0 is the top.  index -1 means push"""
         if self.smId==0: raise Error("accessed inactive script machine")
         if which is None: which = self.STACK
-        cashlib.SmSetStackItem(self.smId, which, idx, value, len(value))
+        cashlib.SmSetStackItem(self.smId, which, idx, int(itemType), value, len(value))
 
 
 def Test():

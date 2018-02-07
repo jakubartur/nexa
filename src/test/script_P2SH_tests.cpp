@@ -33,20 +33,20 @@ static bool Verify(const CScript &scriptSig, const CScript &scriptPubKey, bool f
     CMutableTransaction txFrom;
     txFrom.vout.resize(1);
     txFrom.vout[0].scriptPubKey = scriptPubKey;
+    txFrom.vout[0].nValue = 1;
 
     CMutableTransaction txTo;
     txTo.vin.resize(1);
     txTo.vout.resize(1);
-    txTo.vin[0].prevout.n = 0;
-    txTo.vin[0].prevout.hash = txFrom.GetHash();
+    txTo.vin[0] = txFrom.SpendOutput(0);
     txTo.vin[0].scriptSig = scriptSig;
     txTo.vout[0].nValue = 1;
 
-    MutableTransactionSignatureChecker tsc(&txTo, 0, txFrom.vout[0].nValue);
+    unsigned int flags = fStrict ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
+    MutableTransactionSignatureChecker tsc(&txTo, 0, txFrom.vout[0].nValue, flags);
     ScriptImportedState sis(&tsc, MakeTransactionRef(txTo), std::vector<CTxOut>(), 0, txFrom.vout[0].nValue);
 
-    return VerifyScript(
-        scriptSig, scriptPubKey, fStrict ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE, MAX_OPS_PER_SCRIPT, sis, &err);
+    return VerifyScript(scriptSig, scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
 }
 
 
@@ -88,9 +88,9 @@ BOOST_AUTO_TEST_CASE(sign)
     for (int i = 0; i < 4; i++)
     {
         txFrom.vout[i].scriptPubKey = evalScripts[i];
-        txFrom.vout[i].nValue = COIN;
+        txFrom.vout[i].nValue = 10 * COIN;
         txFrom.vout[i + 4].scriptPubKey = standardScripts[i];
-        txFrom.vout[i + 4].nValue = COIN;
+        txFrom.vout[i + 4].nValue = 10 * COIN;
     }
     BOOST_CHECK(IsStandardTx(MakeTransactionRef(CTransaction(txFrom)), reason));
 
@@ -99,8 +99,7 @@ BOOST_AUTO_TEST_CASE(sign)
     {
         txTo[i].vin.resize(1);
         txTo[i].vout.resize(1);
-        txTo[i].vin[0].prevout.n = i;
-        txTo[i].vin[0].prevout.hash = txFrom.GetHash();
+        txTo[i].vin[0] = txFrom.SpendOutput(i);
         txTo[i].vout[0].nValue = 1;
 #ifdef ENABLE_WALLET
         BOOST_CHECK_MESSAGE(IsMine(keystore, txFrom.vout[i].scriptPubKey, 0), strprintf("IsMine %d", i));
@@ -108,7 +107,7 @@ BOOST_AUTO_TEST_CASE(sign)
     }
     for (int i = 0; i < 8; i++)
     {
-        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom, txTo[i], 0), strprintf("SignSignature %d", i));
+        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom.vout[i], txTo[i], 0), strprintf("SignSignature %d", i));
     }
     // All of the above should be OK, and the txTos have valid signatures
     // Check to make sure signature verification fails if we use the wrong ScriptSig:
@@ -116,10 +115,11 @@ BOOST_AUTO_TEST_CASE(sign)
         for (int j = 0; j < 8; j++)
         {
             CScript sigSave = txTo[i].vin[0].scriptSig;
+            const CTxOut *output = txFrom.PrevOut(txTo[i].vin[0].prevout);
+            assert(output != nullptr);
             txTo[i].vin[0].scriptSig = txTo[j].vin[0].scriptSig;
-
-            const CTxOut &output = txFrom.vout[txTo[i].vin[0].prevout.n];
-            bool sigOK = CScriptCheck(nullptr, output.scriptPubKey, output.nValue, txTo[i], std::vector<CTxOut>(), 0,
+            txTo[i].vin[0].amount = output->nValue;
+            bool sigOK = CScriptCheck(nullptr, output->scriptPubKey, output->nValue, txTo[i], std::vector<CTxOut>(), 0,
                 SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_ENABLE_SIGHASH_FORKID, MAX_OPS_PER_SCRIPT,
                 false)();
             if (i == j)
@@ -190,7 +190,7 @@ BOOST_AUTO_TEST_CASE(set)
     for (int i = 0; i < 4; i++)
     {
         txFrom.vout[i].scriptPubKey = outer[i];
-        txFrom.vout[i].nValue = CENT;
+        txFrom.vout[i].nValue = 10 * COIN;
     }
     BOOST_CHECK(IsStandardTx(MakeTransactionRef(CTransaction(txFrom)), reason));
 
@@ -199,9 +199,8 @@ BOOST_AUTO_TEST_CASE(set)
     {
         txTo[i].vin.resize(1);
         txTo[i].vout.resize(1);
-        txTo[i].vin[0].prevout.n = i;
-        txTo[i].vin[0].prevout.hash = txFrom.GetHash();
-        txTo[i].vout[0].nValue = 1 * CENT;
+        txTo[i].vin[0] = txFrom.SpendOutput(i);
+        txTo[i].vout[0].nValue = 10 * COIN;
         txTo[i].vout[0].scriptPubKey = inner[i];
 #ifdef ENABLE_WALLET
         BOOST_CHECK_MESSAGE(IsMine(keystore, txFrom.vout[i].scriptPubKey, 0), strprintf("IsMine %d", i));
@@ -209,7 +208,9 @@ BOOST_AUTO_TEST_CASE(set)
     }
     for (int i = 0; i < 4; i++)
     {
-        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom, txTo[i], 0), strprintf("SignSignature %d", i));
+        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom.vout[i], txTo[i], 0), strprintf("SignSignature %d", i));
+        BOOST_CHECK_MESSAGE(
+            IsStandardTx(MakeTransactionRef(CTransaction(txTo[i])), reason), strprintf("txTo[%d].IsStandard", i));
         BOOST_CHECK_MESSAGE(
             IsStandardTx(MakeTransactionRef(CTransaction(txTo[i])), reason), strprintf("txTo[%d].IsStandard", i));
         BOOST_CHECK_MESSAGE(
@@ -350,20 +351,19 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
     txTo.vin.resize(5);
     for (int i = 0; i < 5; i++)
     {
-        txTo.vin[i].prevout.n = i;
-        txTo.vin[i].prevout.hash = txFrom.GetHash();
+        txTo.vin[i] = txFrom.SpendOutput(i);
     }
-    BOOST_CHECK(SignSignature(keystore, txFrom, txTo, 0));
-    BOOST_CHECK(SignSignature(keystore, txFrom, txTo, 1));
-    BOOST_CHECK(SignSignature(keystore, txFrom, txTo, 2));
+    // OutpointAt here matches the for loop above
+    BOOST_CHECK(SignSignature(keystore, txFrom.vout[0], txTo, 0));
+    BOOST_CHECK(SignSignature(keystore, txFrom.vout[1], txTo, 1));
+    BOOST_CHECK(SignSignature(keystore, txFrom.vout[2], txTo, 2));
     // SignSignature doesn't know how to sign these. We're
     // not testing validating signatures, so just create
     // dummy signatures that DO include the correct P2SH scripts:
     txTo.vin[3].scriptSig << OP_11 << OP_11 << vector<unsigned char>(oneAndTwo.begin(), oneAndTwo.end());
     txTo.vin[4].scriptSig << vector<unsigned char>(fifteenSigops.begin(), fifteenSigops.end());
 
-    BOOST_CHECK(::AreInputsStandard(MakeTransactionRef(CTransaction(txTo)), coins, false));
-    BOOST_CHECK(::AreInputsStandard(MakeTransactionRef(CTransaction(txTo)), coins, true));
+    BOOST_CHECK(::AreInputsStandard(MakeTransactionRef(CTransaction(txTo)), coins));
     // 22 P2SH sigops for all inputs (1 for vin[0], 6 for vin[3], 15 for vin[4]
     BOOST_CHECK_EQUAL(
         GetP2SHSigOpCount(MakeTransactionRef(CTransaction(txTo)), coins, STANDARD_SCRIPT_VERIFY_FLAGS), 22U);
@@ -375,12 +375,10 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
     txToNonStd1.vout[0].scriptPubKey = GetScriptForDestination(key[1].GetPubKey().GetID());
     txToNonStd1.vout[0].nValue = 1000;
     txToNonStd1.vin.resize(1);
-    txToNonStd1.vin[0].prevout.n = 5;
-    txToNonStd1.vin[0].prevout.hash = txFrom.GetHash();
+    txToNonStd1.vin[0] = txFrom.SpendOutput(5);
     txToNonStd1.vin[0].scriptSig << vector<unsigned char>(sixteenSigops.begin(), sixteenSigops.end());
 
-    BOOST_CHECK(!::AreInputsStandard(MakeTransactionRef(CTransaction(txToNonStd1)), coins, false));
-    BOOST_CHECK(::AreInputsStandard(MakeTransactionRef(CTransaction(txToNonStd1)), coins, true));
+    BOOST_CHECK(::AreInputsStandard(MakeTransactionRef(CTransaction(txToNonStd1)), coins));
     BOOST_CHECK_EQUAL(
         GetP2SHSigOpCount(MakeTransactionRef(CTransaction(txToNonStd1)), coins, STANDARD_SCRIPT_VERIFY_FLAGS), 16U);
     // Check that no sigops show up when P2SH is not activated.
@@ -391,12 +389,10 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
     txToNonStd2.vout[0].scriptPubKey = GetScriptForDestination(key[1].GetPubKey().GetID());
     txToNonStd2.vout[0].nValue = 1000;
     txToNonStd2.vin.resize(1);
-    txToNonStd2.vin[0].prevout.n = 6;
-    txToNonStd2.vin[0].prevout.hash = txFrom.GetHash();
+    txToNonStd2.vin[0] = txFrom.SpendOutput(6);
     txToNonStd2.vin[0].scriptSig << vector<unsigned char>(twentySigops.begin(), twentySigops.end());
 
-    BOOST_CHECK(!::AreInputsStandard(MakeTransactionRef(CTransaction(txToNonStd2)), coins, false));
-    BOOST_CHECK(::AreInputsStandard(MakeTransactionRef(CTransaction(txToNonStd2)), coins, true));
+    BOOST_CHECK(::AreInputsStandard(MakeTransactionRef(CTransaction(txToNonStd2)), coins));
     BOOST_CHECK_EQUAL(
         GetP2SHSigOpCount(MakeTransactionRef(CTransaction(txToNonStd2)), coins, STANDARD_SCRIPT_VERIFY_FLAGS), 20U);
     // Check that no sigops show up when P2SH is not activated.

@@ -90,24 +90,14 @@ struct ForkDeployment
  */
 struct Params
 {
-    /** what pow algorithm to use (BTC/BCH = 0).  Only 0 supported now */
-    unsigned int powAlgorithm = 0;
+    /** what pow algorithm to use (nextchain's = 1 or BTC/BCH = 0) */
+    unsigned int powAlgorithm = 1;
     /** Initial subsidy */
-    CAmount initialSubsidy = 50 * COIN;
+    CAmount initialSubsidy;
 
     uint256 hashGenesisBlock;
     int nSubsidyHalvingInterval;
-    /** Block height at which BIP16 becomes active */
-    int BIP16Height;
-    /** Block height and hash at which BIP34 becomes active */
-    int BIP34Height;
-    uint256 BIP34Hash;
-    /** Block height at which BIP65 becomes active */
-    int BIP65Height;
-    /** Block height at which BIP66 becomes active */
-    int BIP66Height;
-    /** Block height at which BIP68, BIP112 and BIP113 become active */
-    int BIP68Height;
+
     /**
      * Deployment parameters for the 29 bits (0..28) defined by bip135
      */
@@ -156,26 +146,14 @@ struct Params
     int64_t nASERTHalfLife;
 
     int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
-    /** UAHF Aug 1st 2017 block height */
-    int uahfHeight;
-    /** Block height at which the new DAA becomes active */
-    int daaHeight;
-    /** May 15, 2018 block height at which the fork activated */
-    int may2018Height;
-    /** Nov 15, 2018 activation height */
-    int nov2018Height;
-    /** May 15, 2019 actication height */
-    int may2019Height;
-    /** Nov 15, 2019 actication height */
-    int nov2019Height;
-    /** May 15, 2020 actication height */
-    int may2020Height;
-    /** Nov 15, 2020 MTP activation time will be 12:00:00 UTC */
-    uint64_t nov2020ActivationTime;
-    /** Nov 15, 2020 actication height */
-    boost::optional<int> nov2020Height;
-    /** May 15, 2022 MTP activation time will be 12:00:00 UTC */
-    uint64_t may2022ActivationTime;
+    /** May 15, 2021 MTP activation time will be 12:00:00 UTC */
+    uint64_t nextForkActivationTime;
+
+    /** Adaptive Block Size settings */
+    uint64_t nDefaultMaxBlockSize;
+    uint64_t nShortBlockWindow;
+    uint64_t nLongBlockWindow;
+    uint64_t nBlockSizeMultiplier;
 };
 } // namespace Consensus
 

@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2015-2019 The Bitcoin Unlimited developers
+// Copyright (c) 2015-2022 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -8,6 +8,7 @@
 #include "chain.h"
 #include "core_io.h"
 #include "dstencode.h"
+#include "grouptokenwallet.h"
 #include "init.h"
 #include "main.h"
 #include "net.h"
@@ -75,8 +76,8 @@ void WalletTxToJSON(const CWalletTx &wtx, UniValue &entry)
     {
         entry.pushKV("trusted", wtx.IsTrusted());
     }
-    uint256 hash = wtx.GetHash();
-    entry.pushKV("txid", hash.GetHex());
+    entry.pushKV("txid", wtx.GetId().GetHex());
+    entry.pushKV("txidem", wtx.GetIdem().GetHex());
     UniValue conflicts(UniValue::VARR);
     for (const uint256 &conflict : wtx.GetConflicts())
     {
@@ -107,7 +108,7 @@ UniValue getnewaddress(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() > 1)
         throw runtime_error("getnewaddress ( \"account\" )\n"
-                            "\nReturns a new Bitcoin address for receiving payments.\n"
+                            "\nReturns a new address for receiving payments.\n"
                             "If 'account' is specified (DEPRECATED), it is added to the address book \n"
                             "so payments received with the address will be credited to 'account'.\n"
                             "\nArguments:\n"
@@ -116,7 +117,7 @@ UniValue getnewaddress(const UniValue &params, bool fHelp)
                             "the empty string \"\" to represent the default account. The account does not need to "
                             "exist, it will be created if there is no account by the given name.\n"
                             "\nResult:\n"
-                            "\"bitcoinaddress\"    (string) The new bitcoin address\n"
+                            "\"address\"    (string) The new address\n"
                             "\nExamples:\n" +
                             HelpExampleCli("getnewaddress", "") + HelpExampleRpc("getnewaddress", ""));
 
@@ -154,11 +155,15 @@ CTxDestination GetAccountAddress(string strAccount, bool bForceNew = false)
     if (account.vchPubKey.IsValid())
     {
         CScript scriptPubKey = GetScriptForDestination(account.vchPubKey.GetID());
-        for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin();
+        for (MapWallet::iterator it = pwalletMain->mapWallet.begin();
              it != pwalletMain->mapWallet.end() && account.vchPubKey.IsValid(); ++it)
         {
-            const CWalletTx &wtx = (*it).second;
-            for (const CTxOut &txout : wtx.vout)
+            CWalletTxRef wtx = (*it).second.tx;
+            // Get every transaction exactly once, skipping outpoint and idem entries
+            if (it->first.hash != wtx->GetId())
+                continue;
+
+            for (const CTxOut &txout : wtx->vout)
             {
                 if (txout.scriptPubKey == scriptPubKey)
                     bKeyUsed = true;
@@ -187,13 +192,13 @@ UniValue getaccountaddress(const UniValue &params, bool fHelp)
     if (fHelp || params.size() != 1)
         throw runtime_error(
             "getaccountaddress \"account\"\n"
-            "\nDEPRECATED. Returns the current Bitcoin address for receiving payments to this account.\n"
+            "\nDEPRECATED. Returns the current address for receiving payments to this account.\n"
             "\nArguments:\n"
             "1. \"account\"       (string, required) The account name for the address. It can also be set to the empty "
             "string \"\" to represent the default account. The account does not need to exist, it will be created and "
             "a new address created  if there is no account by the given name.\n"
             "\nResult:\n"
-            "\"bitcoinaddress\"   (string) The account bitcoin address\n"
+            "\"address\"   (string) The account address\n"
             "\nExamples:\n" +
             HelpExampleCli("getaccountaddress", "") + HelpExampleCli("getaccountaddress", "\"\"") +
             HelpExampleCli("getaccountaddress", "\"myaccount\"") +
@@ -218,7 +223,7 @@ UniValue getrawchangeaddress(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() > 1)
         throw runtime_error("getrawchangeaddress\n"
-                            "\nReturns a new Bitcoin address, for receiving change.\n"
+                            "\nReturns a new address, for receiving change.\n"
                             "This is for use with raw transactions, NOT normal use.\n"
                             "\nResult:\n"
                             "\"address\"    (string) The address\n"
@@ -249,21 +254,21 @@ UniValue setaccount(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "setaccount \"bitcoinaddress\" \"account\"\n"
+            "setaccount \"address\" \"account\"\n"
             "\nDEPRECATED. Sets the account associated with the given address.\n"
             "\nArguments:\n"
-            "1. \"bitcoinaddress\"  (string, required) The bitcoin address to be associated with an account.\n"
+            "1. \"address\"  (string, required) The address to be associated with an account.\n"
             "2. \"account\"         (string, required) The account to assign the address to.\n"
             "\nExamples:\n" +
-            HelpExampleCli("setaccount", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\" \"tabby\"") +
-            HelpExampleRpc("setaccount", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\", \"tabby\""));
+            HelpExampleCli("setaccount", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" \"tabby\"") +
+            HelpExampleRpc("setaccount", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\", \"tabby\""));
 
     LOCK(pwalletMain->cs_wallet);
 
     CTxDestination dest = DecodeDestination(params[0].get_str());
     if (!IsValidDestination(dest))
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid coin address");
     }
 
     string strAccount;
@@ -295,22 +300,22 @@ UniValue getaccount(const UniValue &params, bool fHelp)
         return NullUniValue;
 
     if (fHelp || params.size() != 1)
-        throw runtime_error("getaccount \"bitcoinaddress\"\n"
+        throw runtime_error("getaccount \"address\"\n"
                             "\nDEPRECATED. Returns the account associated with the given address.\n"
                             "\nArguments:\n"
-                            "1. \"bitcoinaddress\"  (string, required) The bitcoin address for account lookup.\n"
+                            "1. \"address\"  (string, required) The address for account lookup.\n"
                             "\nResult:\n"
                             "\"accountname\"        (string) the account address\n"
                             "\nExamples:\n" +
-                            HelpExampleCli("getaccount", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\"") +
-                            HelpExampleRpc("getaccount", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\""));
+                            HelpExampleCli("getaccount", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\"") +
+                            HelpExampleRpc("getaccount", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\""));
 
     LOCK(pwalletMain->cs_wallet);
 
     CTxDestination dest = DecodeDestination(params[0].get_str());
     if (!IsValidDestination(dest))
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid coin address");
     }
 
     std::string strAccount;
@@ -334,7 +339,7 @@ UniValue getaddressesbyaccount(const UniValue &params, bool fHelp)
                             "1. \"account\"  (string, required) The account name.\n"
                             "\nResult:\n"
                             "[                     (json array of string)\n"
-                            "  \"bitcoinaddress\"  (string) a bitcoin address associated with the given account\n"
+                            "  \"address\"  (string) an address associated with the given account\n"
                             "  ,...\n"
                             "]\n"
                             "\nExamples:\n" +
@@ -365,7 +370,7 @@ static void SendMoney(const CTxDestination &address, CAmount nValue, bool fSubtr
     if (nValue <= 0)
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid amount");
 
-    // Parse Bitcoin address
+    // Parse address
     CScript scriptPubKey = GetScriptForDestination(address);
 
     // Create and send the transaction
@@ -373,7 +378,7 @@ static void SendMoney(const CTxDestination &address, CAmount nValue, bool fSubtr
         LOCK(serializeCreateTx);
 
         CReserveKey reservekey(pwalletMain);
-        CAmount nFeeRequired;
+        CAmount nFeeRequired = 0;
         std::string strError;
         vector<CRecipient> vecSend;
         int nChangePosRet = -1;
@@ -403,14 +408,14 @@ UniValue sendtoaddress(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 2 || params.size() > 5)
         throw runtime_error(
-            "sendtoaddress \"bitcoinaddress\" amount ( \"comment\" \"comment-to\" subtractfeefromamount )\n"
+            "sendtoaddress \"address\" amount ( \"comment\" \"comment-to\" subtractfeefromamount )\n"
             "\nSend an amount to a given address.\n" +
             HelpRequiringPassphrase() +
             "\nArguments:\n"
-            "1. \"bitcoinaddress\"  (string, required) The bitcoin address to send to.\n"
+            "1. \"address\"  (string, required) The address to send to.\n"
             "2. \"amount\"      (numeric or string, required) The amount in " +
             CURRENCY_UNIT +
-            " to send. eg 0.1\n"
+            " to send. eg 10.81\n"
             "3. \"comment\"     (string, optional) A comment used to store what the transaction is for. \n"
             "                             This is not part of the transaction, just kept in your wallet.\n"
             "4. \"comment-to\"  (string, optional) A comment to store the name of the person or organization \n"
@@ -418,22 +423,23 @@ UniValue sendtoaddress(const UniValue &params, bool fHelp)
             "                             transaction, just kept in your wallet.\n"
             "5. subtractfeefromamount  (boolean, optional, default=false) The fee will be deducted from the amount "
             "being sent.\n"
-            "                             The recipient will receive less bitcoins than you enter in the amount "
+            "                             The recipient will receive less coins than you enter in the amount "
             "field.\n"
             "\nResult:\n"
             "\"transactionid\"  (string) The transaction id.\n"
             "\nExamples:\n" +
-            HelpExampleCli("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.1") +
+            HelpExampleCli("sendtoaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 10.81") +
+            HelpExampleCli("sendtoaddress",
+                "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 10.81 \"donation\" \"seans outpost\"") +
             HelpExampleCli(
-                "sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.1 \"donation\" \"seans outpost\"") +
-            HelpExampleCli("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.1 \"\" \"\" true") +
-            HelpExampleRpc(
-                "sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.1, \"donation\", \"seans outpost\""));
+                "sendtoaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 10.81 \"\" \"\" true") +
+            HelpExampleRpc("sendtoaddress",
+                "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\", 10.81, \"donation\", \"seans outpost\""));
 
     CTxDestination dest = DecodeDestination(params[0].get_str());
     if (!IsValidDestination(dest))
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid coin address");
     }
 
     // Amount
@@ -456,7 +462,7 @@ UniValue sendtoaddress(const UniValue &params, bool fHelp)
 
     SendMoney(dest, nAmount, fSubtractFeeFromAmount, wtx);
 
-    return wtx.GetHash().GetHex();
+    return wtx.GetIdem().GetHex();
 }
 
 UniValue listaddressgroupings(const UniValue &params, bool fHelp)
@@ -473,7 +479,7 @@ UniValue listaddressgroupings(const UniValue &params, bool fHelp)
                             "[\n"
                             "  [\n"
                             "    [\n"
-                            "      \"bitcoinaddress\",     (string) The bitcoin address\n"
+                            "      \"address\",     (string) The address\n"
                             "      amount,                 (numeric) The amount in " +
                             CURRENCY_UNIT +
                             "\n"
@@ -510,6 +516,33 @@ UniValue listaddressgroupings(const UniValue &params, bool fHelp)
     return jsonGroupings;
 }
 
+UniValue listactiveaddresses(const UniValue &params, bool fHelp)
+{
+    if (!EnsureWalletIsAvailable(fHelp))
+        return NullUniValue;
+
+    if (fHelp)
+        throw runtime_error("listactiveaddresses\n"
+                            "\nLists addresses \n"
+                            "made public by common use as inputs or as the resulting change\n"
+                            "\nResult:\n"
+                            "[\n"
+                            "]\n"
+                            "\nExamples:\n" +
+                            HelpExampleCli("listaddressgroupings", "") + HelpExampleRpc("listaddressgroupings", ""));
+
+    LOCK(pwalletMain->cs_wallet);
+
+    UniValue ret(UniValue::VOBJ);
+    std::map<CTxDestination, CAmount> balances = pwalletMain->GetAddressBalances();
+    for (const auto &b : balances)
+    {
+        ret.pushKV(EncodeDestination(b.first), ValueFromAmount(b.second));
+    }
+    return ret;
+}
+
+
 UniValue signmessage(const UniValue &params, bool fHelp)
 {
     if (!EnsureWalletIsAvailable(fHelp))
@@ -517,24 +550,25 @@ UniValue signmessage(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() != 2)
         throw runtime_error(
-            "signmessage \"bitcoinaddress\" \"message\"\n"
+            "signmessage \"address\" \"message\"\n"
             "\nSign a message with the private key of an address.  This is NOT compatible with CHECKDATASIG"
             "\n (use signdata instead)." +
             HelpRequiringPassphrase() +
             "\n"
             "\nArguments:\n"
-            "1. \"bitcoinaddress\"  (string, required) The bitcoin address to use for the private key.\n"
+            "1. \"address\"  (string, required) The coin address to use for the private key.\n"
             "2. \"message\"         (string, required) The message to create a signature of.\n"
             "\nResult:\n"
             "\"signature\"          (string) The signature of the message encoded in base 64\n"
             "\nExamples:\n"
             "\nUnlock the wallet for 30 seconds\n" +
             HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") + "\nCreate the signature\n" +
-            HelpExampleCli("signmessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\" \"my message\"") +
+            HelpExampleCli("signmessage", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" \"my message\"") +
             "\nVerify the signature\n" +
-            HelpExampleCli("verifymessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\" \"signature\" \"my message\"") +
+            HelpExampleCli(
+                "verifymessage", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" \"signature\" \"my message\"") +
             "\nAs json rpc\n" +
-            HelpExampleRpc("signmessage", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\", \"my message\""));
+            HelpExampleRpc("signmessage", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\", \"my message\""));
 
     LOCK(pwalletMain->cs_wallet);
 
@@ -545,7 +579,7 @@ UniValue signmessage(const UniValue &params, bool fHelp)
 
     CTxDestination dest = DecodeDestination(strAddress);
     if (!IsValidDestination(dest))
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid coin address");
 
     const CKeyID *keyID = boost::get<CKeyID>(&dest);
     if (!keyID)
@@ -569,7 +603,7 @@ UniValue signdata(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 3 || params.size() > 4)
         throw runtime_error(
-            "signdata \"bitcoinaddress\" \"msgFormat\" \"message\"\n"
+            "signdata \"address\" \"msgFormat\" \"message\"\n"
             "\nSign message for use with the CHECKDATASIG instruction."
             "\nAs per the CHECKDATASIG operation, this RPC normally signs the SHA256 of"
             "\nthe provided message unless the 'hash' message format is specified."
@@ -578,7 +612,7 @@ UniValue signdata(const UniValue &params, bool fHelp)
             HelpRequiringPassphrase() +
             "\n"
             "\nArguments:\n"
-            "1. \"bitcoinaddress\"  (string, required) The bitcoin address to use for the private key.\n"
+            "1. \"address\"  (string, required) The address to use for the private key.\n"
             "2. \"msgFormat\"       (string, required) Use \"string\", \"hex\", or \"hash\" to specify the message "
             "encoding.\n"
             "3. \"message\"         (string, required) The message to create a signature of.\n"
@@ -590,12 +624,11 @@ UniValue signdata(const UniValue &params, bool fHelp)
             "\nUnlock the wallet for 30 seconds\n" +
             HelpExampleCli("walletpassphrase", "\"mypassphrase\" 30") + "\nCreate the signature\n" +
             HelpExampleCli(
-                "signdata", "\"bitcoincash:qq5lslagrktm5qtxfw4ltpd5krehhrh595fc04hv0k\" \"string\" \"my message\"") +
-            HelpExampleCli(
-                "signdata", "\"bitcoincash:qq5lslagrktm5qtxfw4ltpd5krehhrh595fc04hv0k\" \"hex\" \"01020304\"") +
+                "signdata", "\"nexa:qq5lslagrktm5qtxfw4ltpd5krehhrh595fc04hv0k\" \"string\" \"my message\"") +
+            HelpExampleCli("signdata", "\"nexa:qq5lslagrktm5qtxfw4ltpd5krehhrh595fc04hv0k\" \"hex\" \"01020304\"") +
             "\nAs json rpc\n" +
             HelpExampleRpc(
-                "signdata", "\"bitcoincash:qq5lslagrktm5qtxfw4ltpd5krehhrh595fc04hv0k\", \"string\", \"my message\""));
+                "signdata", "\"nexa:qq5lslagrktm5qtxfw4ltpd5krehhrh595fc04hv0k\", \"string\", \"my message\""));
 
     LOCK(pwalletMain->cs_wallet);
 
@@ -610,7 +643,7 @@ UniValue signdata(const UniValue &params, bool fHelp)
 
     CTxDestination dest = DecodeDestination(strAddress);
     if (!IsValidDestination(dest))
-        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
+        throw JSONRPCError(RPC_TYPE_ERROR, "Invalid coin address");
 
     const CKeyID *keyID = boost::get<CKeyID>(&dest);
     if (!keyID)
@@ -648,7 +681,7 @@ UniValue signdata(const UniValue &params, bool fHelp)
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid message format");
     }
     std::vector<uint8_t> sig;
-    key.SignECDSA(hash, sig);
+    key.SignSchnorr(hash, sig);
     if (sig.empty())
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Sign failed");
     if (verbose)
@@ -671,34 +704,35 @@ UniValue getreceivedbyaddress(const UniValue &params, bool fHelp)
         return NullUniValue;
 
     if (fHelp || params.size() < 1 || params.size() > 2)
-        throw runtime_error("getreceivedbyaddress \"bitcoinaddress\" ( minconf )\n"
-                            "\nReturns the total amount received by the given bitcoinaddress in transactions with at "
-                            "least minconf confirmations.\n"
-                            "\nArguments:\n"
-                            "1. \"bitcoinaddress\"  (string, required) The bitcoin address for transactions.\n"
-                            "2. minconf             (numeric, optional, default=1) Only include transactions confirmed "
-                            "at least this many times.\n"
-                            "\nResult:\n"
-                            "amount   (numeric) The total amount in " +
-                            CURRENCY_UNIT +
-                            " received at this address.\n"
-                            "\nExamples:\n"
-                            "\nThe amount from transactions with at least 1 confirmation\n" +
-                            HelpExampleCli("getreceivedbyaddress", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\"") +
-                            "\nThe amount including unconfirmed transactions, zero confirmations\n" +
-                            HelpExampleCli("getreceivedbyaddress", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\" 0") +
-                            "\nThe amount with at least 6 confirmation, very safe\n" +
-                            HelpExampleCli("getreceivedbyaddress", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\" 6") +
-                            "\nAs a json rpc call\n" +
-                            HelpExampleRpc("getreceivedbyaddress", "\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\", 6"));
+        throw runtime_error(
+            "getreceivedbyaddress \"address\" ( minconf )\n"
+            "\nReturns the total amount received by the given address in transactions with at "
+            "least minconf confirmations.\n"
+            "\nArguments:\n"
+            "1. \"address\"           (string, required) The address for transactions.\n"
+            "2. minconf             (numeric, optional, default=1) Only include transactions confirmed "
+            "at least this many times.\n"
+            "\nResult:\n"
+            "amount   (numeric) The total amount in " +
+            CURRENCY_UNIT +
+            " received at this address.\n"
+            "\nExamples:\n"
+            "\nThe amount from transactions with at least 1 confirmation\n" +
+            HelpExampleCli("getreceivedbyaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\"") +
+            "\nThe amount including unconfirmed transactions, zero confirmations\n" +
+            HelpExampleCli("getreceivedbyaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 0") +
+            "\nThe amount with at least 6 confirmation, very safe\n" +
+            HelpExampleCli("getreceivedbyaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 6") +
+            "\nAs a json rpc call\n" +
+            HelpExampleRpc("getreceivedbyaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\", 6"));
 
     LOCK(pwalletMain->cs_wallet);
 
-    // Bitcoin address
+    // address
     CTxDestination dest = DecodeDestination(params[0].get_str());
     if (!IsValidDestination(dest))
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid coin address");
     }
     CScript scriptPubKey = GetScriptForDestination(dest);
     if (!IsMine(*pwalletMain, scriptPubKey, chainActive.Tip()))
@@ -711,16 +745,21 @@ UniValue getreceivedbyaddress(const UniValue &params, bool fHelp)
 
     // Tally
     CAmount nAmount = 0;
-    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end();
-         ++it)
+    for (MapWallet::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
     {
-        const CWalletTx &wtx = (*it).second;
-        if (wtx.IsCoinBase() || !CheckFinalTx(MakeTransactionRef(wtx)))
+        CWalletTxRef wtx = it->second.tx;
+        // Get every transaction exactly once, skipping outpoint and idem entries
+        if (it->first.hash != wtx->GetId())
             continue;
 
-        for (const CTxOut &txout : wtx.vout)
+        const CTransaction *tx = wtx.get();
+        if (wtx->IsCoinBase() || !CheckFinalTx(tx))
+            continue;
+
+        auto txDepth = wtx->GetDepthInMainChain();
+        for (const CTxOut &txout : wtx->vout)
             if (txout.scriptPubKey == scriptPubKey)
-                if (wtx.GetDepthInMainChain() >= nMinDepth)
+                if (txDepth >= nMinDepth)
                     nAmount += txout.nValue;
     }
 
@@ -739,7 +778,7 @@ UniValue getreceivedbyaccount(const UniValue &params, bool fHelp)
             "\nDEPRECATED. Returns the total amount received by addresses with <account> in transactions with at least "
             "[minconf] confirmations.\n"
             "\nArguments:\n"
-            "1. \"account\"      (string, required) The selected account, may be the default account using \"\".\n"
+            "1. \"account\"        (string, required) The selected account, may be the default account using \"\".\n"
             "2. minconf          (numeric, optional, default=1) Only include transactions confirmed at least this many "
             "times.\n"
             "\nResult:\n"
@@ -768,19 +807,23 @@ UniValue getreceivedbyaccount(const UniValue &params, bool fHelp)
 
     // Tally
     CAmount nAmount = 0;
-    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end();
-         ++it)
+    for (MapWallet::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
     {
-        const CWalletTx &wtx = (*it).second;
-        if (wtx.IsCoinBase() || !CheckFinalTx(MakeTransactionRef(wtx)))
+        const CWalletTxRef wtx = it->second.tx;
+        // Get every transaction exactly once, skipping outpoint and idem entries
+        if (it->first.hash != wtx->GetId())
             continue;
 
-        for (const CTxOut &txout : wtx.vout)
+        if (wtx->IsCoinBase() || !CheckFinalTx(wtx.get()))
+            continue;
+
+        int depth = wtx->GetDepthInMainChain();
+        for (const CTxOut &txout : wtx->vout)
         {
             CTxDestination address;
             if (ExtractDestination(txout.scriptPubKey, address) && IsMine(*pwalletMain, address, chainActive.Tip()) &&
                 setAddress.count(address))
-                if (wtx.GetDepthInMainChain() >= nMinDepth)
+                if (depth >= nMinDepth)
                     nAmount += txout.nValue;
         }
     }
@@ -794,16 +837,18 @@ CAmount GetAccountBalance(CWalletDB &walletdb, const string &strAccount, int nMi
     CAmount nBalance = 0;
 
     // Tally wallet transactions
-    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end();
-         ++it)
+    for (MapWallet::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
     {
-        const CWalletTx &wtx = (*it).second;
-        int depth = wtx.GetDepthInMainChain();
-        if (!CheckFinalTx(MakeTransactionRef(wtx)) || wtx.GetBlocksToMaturity() > 0 || depth < 0)
+        CWalletTxRef wtx = it->second.tx;
+        // Get every transaction exactly once, skipping outpoint and idem entries
+        if (it->first.hash != wtx->GetId())
+            continue;
+        int depth = wtx->GetDepthInMainChain();
+        if (!CheckFinalTx(wtx.get()) || wtx->GetBlocksToMaturity() > 0 || depth < 0)
             continue;
 
         CAmount nReceived, nSent, nFee;
-        wtx.GetAccountAmounts(strAccount, nReceived, nSent, nFee, filter);
+        wtx->GetAccountAmounts(strAccount, nReceived, nSent, nFee, filter);
 
         if (nReceived != 0 && depth >= nMinDepth)
             nBalance += nReceived;
@@ -873,29 +918,36 @@ UniValue getbalance(const UniValue &params, bool fHelp)
         // (GetBalance() sums up all unspent TxOuts)
         // getbalance and "getbalance * 1 true" should return the same number
         CAmount nBalance = 0;
-        for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end();
-             ++it)
+        for (MapWallet::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
         {
-            const CWalletTx &wtx = (*it).second;
-            if (!CheckFinalTx(MakeTransactionRef(wtx)) || wtx.GetBlocksToMaturity() > 0 ||
-                wtx.GetDepthInMainChain() < 0)
+            const CWalletTxRef wtx = it->second.tx;
+            // Get every transaction exactly once, skipping outpoint and idem entries
+            if (it->first.hash != wtx->GetId())
+                continue;
+
+            if (!CheckFinalTx(wtx.get()) || wtx->GetBlocksToMaturity() > 0 || wtx->GetDepthInMainChain() < 0)
                 continue;
 
             CAmount allFee;
             string strSentAccount;
             list<COutputEntry> listReceived;
             list<COutputEntry> listSent;
-            wtx.GetAmounts(listReceived, listSent, allFee, strSentAccount, filter);
-            if (wtx.GetDepthInMainChain() >= nMinDepth)
+            wtx->GetAmounts(listReceived, listSent, allFee, strSentAccount, filter);
+            CAmount net = 0;
+            if (wtx->GetDepthInMainChain() >= nMinDepth)
             {
                 for (const COutputEntry &r : listReceived)
                 {
+                    LOGA("received %lu", r.amount);
                     nBalance += r.amount;
+                    net += r.amount;
                 }
             }
             for (const COutputEntry &s : listSent)
             {
+                LOGA("sent %lu", s.amount);
                 nBalance -= s.amount;
+                net -= s.amount;
             }
             nBalance -= allFee;
         }
@@ -949,12 +1001,12 @@ UniValue movecmd(const UniValue &params, bool fHelp)
             "\nResult:\n"
             "true|false           (boolean) true if successful.\n"
             "\nExamples:\n"
-            "\nMove 0.01 " +
+            "\nMove 10.01 " +
             CURRENCY_UNIT + " from the default account to the account named tabby\n" +
-            HelpExampleCli("move", "\"\" \"tabby\" 0.01") + "\nMove 0.01 " + CURRENCY_UNIT +
+            HelpExampleCli("move", "\"\" \"tabby\" 10.01") + "\nMove 0.01 " + CURRENCY_UNIT +
             " timotei to akiko with a comment and funds have 6 confirmations\n" +
-            HelpExampleCli("move", "\"timotei\" \"akiko\" 0.01 6 \"happy birthday!\"") + "\nAs a json rpc call\n" +
-            HelpExampleRpc("move", "\"timotei\", \"akiko\", 0.01, 6, \"happy birthday!\""));
+            HelpExampleCli("move", "\"timotei\" \"akiko\" 10.01 6 \"happy birthday!\"") + "\nAs a json rpc call\n" +
+            HelpExampleRpc("move", "\"timotei\", \"akiko\", 10.01, 6, \"happy birthday!\""));
 
     LOCK(pwalletMain->cs_wallet);
 
@@ -1010,14 +1062,14 @@ UniValue sendfrom(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 3 || params.size() > 6)
         throw runtime_error(
-            "sendfrom \"fromaccount\" \"tobitcoinaddress\" amount ( minconf \"comment\" \"comment-to\" )\n"
-            "\nDEPRECATED (use sendtoaddress). Sent an amount from an account to a bitcoin address." +
+            "sendfrom \"fromaccount\" \"toaddress\" amount ( minconf \"comment\" \"comment-to\" )\n"
+            "\nDEPRECATED (use sendtoaddress). Sent an amount from an account to an address." +
             HelpRequiringPassphrase() +
             "\n"
             "\nArguments:\n"
             "1. \"fromaccount\"       (string, required) The name of the account to send funds from. May be the "
             "default account using \"\".\n"
-            "2. \"tobitcoinaddress\"  (string, required) The bitcoin address to send funds to.\n"
+            "2. \"toaddress\"  (string, required) The address to send funds to.\n"
             "3. amount                (numeric or string, required) The amount in " +
             CURRENCY_UNIT +
             " (transaction fee is added on top).\n"
@@ -1035,19 +1087,19 @@ UniValue sendfrom(const UniValue &params, bool fHelp)
             "\nExamples:\n"
             "\nSend 0.01 " +
             CURRENCY_UNIT + " from the default account to the address, must have at least 1 confirmation\n" +
-            HelpExampleCli("sendfrom", "\"\" \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.01") +
-            "\nSend 0.01 from the tabby account to the given address, funds must have at least 6 confirmations\n" +
-            HelpExampleCli(
-                "sendfrom", "\"tabby\" \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 0.01 6 \"donation\" \"seans outpost\"") +
+            HelpExampleCli("sendfrom", "\"\" \"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 10.01") +
+            "\nSend 10.01 from the tabby account to the given address, funds must have at least 6 confirmations\n" +
+            HelpExampleCli("sendfrom", "\"tabby\" \"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 10.01 6 "
+                                       "\"donation\" \"seans outpost\"") +
             "\nAs a json rpc call\n" +
-            HelpExampleRpc("sendfrom",
-                "\"tabby\", \"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\", 0.01, 6, \"donation\", \"seans outpost\""));
+            HelpExampleRpc("sendfrom", "\"tabby\", \"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\", 10.01, 6, "
+                                       "\"donation\", \"seans outpost\""));
 
     std::string strAccount = AccountFromValue(params[0]);
     CTxDestination dest = DecodeDestination(params[1].get_str());
     if (!IsValidDestination(dest))
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid coin address");
     }
     CAmount nAmount = AmountFromValue(params[2]);
     if (nAmount <= 0)
@@ -1075,7 +1127,7 @@ UniValue sendfrom(const UniValue &params, bool fHelp)
 
     SendMoney(dest, nAmount, false, wtx);
 
-    return wtx.GetHash().GetHex();
+    return wtx.GetIdem().GetHex();
 }
 
 
@@ -1095,7 +1147,7 @@ UniValue sendmany(const UniValue &params, bool fHelp)
             "\"\" for the default account\n"
             "2. \"amounts\"             (string, required) A json object with addresses and amounts\n"
             "    {\n"
-            "      \"address\":amount   (numeric or string) The bitcoin address is the key, the numeric amount (can be "
+            "      \"address\":amount   (numeric or string) The address is the key, the numeric amount (can be "
             "string) in " +
             CURRENCY_UNIT +
             " is the value\n"
@@ -1106,7 +1158,7 @@ UniValue sendmany(const UniValue &params, bool fHelp)
             "4. \"comment\"             (string, optional) A comment\n"
             "5. subtractfeefromamount   (string, optional) A json array with addresses.\n"
             "                           The fee will be equally deducted from the amount of each selected address.\n"
-            "                           Those recipients will receive less bitcoins than you enter in their "
+            "                           Those recipients will receive less coins than you enter in their "
             "corresponding amount field.\n"
             "                           If no addresses are specified here, the sender pays the fee.\n"
             "    [\n"
@@ -1120,21 +1172,25 @@ UniValue sendmany(const UniValue &params, bool fHelp)
             "\nExamples:\n"
             "\nSend two amounts to two different addresses:\n" +
             HelpExampleCli("sendmany", "\"\" "
-                                       "\"{\\\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\\\":0.01,"
-                                       "\\\"1353tsE8YMTA4EuV7dgUXGjNFf9KpVvKHz\\\":0.02}\"") +
+                                       "\"{\\\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\\\":10.01,"
+                                       "\\\"nexa:qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\":10.02}\"") +
             "\nSend two amounts to two different addresses setting the confirmation and comment:\n" +
-            HelpExampleCli("sendmany", "\"\" "
-                                       "\"{\\\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\\\":0.01,"
-                                       "\\\"1353tsE8YMTA4EuV7dgUXGjNFf9KpVvKHz\\\":0.02}\" 6 \"testing\"") +
-            "\nSend two amounts to two different addresses, subtract fee from amount:\n" +
             HelpExampleCli("sendmany",
                 "\"\" "
-                "\"{\\\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\\\":0.01,\\\"1353tsE8YMTA4EuV7dgUXGjNFf9KpVvKHz\\\":0.02}\" "
-                "1 \"\" \"[\\\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\\\",\\\"1353tsE8YMTA4EuV7dgUXGjNFf9KpVvKHz\\\"]\"") +
+                "\"{\\\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\\\":10.01,"
+                "\\\"nexa:qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\":10.02}\" 6 \"testing\"") +
+            "\nSend two amounts to two different addresses, subtract fee from amount:\n" +
+            HelpExampleCli("sendmany", "\"\" "
+                                       "\"{\\\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\\\":10.01,\\\"nexa:"
+                                       "qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\":10.02}\" "
+                                       "1 \"\" "
+                                       "\"[\\\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\\\",\\\"nexa:"
+                                       "qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\"]\"") +
             "\nAs a json rpc call\n" +
-            HelpExampleRpc("sendmany", "\"\", "
-                                       "\"{\\\"1D1ZrZNe3JUo7ZycKEYQQiQAWd9y54F4XZ\\\":0.01,"
-                                       "\\\"1353tsE8YMTA4EuV7dgUXGjNFf9KpVvKHz\\\":0.02}\", 6, \"testing\""));
+            HelpExampleRpc("sendmany",
+                "\"\", "
+                "\"{\\\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\\\":10.01,"
+                "\\\"nexa:qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\":10.02}\", 6, \"testing\""));
 
     string strAccount = AccountFromValue(params[0]);
     UniValue sendTo = params[1].get_obj();
@@ -1161,7 +1217,7 @@ UniValue sendmany(const UniValue &params, bool fHelp)
         CTxDestination dest = DecodeDestination(name_);
         if (!IsValidDestination(dest))
         {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Bitcoin address: ") + name_);
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid coin address: ") + name_);
         }
 
         if (destinations.count(dest))
@@ -1215,7 +1271,7 @@ UniValue sendmany(const UniValue &params, bool fHelp)
         if (!pwalletMain->CommitTransaction(wtx, keyChange))
             throw JSONRPCError(RPC_WALLET_ERROR, "Transaction commit failed");
     }
-    return wtx.GetHash().GetHex();
+    return wtx.GetIdem().GetHex();
 }
 
 // Defined in rpc/misc.cpp
@@ -1231,29 +1287,31 @@ UniValue addmultisigaddress(const UniValue &params, bool fHelp)
         string msg =
             "addmultisigaddress nrequired [\"key\",...] ( \"account\" )\n"
             "\nAdd a nrequired-to-sign multisignature address to the wallet.\n"
-            "Each key is a Bitcoin address or hex-encoded public key.\n"
+            "Each key is an address or hex-encoded public key.\n"
             "If 'account' is specified (DEPRECATED), assign address to that account.\n"
 
             "\nArguments:\n"
-            "1. nrequired        (numeric, required) The number of required signatures out of the n keys or "
+            "1. nrequired      (numeric, required) The number of required signatures out of the n keys or "
             "addresses.\n"
-            "2. \"keysobject\"   (string, required) A json array of bitcoin addresses or hex-encoded public keys\n"
+            "2. \"keysobject\"   (string, required) A json array of addresses or hex-encoded public keys\n"
             "     [\n"
-            "       \"address\"  (string) bitcoin address or hex-encoded public key\n"
+            "       \"address\"  (string) address or hex-encoded public key\n"
             "       ...,\n"
             "     ]\n"
             "3. \"account\"      (string, optional) DEPRECATED. An account to assign the addresses to.\n"
 
             "\nResult:\n"
-            "\"bitcoinaddress\"  (string) A bitcoin address associated with the keys.\n"
+            "\"address\"  (string) A address associated with the keys.\n"
 
             "\nExamples:\n"
             "\nAdd a multisig address from 2 addresses\n" +
-            HelpExampleCli("addmultisigaddress",
-                "2 \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"") +
+            HelpExampleCli("addmultisigaddress", "2 "
+                                                 "\"[\\\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\\\",\\\"nexa:"
+                                                 "qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\"]\"") +
             "\nAs json rpc call\n" +
-            HelpExampleRpc("addmultisigaddress",
-                "2, \"[\\\"16sSauSf5pF2UkUwvKGq4qjNRzBZYqgEL5\\\",\\\"171sgjn4YtPu27adkKGrdDwzRTxnRkBfKV\\\"]\"");
+            HelpExampleRpc("addmultisigaddress", "2, "
+                                                 "\"[\\\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\\\",\\\"nexa:"
+                                                 "qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\"]\"");
         throw runtime_error(msg);
     }
 
@@ -1277,7 +1335,7 @@ struct tallyitem
 {
     CAmount nAmount;
     int nConf;
-    vector<uint256> txids;
+    vector<uint256> txidems;
     bool fIsWatchonly;
     tallyitem()
     {
@@ -1306,20 +1364,22 @@ UniValue ListReceived(const UniValue &params, bool fByAccounts)
 
     // Tally
     std::map<CTxDestination, tallyitem> mapTally;
-    for (std::map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end();
-         ++it)
+    for (MapWallet::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
     {
-        const CWalletTx &wtx = (*it).second;
-
-        CValidationState state;
-        if (wtx.IsCoinBase() || !CheckFinalTx(MakeTransactionRef(wtx)))
+        const CWalletTxRef wtx = it->second.tx;
+        // Get every transaction exactly once, skipping outpoint and idem entries
+        if (it->first.hash != wtx->GetId())
             continue;
 
-        int nDepth = wtx.GetDepthInMainChain();
+        CValidationState state;
+        if (wtx->IsCoinBase() || !CheckFinalTx(wtx.get()))
+            continue;
+
+        int nDepth = wtx->GetDepthInMainChain();
         if (nDepth < nMinDepth)
             continue;
 
-        for (const CTxOut &txout : wtx.vout)
+        for (const CTxOut &txout : wtx->vout)
         {
             CTxDestination address;
             if (!ExtractDestination(txout.scriptPubKey, address))
@@ -1332,7 +1392,7 @@ UniValue ListReceived(const UniValue &params, bool fByAccounts)
             tallyitem &item = mapTally[address];
             item.nAmount += txout.nValue;
             item.nConf = min(item.nConf, nDepth);
-            item.txids.push_back(wtx.GetHash());
+            item.txidems.push_back(wtx->GetIdem());
             if (mine & ISMINE_WATCH_ONLY)
                 item.fIsWatchonly = true;
         }
@@ -1385,12 +1445,12 @@ UniValue ListReceived(const UniValue &params, bool fByAccounts)
             UniValue transactions(UniValue::VARR);
             if (it != mapTally.end())
             {
-                for (const uint256 &item3 : (*it).second.txids)
+                for (const uint256 &item3 : (*it).second.txidems)
                 {
                     transactions.push_back(item3.GetHex());
                 }
             }
-            obj.pushKV("txids", transactions);
+            obj.pushKV("txidems", transactions);
             ret.push_back(obj);
         }
     }
@@ -1507,7 +1567,7 @@ static void MaybePushAddress(UniValue &entry, const CTxDestination &dest)
     }
 }
 
-void ListTransactions(const CWalletTx &wtx,
+void ListTransactions(const CWalletTxRef wtx,
     const string &strAccount,
     int nMinDepth,
     bool fLong,
@@ -1516,18 +1576,18 @@ void ListTransactions(const CWalletTx &wtx,
 {
     CAmount nFee;
     string strSentAccount;
-    list<COutputEntry> listReceived;
-    list<COutputEntry> listSent;
+    list<CGroupedOutputEntry> listReceived;
+    list<CGroupedOutputEntry> listSent;
 
-    wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount, filter);
+    wtx->GetAmounts(listReceived, listSent, nFee, strSentAccount, filter);
 
     bool fAllAccounts = (strAccount == string("*"));
-    bool involvesWatchonly = wtx.IsFromMe(ISMINE_WATCH_ONLY);
+    bool involvesWatchonly = wtx->IsFromMe(ISMINE_WATCH_ONLY);
 
     // Sent
     if ((!listSent.empty() || nFee != 0) && (fAllAccounts || strAccount == strSentAccount))
     {
-        for (const COutputEntry &s : listSent)
+        for (const CGroupedOutputEntry &s : listSent)
         {
             UniValue entry(UniValue::VOBJ);
             if (involvesWatchonly || (::IsMine(*pwalletMain, s.destination, chainActive.Tip()) & ISMINE_WATCH_ONLY))
@@ -1535,6 +1595,11 @@ void ListTransactions(const CWalletTx &wtx,
             entry.pushKV("account", strSentAccount);
             MaybePushAddress(entry, s.destination);
             entry.pushKV("category", "send");
+            if (s.grp != NoGroup)
+            {
+                entry.pushKV("group", EncodeGroupToken(s.grp));
+                entry.pushKV("groupAmount", -s.grpAmount);
+            }
             entry.pushKV("satoshi", UniValue(-s.amount));
             entry.pushKV("amount", ValueFromAmount(-s.amount));
             if (pwalletMain->mapAddressBook.count(s.destination))
@@ -1542,16 +1607,16 @@ void ListTransactions(const CWalletTx &wtx,
             entry.pushKV("vout", s.vout);
             entry.pushKV("fee", ValueFromAmount(-nFee));
             if (fLong)
-                WalletTxToJSON(wtx, entry);
-            entry.pushKV("abandoned", wtx.isAbandoned());
+                WalletTxToJSON(*wtx, entry);
+            entry.pushKV("abandoned", wtx->isAbandoned());
             ret.push_back(entry);
         }
     }
 
     // Received
-    if (listReceived.size() > 0 && wtx.GetDepthInMainChain() >= nMinDepth)
+    if (listReceived.size() > 0 && wtx->GetDepthInMainChain() >= nMinDepth)
     {
-        for (const COutputEntry &r : listReceived)
+        for (const CGroupedOutputEntry &r : listReceived)
         {
             string account;
             if (pwalletMain->mapAddressBook.count(r.destination))
@@ -1563,11 +1628,11 @@ void ListTransactions(const CWalletTx &wtx,
                     entry.pushKV("involvesWatchonly", true);
                 entry.pushKV("account", account);
                 MaybePushAddress(entry, r.destination);
-                if (wtx.IsCoinBase())
+                if (wtx->IsCoinBase())
                 {
-                    if (wtx.GetDepthInMainChain() < 1)
+                    if (wtx->GetDepthInMainChain() < 1)
                         entry.pushKV("category", "orphan");
-                    else if (wtx.GetBlocksToMaturity() > 0)
+                    else if (wtx->GetBlocksToMaturity() > 0)
                         entry.pushKV("category", "immature");
                     else
                         entry.pushKV("category", "generate");
@@ -1576,13 +1641,18 @@ void ListTransactions(const CWalletTx &wtx,
                 {
                     entry.pushKV("category", "receive");
                 }
+                if (r.grp != NoGroup)
+                {
+                    entry.pushKV("group", EncodeGroupToken(r.grp));
+                    entry.pushKV("groupAmount", r.grpAmount);
+                }
                 entry.pushKV("satoshi", UniValue(r.amount));
                 entry.pushKV("amount", ValueFromAmount(r.amount));
                 if (pwalletMain->mapAddressBook.count(r.destination))
                     entry.pushKV("label", account);
                 entry.pushKV("vout", r.vout);
                 if (fLong)
-                    WalletTxToJSON(wtx, entry);
+                    WalletTxToJSON(*wtx, entry);
                 ret.push_back(entry);
             }
         }
@@ -1629,7 +1699,7 @@ UniValue listtransactions(const UniValue &params, bool fHelp)
             "    \"account\":\"accountname\",       (string) DEPRECATED. The account name associated with the "
             "transaction. \n"
             "                                                It will be \"\" for the default account.\n"
-            "    \"address\":\"bitcoinaddress\",    (string) The bitcoin address of the transaction. Not present for \n"
+            "    \"address\":\"address\",    (string) The address of the transaction. Not present for \n"
             "                                                move transactions (category = move).\n"
             "    \"category\":\"send|receive|move\", (string) The transaction category. 'move' is a local (off "
             "blockchain)\n"
@@ -1718,9 +1788,9 @@ UniValue listtransactions(const UniValue &params, bool fHelp)
     // iterate backwards until we have nCount items to return:
     for (CWallet::TxItems::const_reverse_iterator it = txOrdered.rbegin(); it != txOrdered.rend(); ++it)
     {
-        CWalletTx *const pwtx = (*it).second.first;
-        if (pwtx != nullptr)
-            ListTransactions(*pwtx, strAccount, 0, true, ret, filter);
+        CWalletTxRef wtx = (*it).second.first;
+        if (wtx != nullptr)
+            ListTransactions(wtx, strAccount, 0, true, ret, filter);
         CAccountingEntry *const pacentry = (*it).second.second;
         if (pacentry != nullptr)
             AcentryToJSON(*pacentry, strAccount, ret);
@@ -1778,7 +1848,7 @@ UniValue listtransactionsfrom(const UniValue &params, bool fHelp)
             "    \"account\":\"accountname\",       (string) DEPRECATED. The account name associated with the "
             "transaction. \n"
             "                                                It will be \"\" for the default account.\n"
-            "    \"address\":\"bitcoinaddress\",    (string) The bitcoin address of the transaction. Not present for \n"
+            "    \"address\":\"address\",    (string) The address of the transaction. Not present for \n"
             "                                                move transactions (category = move).\n"
             "    \"category\":\"send|receive|move\", (string) The transaction category. 'move' is a local (off "
             "blockchain)\n"
@@ -1870,9 +1940,9 @@ UniValue listtransactionsfrom(const UniValue &params, bool fHelp)
 
     for (int cnt = 0; (it != txOrdered.end()) && (cnt < nCount); ++it, ++cnt)
     {
-        CWalletTx *const pwtx = (*it).second.first;
-        if (pwtx != 0)
-            ListTransactions(*pwtx, strAccount, 0, true, ret, filter);
+        CWalletTxRef wtx = (*it).second.first;
+        if (wtx != 0)
+            ListTransactions(wtx, strAccount, 0, true, ret, filter);
         CAccountingEntry *const pacentry = (*it).second.second;
         if (pacentry != 0)
             AcentryToJSON(*pacentry, strAccount, ret);
@@ -1929,18 +1999,21 @@ UniValue listaccounts(const UniValue &params, bool fHelp)
                 mapAccountBalances[entry.second.name] = 0;
         }
 
-        for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end();
-             ++it)
+        for (MapWallet::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); ++it)
         {
-            const CWalletTx &wtx = (*it).second;
+            const CWalletTxRef wtx = it->second.tx;
+            // Get every transaction exactly once, skipping outpoint and idem entries
+            if (it->first.hash != wtx->GetId())
+                continue;
+
             CAmount nFee;
             string strSentAccount;
             list<COutputEntry> listReceived;
             list<COutputEntry> listSent;
-            int nDepth = wtx.GetDepthInMainChain();
-            if (wtx.GetBlocksToMaturity() > 0 || nDepth < 0)
+            int nDepth = wtx->GetDepthInMainChain();
+            if (wtx->GetBlocksToMaturity() > 0 || nDepth < 0)
                 continue;
-            wtx.GetAmounts(listReceived, listSent, nFee, strSentAccount, includeWatchonly);
+            wtx->GetAmounts(listReceived, listSent, nFee, strSentAccount, includeWatchonly);
             mapAccountBalances[strSentAccount] -= nFee;
             for (const COutputEntry &s : listSent)
             {
@@ -1992,7 +2065,7 @@ UniValue listsinceblock(const UniValue &params, bool fHelp)
             "  \"transactions\": [\n"
             "    \"account\":\"accountname\",       (string) DEPRECATED. The account name associated with the "
             "transaction. Will be \"\" for the default account.\n"
-            "    \"address\":\"bitcoinaddress\",    (string) The bitcoin address of the transaction. Not present for "
+            "    \"address\":\"address\",    (string) The address of the transaction. Not present for "
             "move transactions (category = move).\n"
             "    \"category\":\"send|receive\",     (string) The transaction category. 'send' has negative amounts, "
             "'receive' has positive amounts.\n"
@@ -2057,16 +2130,18 @@ UniValue listsinceblock(const UniValue &params, bool fHelp)
         if (params[2].get_bool())
             filter = filter | ISMINE_WATCH_ONLY;
 
-    int depth = pindex ? (1 + chainActive.Height() - pindex->nHeight) : -1;
+    int depth = pindex ? (1 + chainActive.Height() - pindex->height()) : -1;
 
     UniValue transactions(UniValue::VARR);
 
-    for (map<uint256, CWalletTx>::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end();
-         it++)
+    for (MapWallet::iterator it = pwalletMain->mapWallet.begin(); it != pwalletMain->mapWallet.end(); it++)
     {
-        CWalletTx tx = (*it).second;
+        CWalletTxRef tx = it->second.tx;
+        // Get every transaction exactly once, skipping outpoint and idem entries
+        if (it->first.hash != tx->GetId())
+            continue;
 
-        if (depth == -1 || tx.GetDepthInMainChain() < depth)
+        if (depth == -1 || tx->GetDepthInMainChain() < depth)
             ListTransactions(tx, "*", 0, true, transactions, filter);
     }
 
@@ -2099,7 +2174,7 @@ UniValue gettransaction(const UniValue &params, bool fHelp)
             CURRENCY_UNIT +
             "\n"
             "  \"confirmations\" : n,     (numeric) The number of confirmations\n"
-            "  \"blockhash\" : \"hash\",  (string) The block hash\n"
+            "  \"blockhash\" : \"hash\",    (string) The block hash\n"
             "  \"blockindex\" : xx,       (numeric) The index of the transaction in the block that includes it\n"
             "  \"blocktime\" : ttt,       (numeric) The time in seconds since epoch (1 Jan 1970 GMT)\n"
             "  \"txid\" : \"transactionid\",   (string) The transaction id.\n"
@@ -2113,13 +2188,15 @@ UniValue gettransaction(const UniValue &params, bool fHelp)
             "    {\n"
             "      \"account\" : \"accountname\",  (string) DEPRECATED. The account name involved in the transaction, "
             "can be \"\" for the default account.\n"
-            "      \"address\" : \"bitcoinaddress\",   (string) The bitcoin address involved in the transaction\n"
+            "      \"address\" : \"address\",   (string) The address involved in the transaction\n"
             "      \"category\" : \"send|receive\",    (string) The category, either 'send' or 'receive'\n"
-            "      \"amount\" : x.xxx,                 (numeric) The amount in " +
+            "      \"group\": \"groupidentifier\",     (string) The token identifier (appears only if applicable)\n"
+            "      \"groupAmount\": n,               (numeric) The token quantity (appears only if applicable)\n"
+            "      \"amount\" : x.xxx,               (numeric) The amount in " +
             CURRENCY_UNIT +
             "\n"
             "      \"label\" : \"label\",              (string) A comment for the address/transaction, if any\n"
-            "      \"vout\" : n,                       (numeric) the vout value\n"
+            "      \"vout\" : n,                     (numeric) the vout value\n"
             "    }\n"
             "    ,...\n"
             "  ],\n"
@@ -2143,27 +2220,28 @@ UniValue gettransaction(const UniValue &params, bool fHelp)
             filter = filter | ISMINE_WATCH_ONLY;
 
     UniValue entry(UniValue::VOBJ);
-    if (!pwalletMain->mapWallet.count(hash))
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
-    const CWalletTx &wtx = pwalletMain->mapWallet[hash];
 
-    CAmount nCredit = wtx.GetCredit(filter);
-    CAmount nDebit = wtx.GetDebit(filter);
+    const CWalletTxRef wtx = pwalletMain->GetWalletTx(hash);
+    if (!wtx)
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
+
+    CAmount nCredit = wtx->GetCredit(filter);
+    CAmount nDebit = wtx->GetDebit(filter);
     CAmount nNet = nCredit - nDebit;
-    CAmount nFee = (wtx.IsFromMe(filter) ? wtx.GetValueOut() - nDebit : 0);
+    CAmount nFee = (wtx->IsFromMe(filter) ? wtx->GetValueOut() - nDebit : 0);
 
     entry.pushKV("satoshi", UniValue(nNet - nFee));
     entry.pushKV("amount", ValueFromAmount(nNet - nFee));
-    if (wtx.IsFromMe(filter))
+    if (wtx->IsFromMe(filter))
         entry.pushKV("fee", ValueFromAmount(nFee));
 
-    WalletTxToJSON(wtx, entry);
+    WalletTxToJSON(*wtx, entry);
 
     UniValue details(UniValue::VARR);
     ListTransactions(wtx, "*", 0, false, details, filter);
     entry.pushKV("details", details);
 
-    string strHex = EncodeHexTx(static_cast<CTransaction>(wtx));
+    string strHex = EncodeHexTx(static_cast<CTransaction>(*wtx));
     entry.pushKV("hex", strHex);
 
     return entry;
@@ -2196,7 +2274,7 @@ UniValue abandontransaction(const UniValue &params, bool fHelp)
     uint256 hash;
     hash.SetHex(params[0].get_str());
 
-    if (!pwalletMain->mapWallet.count(hash))
+    if (!pwalletMain->GetWalletTx(hash))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid or non-wallet transaction id");
     if (!pwalletMain->AbandonTransaction(hash))
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not eligible for abandonment");
@@ -2281,7 +2359,7 @@ UniValue walletpassphrase(const UniValue &params, bool fHelp)
         throw runtime_error(
             "walletpassphrase \"passphrase\" timeout\n"
             "\nStores the wallet decryption key in memory for 'timeout' seconds.\n"
-            "This is needed prior to performing transactions related to private keys such as sending bitcoins\n"
+            "This is needed prior to performing transactions related to private keys such as sending coins\n"
             "\nArguments:\n"
             "1. \"passphrase\"     (string, required) The wallet passphrase\n"
             "2. timeout            (numeric, required) The time to keep the decryption key in seconds.\n"
@@ -2379,18 +2457,18 @@ UniValue walletlock(const UniValue &params, bool fHelp)
         return NullUniValue;
 
     if (pwalletMain->IsCrypted() && (fHelp || params.size() != 0))
-        throw runtime_error("walletlock\n"
-                            "\nRemoves the wallet encryption key from memory, locking the wallet.\n"
-                            "After calling this method, you will need to call walletpassphrase again\n"
-                            "before being able to call any methods which require the wallet to be unlocked.\n"
-                            "\nExamples:\n"
-                            "\nSet the passphrase for 2 minutes to perform a transaction\n" +
-                            HelpExampleCli("walletpassphrase", "\"my pass phrase\" 120") +
-                            "\nPerform a send (requires passphrase set)\n" +
-                            HelpExampleCli("sendtoaddress", "\"1M72Sfpbz1BPpXFHz9m3CdqATR44Jvaydd\" 1.0") +
-                            "\nClear the passphrase since we are done before 2 minutes is up\n" +
-                            HelpExampleCli("walletlock", "") + "\nAs json rpc call\n" +
-                            HelpExampleRpc("walletlock", ""));
+        throw runtime_error(
+            "walletlock\n"
+            "\nRemoves the wallet encryption key from memory, locking the wallet.\n"
+            "After calling this method, you will need to call walletpassphrase again\n"
+            "before being able to call any methods which require the wallet to be unlocked.\n"
+            "\nExamples:\n"
+            "\nSet the passphrase for 2 minutes to perform a transaction\n" +
+            HelpExampleCli("walletpassphrase", "\"my pass phrase\" 120") +
+            "\nPerform a send (requires passphrase set)\n" +
+            HelpExampleCli("sendtoaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 1.01") +
+            "\nClear the passphrase since we are done before 2 minutes is up\n" + HelpExampleCli("walletlock", "") +
+            "\nAs json rpc call\n" + HelpExampleRpc("walletlock", ""));
 
     LOCK(pwalletMain->cs_wallet);
 
@@ -2430,9 +2508,9 @@ UniValue encryptwallet(const UniValue &params, bool fHelp)
             "\nExamples:\n"
             "\nEncrypt you wallet\n" +
             HelpExampleCli("encryptwallet", "\"my pass phrase\"") +
-            "\nNow set the passphrase to use the wallet, such as for signing or sending bitcoin\n" +
+            "\nNow set the passphrase to use the wallet, such as for signing or sending coins\n" +
             HelpExampleCli("walletpassphrase", "\"my pass phrase\"") + "\nNow we can so something like sign\n" +
-            HelpExampleCli("signmessage", "\"bitcoinaddress\" \"test message\"") +
+            HelpExampleCli("signmessage", "\"address\" \"test message\"") +
             "\nNow lock the wallet again by removing the passphrase\n" + HelpExampleCli("walletlock", "") +
             "\nAs a json rpc call\n" + HelpExampleRpc("encryptwallet", "\"my pass phrase\""));
 
@@ -2461,7 +2539,7 @@ UniValue encryptwallet(const UniValue &params, bool fHelp)
     // slack space in .dat files; that is bad if the old data is
     // unencrypted private keys. So:
     StartShutdown();
-    return "wallet encrypted; Bitcoin server stopping, restart to run with encrypted wallet. The keypool has been "
+    return "wallet encrypted; server stopping, restart to run with encrypted wallet. The keypool has been "
            "flushed and a new HD seed was generated (if you are using HD). You need to make a new backup.";
 }
 
@@ -2472,21 +2550,22 @@ UniValue lockunspent(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
-            "lockunspent unlock [{\"txid\":\"txid\",\"vout\":n},...]\n"
+            "lockunspent unlock [{\"txidem\":\"txidem\",\"vout\":n},...]\n"
+            "lockunspent unlock [\"outpointhash\",...]\n"
             "\nUpdates list of temporarily unspendable outputs.\n"
             "Temporarily lock (unlock=false) or unlock (unlock=true) specified transaction outputs.\n"
-            "A locked transaction output will not be chosen by automatic coin selection, when spending bitcoins.\n"
+            "A locked transaction output will not be chosen by automatic coin selection, when spending coins.\n"
             "Locks are stored in memory only. Nodes start with zero locked outputs, and the locked output list\n"
             "is always cleared (by virtue of process exit) when a node stops or fails.\n"
             "Also see the listunspent call\n"
             "\nArguments:\n"
             "1. unlock            (boolean, required) Whether to unlock (true) or lock (false) the specified "
             "transactions\n"
-            "2. \"transactions\"  (string, required) A json array of objects. Each object the txid (string) vout "
+            "2. \"transactions\"  (string, required) A json array of objects. Each object the txidem (string) vout "
             "(numeric)\n"
             "     [           (json array of json objects)\n"
             "       {\n"
-            "         \"txid\":\"id\",    (string) The transaction id\n"
+            "         \"txidem\":\"id\",    (string) The transaction id\n"
             "         \"vout\": n         (numeric) The output number\n"
             "       }\n"
             "       ,...\n"
@@ -2499,18 +2578,18 @@ UniValue lockunspent(const UniValue &params, bool fHelp)
             "\nList the unspent transactions\n" +
             HelpExampleCli("listunspent", "") + "\nLock an unspent transaction\n" +
             HelpExampleCli("lockunspent", "false "
-                                          "\"[{\\\"txid\\\":"
+                                          "\"[{\\\"txidem\\\":"
                                           "\\\"a08e6907dbbd3d809776dbfc5d82e371b764ed838b5655e72f463568df1aadf0\\\","
                                           "\\\"vout\\\":1}]\"") +
             "\nList the locked transactions\n" + HelpExampleCli("listlockunspent", "") +
             "\nUnlock the transaction again\n" +
             HelpExampleCli("lockunspent", "true "
-                                          "\"[{\\\"txid\\\":"
+                                          "\"[{\\\"txidem\\\":"
                                           "\\\"a08e6907dbbd3d809776dbfc5d82e371b764ed838b5655e72f463568df1aadf0\\\","
                                           "\\\"vout\\\":1}]\"") +
             "\nAs a json rpc call\n" +
             HelpExampleRpc("lockunspent", "false, "
-                                          "\"[{\\\"txid\\\":"
+                                          "\"[{\\\"txidem\\\":"
                                           "\\\"a08e6907dbbd3d809776dbfc5d82e371b764ed838b565"
                                           "5e72f463568df1aadf0\\\",\\\"vout\\\":1}]\""));
 
@@ -2534,21 +2613,30 @@ UniValue lockunspent(const UniValue &params, bool fHelp)
     for (unsigned int idx = 0; idx < outputs.size(); idx++)
     {
         const UniValue &output = outputs[idx];
+        COutPoint outpt;
         if (!output.isObject())
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected object");
-        const UniValue &o = output.get_obj();
+        {
+            string outpointhash = output.get_str();
+            if (!IsHex(outpointhash))
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected hex outpoint or object");
+            outpt = COutPoint(uint256S(outpointhash));
+        }
+        else
+        {
+            const UniValue &o = output.get_obj();
 
-        RPCTypeCheckObj(o, {{"txid", UniValue::VSTR}, {"vout", UniValue::VNUM}});
+            RPCTypeCheckObj(o, {{"txidem", UniValue::VSTR}, {"vout", UniValue::VNUM}});
 
-        string txid = find_value(o, "txid").get_str();
-        if (!IsHex(txid))
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected hex txid");
+            string txidem = find_value(o, "txidem").get_str();
+            if (!IsHex(txidem))
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, expected hex txidem");
 
-        int nOutput = find_value(o, "vout").get_int();
-        if (nOutput < 0)
-            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, vout must be positive");
+            int nOutput = find_value(o, "vout").get_int();
+            if (nOutput < 0)
+                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, vout must be positive");
 
-        COutPoint outpt(uint256S(txid), nOutput);
+            outpt = COutPoint(uint256S(txidem), nOutput);
+        }
 
         if (fUnlock)
             pwalletMain->UnlockCoin(outpt);
@@ -2578,7 +2666,7 @@ UniValue listlockunspent(const UniValue &params, bool fHelp)
                             "]\n"
                             "\nExamples:\n"
                             "\nList the unspent transactions\n" +
-                            HelpExampleCli("listunspent", "") + "\nLock an unspent transaction\n" +
+                            HelpExampleCli("lockunspent", "") + "\nLock an unspent transaction\n" +
                             HelpExampleCli("lockunspent", "false "
                                                           "\"[{\\\"txid\\\":"
                                                           "\\\"a08e6907dbbd3d809776dbfc5d82e371b764ed838b5655e72f463568"
@@ -2602,8 +2690,7 @@ UniValue listlockunspent(const UniValue &params, bool fHelp)
     {
         UniValue o(UniValue::VOBJ);
 
-        o.pushKV("txid", outpt.hash.GetHex());
-        o.pushKV("vout", (int)outpt.n);
+        o.pushKV("outpoint", outpt.GetHex());
         ret.push_back(o);
     }
 
@@ -2648,6 +2735,8 @@ UniValue getwalletinfo(const UniValue &params, bool fHelp)
             "\nResult:\n"
             "{\n"
             "  \"walletversion\": xxxxx,     (numeric) the wallet version\n"
+            "  \"syncblock\": string,         (hex hash) the wallet is synced to this block\n"
+            "  \"syncheight\": xxxx,         (numeric) the wallet is synced to this height\n"
             "  \"balance\": xxxxxxx,         (numeric) the total confirmed balance of the wallet in " +
             CURRENCY_UNIT +
             "\n"
@@ -2671,10 +2760,13 @@ UniValue getwalletinfo(const UniValue &params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getwalletinfo", "") + HelpExampleRpc("getwalletinfo", ""));
 
-    LOCK(pwalletMain->cs_wallet);
+    // I am locking main here to ensure that we accurately report what block the wallet is synced to
+    LOCK2(cs_main, pwalletMain->cs_wallet);
 
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("walletversion", pwalletMain->GetVersion());
+    obj.pushKV("syncblock", chainActive.Tip()->header.GetHash().ToString());
+    obj.pushKV("syncheight", chainActive.Tip()->height());
     obj.pushKV("balance", ValueFromAmount(pwalletMain->GetBalance()));
     obj.pushKV("unconfirmed_balance", ValueFromAmount(pwalletMain->GetUnconfirmedBalance()));
     obj.pushKV("immature_balance", ValueFromAmount(pwalletMain->GetImmatureBalance()));
@@ -2729,17 +2821,18 @@ UniValue listunspent(const UniValue &params, bool fHelp)
             "\nArguments:\n"
             "1. minconf          (numeric, optional, default=1) The minimum confirmations to filter\n"
             "2. maxconf          (numeric, optional, default=9999999) The maximum confirmations to filter\n"
-            "3. \"addresses\"    (string) A json array of bitcoin addresses to filter\n"
+            "3. \"addresses\"    (string) A json array of addresses to filter\n"
             "    [\n"
-            "      \"address\"   (string) bitcoin address\n"
+            "      \"address\"   (string) address\n"
             "      ,...\n"
             "    ]\n"
             "\nResult\n"
             "[                   (array of json object)\n"
             "  {\n"
+            "    \"outpoint\" : \"hash\"     (string) prevout identifier \n"
             "    \"txid\" : \"txid\",        (string) the transaction id \n"
             "    \"vout\" : n,               (numeric) the vout value\n"
-            "    \"address\" : \"address\",  (string) the bitcoin address\n"
+            "    \"address\" : \"address\",  (string) the address\n"
             "    \"account\" : \"account\",  (string) DEPRECATED. The associated account, or \"\" for the default "
             "account\n"
             "    \"scriptPubKey\" : \"key\", (string) the script key\n"
@@ -2754,10 +2847,10 @@ UniValue listunspent(const UniValue &params, bool fHelp)
             "\nExamples\n" +
             HelpExampleCli("listunspent", "") +
             HelpExampleCli("listunspent", "6 9999999 "
-                                          "\"[\\\"1PGFqEzfmQch1gKD3ra4k18PNj3tTUUSqg\\\","
+                                          "\"[\\\"nexa:qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\","
                                           "\\\"1LtvqCaApEdUGFkpKMM4MstjcaL4dKg8SP\\\"]\"") +
             HelpExampleRpc("listunspent", "6, 9999999 "
-                                          "\"[\\\"1PGFqEzfmQch1gKD3ra4k18PNj3tTUUSqg\\\","
+                                          "\"[\\\"nexa:qqqdf524crwrn659hattd40jn5ykz32xey7z6n5z28\\\","
                                           "\\\"1LtvqCaApEdUGFkpKMM4MstjcaL4dKg8SP\\\"]\""));
 
     RPCTypeCheck(params, {UniValue::VNUM, UniValue::VNUM, UniValue::VARR});
@@ -2779,7 +2872,7 @@ UniValue listunspent(const UniValue &params, bool fHelp)
             const UniValue &input = inputs[idx];
             CTxDestination address = DecodeDestination(input.get_str());
             if (!IsValidDestination(address))
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid Bitcoin address: ") + input.get_str());
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, string("Invalid coin address: ") + input.get_str());
             if (destinations.count(address))
                 throw JSONRPCError(
                     RPC_INVALID_PARAMETER, string("Invalid parameter, duplicated address: ") + input.get_str());
@@ -2796,7 +2889,8 @@ UniValue listunspent(const UniValue &params, bool fHelp)
     pwalletMain->AvailableCoins(vecOutputs, false, nullptr, true);
     for (const COutput &out : vecOutputs)
     {
-        if (out.nDepth < nMinDepth || out.nDepth > nMaxDepth)
+        int depth = out.GetDepthInMainChain();
+        if (depth < nMinDepth || depth > nMaxDepth)
             continue;
 
         if (destinations.size())
@@ -2812,7 +2906,9 @@ UniValue listunspent(const UniValue &params, bool fHelp)
         CAmount nValue = out.tx->vout[out.i].nValue;
         const CScript &pk = out.tx->vout[out.i].scriptPubKey;
         UniValue entry(UniValue::VOBJ);
-        entry.pushKV("txid", out.tx->GetHash().GetHex());
+        entry.pushKV("outpoint", out.GetOutPoint().hash.GetHex());
+        entry.pushKV("txid", out.tx->GetId().GetHex());
+        entry.pushKV("txidem", out.tx->GetIdem().GetHex());
         entry.pushKV("vout", out.i);
         CTxDestination address;
         if (ExtractDestination(out.tx->vout[out.i].scriptPubKey, address))
@@ -2835,8 +2931,8 @@ UniValue listunspent(const UniValue &params, bool fHelp)
         }
         entry.pushKV("satoshi", UniValue(nValue));
         entry.pushKV("amount", ValueFromAmount(nValue));
-        entry.pushKV("confirmations", out.nDepth);
-        entry.pushKV("spendable", out.fSpendable);
+        entry.pushKV("confirmations", depth);
+        entry.pushKV("spendable", out.spendable());
         results.push_back(entry);
     }
 
@@ -2872,7 +2968,7 @@ UniValue fundrawtransaction(const UniValue &params, bool fHelp)
             "\"hex\"             \n"
             "\nExamples:\n"
             "\nCreate a transaction with no inputs\n" +
-            HelpExampleCli("createrawtransaction", "\"[]\" \"{\\\"myaddress\\\":0.01}\"") +
+            HelpExampleCli("createrawtransaction", "\"[]\" \"{\\\"myaddress\\\":10.01}\"") +
             "\nAdd sufficient unsigned inputs to meet the output value\n" +
             HelpExampleCli("fundrawtransaction", "\"rawtransactionhex\"") + "\nSign the transaction\n" +
             HelpExampleCli("signrawtransaction", "\"fundedtransactionhex\"") + "\nSend the transaction\n" +
@@ -2903,6 +2999,9 @@ UniValue fundrawtransaction(const UniValue &params, bool fHelp)
     result.pushKV("hex", EncodeHexTx(tx));
     result.pushKV("changepos", nChangePos);
     result.pushKV("fee", ValueFromAmount(nFee));
+    result.pushKV("complete", true); // Match signrawtransaction RPC
+    result.pushKV("txid", tx.GetId().GetHex());
+    result.pushKV("txidem", tx.GetIdem().GetHex());
 
     return result;
 }
@@ -2951,6 +3050,7 @@ static const CRPCCommand commands[] = {
     {"wallet",                "keypoolrefill",            &keypoolrefill,            true},
     {"wallet",                "listaccounts",             &listaccounts,             false},
     {"wallet",                "listaddressgroupings",     &listaddressgroupings,     false},
+    {"wallet",                "listactiveaddresses",      &listactiveaddresses,      false},
     {"wallet",                "listlockunspent",          &listlockunspent,          false},
     {"wallet",                "listreceivedbyaccount",    &listreceivedbyaccount,    false},
     {"wallet",                "listreceivedbyaddress",    &listreceivedbyaddress,    false},
@@ -2972,7 +3072,6 @@ static const CRPCCommand commands[] = {
     {"wallet",                "walletpassphrase",         &walletpassphrase,         true},
     {"wallet",                "removeprunedfunds",        &removeprunedfunds,        true},
 };
-/* clang-format on */
 
 void RegisterWalletRPCCommands(CRPCTable &table)
 {

@@ -8,6 +8,7 @@
 #include "blockstorage/blockstorage.h"
 #include "chain.h"
 #include "chainparams.h"
+#include "consensus/adaptive_blocksize.h"
 #include "consensus/consensus.h"
 #include "consensus/params.h"
 #include "consensus/validation.h"
@@ -48,16 +49,16 @@ UniValue GetNetworkHashPS(int lookup, int height)
     if (height >= 0 && height < chainActive.Height())
         pb = chainActive[height];
 
-    if (pb == nullptr || !pb->nHeight)
+    if (pb == nullptr || !pb->height())
         return 0;
 
     // If lookup is -1, then use blocks since last difficulty change.
     if (lookup <= 0)
-        lookup = pb->nHeight % Params().GetConsensus().DifficultyAdjustmentInterval() + 1;
+        lookup = pb->height() % Params().GetConsensus().DifficultyAdjustmentInterval() + 1;
 
     // If lookup is larger than chain, then set it to chain length.
-    if (lookup > pb->nHeight)
-        lookup = pb->nHeight;
+    if (lookup > pb->height())
+        lookup = pb->height();
 
     CBlockIndex *pb0 = pb;
     int64_t minTime = pb0->GetBlockTime();
@@ -74,7 +75,7 @@ UniValue GetNetworkHashPS(int lookup, int height)
     if (minTime == maxTime)
         return 0;
 
-    arith_uint256 workDiff = pb->nChainWork - pb0->nChainWork;
+    arith_uint256 workDiff = pb->chainWork() - pb0->chainWork();
     int64_t timeDiff = maxTime - minTime;
 
     return workDiff.getdouble() / timeDiff;
@@ -107,7 +108,7 @@ UniValue generateBlocks(boost::shared_ptr<CReserveScript> coinbaseScript,
     uint64_t nMaxTries,
     bool keepScript)
 {
-    static const int nInnerLoopCount = 0x10000;
+    static const uint64_t nInnerLoopCount = 0x10000;
     int nHeightStart = 0;
     int nHeightEnd = 0;
     int nHeight = 0;
@@ -116,8 +117,8 @@ UniValue generateBlocks(boost::shared_ptr<CReserveScript> coinbaseScript,
     nHeight = nHeightStart;
     nHeightEnd = nHeightStart + nGenerate;
 
-    unsigned int nExtraNonce = 0;
     UniValue blockHashes(UniValue::VARR);
+    auto p = Params().GetConsensus();
     while (nHeight < nHeightEnd)
     {
         std::unique_ptr<CBlockTemplate> pblocktemplate;
@@ -129,21 +130,22 @@ UniValue generateBlocks(boost::shared_ptr<CReserveScript> coinbaseScript,
             throw JSONRPCError(RPC_INTERNAL_ERROR, "Couldn't create new block");
 
         CBlockRef pblock = pblocktemplate->block;
-        IncrementExtraNonce(pblock, nExtraNonce);
-        while (nMaxTries > 0 && pblock->nNonce < nInnerLoopCount &&
-               !CheckProofOfWork(pblock->GetHash(), pblock->nBits, Params().GetConsensus()))
-        {
-            ++pblock->nNonce;
-            --nMaxTries;
-        }
+        pblock->nonce.resize(4);
+
+        auto tries = min(nInnerLoopCount, nMaxTries);
+        bool worked = MineBlock(*pblock, tries, p);
+        nMaxTries -= tries;
+
         if (nMaxTries == 0)
         {
             break;
         }
-        if (pblock->nNonce == nInnerLoopCount)
+
+        if (worked == false)
         {
             continue;
         }
+        // Ok we found a block, so process it
 
         // In we are mining our own block or not running in parallel for any reason
         // we must terminate any block validation threads that are currently running,
@@ -187,7 +189,7 @@ UniValue generate(const UniValue &params, bool fHelp)
                             HelpExampleCli("generate", "11"));
 
     int nGenerate = params[0].get_int();
-    uint64_t nMaxTries = 1000000;
+    uint64_t nMaxTries = 100000000;
     if (params.size() > 1)
     {
         nMaxTries = params[1].get_int();
@@ -283,10 +285,10 @@ UniValue prioritisetransaction(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
         throw runtime_error(
-            "prioritisetransaction <txid> <priority delta> <fee delta>\n"
+            "prioritisetransaction <tx id or idem> <priority delta> <fee delta>\n"
             "Accepts the transaction into mined blocks at a higher (or lower) priority\n"
             "\nArguments:\n"
-            "1. \"txid\"       (string, required) The transaction id.\n"
+            "1. \"tx id or idem\"       (string, required) The transaction id or idem.\n"
             "2. priority delta (numeric, required) The priority to add or subtract.\n"
             "                  The transaction selection algorithm considers the tx as it would have a higher "
             "priority.\n"
@@ -301,10 +303,9 @@ UniValue prioritisetransaction(const UniValue &params, bool fHelp)
             HelpExampleCli("prioritisetransaction", "\"txid\" 0.0 10000") +
             HelpExampleRpc("prioritisetransaction", "\"txid\", 0.0, 10000"));
 
-    uint256 hash = ParseHashStr(params[0].get_str(), "txid");
+    uint256 hash = ParseHashStr(params[0].get_str(), "tx id or idem");
     CAmount nAmount = params[2].get_int64();
-    mempool.PrioritiseTransaction(hash, params[0].get_str(), params[1].get_real(), nAmount);
-    return true;
+    return mempool.PrioritiseTransaction(hash, params[0].get_str(), params[1].get_real(), nAmount);
 }
 
 
@@ -415,7 +416,6 @@ static UniValue MkFullMiningCandidateJson(const std::set<std::string> &setClient
     const int nMaxVersionPreVB,
     const unsigned int nTransactionsUpdatedLast)
 {
-    bool may2020Enabled = IsMay2020Activated(Params().GetConsensus(), pindexPrev);
     CBlockRef pblock = pblocktemplate->block; // pointer for convenience
     UniValue aCaps(UniValue::VARR);
     aCaps.push_back("proposal");
@@ -427,7 +427,7 @@ static UniValue MkFullMiningCandidateJson(const std::set<std::string> &setClient
     for (const auto &it : pblock->vtx)
     {
         const CTransaction &tx = *it;
-        uint256 txHash = tx.GetHash();
+        uint256 txHash = tx.GetId();
         setTxIndex[txHash] = i++;
 
         if (tx.IsCoinBase())
@@ -449,24 +449,14 @@ static UniValue MkFullMiningCandidateJson(const std::set<std::string> &setClient
 
         int index_in_template = i - 1;
         entry.pushKV("fee", pblocktemplate->vTxFees[index_in_template]);
-        if (!may2020Enabled)
-            entry.pushKV("sigops", pblocktemplate->vTxSigOps[index_in_template]);
-        else
-        {
-            // sigops is deprecated and not part of this block's consensus so report 0
-            entry.pushKV("sigops", 0);
-            entry.pushKV("sigchecks", pblocktemplate->vTxSigOps[index_in_template]);
-            sigcheckTotal += pblocktemplate->vTxSigOps[index_in_template];
-        }
+        entry.pushKV("sigchecks", pblocktemplate->vTxSigOps[index_in_template]);
+        sigcheckTotal += pblocktemplate->vTxSigOps[index_in_template];
 
         transactions.push_back(entry);
     }
 
     UniValue aRules(UniValue::VARR);
     UniValue vbavailable(UniValue::VOBJ);
-
-    pblock->nVersion = UtilMkBlockTmplVersionBits(pblock->nVersion, setClientRules, pindexPrev, &aRules, &vbavailable);
-
     UniValue aux(UniValue::VOBJ);
     // COINBASE_FLAGS were assigned in CreateNewBlock() in the steps above.  Now we can use it here.
     {
@@ -483,7 +473,6 @@ static UniValue MkFullMiningCandidateJson(const std::set<std::string> &setClient
 
     UniValue result(UniValue::VOBJ);
     result.pushKV("capabilities", aCaps);
-    result.pushKV("version", pblock->nVersion);
     result.pushKV("rules", aRules);
     result.pushKV("vbavailable", vbavailable);
     result.pushKV("vbrequired", int(0));
@@ -509,14 +498,8 @@ static UniValue MkFullMiningCandidateJson(const std::set<std::string> &setClient
     result.pushKV("mintime", (int64_t)pindexPrev->GetMedianTimePast() + 1);
     result.pushKV("mutable", aMutable);
     result.pushKV("noncerange", "00000000ffffffff");
-
-    // Deprecated after may 2020 but leave it in in case miners are using it in their code.
-    result.pushKV("sigoplimit", (int64_t)MAX_BLOCK_SIGOPS_PER_MB);
-    if (may2020Enabled)
-    {
-        result.pushKV("sigchecklimit", maxSigChecks.Value());
-        result.pushKV("sigchecktotal", sigcheckTotal);
-    }
+    result.pushKV("sigchecklimit", GetMaxBlockSigChecks(pindexPrev->GetNextMaxBlockSize()));
+    result.pushKV("sigchecktotal", sigcheckTotal);
 
     result.pushKV("sizelimit", (int64_t)maxGeneratedBlock);
     result.pushKV("curtime", pblock->GetBlockTime());
@@ -765,12 +748,11 @@ UniValue mkblocktemplate(const UniValue &params,
 
     // Update nTime
     UpdateTime(pblock.get(), consensusParams, pindexPrev);
-    pblock->nNonce = 0;
+    pblock->nonce.clear();
 
     if (pblockOut != nullptr)
     {
         // Make a block.
-        pblock->nVersion = UtilMkBlockTmplVersionBits(pblock->nVersion, setClientRules, pindexPrev, nullptr, nullptr);
         *pblockOut = *pblock;
         return UniValue();
     }
@@ -889,6 +871,7 @@ protected:
     };
 };
 
+
 UniValue SubmitBlock(CBlock &block)
 {
     uint256 hash = block.GetHash();
@@ -910,16 +893,19 @@ UniValue SubmitBlock(CBlock &block)
     CValidationState state;
     submitblock_StateCatcher sc(block.GetHash());
     LOG(RPC, "Received block %s via RPC.\n", block.GetHash().ToString());
-    RegisterValidationInterface(&sc);
+    bool fAccepted = false;
+    {
+        RaiiRegisterValidationInterface regDereg(&sc);
 
-    // In we are mining our own block or not running in parallel for any reason
-    // we must terminate any block validation threads that are currently running,
-    // Unless they have more work than our own block or are processing a chain
-    // that has more work than our block.
-    PV->StopAllValidationThreads(block.GetBlockHeader().nBits);
+        // In we are mining our own block or not running in parallel for any reason
+        // we must terminate any block validation threads that are currently running,
+        // Unless they have more work than our own block or are processing a chain
+        // that has more work than our block.
+        PV->StopAllValidationThreads(block.GetBlockHeader().nBits);
 
-    bool fAccepted = ProcessNewBlock(state, Params(), nullptr, std::make_shared<CBlock>(block), true, nullptr, false);
-    UnregisterValidationInterface(&sc);
+        fAccepted = ProcessNewBlock(state, Params(), nullptr, std::make_shared<CBlock>(block), true, nullptr, false);
+    }
+
     if (fBlockPresent)
     {
         if (fAccepted && !sc.found)

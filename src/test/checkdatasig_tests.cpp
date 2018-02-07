@@ -13,8 +13,8 @@
 
 #include <array>
 
-typedef std::vector<uint8_t> valtype;
-typedef std::vector<valtype> stacktype;
+typedef StackItem valtype;
+typedef Stack stacktype;
 
 BOOST_FIXTURE_TEST_SUITE(checkdatasig_tests, BasicTestingSetup)
 
@@ -47,7 +47,7 @@ static void CheckError(uint32_t flags, const stacktype &original_stack, const CS
     stacktype stack{original_stack};
     // Note that this returns false for CHECKSIG, whereas an empty ScriptImportedState() errors out with missing data
     BaseSignatureChecker checker;
-    ScriptImportedState sis(&checker, MakeTransactionRef(), std::vector<CTxOut>(), 0, 0);
+    ScriptImportedState sis(&checker, MakeTransactionRef(), std::vector<CTxOut>(), (unsigned int)-1, 0);
     bool r = EvalScript(stack, script, flags, MAX_OPS_PER_SCRIPT, sis, &err);
     BOOST_CHECK(!r);
     BOOST_CHECK_EQUAL(err, expected);
@@ -59,7 +59,7 @@ static void CheckPass(uint32_t flags, const stacktype &original_stack, const CSc
     stacktype stack{original_stack};
     // Note that this returns false for CHECKSIG, whereas an empty ScriptImportedState() errors out with missing data
     BaseSignatureChecker checker;
-    ScriptImportedState sis(&checker, MakeTransactionRef(), std::vector<CTxOut>(), 0, 0);
+    ScriptImportedState sis(&checker, MakeTransactionRef(), std::vector<CTxOut>(), (unsigned int)-1, 0);
     bool r = EvalScript(stack, script, flags, MAX_OPS_PER_SCRIPT, sis, &err);
     BOOST_CHECK(r);
     BOOST_CHECK_EQUAL(err, SCRIPT_ERR_OK);
@@ -105,9 +105,9 @@ BOOST_AUTO_TEST_CASE(checkdatasig_test)
 
     // Check various pubkey encoding.
     const valtype message{};
-    valtype vchHash(32);
-    CSHA256().Write(message.data(), message.size()).Finalize(vchHash.data());
-    uint256 messageHash(vchHash);
+    valtype vchHash(VchStack, 32);
+    CSHA256().Write(message.data().data(), message.size()).Finalize(vchHash.mdata().data());
+    uint256 messageHash(vchHash.data());
 
     KeyData kd;
     valtype pubkey = ToByteVector(kd.pubkey);
@@ -125,7 +125,7 @@ BOOST_AUTO_TEST_CASE(checkdatasig_test)
 
     // Check valid signatures (as in the signature format is valid).
     valtype validsig;
-    kd.privkey.SignECDSA(messageHash, validsig);
+    kd.privkey.SignSchnorr(messageHash, validsig.mdata());
 
     CheckTestResultForAllFlags({validsig, message, pubkey}, CScript() << OP_CHECKDATASIG, {{0x01}});
     CheckTestResultForAllFlags({validsig, message, pubkey}, CScript() << OP_CHECKDATASIGVERIFY, {});

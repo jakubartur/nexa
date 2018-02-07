@@ -19,10 +19,10 @@
 #include "random.h"
 #include "script/sign.h"
 #include "streams.h"
+#include "tinyformat.h"
 #include "uint256.h"
 #include "util.h"
 #include "utilstrencodings.h"
-
 #define MAX_SIG_LEN 100 // DER-encoded ECDSA is more like 72 but better to be safe
 
 #ifndef ANDROID
@@ -37,6 +37,30 @@ static bool sigInited = false;
 
 ECCVerifyHandle *verifyContext = nullptr;
 CChainParams *cashlibParams = nullptr;
+#ifdef DEBUG_PAUSE
+bool pauseOnDbgAssert = false;
+std::mutex dbgPauseMutex;
+std::condition_variable dbgPauseCond;
+void DbgPause()
+{
+#ifdef __linux__ // The thread ID returned by gettid is very useful since its shown in gdb
+    printf("\n!!! Process %d, Thread %ld (%lx) paused !!!\n", getpid(), syscall(SYS_gettid), pthread_self());
+#else
+    printf("\n!!! Process %d paused !!!\n", getpid());
+#endif
+    std::unique_lock<std::mutex> lk(dbgPauseMutex);
+    dbgPauseCond.wait(lk);
+}
+
+extern "C" void DbgResume() { dbgPauseCond.notify_all(); }
+#endif
+#ifdef ANDROID // log sighash calculations
+#include <android/log.h>
+#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "bu.sig", __VA_ARGS__)
+#else
+#define p(...)
+// tinyformat::format(std::cout, __VA_ARGS__)
+#endif
 
 // stop the logging
 int LogPrintStr(const std::string &str) { return str.size(); }
@@ -66,6 +90,7 @@ typedef enum
     AddrBlockchainBCHtestnet = 2,
     AddrBlockchainBCHregtest = 3,
     AddrBlockchainNol = 4,
+    AddrBlockchainNextChain = 5,
 } ChainSelector;
 
 CChainParams *GetChainParams(ChainSelector chainSelector)
@@ -78,11 +103,14 @@ CChainParams *GetChainParams(ChainSelector chainSelector)
         return &Params(CBaseChainParams::REGTEST);
     else if (chainSelector == AddrBlockchainNol)
         return &Params(CBaseChainParams::UNL);
+    else if (chainSelector == AddrBlockchainNextChain)
+        return &Params(CBaseChainParams::NEXTCHAIN);
     else
         return nullptr;
 }
 
-
+// No-op this RPC function that is unused in .so context
+extern UniValue token(const UniValue &params, bool fHelp) { return UniValue(); }
 // helper functions
 namespace
 {
@@ -156,7 +184,7 @@ SLAPI int GetPubKey(unsigned char *keyData, unsigned char *result, unsigned int 
 }
 
 /** Sign data (compatible with OP_CHECKDATASIG) */
-SLAPI int SignData(unsigned char *data,
+SLAPI int SignHashEDCSA(unsigned char *data,
     int datalen,
     unsigned char *secret,
     unsigned char *result,
@@ -167,7 +195,7 @@ SLAPI int SignData(unsigned char *data,
     uint256 hash;
     CSHA256().Write(data, datalen).Finalize(hash.begin());
     std::vector<uint8_t> sig;
-    if (!key.SignSchnorr(hash, sig))
+    if (!key.SignECDSA(hash, sig))
     {
         return 0;
     }
@@ -178,13 +206,47 @@ SLAPI int SignData(unsigned char *data,
     return sigSize;
 }
 
+SLAPI int txid(unsigned char *txData, int txbuflen, unsigned char *result)
+{
+    CTransaction tx;
+    CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
+    try
+    {
+        ssData >> tx;
+    }
+    catch (const std::exception &)
+    {
+        return 0;
+    }
+    uint256 ret = tx.GetId();
+    memcpy(result, ret.begin(), ret.size());
+    return 1;
+}
+
+SLAPI int txidem(unsigned char *txData, int txbuflen, unsigned char *result)
+{
+    CTransaction tx;
+    CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
+    try
+    {
+        ssData >> tx;
+    }
+    catch (const std::exception &)
+    {
+        return 0;
+    }
+    uint256 ret = tx.GetIdem();
+    memcpy(result, ret.begin(), ret.size());
+    return 1;
+}
+
 /** Sign one input of a transaction
     All buffer arguments should be in binary-serialized data.
     The transaction (txData) must contain the COutPoint (tx hash and vout) of all relevant inputs,
     however, it is not necessary to provide the spend script.
     Returns length of returned signature.
 */
-SLAPI int SignTx(unsigned char *txData,
+SLAPI int SignTxECDSA(unsigned char *txData,
     int txbuflen,
     unsigned int inputIdx,
     int64_t inputAmount,
@@ -271,10 +333,12 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     size_t nHashedOut = 0;
     uint256 sighash = SignatureHash(priorScript, tx, inputIdx, nHashType, inputAmount, &nHashedOut);
     std::vector<unsigned char> sig;
+    CPubKey pub = key.GetPubKey();
     if (!key.SignSchnorr(sighash, sig))
     {
         return 0;
     }
+    p("Sign Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig), HexStr(pub.begin(), pub.end()), sighash.GetHex());
     sig.push_back((unsigned char)nHashType);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
@@ -322,9 +386,10 @@ of the ScriptMachine.
 class ScriptMachineData
 {
 public:
-    ScriptMachineData() : sm(nullptr), tx(nullptr), checker(nullptr), script(nullptr) {}
+    ScriptMachineData() : sm(nullptr), tx(nullptr), sis(nullptr), script(nullptr) {}
     ScriptMachine *sm;
-    std::shared_ptr<CTransaction> tx;
+
+    CTransactionRef tx;
     std::shared_ptr<BaseSignatureChecker> checker;
     std::shared_ptr<ScriptImportedState> sis;
     std::shared_ptr<CScript> script;
@@ -344,7 +409,7 @@ public:
 SLAPI void *CreateNoContextScriptMachine(unsigned int flags)
 {
     ScriptMachineData *smd = new ScriptMachineData();
-    smd->sis = std::make_shared<ScriptImportedState>(nullptr, smd->tx, std::vector<CTxOut>(), 0, 0);
+    smd->sis = std::make_shared<ScriptImportedState>(nullptr, smd->tx, std::vector<CTxOut>(), -1, 0);
     smd->sm = new ScriptMachine(flags, *smd->sis, 0xffffffff, 0xffffffff);
     return (void *)smd;
 }
@@ -417,8 +482,9 @@ SLAPI void *SmClone(void *smId)
     ScriptMachineData *from = (ScriptMachineData *)smId;
     ScriptMachineData *to = new ScriptMachineData();
     to->script = from->script;
-    to->checker = from->checker;
+    to->sis = from->sis;
     to->tx = from->tx;
+    to->sis->tx = to->tx; // Get it pointing to the right object even though they are currently the same
     to->sm = new ScriptMachine(*from->sm);
     return (void *)to;
 }
@@ -479,36 +545,72 @@ SLAPI void SmReset(void *smId)
 
 // Get a stack item, 0 = stack, 1 = altstack,  pass a buffer at least 520 bytes in size
 // returns length of the item or -1 if no item.  0 is the stack top
-SLAPI void SmSetStackItem(void *smId, unsigned int stack, int index, const unsigned char *value, unsigned int valsize)
+SLAPI void SmSetStackItem(void *smId,
+    unsigned int stack,
+    int index,
+    StackElementType t,
+    const unsigned char *value,
+    unsigned int valsize)
 {
     ScriptMachineData *smd = (ScriptMachineData *)smId;
 
-    const std::vector<StackDataType> &stk = (stack == 0) ? smd->sm->getStack() : smd->sm->getAltStack();
+    const std::vector<StackItem> &stk = (stack == 0) ? smd->sm->getStack() : smd->sm->getAltStack();
     if (((int)stk.size()) <= index)
         return;
+
+    StackItem si;
+    if (t == StackElementType::VCH)
+    {
+        si = StackItem(value, value + valsize);
+    }
+    else if (t == StackElementType::BIGNUM)
+    {
+        BigNum bn;
+        bn.deserialize(value, valsize);
+        si = StackItem(bn);
+    }
+    else
+    {
+        return;
+    }
+
     if (stack == 0)
     {
-        smd->sm->setStackItem(index, StackDataType(value, value + valsize));
+        smd->sm->setStackItem(index, si);
     }
     else if (stack == 1)
     {
-        smd->sm->setAltStackItem(index, StackDataType(value, value + valsize));
+        smd->sm->setAltStackItem(index, si);
     }
 }
 
 // Get a stack item, 0 = stack, 1 = altstack,  pass a buffer at least 520 bytes in size
 // returns length of the item or -1 if no item.  0 is the stack top
-SLAPI int SmGetStackItem(void *smId, unsigned int stack, unsigned int index, unsigned char *result)
+SLAPI int SmGetStackItem(void *smId, unsigned int stack, unsigned int index, StackElementType *t, unsigned char *result)
 {
     ScriptMachineData *smd = (ScriptMachineData *)smId;
 
-    const std::vector<StackDataType> &stk = (stack == 0) ? smd->sm->getStack() : smd->sm->getAltStack();
+    const std::vector<StackItem> &stk = (stack == 0) ? smd->sm->getStack() : smd->sm->getAltStack();
     if (stk.size() <= index)
         return -1;
     index = stk.size() - index - 1; // reverse it so 0 is stack top
-    int sz = stk[index].size();
-    memcpy(result, stk[index].data(), sz);
-    return sz;
+
+    const StackItem &item = stk[index];
+
+    *t = item.type;
+    if (item.type == StackElementType::VCH)
+    {
+        int sz = stk[index].size();
+        memcpy(result, stk[index].data().data(), sz);
+        return sz;
+    }
+    else if (item.type == StackElementType::BIGNUM)
+    {
+        int sz = item.num().serialize(result, 512);
+        return (sz);
+    }
+    else
+        return 0;
 }
 
 // Returns the last error generated during script evaluation (if any)
@@ -782,7 +884,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
         return jbyteArray();
 
     unsigned char result[MAX_SIG_LEN];
-    uint32_t resultLen = SignTx(tx.data, tx.size, inputIdx, inputAmount, prevout.data, prevout.size, sigHashType,
+    uint32_t resultLen = SignTxECDSA(tx.data, tx.size, inputIdx, inputAmount, prevout.data, prevout.size, sigHashType,
         privkey.data, result, MAX_SIG_LEN);
 
     if (resultLen == 0)
@@ -825,6 +927,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
     jint flags,
     jint tweak)
 {
+    jclass byteArrayClass = env->FindClass("[B");
     size_t len = env->GetArrayLength(arg);
     if (capacity < 10)
         capacity = 10; // sanity check the capacity
@@ -839,8 +942,19 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
 
     for (size_t i = 0; i < len; i++)
     {
-        jbyteArray elem = (jbyteArray)env->GetObjectArrayElement(arg, i);
+        jobject obj = env->GetObjectArrayElement(arg, i);
+        if (!env->IsInstanceOf(obj, byteArrayClass))
+        {
+            triggerJavaIllegalStateException(env, "incorrect element data type (must be ByteArray)");
+            return nullptr;
+        }
+        jbyteArray elem = (jbyteArray)obj;
         jbyte *elemData = env->GetByteArrayElements(elem, 0);
+        if (elemData == NULL)
+        {
+            triggerJavaIllegalStateException(env, "incorrect element data type (must be ByteArray)");
+            return nullptr;
+        }
         size_t elemLen = env->GetArrayLength(elem);
         bloom.insert(std::vector<unsigned char>(elemData, elemData + elemLen));
         env->ReleaseByteArrayElements(elem, elemData, 0);
@@ -852,9 +966,11 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
         (unsigned int)bloom.vDataSize(), (unsigned int)serializer.size(), (unsigned int)len);
     jbyteArray ret = env->NewByteArray(serializer.size());
     jbyte *retData = env->GetByteArrayElements(ret, 0);
+
     if (!retData)
         return ret; // failed
     memcpy(retData, serializer.data(), serializer.size());
+
     env->ReleaseByteArrayElements(ret, retData, 0);
     return ret;
 }

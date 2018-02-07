@@ -13,21 +13,14 @@
 #include "txmempool.h"
 #include <queue>
 
-/** The default value for -minrelaytxfee in sat/byte */
-static const double DEFAULT_MINLIMITERTXFEE = (double)DEFAULT_MIN_RELAY_TX_FEE / 1000;
-/** The default value for -maxrelaytxfee in sat/byte */
-static const double DEFAULT_MAXLIMITERTXFEE = (double)DEFAULT_MIN_RELAY_TX_FEE / 1000;
-/** The number of block heights to gradually choke spam transactions over */
-static const unsigned int MAX_BLOCK_SIZE_MULTIPLIER = 3;
+/** The default value for -minrelaytxfee in sat/KB */
+static const uint32_t DEFAULT_MINRELAYTXFEE = 1000;
 
 /** The maximum number of free transactions (in KB) that can enter the mempool per minute.
  *  For a 1MB block we allow 15KB of free transactions per 1 minute.
  */
 // static const uint32_t DEFAULT_LIMITFREERELAY = DEFAULT_BLOCK_MAX_SIZE * 0.000015;
 static const uint32_t DEFAULT_LIMITFREERELAY = 0;
-/** The minimum value possible for -limitfreerelay when rate limiting */
-// static const unsigned int DEFAULT_MIN_LIMITFREERELAY = 1;
-static const unsigned int DEFAULT_MIN_LIMITFREERELAY = 0;
 
 /** Subject free transactions to priority checking when entering the mempool */
 static const bool DEFAULT_RELAYPRIORITY = false;
@@ -146,6 +139,7 @@ extern std::queue<CTxInputData> txDeferQ;
 // Transactions that are validated and can be committed to the mempool, and protection
 extern CWaitableCriticalSection csCommitQ;
 extern CConditionVariable cvCommitQ;
+// extern CConditionVariable cvCommitted;  // notified whenever txes are committed.
 extern std::map<uint256, CTxCommitData> *txCommitQ;
 
 // returns a transaction ref, if it exists in the commitQ
@@ -208,6 +202,7 @@ void ThreadTxAdmission();
  * See consensus/consensus.h for flag definitions.
  */
 bool CheckFinalTx(const CTransactionRef tx, int flags = -1, const Snapshot *ss = nullptr);
+bool CheckFinalTx(const CTransaction *tx, int flags = -1, const Snapshot *ss = nullptr);
 
 /*
  * Check if transaction will be BIP 68 final in the next block to be created.

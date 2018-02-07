@@ -6,9 +6,11 @@
 #include "tx_verify.h"
 
 #include "consensus.h"
+#include "grouptokens.h"
 #include "main.h"
 #include "primitives/transaction.h"
 #include "script/interpreter.h"
+#include "tweak.h"
 #include "unlimited.h"
 #include "validation.h"
 
@@ -19,8 +21,14 @@
 
 #include <boost/scope_exit.hpp>
 
+extern CTweak<bool> enforceMinTxSize;
 
 bool IsFinalTx(const CTransactionRef tx, int nBlockHeight, int64_t nBlockTime)
+{
+    return IsFinalTx(tx.get(), nBlockHeight, nBlockTime);
+}
+
+bool IsFinalTx(const CTransaction *tx, int nBlockHeight, int64_t nBlockTime)
 {
     if (tx->nLockTime == 0)
         return true;
@@ -111,7 +119,7 @@ bool EvaluateSequenceLocks(const CBlockIndex &block, std::pair<int, int64_t> loc
 {
     assert(block.pprev);
     int64_t nBlockTime = block.pprev->GetMedianTimePast();
-    if (lockPair.first >= block.nHeight || lockPair.second >= nBlockTime)
+    if (lockPair.first >= block.height() || lockPair.second >= nBlockTime)
         return false;
 
     return true;
@@ -163,27 +171,9 @@ bool ContextualCheckTransaction(const CTransactionRef tx,
     CBlockIndex *const pindexPrev,
     const CChainParams &params)
 {
-    const int nHeight = pindexPrev == nullptr ? 0 : pindexPrev->nHeight + 1;
-    auto consensusParams = params.GetConsensus();
-
-    if (IsMay2020Activated(consensusParams, nHeight) == false)
-    {
-        // Check that the transaction doesn't have an excessive number of sigops
-        unsigned int nSigOps = GetLegacySigOpCount(tx, STANDARD_SCRIPT_VERIFY_FLAGS);
-        if (nSigOps > MAX_TX_SIGOPS_COUNT)
-            return state.DoS(10, false, REJECT_INVALID, "bad-txns-too-many-sigops");
-    }
-
-    // Make sure tx size is equal or higher to 100 bytes if we are on the BCH chain and Nov 15th 2018 activated
-    if (IsNov2018Activated(consensusParams, nHeight))
-    {
-        if (tx->GetTxSize() < MIN_TX_SIZE)
-        {
-            return state.DoS(
-                10, error("%s: contains transactions that are too small", __func__), REJECT_INVALID, "txn-undersize");
-        }
-    }
-
+    // Commented out until needed again.
+    // const int nHeight = pindexPrev == nullptr ? 0 : pindexPrev->height() + 1;
+    // auto consensusParams = params.GetConsensus();
 
     return true;
 }
@@ -191,19 +181,21 @@ bool ContextualCheckTransaction(const CTransactionRef tx,
 bool CheckTransaction(const CTransactionRef tx, CValidationState &state)
 {
     // Basic checks that don't depend on any context
-    if (tx->vin.empty())
-        return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
     if (tx->vout.empty())
         return state.DoS(10, false, REJECT_INVALID, "bad-txns-vout-empty");
 
-    // Sigops moved to ContextualCheckTransaction because the consensus rule goes away after may2020 fork
-
     // Size limit
-    if (tx->GetTxSize() > maxTxSize.Value())
+    if (tx->GetTxSize() > DEFAULT_LARGEST_TRANSACTION)
     {
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-oversize");
     }
 
+    // Make sure tx size is equal to or above the minimum allowed
+    if ((tx->GetTxSize() < MIN_TX_SIZE) && enforceMinTxSize.Value())
+    {
+        return state.DoS(
+            10, error("%s: contains transactions that are too small", __func__), REJECT_INVALID, "txn-undersize");
+    }
 
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
@@ -220,12 +212,15 @@ bool CheckTransaction(const CTransactionRef tx, CValidationState &state)
 
     if (tx->IsCoinBase())
     {
-        // BU convert 100 to a constant so we can use it during generation
-        if (tx->vin[0].scriptSig.size() < 2 || tx->vin[0].scriptSig.size() > MAX_COINBASE_SCRIPTSIG_SIZE)
-            return state.DoS(100, false, REJECT_INVALID, "bad-cb-length");
+        // Coinbase tx can't have group outputs because it has no group inputs or mintable outputs
+        if (IsAnyTxOutputGrouped(*tx))
+            return state.DoS(100, false, REJECT_INVALID, "coinbase-has-group-outputs");
     }
     else
     {
+        if (tx->vin.empty())
+            return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
+
         // Check for duplicate inputs.
         // Simply checking every pair is O(n^2).
         // Sorting a vector and checking adjacent elements is O(n log n).
@@ -287,7 +282,7 @@ static int GetSpendHeight(const CCoinsViewCache &inputs)
     {
         CBlockIndex *pindexPrev = i->second;
         if (pindexPrev)
-            return pindexPrev->nHeight + 1;
+            return pindexPrev->height() + 1;
         else
         {
             throw std::runtime_error("GetSpendHeight(): mapBlockIndex contains null block");

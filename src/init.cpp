@@ -83,6 +83,9 @@
 #include <zmq/zmqrpc.h>
 #endif
 
+extern CTweak<uint32_t> dataCarrierSize;
+extern CTweak<bool> dataCarrier;
+
 using namespace std;
 
 bool fFeeEstimatesInitialized = false;
@@ -443,6 +446,8 @@ static void ReconsiderChainOnStartup()
 {
     if (!fReindex && !(avoidReconsiderMostWorkChain.Value()))
     {
+        TxAdmissionPause txlock;
+        LOCK(cs_main);
         try
         {
             bool fOverride = false;
@@ -1043,28 +1048,13 @@ bool AppInit2(Config &config)
     // a transaction spammer can cheaply fill blocks using
     // 1-satoshi-fee transactions. It should be set above the real
     // cost to you of processing a transaction.
-    ::minRelayTxFee = CFeeRate((CAmount)(dMinLimiterTxFee.Value()) * 1000);
-
-    // -minrelaytxfee is no longer a command line option however it is still used in Bitcon Core so we want to tell
-    // any users that migrate from Core to BU that this option is not used.
-    if (mapArgs.count("-minrelaytxfee"))
-    {
-        InitWarning(_("Config option -minrelaytxfee is no longer supported.  To set the limit "
-                      "below which a transaction is considered zero fee please use -minlimitertxfee.  "
-                      "To convert -minrelaytxfee, which is specified  in BCH/KB, to -minlimtertxfee, "
-                      "which is specified in Satoshi/Byte, simply multiply the original -minrelaytxfee "
-                      "by 100,000. For example, a -minrelaytxfee=0.00001000 will become -minlimitertxfee=1.000"));
-    }
-
+    ::minRelayTxFee = CFeeRate((CAmount)minRelayFee.Value());
 
     bool fStandard = !GetBoolArg("-acceptnonstdtxn", !Params().RequireStandard());
     // If we specified an override but that override was not accepted then its an error
     if (fStandard != Params().RequireStandard())
         return InitError(
             strprintf("acceptnonstdtxn is not currently supported for %s chain", chainparams.NetworkIDString()));
-
-    // Set Dust Threshold for outputs.
-    nDustThreshold.Set(GetArg("-dustthreshold", DEFAULT_DUST_THRESHOLD));
 
     nBytesPerSigOp = GetArg("-bytespersigop", nBytesPerSigOp);
 
@@ -1074,14 +1064,6 @@ bool AppInit2(Config &config)
 #endif // ENABLE_WALLET
 
     fIsBareMultisigStd = GetBoolArg("-permitbaremultisig", DEFAULT_PERMIT_BAREMULTISIG);
-    fAcceptDatacarrier = GetBoolArg("-datacarrier", DEFAULT_ACCEPT_DATACARRIER);
-    nMaxDatacarrierBytes = GetArg("-datacarriersize", nMaxDatacarrierBytes);
-    if (nMaxDatacarrierBytes < MAX_OP_RETURN_RELAY)
-    {
-        InitWarning(strprintf(_("Increasing -datacarriersize from %d to %d due to new May 15th OP_RETURN size policy."),
-            nMaxDatacarrierBytes, MAX_OP_RETURN_RELAY));
-        nMaxDatacarrierBytes = MAX_OP_RETURN_RELAY;
-    }
 
     // Option to startup with mocktime set (used for regression testing):
     SetMockTime(GetArg("-mocktime", 0)); // SetMockTime(0) is a no-op
@@ -1385,7 +1367,7 @@ bool AppInit2(Config &config)
                 uiInterface.InitMessage(_("Loading block index..."));
                 if (!LoadBlockIndex())
                 {
-                    strLoadError = _("Error loading block database");
+                    strLoadError = strprintf("Error loading block database from %s", GetDataDir());
                     break;
                 }
 
@@ -1423,7 +1405,7 @@ bool AppInit2(Config &config)
                 // we intentionally do not check if tip is a nullptr here
                 // ActivateBestChain has already been called in either LoadBlockIndex or InitBlockIndex, if tip
                 // is nullptr here then there is a critical error somewhere
-                if (tip->nTime > GetAdjustedTime() + 2 * 60 * 60)
+                if (tip->time() > GetAdjustedTime() + 2 * 60 * 60)
                 {
                     strLoadError = _("The block database contains a block which appears to be from the future. "
                                      "This may be due to your computer's date and time being set incorrectly. "
@@ -1493,23 +1475,6 @@ bool AppInit2(Config &config)
     if (!est_filein.IsNull())
         mempool.ReadFeeEstimates(est_filein);
     fFeeEstimatesInitialized = true;
-
-    // Set fCanonicalTxsOrder for the BCH early in the bootstrap phase
-    if (IsNov2018Activated(Params().GetConsensus(), chainActive.Tip()))
-    {
-        if (chainparams.NetworkIDString() != "regtest")
-        {
-            fCanonicalTxsOrder = true;
-        }
-    }
-    else
-    {
-        if (chainparams.NetworkIDString() != "regtest")
-        {
-            fCanonicalTxsOrder = false;
-        }
-    }
-
 
     // ********************************************************* Step 7: load wallet
 

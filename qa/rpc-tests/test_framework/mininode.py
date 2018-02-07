@@ -516,6 +516,7 @@ class P2PDataStore(SingleNodeConnCB):
 
     def on_getdata(self, conn, message):
         """Check for the tx/block in our stores and if found, reply with an inv message."""
+        print("mininode on_getdata")
         for inv in message.inv:
             self.getdata_requests.append(inv.hash)
             if inv.type == CInv.MSG_TX and inv.hash in self.tx_store.keys():
@@ -537,7 +538,7 @@ class P2PDataStore(SingleNodeConnCB):
 
         headers_list = [self.block_store[self.last_block_hash]]
         maxheaders = 2000
-        while headers_list[-1].sha256 not in locator.vHave:
+        while headers_list[-1].gethash() not in locator.vHave:
             # Walk back through the block store, adding headers to headers_list
             # as we go.
             prev_block_hash = headers_list[-1].hashPrevBlock
@@ -545,7 +546,7 @@ class P2PDataStore(SingleNodeConnCB):
                 prev_block_header = CBlockHeader(
                     self.block_store[prev_block_hash])
                 headers_list.append(prev_block_header)
-                if prev_block_header.sha256 == hash_stop:
+                if prev_block_header.gethash() == hash_stop:
                     # if this is the hashstop header, stop here
                     break
             else:
@@ -574,8 +575,8 @@ class P2PDataStore(SingleNodeConnCB):
 
         with mininode_lock:
             for block in blocks:
-                self.block_store[block.sha256] = block
-                self.last_block_hash = block.sha256
+                self.block_store[block.gethash()] = block
+                self.last_block_hash = block.gethash()
 
         def to_headers(blocks):
             return [CBlockHeader(b) for b in blocks]
@@ -594,8 +595,8 @@ class P2PDataStore(SingleNodeConnCB):
 
             if request_block:
                 ok = wait_until(
-                    lambda: blocks[-1].sha256 in self.getdata_requests, timeout=timeout)
-                assert ok, "did not receive getdata for {}".format(blocks[-1].sha256)
+                    lambda: blocks[-1].gethash() in self.getdata_requests, timeout=timeout)
+                assert ok, "did not receive getdata for {}".format(blocks[-1].gethash())
 
             if expect_disconnect:
                 self.wait_for_disconnect()
@@ -610,6 +611,7 @@ class P2PDataStore(SingleNodeConnCB):
                 ct = waitForBlockInChainTips(node, blockHash, timeout)
                 assert ct["status"] == 'invalid'  # Was expecting failure but block is not invalid
                 gbbh = node.getbestblockhash()
+                print(gbbh, blocks[-1].hash)
                 assert gbbh != blocks[-1].hash
 
     def send_txs_and_test(self, txs, node, *, success=True, expect_ban=False, reject_reason=None, timeout=60):
@@ -623,7 +625,7 @@ class P2PDataStore(SingleNodeConnCB):
         assert(len(txs))
         with mininode_lock:
             for tx in txs:
-                self.tx_store[tx.sha256] = tx
+                self.tx_store[tx.GetId()] = tx
 
         BAN_MSG = "BAN THRESHOLD EXCEEDED"
         expected_msgs = []

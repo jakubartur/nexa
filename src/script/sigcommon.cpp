@@ -19,15 +19,31 @@
 #include <string>
 #include <vector>
 
+#ifdef ANDROID // log sighash calculations
+#include <android/log.h>
+#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "bu.sig", __VA_ARGS__)
+#else
+#define p(...)
+// tinyformat::format(std::cout, __VA_ARGS__)
+#endif
 
-namespace
-{
+
 uint256 GetPrevoutHash(const CTransaction &txTo)
 {
     CHashWriter ss(SER_GETHASH, 0);
     for (unsigned int n = 0; n < txTo.vin.size(); n++)
     {
         ss << txTo.vin[n].prevout;
+    }
+    return ss.GetHash();
+}
+
+uint256 GetInputAmountHash(const CTransaction &txTo)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    for (unsigned int n = 0; n < txTo.vin.size(); n++)
+    {
+        ss << txTo.vin[n].amount;
     }
     return ss.GetHash();
 }
@@ -124,6 +140,7 @@ public:
             ::Serialize(s, (int)0);
         else
             ::Serialize(s, txTo.vin[nInput].nSequence);
+        ::Serialize(s, txTo.vin[nInput].amount);
     }
 
     /** Serialize an output of txTo */
@@ -158,7 +175,6 @@ public:
     }
 };
 
-} // namespace
 
 // WARNING: Never use this to signal errors in a signature hash function. This is here solely for legacy reasons!
 const uint256 SIGNATURE_HASH_ERROR(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
@@ -219,28 +235,39 @@ static uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
 {
     uint256 hashPrevouts;
     uint256 hashSequence;
+    uint256 hashInputAmounts;
     uint256 hashOutputs;
 
+    p("Signature hash calculation with type: 0x%x\n", nHashType);
     if (!(nHashType & SIGHASH_ANYONECANPAY))
     {
         hashPrevouts = GetPrevoutHash(txTo);
+        p("Hashing prevouts to: %s\n", hashPrevouts.GetHex().c_str());
+        hashInputAmounts = GetInputAmountHash(txTo);
+        p("Hashing input amounts to: %s\n", hashInputAmounts.GetHex().c_str());
     }
 
+    /* gets the hash of the sequence numbers of every input */
     if (!(nHashType & SIGHASH_ANYONECANPAY) && (nHashType & 0x1f) != SIGHASH_SINGLE &&
         (nHashType & 0x1f) != SIGHASH_NONE)
     {
         hashSequence = GetSequenceHash(txTo);
+        p("Hashing input sequence numbers to: %s\n", hashSequence.GetHex().c_str());
     }
 
+    /* gets the hash of the serialization of every output */
     if ((nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE)
     {
         hashOutputs = GetOutputsHash(txTo);
+        p("Hashing every output to: %s\n", hashOutputs.GetHex().c_str());
     }
+    /* Or just serialize the output that corresponds to this input */
     else if ((nHashType & 0x1f) == SIGHASH_SINGLE && nIn < txTo.vout.size())
     {
         CHashWriter ss(SER_GETHASH, 0);
         ss << txTo.vout[nIn];
         hashOutputs = ss.GetHash();
+        p("Hashing just output %d to: %s\n", nIn, hashOutputs.GetHex().c_str());
     }
 
     CHashWriter ss(SER_GETHASH, 0);
@@ -248,23 +275,28 @@ static uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     ss << txTo.nVersion;
     // Input prevouts/nSequence (none/all, depending on flags)
     ss << hashPrevouts;
+    ss << hashInputAmounts;
     ss << hashSequence;
     // The input being signed (replacing the scriptSig with scriptCode +
     // amount). The prevout may already be contained in hashPrevout, and the
     // nSequence may already be contain in hashSequence.
     ss << txTo.vin[nIn].prevout;
     ss << static_cast<const CScriptBase &>(scriptCode);
-    ss << amount;
+    p("ScriptCode: %s\n", scriptCode.GetHex().c_str());
+    ss << txTo.vin[nIn].amount;
+    p("Amount: %ld\n", (long int)txTo.vin[nIn].amount);
     ss << txTo.vin[nIn].nSequence;
+    p("This input sequence: %d\n", txTo.vin[nIn].nSequence);
     // Outputs (none/one/all, depending on flags)
     ss << hashOutputs;
     // Locktime
     ss << txTo.nLockTime;
+    p("Locktime: %d\n", txTo.nLockTime);
     // Sighash type
     ss << nHashType;
 
     uint256 sighash = ss.GetHash();
-    // printf("SigHash: %s\n", sighash.GetHex().c_str());
+    p("Final sighash is: %s\n", sighash.GetHex().c_str());
     return sighash;
 }
 

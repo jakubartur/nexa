@@ -14,8 +14,8 @@
 #include <boost/test/unit_test.hpp>
 
 BOOST_FIXTURE_TEST_SUITE(native_introspection_tests, BasicTestingSetup)
-using valtype = std::vector<uint8_t>;
-using stacktype = std::vector<valtype>;
+using valtype = StackItem;
+using stacktype = Stack;
 
 static std::vector<ScriptImportedState> createForAllInputs(CTransactionRef tx,
     const CCoinsViewCache &coinsCache,
@@ -45,26 +45,26 @@ static std::vector<ScriptImportedState> createForAllInputs(CTransactionRef tx,
 
 
 static void CheckErrorWithFlags(uint32_t flags,
-    const stacktype &original_stack,
+    const Stack &original_stack,
     const CScript &script,
     const ScriptImportedState &sis,
     ScriptError expected)
 {
     ScriptError err = SCRIPT_ERR_OK;
-    stacktype stack{original_stack};
+    Stack stack = original_stack;
     bool r = EvalScript(stack, script, flags, MAX_OPS_PER_SCRIPT, sis, &err);
     BOOST_CHECK(!r);
     BOOST_CHECK(err == expected);
 }
 
 static void CheckPassWithFlags(uint32_t flags,
-    const stacktype &original_stack,
+    const Stack &original_stack,
     const CScript &script,
     const ScriptImportedState &sis,
-    const stacktype &expected)
+    const Stack &expected)
 {
     ScriptError err = SCRIPT_ERR_OK;
-    stacktype stack{original_stack};
+    Stack stack = original_stack;
     bool r = EvalScript(stack, script, flags, MAX_OPS_PER_SCRIPT, sis, &err);
     BOOST_CHECK(r);
     BOOST_CHECK(err == SCRIPT_ERR_OK);
@@ -85,8 +85,8 @@ BOOST_AUTO_TEST_CASE(opcodes_basic)
     const CScript coinScriptPubKey1 = CScript() << 2 << OP_ADD << 0 << OP_GREATERTHAN;
     const CScript coinScriptPubKey2 = CScript() << 3 << OP_ADD << 0 << OP_GREATERTHAN;
 
-    coins.AddCoin(in1, Coin(CTxOut(val1, coinScriptPubKey1), 1, false), false);
-    coins.AddCoin(in2, Coin(CTxOut(val2, coinScriptPubKey2), 1, false), false);
+    coins.AddCoin(in1, Coin(CTxOut(CTxOut::LEGACY, val1, coinScriptPubKey1), 1, false), false);
+    coins.AddCoin(in2, Coin(CTxOut(CTxOut::LEGACY, val2, coinScriptPubKey2), 1, false), false);
 
     CMutableTransaction tx;
     tx.vin.resize(2);
@@ -250,47 +250,23 @@ BOOST_AUTO_TEST_CASE(opcodes_basic)
     // OP_OUTPOINTTXHASH (unary)
     {
         const valtype expected0(in1.hash.begin(), in1.hash.end());
-        CheckPassWithFlags(flags, {}, CScript() << OP_0 << OP_OUTPOINTTXHASH, context[0], {expected0});
+        CheckPassWithFlags(flags, {}, CScript() << OP_0 << OP_OUTPOINTHASH, context[0], {expected0});
 
         const valtype expected1(in2.hash.begin(), in2.hash.end());
-        CheckPassWithFlags(flags, {}, CScript() << OP_1 << OP_OUTPOINTTXHASH, context[1], {expected1});
+        CheckPassWithFlags(flags, {}, CScript() << OP_1 << OP_OUTPOINTHASH, context[1], {expected1});
 
         // failure (missing arg)
-        CheckErrorWithFlags(flags, {}, CScript() << OP_OUTPOINTTXHASH, context[0], SCRIPT_ERR_INVALID_STACK_OPERATION);
+        CheckErrorWithFlags(flags, {}, CScript() << OP_OUTPOINTHASH, context[0], SCRIPT_ERR_INVALID_STACK_OPERATION);
         // failure (out of range)
         CheckErrorWithFlags(
-            flags, {}, CScript() << OP_2 << OP_OUTPOINTTXHASH, context[1], SCRIPT_ERR_INVALID_TX_INPUT_INDEX);
+            flags, {}, CScript() << OP_2 << OP_OUTPOINTHASH, context[1], SCRIPT_ERR_INVALID_TX_INPUT_INDEX);
         CheckErrorWithFlags(
-            flags, {}, CScript() << -1 << OP_OUTPOINTTXHASH, context[1], SCRIPT_ERR_INVALID_TX_INPUT_INDEX);
+            flags, {}, CScript() << -1 << OP_OUTPOINTHASH, context[1], SCRIPT_ERR_INVALID_TX_INPUT_INDEX);
         // failure (no context)
-        CheckErrorWithFlags(flags, {}, CScript() << OP_0 << OP_OUTPOINTTXHASH, {}, SCRIPT_ERR_DATA_REQUIRED);
+        CheckErrorWithFlags(flags, {}, CScript() << OP_0 << OP_OUTPOINTHASH, {}, SCRIPT_ERR_DATA_REQUIRED);
         // failure (not activated)
         CheckErrorWithFlags(
-            flags_inactive, {}, CScript() << OP_0 << OP_OUTPOINTTXHASH, context[0], SCRIPT_ERR_BAD_OPCODE);
-    }
-
-    // OP_OUTPOINTINDEX (unary)
-    {
-        const valtype expected0(CScriptNum::fromIntUnchecked(in1.n).getvch());
-        CheckPassWithFlags(flags, {}, CScript() << OP_0 << OP_OUTPOINTINDEX, context[0], {expected0});
-        CheckPassWithFlags(flags, {}, CScript() << OP_0 << OP_OUTPOINTINDEX, context[1], {expected0});
-
-        const valtype expected1(CScriptNum::fromIntUnchecked(in2.n).getvch());
-        CheckPassWithFlags(flags, {}, CScript() << OP_1 << OP_OUTPOINTINDEX, context[0], {expected1});
-        CheckPassWithFlags(flags, {}, CScript() << OP_1 << OP_OUTPOINTINDEX, context[1], {expected1});
-
-        // failure (missing arg)
-        CheckErrorWithFlags(flags, {}, CScript() << OP_OUTPOINTINDEX, context[0], SCRIPT_ERR_INVALID_STACK_OPERATION);
-        // failure (out of range)
-        CheckErrorWithFlags(
-            flags, {}, CScript() << OP_2 << OP_OUTPOINTINDEX, context[1], SCRIPT_ERR_INVALID_TX_INPUT_INDEX);
-        CheckErrorWithFlags(
-            flags, {}, CScript() << -1 << OP_OUTPOINTINDEX, context[1], SCRIPT_ERR_INVALID_TX_INPUT_INDEX);
-        // failure (no context)
-        CheckErrorWithFlags(flags, {}, CScript() << OP_0 << OP_OUTPOINTINDEX, {}, SCRIPT_ERR_DATA_REQUIRED);
-        // failure (not activated)
-        CheckErrorWithFlags(
-            flags_inactive, {}, CScript() << OP_0 << OP_OUTPOINTINDEX, context[0], SCRIPT_ERR_BAD_OPCODE);
+            flags_inactive, {}, CScript() << OP_0 << OP_OUTPOINTHASH, context[0], SCRIPT_ERR_BAD_OPCODE);
     }
 
     // OP_INPUTBYTECODE (unary)

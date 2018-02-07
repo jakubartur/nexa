@@ -72,16 +72,16 @@ bool CWalletDB::ErasePurpose(const CTxDestination &address)
     return Erase(std::make_pair(std::string("purpose"), EncodeLegacyAddr(address, Params())));
 }
 
-bool CWalletDB::WriteTx(uint256 hash, const CWalletTx &wtx)
+bool CWalletDB::WriteTx(const CWalletTx &wtx)
 {
     nWalletDBUpdated++;
-    return Write(std::make_pair(std::string("tx"), hash), wtx);
+    return Write(std::make_pair(std::string("txidem"), wtx.GetIdem()), wtx);
 }
 
-bool CWalletDB::EraseTx(uint256 hash)
+bool CWalletDB::EraseTx(uint256 idem)
 {
     nWalletDBUpdated++;
-    return Erase(std::make_pair(std::string("tx"), hash));
+    return Erase(std::make_pair(std::string("txidem"), idem));
 }
 
 bool CWalletDB::WriteKey(const CPubKey &vchPubKey, const CPrivKey &vchPrivKey, const CKeyMetadata &keyMeta)
@@ -269,79 +269,6 @@ void CWalletDB::ListAccountCreditDebit(const string &strAccount, list<CAccountin
     pcursor->close();
 }
 
-DBErrors CWalletDB::ReorderTransactions(CWallet *pwallet)
-{
-    LOCK(pwallet->cs_wallet);
-    // Old wallets didn't have any defined order for transactions
-    // Probably a bad idea to change the output of this
-
-    // First: get all CWalletTx and CAccountingEntry into a sorted-by-time multimap.
-    typedef pair<CWalletTx *, CAccountingEntry *> TxPair;
-    typedef multimap<int64_t, TxPair> TxItems;
-    TxItems txByTime;
-
-    for (map<uint256, CWalletTx>::iterator it = pwallet->mapWallet.begin(); it != pwallet->mapWallet.end(); ++it)
-    {
-        CWalletTx *wtx = &((*it).second);
-        txByTime.insert(make_pair(wtx->nTimeReceived, TxPair(wtx, nullptr)));
-    }
-    list<CAccountingEntry> acentries;
-    ListAccountCreditDebit("", acentries);
-    for (CAccountingEntry &entry : acentries)
-    {
-        txByTime.insert(make_pair(entry.nTime, TxPair(nullptr, &entry)));
-    }
-
-    int64_t &nOrderPosNext = pwallet->nOrderPosNext;
-    nOrderPosNext = 0;
-    std::vector<int64_t> nOrderPosOffsets;
-    for (TxItems::iterator it = txByTime.begin(); it != txByTime.end(); ++it)
-    {
-        CWalletTx *const pwtx = (*it).second.first;
-        CAccountingEntry *const pacentry = (*it).second.second;
-        int64_t &nOrderPos = (pwtx != 0) ? pwtx->nOrderPos : pacentry->nOrderPos;
-
-        if (nOrderPos == -1)
-        {
-            nOrderPos = nOrderPosNext++;
-            nOrderPosOffsets.push_back(nOrderPos);
-
-            if (pwtx)
-            {
-                if (!WriteTx(pwtx->GetHash(), *pwtx))
-                    return DB_LOAD_FAIL;
-            }
-            else if (!WriteAccountingEntry(pacentry->nEntryNo, *pacentry))
-                return DB_LOAD_FAIL;
-        }
-        else
-        {
-            int64_t nOrderPosOff = 0;
-            for (const int64_t &nOffsetStart : nOrderPosOffsets)
-            {
-                if (nOrderPos >= nOffsetStart)
-                    ++nOrderPosOff;
-            }
-            nOrderPos += nOrderPosOff;
-            nOrderPosNext = std::max(nOrderPosNext, nOrderPos + 1);
-
-            if (!nOrderPosOff)
-                continue;
-
-            // Since we're changing the order, write it back
-            if (pwtx)
-            {
-                if (!WriteTx(pwtx->GetHash(), *pwtx))
-                    return DB_LOAD_FAIL;
-            }
-            else if (!WriteAccountingEntry(pacentry->nEntryNo, *pacentry))
-                return DB_LOAD_FAIL;
-        }
-    }
-    WriteOrderPosNext(nOrderPosNext);
-
-    return DB_LOAD_OK;
-}
 
 class CWalletScanState
 {
@@ -350,15 +277,13 @@ public:
     unsigned int nCKeys;
     unsigned int nKeyMeta;
     bool fIsEncrypted;
-    bool fAnyUnordered;
     int nFileVersion;
-    vector<uint256> vWalletUpgrade;
+    std::vector<CWalletTxRef> tx;
 
     CWalletScanState()
     {
         nKeys = nCKeys = nKeyMeta = 0;
         fIsEncrypted = false;
-        fAnyUnordered = false;
         nFileVersion = 0;
     }
 };
@@ -388,41 +313,19 @@ bool ReadKeyValue(CWallet *pwallet,
             ssKey >> strAddress;
             ssValue >> pwallet->mapAddressBook[DecodeDestination(strAddress)].purpose;
         }
-        else if (strType == "tx")
+        else if (strType == "txidem")
         {
             uint256 hash;
             ssKey >> hash;
-            CWalletTx wtx;
-            ssValue >> wtx;
+            CWalletTxRef wtx = std::make_shared<CWalletTx>();
+            ssValue >> *wtx;
             CValidationState state;
-            if (!(CheckTransaction(MakeTransactionRef(wtx), state) && (wtx.GetHash() == hash) && state.IsValid()))
+            if (!(CheckTransaction(std::static_pointer_cast<const CTransaction>(wtx), state) &&
+                    (wtx->GetIdem() == hash) && state.IsValid()))
                 return false;
 
-            // Undo serialize changes in 31600
-            if (31404 <= wtx.fTimeReceivedIsTxTime && wtx.fTimeReceivedIsTxTime <= 31703)
-            {
-                if (!ssValue.empty())
-                {
-                    char fTmp;
-                    char fUnused;
-                    ssValue >> fTmp >> fUnused >> wtx.strFromAccount;
-                    strErr = strprintf("LoadWallet() upgrading tx ver=%d %d '%s' %s", wtx.fTimeReceivedIsTxTime, fTmp,
-                        wtx.strFromAccount, hash.ToString());
-                    wtx.fTimeReceivedIsTxTime = fTmp;
-                }
-                else
-                {
-                    strErr =
-                        strprintf("LoadWallet() repairing tx ver=%d %s", wtx.fTimeReceivedIsTxTime, hash.ToString());
-                    wtx.fTimeReceivedIsTxTime = 0;
-                }
-                wss.vWalletUpgrade.push_back(hash);
-            }
-
-            if (wtx.nOrderPos == -1)
-                wss.fAnyUnordered = true;
-
-            pwallet->AddToWallet(wtx, true, nullptr);
+            assert(wtx->nOrderPos != -1);
+            wss.tx.push_back(wtx); // Defer adding all transactions until the end
         }
         else if (strType == "acentry")
         {
@@ -433,13 +336,9 @@ bool ReadKeyValue(CWallet *pwallet,
             if (nNumber > nAccountingEntryNumber)
                 nAccountingEntryNumber = nNumber;
 
-            if (!wss.fAnyUnordered)
-            {
-                CAccountingEntry acentry;
-                ssValue >> acentry;
-                if (acentry.nOrderPos == -1)
-                    wss.fAnyUnordered = true;
-            }
+            CAccountingEntry acentry;
+            ssValue >> acentry;
+            assert(acentry.nOrderPos != -1);
         }
         else if (strType == "watchs")
         {
@@ -511,12 +410,12 @@ bool ReadKeyValue(CWallet *pwallet,
 
                 fSkipCheck = true;
             }
-
             if (!key.Load(pkey, vchPubKey, fSkipCheck))
             {
                 strErr = "Error reading wallet database: CPrivKey corrupt";
                 return false;
             }
+
             if (!pwallet->LoadKey(key, vchPubKey))
             {
                 strErr = "Error reading wallet database: LoadKey failed";
@@ -700,7 +599,7 @@ DBErrors CWalletDB::LoadWallet(CWallet *pwallet)
                 {
                     // Leave other errors alone, if we try to fix them we might make things worse.
                     fNoncriticalErrors = true; // ... but do warn the user there is something wrong.
-                    if (strType == "tx")
+                    if (strType == "txidem")
                         // Rescan if there is a bad transaction record:
                         SoftSetBoolArg("-rescan", true);
                 }
@@ -717,6 +616,14 @@ DBErrors CWalletDB::LoadWallet(CWallet *pwallet)
     catch (...)
     {
         result = DB_CORRUPT;
+    }
+
+    // Now that all keys and P2SH addresses are loaded, we can accurately determine
+    // every output in these transactions that this wallet controls.  These are added individually
+    // into mapWallet
+    for (const CWalletTxRef &wtx : wss.tx)
+    {
+        pwallet->AddToWallet(wtx, true, nullptr);
     }
 
     if (fNoncriticalErrors && result == DB_LOAD_OK)
@@ -736,20 +643,12 @@ DBErrors CWalletDB::LoadWallet(CWallet *pwallet)
     if ((wss.nKeys + wss.nCKeys) != wss.nKeyMeta)
         pwallet->nTimeFirstKey = 1; // 0 would be considered 'no value'
 
-    for (uint256 &hash : wss.vWalletUpgrade)
-    {
-        WriteTx(hash, pwallet->mapWallet[hash]);
-    }
-
     // Rewrite encrypted wallets of versions 0.4.0 and 0.5.0rc:
     if (wss.fIsEncrypted && (wss.nFileVersion == 40000 || wss.nFileVersion == 50000))
         return DB_NEED_REWRITE;
 
     if (wss.nFileVersion < CLIENT_VERSION) // Update
         WriteVersion(CLIENT_VERSION);
-
-    if (wss.fAnyUnordered)
-        result = ReorderTransactions(pwallet);
 
     pwallet->laccentries.clear();
     ListAccountCreditDebit("*", pwallet->laccentries);
@@ -761,7 +660,7 @@ DBErrors CWalletDB::LoadWallet(CWallet *pwallet)
     return result;
 }
 
-DBErrors CWalletDB::FindWalletTx(CWallet *pwallet, vector<uint256> &vTxHash, vector<CWalletTx> &vWtx)
+DBErrors CWalletDB::FindWalletTx(CWallet *pwallet, vector<uint256> &vTxHash, vector<CWalletTxRef> &vWtx)
 {
     pwallet->vchDefaultKey = CPubKey();
     bool fNoncriticalErrors = false;
@@ -802,13 +701,13 @@ DBErrors CWalletDB::FindWalletTx(CWallet *pwallet, vector<uint256> &vTxHash, vec
 
             string strType;
             ssKey >> strType;
-            if (strType == "tx")
+            if (strType == "txidem")
             {
                 uint256 hash;
                 ssKey >> hash;
 
-                CWalletTx wtx;
-                ssValue >> wtx;
+                CWalletTxRef wtx = MakeWalletTxRef();
+                ssValue >> *wtx;
 
                 vTxHash.push_back(hash);
                 vWtx.push_back(wtx);
@@ -831,25 +730,29 @@ DBErrors CWalletDB::FindWalletTx(CWallet *pwallet, vector<uint256> &vTxHash, vec
     return result;
 }
 
+
 DBErrors CWalletDB::ZapSelectTx(CWallet *pwallet, vector<uint256> &vTxHashIn, vector<uint256> &vTxHashOut)
 {
     // build list of wallet TXs and hashes
-    vector<uint256> vTxHash;
-    vector<CWalletTx> vWtx;
-    DBErrors err = FindWalletTx(pwallet, vTxHash, vWtx);
-    if (err != DB_LOAD_OK)
+    vector<CWalletTxRef> vWtx;
     {
-        return err;
+        vector<uint256> vTxHash;
+        DBErrors err = FindWalletTx(pwallet, vTxHash, vWtx);
+        if (err != DB_LOAD_OK)
+        {
+            return err;
+        }
     }
 
-    std::sort(vTxHash.begin(), vTxHash.end());
+    std::sort(vWtx.begin(), vWtx.end(), [](CWalletTxRef &a, CWalletTxRef &b) { return a->GetIdem() < b->GetIdem(); });
     std::sort(vTxHashIn.begin(), vTxHashIn.end());
 
     // erase each matching wallet TX
     bool delerror = false;
     vector<uint256>::iterator it = vTxHashIn.begin();
-    for (uint256 hash : vTxHash)
+    for (auto &tx : vWtx)
     {
+        uint256 hash = tx->GetIdem();
         while (it < vTxHashIn.end() && (*it) < hash)
         {
             it++;
@@ -860,7 +763,7 @@ DBErrors CWalletDB::ZapSelectTx(CWallet *pwallet, vector<uint256> &vTxHashIn, ve
         }
         else if ((*it) == hash)
         {
-            pwallet->mapWallet.erase(hash);
+            pwallet->EraseFromRam(tx);
             if (!EraseTx(hash))
             {
                 LOG(DBASE, "Transaction was found for deletion but returned database error: %s\n", hash.GetHex());
@@ -877,7 +780,8 @@ DBErrors CWalletDB::ZapSelectTx(CWallet *pwallet, vector<uint256> &vTxHashIn, ve
     return DB_LOAD_OK;
 }
 
-DBErrors CWalletDB::ZapWalletTx(CWallet *pwallet, vector<CWalletTx> &vWtx)
+
+DBErrors CWalletDB::ZapWalletTx(CWallet *pwallet, vector<CWalletTxRef> &vWtx)
 {
     // build list of wallet TXs
     vector<uint256> vTxHash;
@@ -894,6 +798,7 @@ DBErrors CWalletDB::ZapWalletTx(CWallet *pwallet, vector<CWalletTx> &vWtx)
 
     return DB_LOAD_OK;
 }
+
 
 void ThreadFlushWalletDB(const string &strFile)
 {
@@ -912,12 +817,12 @@ void ThreadFlushWalletDB(const string &strFile)
     int64_t nLastWalletUpdate = GetTime();
     while (true)
     {
-        MilliSleep(500);
-
         if (shutdown_threads.load() == true)
         {
             break;
         }
+
+        MilliSleep(500);
 
         if (nLastSeen != nWalletDBUpdated)
         {
@@ -941,10 +846,6 @@ void ThreadFlushWalletDB(const string &strFile)
 
                 if (nRefCount == 0)
                 {
-                    if (shutdown_threads.load() == true)
-                    {
-                        break;
-                    }
                     map<string, int>::iterator mi2 = bitdb.mapFileUseCount.find(strFile);
                     if (mi2 != bitdb.mapFileUseCount.end())
                     {
@@ -961,10 +862,6 @@ void ThreadFlushWalletDB(const string &strFile)
                     }
                 }
             }
-        }
-        if (shutdown_threads.load() == true)
-        {
-            break;
         }
     }
 }
@@ -1043,6 +940,7 @@ bool CWalletDB::Recover(CDBEnv &dbenv, const std::string &filename, bool fOnlyKe
 {
     // Recovery procedure:
     // move wallet.dat to wallet.timestamp.bak
+    // Open the wallet normally and read out as many records as possible.
     // Call Salvage with fAggressive=true to
     // get as much data as possible.
     // Rewrite salvaged data to wallet.dat
@@ -1058,6 +956,38 @@ bool CWalletDB::Recover(CDBEnv &dbenv, const std::string &filename, bool fOnlyKe
     {
         LOGA("Failed to rename %s to %s\n", filename, newFilename);
         return false;
+    }
+
+    std::map<std::vector<unsigned char>, std::vector<unsigned char> > readData;
+    {
+        CWallet dummyWallet;
+        CWalletScanState wss;
+        {
+            CDB cdb(newFilename);
+            Dbc *cur = cdb.GetCursor();
+            int count = 0;
+            while (true)
+            {
+                string strType, strErr;
+                CDataStream ssKey(SER_DISK, CLIENT_VERSION);
+                CDataStream ssValue(SER_DISK, CLIENT_VERSION);
+                int ret = cdb.ReadAtCursor(cur, ssKey, ssValue);
+                if (ret == DB_NOTFOUND)
+                    break;
+                count++;
+                LOCK(dummyWallet.cs_wallet);
+                std::vector<unsigned char> keycopy(ssKey.begin(), ssKey.end());
+                std::vector<unsigned char> valcopy(ssValue.begin(), ssValue.end());
+                bool readok = ReadKeyValue(&dummyWallet, ssKey, ssValue, wss, strType, strErr);
+                if (readok && IsKeyType(strType))
+                {
+                    readData[keycopy] = valcopy;
+                }
+            }
+            LOGA("Recover, read %d records", count);
+            cdb.Close();
+        }
+        bitdb.CloseDb(newFilename);
     }
 
     std::vector<CDBEnv::KeyValPair> salvagedData;
@@ -1112,6 +1042,19 @@ bool CWalletDB::Recover(CDBEnv &dbenv, const std::string &filename, bool fOnlyKe
         if (ret2 > 0)
             fSuccess = false;
     }
+
+    // Write any data we got from opening the database normally.  If we got any, this is more likely to be correct
+
+    int nrec = 0;
+    for (auto &i : readData)
+    {
+        Dbt datKey((void *)&i.first[0], i.first.size());
+        Dbt datValue((void *)&i.second[0], i.second.size());
+        int putresult = pdbCopy->put(ptxn, &datKey, &datValue, DB_OVERWRITE_DUP);
+        assert(putresult == 0);
+        nrec++;
+    }
+
     ptxn->commit(0);
     pdbCopy->close(0);
 

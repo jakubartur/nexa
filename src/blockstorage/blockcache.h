@@ -15,6 +15,12 @@
 class CBlockCache
 {
 private:
+    enum BlockType
+    {
+        CBLOCK,
+        CTAILSTORMBLOCK,
+    };
+
     struct CCacheEntry
     {
         int64_t nEntryTime;

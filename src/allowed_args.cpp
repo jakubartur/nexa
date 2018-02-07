@@ -34,7 +34,7 @@
 #endif
 
 // These globals are needed here so bitcoin-cli can link
-const std::string CURRENCY_UNIT = "BCH";
+const std::string CURRENCY_UNIT = "NEX";
 const std::string DEFAULT_TOR_CONTROL = "127.0.0.1:9051";
 const char DEFAULT_RPCCONNECT[] = "127.0.0.1";
 
@@ -249,7 +249,9 @@ static void addChainSelectionOptions(AllowedArgs &allowedArgs)
         .addArg("scalenet", optionalBool, _("Use the scaling test chain"))
         .addDebugArg("regtest", optionalBool,
             "Enter regression test mode, which uses a special chain in which blocks can be solved instantly. "
-            "This is intended for regression testing tools and app development.");
+            "This is intended for regression testing tools and app development.")
+        .addArg("nextchain", optionalBool, _("Use NextChain"))
+        .addArg("bch", optionalBool, _("Use Bitcoin Cash mainnet"));
 }
 
 static void addConfigurationLocationOptions(AllowedArgs &allowedArgs)
@@ -573,16 +575,6 @@ static void addDebuggingOptions(AllowedArgs &allowedArgs, HelpMessageMode mode)
         .addDebugArg("logtimemicros", optionalBool,
             strprintf("Add microsecond precision to debug timestamps (default: %u)", DEFAULT_LOGTIMEMICROS))
         .addDebugArg("mocktime=<n>", requiredInt, "Replace actual time with <n> seconds since epoch (default: 0)")
-        .addDebugArg("limitfreerelay=<n>", optionalInt,
-            strprintf("Continuously rate-limit free transactions to <n>*1000 bytes per minute (default: %u)",
-                DEFAULT_LIMITFREERELAY))
-        .addDebugArg("limitrespendrelay=<n>", optionalInt,
-            strprintf("Continuously rate-limit relaying of double spend"
-                      " transactions to <n>*1000 bytes per minute (default: %u)",
-                respend::DEFAULT_LIMITRESPENDRELAY))
-        .addDebugArg("relaypriority", optionalBool,
-            strprintf(
-                "Require high priority for relaying free or low-fee transactions (default: %u)", DEFAULT_RELAYPRIORITY))
         .addDebugArg("maxsigcachesize=<n>", requiredInt,
             strprintf("Limit size of signature cache to <n> MiB (default: %u)", DEFAULT_MAX_SIG_CACHE_SIZE))
         .addArg("printtoconsole", optionalBool, _("Send trace/debug info to console instead of debug.log file"))
@@ -611,34 +603,12 @@ static void addNodeRelayOptions(AllowedArgs &allowedArgs)
     allowedArgs.addHeader(_("Node relay options:"))
         .addDebugArg("acceptnonstdtxn", optionalBool,
             strprintf("Relay and mine \"non-standard\" transactions (%sdefault: %u)", "testnet/regtest only; ", true))
-        .addArg("bytespersigop=<n>", requiredInt,
-            strprintf(
-                _("Minimum bytes per sigop in transactions we relay and mine (default: %u)"), DEFAULT_BYTES_PER_SIGOP))
-        .addArg("datacarrier", optionalBool,
-            strprintf(_("Relay and mine data carrier transactions (default: %u)"), DEFAULT_ACCEPT_DATACARRIER))
-        .addArg("datacarriersize=<n>", requiredInt,
-            strprintf(_("Maximum size of data in data carrier transactions we relay and mine (default: %u)"),
-                MAX_OP_RETURN_RELAY))
-        .addArg("dustthreshold=<amt>", requiredAmount,
-            strprintf(_("Dust Threshold (in satoshis) defines the minimum quantity an output may contain for the "
-                        "transaction to be considered standard, and therefore relayable. (default: %s)"),
-                DEFAULT_DUST_THRESHOLD))
-        .addArg("excessiveacceptdepth=<n>", requiredInt,
-            strprintf(_("Excessive blocks are accepted if this many blocks are mined on top of them (default: %u)"),
-                DEFAULT_EXCESSIVE_ACCEPT_DEPTH))
-        .addArg("excessiveblocksize=<n>", requiredInt,
-            strprintf(_("Blocks above this size in bytes are considered excessive.  (default: %u)"),
-                DEFAULT_EXCESSIVE_BLOCK_SIZE))
         .addArg("expeditedblock=<host>", requiredStr,
             _("Request expedited blocks from this host whenever we are connected to it"))
         .addArg("maxexpeditedblockrecipients=<n>", requiredInt,
             _("The maximum number of nodes this node will forward expedited blocks to"))
         .addArg("maxexpeditedtxrecipients=<n>", requiredInt,
             _("The maximum number of nodes this node will forward expedited transactions to"))
-        .addArg("minrelaytxfee=<amt>", requiredAmount,
-            strprintf(_("Fees (in %s/kB) smaller than this are considered zero fee for relaying, mining and "
-                        "transaction creation (default: %s)"),
-                CURRENCY_UNIT, FormatMoney(DEFAULT_MIN_RELAY_TX_FEE)))
         .addArg("receiveavg-<n>", requiredInt,
             strprintf(_("The average rate that data can be received in kB/s (default: %u)"), DEFAULT_AVE_RECV))
         .addArg("receiveburst=<n>", requiredInt,
@@ -675,7 +645,7 @@ static void addBlockCreationOptions(AllowedArgs &allowedArgs)
 {
     allowedArgs.addHeader(_("Block creation options:"))
         .addArg("blockmaxsize=<n>", requiredInt,
-            strprintf("Set maximum block size in bytes (default: %d)", DEFAULT_BLOCK_MAX_SIZE))
+            strprintf("Set maximum block size in bytes (default: %d)", DEFAULT_MAX_BLOCK_SIZE))
         .addArg("blockprioritysize=<n>", requiredInt,
             strprintf(_("Set maximum size of high-priority/low-fee transactions in bytes (default: %d)"),
                 DEFAULT_BLOCK_PRIORITY_SIZE))

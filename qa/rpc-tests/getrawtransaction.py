@@ -43,12 +43,12 @@ class GetRawTransactionTest (BitcoinTestFramework):
         while blocks < 7:
             txids = []
             if blocks == 0:
-                self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.001)
-            oneTxHash = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1)
+                self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000)
+            oneTxHash = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000000)
             txids.append(oneTxHash)
             timeIssued = time.time()
-            txids.append(self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1))
-            txids.append(self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1))
+            txids.append(self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000000))
+            txids.append(self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000000))
 
             # Test some fields of rawtransaction get getrawtransaction while the tx is unconfirmed
             grt = self.nodes[0].getrawtransaction(oneTxHash, 1);
@@ -68,10 +68,11 @@ class GetRawTransactionTest (BitcoinTestFramework):
         rawtransactionssince = self.nodes[1].getrawtransactionssince(startinghash[0], 10)
         rawtransactionssince2 = self.nodes[1].getrawtransactionssince(startinghash[0], "10")
         assert_equal(rawtransactionssince, rawtransactionssince2)
-        for hash ,txs in blockTxids.items():
-            assert_not_equal(rawtransactionssince.get(hash, False), False)
+        for blkhash ,txs in blockTxids.items():
+            blktx = rawtransactionssince.get(blkhash, None)
+            assert blktx != None 
             for txid in txs:
-                assert_not_equal(rawtransactionssince[hash].get(txid, False), False)
+                assert blktx.get(txid, None) != None
         assert_equal(rawtransactionssince.get("notarealhash", False), False)
 
         for hash ,txs in blockTxids.items():
@@ -84,7 +85,7 @@ class GetRawTransactionTest (BitcoinTestFramework):
                 break
             index = index + 1
         data = "TestData............................7894561230"
-        tx = self.nodes[1].createrawtransaction([{"txid": unspents[index]['txid'], "vout": unspents[index]['vout']}], {"data": data.encode().hex()})
+        tx = self.nodes[1].createrawtransaction([{"outpoint": unspents[index]['outpoint'], "amount": unspents[index]['amount']}], {"data": data.encode().hex()})
         signedtx = self.nodes[1].signrawtransaction(tx)['hex']
         self.nodes[1].sendrawtransaction(signedtx)
         opblockhash = self.nodes[1].generate(1)[0]

@@ -3,6 +3,7 @@ import socket
 import struct
 import random
 import hashlib
+import decimal
 from binascii import hexlify, unhexlify
 import time
 from codecs import encode
@@ -15,13 +16,20 @@ import test_framework.util as util
 
 MY_VERSION = 70014 # past bip-252 for compactblocks
 
+# Serialization Types
+SER_DEFAULT = 0
+SER_ID = 0
+SER_IDEM = 1
+
+INVALID_OPCODE = b'\xff'
+
 from .constants import SIGHASH_ALL, \
     SIGHASH_FORKID, SIGHASH_ANYONECANPAY, \
     SIGHASH_SINGLE, SIGHASH_NONE
 
 MY_SUBVERSION = b"/python-mininode-tester:0.0.3/"
 
-COIN = 100000000  # 1 btc in satoshis
+COIN = 100  # 1 coin in satoshis
 
 # One lock for synchronizing all data access between the networking thread (see
 # NetworkThread below) and the thread running the test logic.  For simplicity,
@@ -37,6 +45,8 @@ mininode_lock = RLock()
 sha256 = util.sha256
 hash256 = util.hash256
 hash160 = util.hash160
+ser_uint256 = util.ser_uint256
+deser_uint256 = util.deser_uint256
 
 def wait_until(predicate, attempts=float('inf'), timeout=float('inf')):
     attempt = 0
@@ -47,8 +57,8 @@ def wait_until(predicate, attempts=float('inf'), timeout=float('inf')):
             if predicate():
                 return True
         attempt += 1
-        elapsed += 0.05
-        time.sleep(0.05)
+        elapsed += 0.25
+        time.sleep(0.25)
 
     return False
 
@@ -130,7 +140,7 @@ def encodeBitcoinAddress(prefix, data):
 
 
 class CompactSize(int):
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         assert(self>=0)
         if self<253:
             return struct.pack("<B", self)
@@ -183,23 +193,11 @@ def ser_string(s):
     return struct.pack("<BQ", 255, len(s)) + s
 
 
-def deser_uint256(f):
-    r = 0
-    for i in range(8):
-        t = struct.unpack("<I", f.read(4))[0]
-        r += t << (i * 32)
-    return r
-
-
-def ser_uint256(u):
-    rs = b""
-    for i in range(8):
-        rs += struct.pack("<I", u & 0xFFFFFFFF)
-        u >>= 32
-    return rs
-
-
 def uint256_from_str(s):
+    """Decode a uint256 from a little-endian byte array or hex string (bitcoind strings are little-endian)
+    """
+    if len(s) == 64:
+        s = unhexlify(s)
     r = 0
     t = struct.unpack("<IIIIIIII", s[:32])
     for i in range(8):
@@ -240,7 +238,7 @@ def deser_vector(f, c):
     return r
 
 
-def ser_vector(l):
+def ser_vector(l, stype=SER_ID):
     r = b""
     if len(l) < 253:
         r = struct.pack("B", len(l))
@@ -251,7 +249,7 @@ def ser_vector(l):
     else:
         r = struct.pack("<BQ", 255, len(l))
     for i in l:
-        r += i.serialize()
+        r += i.serialize(stype)
     return r
 
 
@@ -306,6 +304,33 @@ def deser_compact_size(f):
         nit = struct.unpack("<Q", f.read(8))[0]
     return nit
 
+def deser_varint(f):
+    done = False
+    num = 0
+    while True:
+        b = struct.unpack("<B", f.read(1))[0]
+        num = (num << 7) | (b&0x7F)
+        if b&0x80:
+            num += 1
+        else:
+            return num
+
+def ser_varint(n):
+    ret = bytearray()
+
+    i = 0
+    ret.append(0)
+    while True:
+        ret[i] = ret[i] | (n & 0x7F)
+        if n <= 0x7F: break
+        n = (n >> 7) - 1
+        i += 1
+        ret.append(0x80)
+
+    return bytes(reversed(ret))
+
+
+
 def deser_string_vector(f):
     nit = struct.unpack("<B", f.read(1))[0]
     if nit == 253:
@@ -319,7 +344,6 @@ def deser_string_vector(f):
         t = deser_string(f)
         r.append(t)
     return r
-
 
 def ser_string_vector(l):
     r = b""
@@ -369,7 +393,7 @@ def ser_int_vector(l):
 
 
 def FromHex(obj, hex_string):
-    obj.deserialize(BytesIO(unhexlify(hex_string.encode('ascii'))))
+    obj.deserialize(BytesIO(unhexlify(hex_string.strip().encode('ascii'))))
     return obj
 
 # Convert a binary-serializable object to hex (eg for submission via RPC)
@@ -396,7 +420,7 @@ class CAddressInVersion(object):
         self.ip = socket.inet_ntoa(f.read(4))
         self.port = struct.unpack(">H", f.read(2))[0]
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<Q", self.nServices)
         r += self.pchReserved
@@ -423,7 +447,7 @@ class CAddress(object):
         self.ip = socket.inet_ntoa(f.read(4))
         self.port = struct.unpack(">H", f.read(2))[0]
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<L", self.nTime)
         r += struct.pack("<Q", self.nServices)
@@ -453,6 +477,10 @@ class CInv(object):
     }
 
     def __init__(self, t=0, h=0):
+        assert type(t) is int
+        if type(h) is bytes:
+            h = deser_uint256(h)
+        assert type(h) is int
         self.type = t
         self.hash = h
 
@@ -460,7 +488,7 @@ class CInv(object):
         self.type = struct.unpack("<i", f.read(4))[0]
         self.hash = deser_uint256(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<i", self.type)
         r += ser_uint256(self.hash)
@@ -480,7 +508,7 @@ class CBlockLocator(object):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
         self.vHave = deser_uint256_vector(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<i", self.nVersion)
         r += ser_uint256_vector(self.vHave)
@@ -492,93 +520,141 @@ class CBlockLocator(object):
 
 
 class COutPoint(object):
-    def __init__(self, hash=0, n=0):
-        if type(hash) is str:
-            hash = uint256_from_bigendian(hash)
-        if type(hash) is bytes:
-            hash = uint256_from_str(hash)
-        self.hash = hash
-        self.n = n
+    def __init__(self, outpointHash=0):
+        if type(outpointHash) is COutPoint:
+            outpointHash = outpointHash.hash
+        if type(outpointHash) is str:
+            outpointHash = uint256_from_bigendian(outpointHash)
+        if type(outpointHash) is bytes:
+            outpointHash = uint256_from_str(outpointHash)
+        self.hash = outpointHash
+
+    def fromIdemAndIdx(self, txidem, n):
+        if type(txidem) is str:
+            txidem = uint256_from_bigendian(txidem)
+        if type(txidem) is int:
+            txidem = ser_uint256(txidem)
+        r = txidem
+        r += struct.pack("<I", n)
+        self.hash = uint256_from_str(sha256(r))
+        return self
 
     def deserialize(self, f):
         self.hash = deser_uint256(f)
-        self.n = struct.unpack("<I", f.read(4))[0]
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += ser_uint256(self.hash)
-        r += struct.pack("<I", self.n)
         return r
 
+    def rpcHex(self):
+        return util.uint256ToRpcHex(self.hash)
+
     def __repr__(self):
-        return "COutPoint(hash=%064x n=%i)" % (self.hash, self.n)
+        return "COutPoint(hash=%064x)" % (self.hash)
 
 
 class CTxIn(object):
-    def __init__(self, outpoint=None, scriptSig=b"", nSequence=0):
+    def __init__(self, outpoint=None, amount=0, scriptSig=b"", nSequence=0):
+        # ctor determination and input arg conversion
+        if type(amount) is decimal.Decimal:
+            amount = int(amount*COIN)
+        assert(type(amount) is int)
+        if isinstance(outpoint, dict):
+            return self.fromRpcUtxo(outpoint)
+        if scriptSig is None: scriptSig = b""
+        assert(isinstance(scriptSig, bytes))
+
+        # Initialization
         if outpoint is None:
             self.prevout = COutPoint()
         else:
             self.prevout = outpoint
         self.scriptSig = scriptSig
         self.nSequence = nSequence
+        self.amount = amount
+
+    def fromRpcUtxo(self, d):
+        """Initialize this CTxIn from a dictionary received by the listunspent RPC call"""
+        self.prevout = COutPoint(d["outpoint"])
+        self.scriptSig = b""
+        self.amount = int(d['amount']*COIN)
+        self.nSequence = 0
 
     def deserialize(self, f):
         self.prevout = COutPoint()
         self.prevout.deserialize(f)
         self.scriptSig = deser_string(f)
         self.nSequence = struct.unpack("<I", f.read(4))[0]
+        self.amount = struct.unpack("<q", f.read(8))[0]
 
-    def serialize(self):
+    def serialize(self, stype):
         r = b""
         r += self.prevout.serialize()
-        r += ser_string(self.scriptSig)
+        if stype != SER_IDEM:
+            r += ser_string(self.scriptSig)
         r += struct.pack("<I", self.nSequence)
+        r += struct.pack("<q", int(self.amount))
         return r
 
     def __repr__(self):
-        return "CTxIn(prevout=%s scriptSig=%s nSequence=%i)" \
-            % (repr(self.prevout), hexlify(self.scriptSig),
-               self.nSequence)
+        return "CTxIn(prevout=%s amount=%d scriptSig=%s nSequence=%i)" % (repr(self.prevout), self.amount, hexlify(self.scriptSig), self.nSequence)
 
+# General transaction output
+class TxOut(object):
+    def __init__(self, typ=0, nValue=0, scriptPubKey=b""):
 
-class CTxOut(object):
-    def __init__(self, nValue=0, scriptPubKey=b""):
-        self.nValue = nValue
+        assert(isinstance(scriptPubKey,bytes))
+        assert(type(typ) == int)
+        self.t   = typ
+        # if its a decimal, its assumed to be in COINs
+        assert(type(nValue) == int or type(nValue) == decimal.Decimal)
+        if type(nValue) == decimal.Decimal:
+            self.nValue = int(nValue*COIN)
+        else:
+            self.nValue = nValue
+
         self.scriptPubKey = scriptPubKey
 
     def deserialize(self, f):
+        self.t   = struct.unpack("<B", f.read(1))[0]
         self.nValue = struct.unpack("<q", f.read(8))[0]
         self.scriptPubKey = deser_string(f)
 
-    def serialize(self):
-        r = b""
+    def serialize(self, serType=SER_DEFAULT):
+        r =  struct.pack("<B", self.t)
         r += struct.pack("<q", int(self.nValue))
         r += ser_string(self.scriptPubKey)
         return r
 
     def __repr__(self):
-        return "CTxOut(nValue=%i.%08i scriptPubKey=%s)" \
-            % (self.nValue // COIN, self.nValue % COIN,
-               hexlify(self.scriptPubKey))
+        return "TxOut(type=%x, nValue=%i.%08i scriptPubKey=%s)" % (self.t, self.nValue // COIN, self.nValue % COIN, hexlify(self.scriptPubKey))
+
+# Legacy script mode tx out
+class CTxOut(TxOut):
+    def __init__(self, nValue=0, scriptPubKey=b""):
+        TxOut.__init__(self, 0, nValue, scriptPubKey)
 
 
 class CTransaction(object):
     def __init__(self, tx=None):
-        if tx is None:
-            self.nVersion = 1
+        self.id = None
+        self.idem = None
+        if isinstance(tx, dict): # handle result from RPC call
+            self.fromHex(tx["hex"])
+            assert util.uint256ToRpcHex(self.GetId()) == tx["txid"], "Deserialized id does not match what was received from RPC"
+        elif isinstance(tx, str):
+            self.fromHex(tx)
+        elif tx is None:
+            self.nVersion = 0
             self.vin = []
             self.vout = []
             self.nLockTime = 0
-            self.sha256 = None
-            self.hash = None
         else:
             self.nVersion = tx.nVersion
             self.vin = copy.deepcopy(tx.vin)
             self.vout = copy.deepcopy(tx.vout)
             self.nLockTime = tx.nLockTime
-            self.sha256 = None
-            self.hash = None
 
     def deserialize(self, f):
         if isinstance(f, str):
@@ -586,52 +662,82 @@ class CTransaction(object):
             f = BytesIO(unhexlify(f))
         elif isinstance(f, bytes):
             f = BytesIO(f)
-        self.nVersion = struct.unpack("<i", f.read(4))[0]
+        self.nVersion = struct.unpack("<B", f.read(1))[0]
         self.vin = deser_vector(f, CTxIn)
         self.vout = deser_vector(f, CTxOut)
         self.nLockTime = struct.unpack("<I", f.read(4))[0]
-        self.sha256 = None
-        self.hash = None
+        self.id = None
+        self.idem = None
         return self
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
-        r += struct.pack("<i", self.nVersion)
-        r += ser_vector(self.vin)
-        r += ser_vector(self.vout)
+        r += struct.pack("<B", self.nVersion)
+        r += ser_vector(self.vin, stype)
+        r += ser_vector(self.vout, stype)
         r += struct.pack("<I", self.nLockTime)
         return r
 
+    def fromHex(self, hexdata):
+        self.deserialize(hexdata)
+        return self
     def toHex(self):
         """Return the hex string serialization of this object"""
         return hexlify(self.serialize()).decode("utf-8")
 
     def rehash(self):
-        self.sha256 = None
-        self.calc_sha256()
-        return self.hash
+        self.id = None
+        self.idem = None
+        self.calcIdem()
+        self.calcId()
+        return self.id
 
-    def calc_sha256(self):
-        if self.sha256 is None:
-            self.sha256 = uint256_from_str(hash256(self.serialize()))
-        self.hash = encode(hash256(self.serialize())[::-1], 'hex_codec').decode('ascii')
-        return self.hash
+    def GetId(self):
+        """Returns the Id as bytes"""
+        if self.id == None: self.calcId()
+        return self.id
+    def GetIdAsInt(self):
+        """Returns the Id as a number"""
+        return deser_uint256(self.GetId())
+    def GetRpcHexId(self):
+        """Returns the Id in the same format it would be returned via a RPC call"""
+        return util.uint256ToRpcHex(self.GetId())
 
-    def getHash(self):
-        if self.sha256 is None:
-            self.rehash()
-        return self.sha256
+    def GetIdem(self):
+        """Returns the Idem as bytes"""
+        if self.idem == None: self.calcIdem()
+        return self.idem
+    def GetRpcHexIdem(self):
+        """Returns the Idem in the same format it would be returned via a RPC call"""
+        return util.uint256ToRpcHex(self.GetIdem())
+
+    def calcIdem(self):
+        self.idem = hash256(self.serialize(SER_IDEM))
+        return self.idem
+
+    def calcId(self):
+        idemHash = self.calcIdem()
+        sigs = []
+        sigs.append(struct.pack("<I", len(self.vin)))
+        for tin in self.vin:
+            sigs.append(bytes(tin.scriptSig))
+            sigs.append(INVALID_OPCODE)  # Separator
+        sigs = b"".join(sigs)
+        sigsHash = hash256(sigs)
+        # print("sigsHash: " + util.uint256ToRpcHex(sigsHash) + "  len: " + str(len(sigs)) + " bytes: " + sigs.hex())
+        self.id = hash256(idemHash + sigsHash)
+        return self.id
 
     def is_valid(self):
         self.calc_sha256()
         for tout in self.vout:
-            if tout.nValue < 0 or tout.nValue > 21000000 * COIN:
+            if tout.nValue < 0 or tout.nValue > 21000000000000 * COIN:
                 return False
         return True
 
     def summary(self):
         self.calc_sha256()
-        s = ["Transaction: %064x\n" % self.sha256]
+        s = ["Transaction: %064x\n" % self.GetId()]
         s.append("%d inputs\n" % len(self.vin))
         for vin in self.vin:
             s.append("  %064x:%d\n" % (vin.prevout.hash, vin.prevout.n))
@@ -639,6 +745,15 @@ class CTransaction(object):
         for vout in self.vout:
             s.append("  %12d %s\n" % (vout.nValue, hexlify((vout.scriptPubKey))))
         return "".join(s)
+
+    def OutpointAt(self, idx):
+        assert idx < len(self.vout)
+        return COutPoint().fromIdemAndIdx(self.GetIdem(), idx)
+
+    def SpendOutput(self, idx, satisfierScript=None):
+        assert idx < len(self.vout)
+        return CTxIn(COutPoint().fromIdemAndIdx(self.GetIdem(), idx), self.vout[idx].nValue, satisfierScript)
+
 
     def __repr__(self):
         return "CTransaction(nVersion=%i vin=%s vout=%s nLockTime=%i)" \
@@ -655,12 +770,16 @@ class CTransaction(object):
         instead of the usual, expected double hashing. This is to aid
         applications such as CHECKDATASIG(VERIFY).
         """
-        hashdata = struct.pack("<I", self.nVersion)
+        hashdata = struct.pack("<B", self.nVersion)
 
         h_prevouts = self.hashPrevouts(hashcode)
         if debug:
             print("Hash prevouts:", hexlify(h_prevouts[::-1]))
         hashdata += h_prevouts
+        h_inputamounts = self.hashInputAmounts(hashcode)
+        if debug:
+            print("Hash input amounts:", hexlify(h_inputamounts[::-1]))
+        hashdata += h_inputamounts
 
         h_sequence = self.hashSequence(hashcode)
         if debug:
@@ -674,22 +793,37 @@ class CTransaction(object):
         assert 75 >= len(scriptCode) > 0
         hashdata += struct.pack("<B", len(scriptCode))
         hashdata += scriptCode
+        if debug:
+            print("ScriptCode:", scriptCode.hex())
         hashdata += struct.pack("<Q", nValue)
+        if debug:
+            print("Amount: ", nValue);
         hashdata += struct.pack("<I", self.vin[in_number].nSequence)
+        if debug:
+            print("sequence: ", self.vin[in_number].nSequence)
 
         h_outputs = self.hashOutputs(hashcode, in_number)
         if debug:
             print("Hash outputs:", hexlify(h_outputs[::-1]))
         hashdata += h_outputs
         hashdata += struct.pack("<I", self.nLockTime)
+        if debug:
+            print("locktime:", self.nLockTime)
         hashdata += struct.pack("<I", hashcode)
+        if debug:
+            print("hashcode: 0x%x" % hashcode)
 
         if debug:
             print("Hash all data:", hexlify(hashdata))
         if single:
-            return sha256(hashdata)
+            ret = sha256(hashdata)
+            if debug:
+                print("Final SHA256 sighash is: ", hexlify(ret[::-1]))
         else:
-            return hash256(hashdata)
+            ret = hash256(hashdata)
+            if debug:
+                print("Final Double SHA256 sighash is: ", hexlify(ret[::-1]))
+        return ret
 
     def hashPrevouts(self, hashcode):
         if hashcode & SIGHASH_ANYONECANPAY:
@@ -697,8 +831,18 @@ class CTransaction(object):
         else:
             op_ser = b""
             for inp in self.vin:
-                op_ser += inp.prevout.serialize()
+                op_ser += inp.prevout.serialize(SER_IDEM)
             return hash256(op_ser)
+
+    def hashInputAmounts(self, hashcode):
+        if hashcode & SIGHASH_ANYONECANPAY:
+            return 32 * b"\x00"
+        else:
+            op_ser = b""
+            for inp in self.vin:
+                op_ser += struct.pack("<q", int(inp.amount))
+            return hash256(op_ser)
+
 
     def hashSequence(self, hashcode):
         if (hashcode & SIGHASH_ANYONECANPAY or
@@ -777,9 +921,7 @@ class CTransaction(object):
 
         return (hash, None)
 
-
-
-class CBlockHeader(object):
+class SatoshiBlockHeader(object):
     def __init__(self, header=None):
         if header is None:
             self.set_null()
@@ -814,7 +956,7 @@ class CBlockHeader(object):
         self.sha256 = None
         self.hash = None
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<i", self.nVersion)
         r += ser_uint256(self.hashPrevBlock)
@@ -864,16 +1006,16 @@ class CBlockHeader(object):
         return "".join(s)
 
     def __str__(self):
-        return "CBlockHeader(hash=%064x nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x)" \
+        return "SatoshiBlockHeader(hash=%064x nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x)" \
             % (self.gethash(), self.nVersion, self.hashPrevBlock, self.hashMerkleRoot, time.ctime(self.nTime), self.nBits, self.nNonce)
 
     def __repr__(self):
-        return "CBlockHeader(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x)" \
+        return "SatoshiBlockHeader(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x)" \
             % (self.nVersion, self.hashPrevBlock, self.hashMerkleRoot,
                time.ctime(self.nTime), self.nBits, self.nNonce)
 
 
-class CBlock(CBlockHeader):
+class SatoshiBlock(SatoshiBlockHeader):
     def __init__(self, header=None):
         super(CBlock, self).__init__(header)
         self.vtx = []
@@ -882,7 +1024,7 @@ class CBlock(CBlockHeader):
         super(CBlock, self).deserialize(f)
         self.vtx = deser_vector(f, CTransaction)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += super(CBlock, self).serialize()
         r += ser_vector(self.vtx)
@@ -891,7 +1033,7 @@ class CBlock(CBlockHeader):
     def calc_merkle_root(self):
         hashes = []
         for tx in self.vtx:
-            tx.calc_sha256()
+            tx.GetId()
             hashes.append(ser_uint256(tx.sha256))
         while len(hashes) > 1:
             newhashes = []
@@ -916,11 +1058,33 @@ class CBlock(CBlockHeader):
         return True
 
     def solve(self):
-        self.rehash()
+        self.sha256 = None
+
         target = uint256_from_compact(self.nBits)
-        while self.sha256 > target:
+        while True:
+
+            r = b""
+            r += struct.pack("<i", self.nVersion)
+            r += ser_uint256(self.hashPrevBlock)
+            r += ser_uint256(self.hashMerkleRoot)
+            r += struct.pack("<I", self.nTime)
+            r += struct.pack("<I", self.nBits)
+            r += struct.pack("<I", self.nNonce)
+            self.sha256 = uint256_from_str(hash256(r))
+            self.hash = encode(hash256(r)[::-1], 'hex_codec').decode('ascii')
+
+            # create a private key from the blockhash
+            private_key = hash256(r)
+
+            # create a schorr sig by signing with the sha256(blockhash) and, private key from above
+            sig = sign(private_key, sha256(hash256(r)))
+
+            # get the sha256 of the schnorr sig
+            schnorr_sha256 = uint256_from_str(sha256(sig))
+            if schnorr_sha256 < target:
+                break
+
             self.nNonce += 1
-            self.rehash()
 
     def __str__(self):
         return "CBlock(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x vtx_len=%d)" \
@@ -931,6 +1095,303 @@ class CBlock(CBlockHeader):
         return "CBlock(nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nNonce=%08x vtx=%s)" \
             % (self.nVersion, self.hashPrevBlock, self.hashMerkleRoot,
                time.ctime(self.nTime), self.nBits, self.nNonce, repr(self.vtx))
+
+
+class CBlockHeader(object):
+    def __init__(self, header=None):
+        if header is None:
+            self.set_null()
+        else:
+            self.set(header)
+
+    def set(self, header):
+        self.hashPrevBlock = header.hashPrevBlock
+        self.nBits = header.nBits
+        self.hashAncestor = header.hashAncestor
+        self.hashMerkleRoot = header.hashMerkleRoot
+        self.hashTxFilter = header.hashTxFilter
+        self.nTime = header.nTime
+        self.height = header.height
+        self.chainWork = header.chainWork
+        self.size = header.size
+        self.txCount = header.txCount
+        self.maxSize = header.maxSize
+        self.feePoolAmt = header.feePoolAmt
+        self.utxoCommitment = header.utxoCommitment
+        self.minerData = header.minerData
+        self.nonce = header.nonce
+        self.hashNum = None
+        self.calc_hash()
+
+    def set_null(self):
+        self.hashPrevBlock = 0
+        self.nBits = 0
+        self.hashAncestor = 0
+        self.hashMerkleRoot = 0
+        self.hashTxFilter = 0
+        self.nTime = 0
+        self.height = 0
+        self.chainWork = 0
+        self.size = 0
+        self.txCount = 0
+        self.maxSize = 0
+        self.feePoolAmt = 0
+        self.utxoCommitment = b""
+        self.minerData = b""
+        self.nonce = None
+        self.hashNum = None
+        self.hash = None
+
+    def deserialize(self, f):
+        self.hashPrevBlock = deser_uint256(f)
+        self.nBits = struct.unpack("<I", f.read(4))[0]
+        self.hashAncestor = deser_uint256(f)
+        self.hashMerkleRoot = deser_uint256(f)
+        self.hashTxFilter = deser_uint256(f)
+        self.nTime = struct.unpack("<I", f.read(4))[0]
+        self.height = deser_varint(f)
+        self.chainWork = deser_uint256(f)
+        self.size = struct.unpack("<Q", f.read(8))[0]
+        self.txCount = deser_varint(f)
+        self.maxSize = deser_varint(f)
+        self.feePoolAmt = deser_varint(f)
+        self.utxoCommitment = deser_string(f)
+        self.minerData = deser_string(f)
+        self.nonce = deser_string(f)
+        self.hashNum = None
+        self.hash = None
+
+    def serialize(self, stype=SER_DEFAULT):
+        r = b""
+        r += ser_uint256(self.hashPrevBlock)
+        r += struct.pack("<I", self.nBits)
+        r += ser_uint256(self.hashAncestor)
+        r += ser_uint256(self.hashMerkleRoot)
+        r += ser_uint256(self.hashTxFilter)
+        r += struct.pack("<I", self.nTime)
+        r += ser_varint(self.height)
+        r += ser_uint256(self.chainWork)
+        r += struct.pack("<Q", self.size)
+        r += ser_varint(self.txCount)
+        r += ser_varint(self.maxSize)
+        r += ser_varint(self.feePoolAmt)
+        r += ser_string(self.utxoCommitment)
+        r += ser_string(self.minerData)
+        r += ser_string(self.nonce)
+        return r
+
+    def HexStr(self):
+        """ Match the C++ equivalent"""
+        return self.serialize().hex()
+
+    def calc_mining_commitment(self):
+        if True:
+            hpv = ser_uint256(self.hashPrevBlock)
+            mh = b""
+            mh += hpv
+            mh += struct.pack("<I", self.nBits)
+            # print("mh bytes: " + mh.hex())
+            shaMh = sha256(mh)
+            # print("miniheader: " + shaMh[::-1].hex())  # note bitcoind prints hash backwards from how it uses it so that's why [::-1]
+
+            eh = b""
+            eh += ser_uint256(self.hashAncestor)
+            eh += ser_uint256(self.hashTxFilter)
+            eh += ser_uint256(self.hashMerkleRoot)
+            eh += struct.pack("<I", self.nTime)
+            eh += struct.pack("<Q", self.height)
+            eh += ser_uint256(self.chainWork)
+            eh += struct.pack("<Q", self.size)
+            eh += struct.pack("<Q", self.txCount)
+            eh += struct.pack("<Q", self.maxSize)
+            eh += struct.pack("<Q", self.feePoolAmt)
+            eh += ser_string(self.utxoCommitment)
+            eh += ser_string(self.minerData)
+            shaEh = sha256(eh)
+            # print("extended bytes: " + eh.hex())
+            # print("ext: " + shaEh[::-1].hex())
+
+            hashBytes = sha256(shaMh + shaEh)
+            # print("full mining commitment: " + hashBytes.hex())
+            return hashBytes
+
+    def calc_hash(self):
+        if self.hashNum is None:
+            mh = b""
+            mh += ser_uint256(self.hashPrevBlock)
+            mh += struct.pack("<I", self.nBits)
+            shaMh = sha256(mh)
+
+            eh = b""
+            eh += ser_uint256(self.hashAncestor)
+            eh += ser_uint256(self.hashTxFilter)
+            eh += ser_uint256(self.hashMerkleRoot)
+            eh += struct.pack("<I", self.nTime)
+            eh += struct.pack("<Q", self.height)
+            eh += ser_uint256(self.chainWork)
+            eh += struct.pack("<Q", self.size)
+            eh += struct.pack("<Q", self.txCount)
+            eh += struct.pack("<Q", self.maxSize)
+            eh += struct.pack("<Q", self.feePoolAmt)
+            eh += ser_string(self.utxoCommitment)
+            eh += ser_string(self.minerData)
+            eh += ser_string(self.nonce)
+
+            shaEh = sha256(eh)
+            hashBytes = sha256(shaMh + shaEh)
+            self.hashNum = uint256_from_str(hashBytes)
+            self.hash = encode(hashBytes[::-1], 'hex_codec').decode('ascii')
+        return self.hash
+
+    def gethashprevblock(self, encoding = 'int'):
+        assert encoding == 'hex' or encoding == 'int'
+        if encoding == 'int':
+            return self.hashPrevBlock
+        return hex(self.hashPrevBlock)
+
+
+    def gethash(self, encoding = 'int'):
+        assert encoding == 'hex' or encoding == 'int'
+        self.calc_hash()
+        if encoding == 'int':
+            return self.hashNum
+        return hex(self.hashNum)
+
+    def gethashhex(self):
+        self.calc_hash()
+        return self.hash
+
+    def rehash(self):
+        self.hashNum = None
+        self.calc_hash()
+        return self.hashNum
+
+    def summary(self):
+        s = []
+        s.append("Block:  %064x  Time:%s  Version:0x%x Bits:0x%08x\n" %
+                 (self.gethash(), time.ctime(self.nTime), self.nVersion, self.nBits))
+        s.append("Parent: %064x  Merkle: %064x" % (self.hashPrevBlock, self.hashMerkleRoot))
+        return "".join(s)
+
+    def __str__(self):
+        return "CBlockHeader(hash=%064x nVersion=%i hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nonce=%s)" \
+            % (self.gethash(), self.nVersion, self.hashPrevBlock, self.hashMerkleRoot, time.ctime(self.nTime), self.nBits, self.nonce.hex())
+
+    def __repr__(self):
+        return "CBlockHeader(hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nonce=%s)" \
+            % (self.hashPrevBlock, self.hashMerkleRoot,
+               time.ctime(self.nTime), self.nBits, self.nonce.hex())
+
+
+class CBlock(CBlockHeader):
+    def __init__(self, header=None):
+        if type(header) is str:
+            FromHex(self, header)
+        else:
+            super(CBlock, self).__init__(header)
+            self.vtx = []
+
+    def deserialize(self, f):
+        super(CBlock, self).deserialize(f)
+        self.vtx = deser_vector(f, CTransaction)
+
+    def serialize(self, stype=SER_DEFAULT):
+        r = b""
+        r += super(CBlock, self).serialize(stype)
+        r += ser_vector(self.vtx)
+        return r
+
+    def update_fields(self):
+        self.hashMerkleRoot = self.calc_merkle_root()
+        self.calc_size()
+        self.txCount = len(self.vtx)
+        self.hashNum = None # force recalculation of hash since block changed
+        self.hash = None
+
+    def calc_merkle_root(self, debug=False):
+        hashes = []
+        for tx in self.vtx:
+            hashes.append(tx.GetId())
+
+        if debug:
+            print("merkle root hashes:")
+            for x in hashes:
+                print(util.uint256ToRpcHex(x))
+        while len(hashes) > 1:
+            newhashes = []
+            for i in range(0, len(hashes), 2):
+                i2 = min(i + 1, len(hashes) - 1)
+                newhashes.append(hash256(hashes[i] + hashes[i2]))
+            hashes = newhashes
+        if hashes:
+            return uint256_from_str(hashes[0])
+        return 0
+
+    def calc_size(self):
+         self.size = len(self.serialize()) - (len(self.nonce) + 1)
+
+    def calc_mining_hash(self):
+        assert 0  # TODO
+
+    def is_valid(self):
+        miningHash = self.calc_mining_hash()
+        target = uint256_from_compact(self.nBits)
+        if miningHash > target:
+            return False
+        for tx in self.vtx:
+            if not tx.is_valid():
+                return False
+        if self.calc_merkle_root() != self.hashMerkleRoot:
+            return False
+        return True
+
+    def solve(self):
+
+        assert self.txCount == len(self.vtx)
+        assert self.size == len(self.serialize()) - (len(self.nonce) + 1)
+
+        target = uint256_from_compact(self.nBits)
+        mining_commitment = uint256_from_str(self.calc_mining_commitment())
+        # print("Mining block commitment: %x" % mining_commitment)
+        while True:
+
+            r = b""
+            r += ser_uint256(mining_commitment)
+            r += ser_string(self.nonce)
+            miningHash = hash256(r)
+            sha256ofMh = sha256(miningHash)
+
+            # create a private key from the blockhash
+            private_key = miningHash
+
+            # create a schorr sig by signing with the sha256(blockhash) and, private key from above
+            sig = sign(private_key, sha256ofMh)
+
+            # get the sha256 of the schnorr sig
+            schnorr_sha256 = uint256_from_str(sha256(sig))
+            if schnorr_sha256 < target:
+                break
+
+            # Roll 3 bytes TODO: verify that nonce is big enough
+            if self.nonce[0] == 255:
+                if len(self.nonce) == 1: self.nonce.append(0)
+                if self.nonce[1] == 255:
+                    if len(self.nonce) == 2: self.nonce.append(0)
+                    self.nonce[2] += 1
+                self.nonce[1] += 1
+            self.nonce[0] += 1
+        self.hashNum = None # force recalculation of hash since block changed
+        self.hash = None
+
+    def __str__(self):
+        return "CBlock(hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nonce=%s vtx_len=%d)" \
+            % (self.hashPrevBlock, self.hashMerkleRoot,
+               time.ctime(self.nTime), self.nBits, self.nonce.hex(), len(self.vtx))
+
+    def __repr__(self):
+        return "CBlock(hashPrevBlock=%064x hashMerkleRoot=%064x nTime=%s nBits=%08x nonce=%s vtx=%s)" \
+            % (self.hashPrevBlock, self.hashMerkleRoot,
+               time.ctime(self.nTime), self.nBits, self.nonce.hex(), repr(self.vtx))
 
 
 class CUnsignedAlert(object):
@@ -964,7 +1425,7 @@ class CUnsignedAlert(object):
         self.strStatusBar = deser_string(f)
         self.strReserved = deser_string(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<i", self.nVersion)
         r += struct.pack("<q", self.nRelayUntil)
@@ -997,7 +1458,7 @@ class CAlert(object):
         self.vchMsg = deser_string(f)
         self.vchSig = deser_string(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += ser_string(self.vchMsg)
         r += ser_string(self.vchSig)
@@ -1018,10 +1479,10 @@ class PrefilledTransaction(object):
         self.tx = CTransaction()
         self.tx.deserialize(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += ser_compact_size(self.index)
-        r += self.tx.serialize()
+        r += self.tx.serialize(stype)
         return r
 
     def __repr__(self):
@@ -1048,9 +1509,9 @@ class P2PHeaderAndShortIDs(object):
         self.prefilled_txn = deser_vector(f, PrefilledTransaction)
         self.prefilled_txn_length = len(self.prefilled_txn)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
-        r += self.header.serialize()
+        r += self.header.serialize(stype)
         r += struct.pack("<Q", self.nonce)
         r += ser_compact_size(self.shortids_length)
         for x in self.shortids:
@@ -1117,7 +1578,7 @@ class HeaderAndShortIDs(object):
         [k0, k1] = self.get_siphash_keys()
         for i in range(len(block.vtx)):
             if i not in prefill_list:
-                self.shortids.append(calculate_shortid(k0, k1, block.vtx[i].sha256))
+                self.shortids.append(calculate_shortid(k0, k1, block.vtx[i].GetIdAsInt()))
 
     def __repr__(self):
         return "HeaderAndShortIDs(header=%s, nonce=%d, shortids=%s, prefilledtxn=%s" % (repr(self.header), self.nonce, repr(self.shortids), repr(self.prefilled_txn))
@@ -1135,7 +1596,7 @@ class BlockTransactionsRequest(object):
         for i in range(indexes_length):
             self.indexes.append(deser_compact_size(f))
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += ser_uint256(self.blockhash)
         r += ser_compact_size(len(self.indexes))
@@ -1166,6 +1627,7 @@ class BlockTransactionsRequest(object):
 class BlockTransactions(object):
 
     def __init__(self, blockhash=0, transactions = None):
+        assert blockhash != None
         self.blockhash = blockhash
         self.transactions = transactions if transactions != None else []
 
@@ -1173,7 +1635,8 @@ class BlockTransactions(object):
         self.blockhash = deser_uint256(f)
         self.transactions = deser_vector(f, CTransaction)
 
-    def serialize(self, with_witness=False):
+    def serialize(self, with_witness=False, stype=SER_DEFAULT):
+        assert type(with_witness) is bool
         r = b""
         r += ser_uint256(self.blockhash)
         if with_witness:
@@ -1222,7 +1685,7 @@ class msg_version(object):
             self.strSubVer = None
             self.nStartingHeight = None
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<i", self.nVersion)
         r += struct.pack("<Q", self.nServices)
@@ -1271,7 +1734,7 @@ class msg_extversion(object):
             value = f.read(val_size)
             self.xver[key] = value
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         res = CompactSize(len(self.xver)).serialize()
         for k, v in self.xver.items():
             res += CompactSize(k).serialize()
@@ -1299,13 +1762,13 @@ class msg_xupdate(object):
             value = f.read(val_size)
             self.xver[key] = value
 
-    def serialize(self):
-        res = CompactSize(len(self.xver)).serialize()
+    def serialize(self, stype=SER_DEFAULT):
+        res = CompactSize(len(self.xver)).serialize(stype)
         for k, v in self.xver.items():
-            res += CompactSize(k).serialize()
+            res += CompactSize(k).serialize(stype)
             if type(v) is int:  # serialize integers in compact format inside the vector
-                v = CompactSize(v).serialize()
-            res += CompactSize(len(v)).serialize()
+                v = CompactSize(v).serialize(stype)
+            res += CompactSize(len(v)).serialize(stype)
             res += v
         return res
 
@@ -1322,7 +1785,7 @@ class msg_addr(object):
     def deserialize(self, f):
         self.addrs = deser_vector(f, CAddress)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         return ser_vector(self.addrs)
 
     def __repr__(self):
@@ -1339,7 +1802,7 @@ class msg_alert(object):
         self.alert = CAlert()
         self.alert.deserialize(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += self.alert.serialize()
         return r
@@ -1360,7 +1823,7 @@ class msg_inv(object):
     def deserialize(self, f):
         self.inv = deser_vector(f, CInv)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         return ser_vector(self.inv)
 
     def __repr__(self):
@@ -1381,7 +1844,7 @@ class msg_getdata(object):
     def deserialize(self, f):
         self.inv = deser_vector(f, CInv)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         return ser_vector(self.inv)
 
     def __repr__(self):
@@ -1400,7 +1863,7 @@ class msg_getblocks(object):
         self.locator.deserialize(f)
         self.hashstop = deser_uint256(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += self.locator.serialize()
         r += ser_uint256(self.hashstop)
@@ -1420,7 +1883,7 @@ class msg_tx(object):
     def deserialize(self, f):
         self.tx.deserialize(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         return self.tx.serialize()
 
     def __repr__(self):
@@ -1439,7 +1902,7 @@ class msg_block(object):
     def deserialize(self, f):
         self.block.deserialize(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         return self.block.serialize()
 
     def __str__(self):
@@ -1458,7 +1921,8 @@ class msg_getaddr(object):
     def deserialize(self, f):
         pass
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
+        assert False
         return b""
 
     def __repr__(self):
@@ -1474,7 +1938,7 @@ class msg_ping(object):
     def deserialize(self, f):
         self.nonce = struct.unpack("<Q", f.read(8))[0]
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<Q", self.nonce)
         return r
@@ -1492,7 +1956,7 @@ class msg_pong(object):
     def deserialize(self, f):
         self.nonce = struct.unpack("<Q", f.read(8))[0]
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<Q", self.nonce)
         return r
@@ -1510,7 +1974,7 @@ class msg_mempool(object):
     def deserialize(self, f):
         pass
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         return b""
 
     def __repr__(self):
@@ -1526,7 +1990,7 @@ class msg_sendheaders(object):
     def deserialize(self, f):
         pass
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         return b""
 
     def __repr__(self):
@@ -1551,7 +2015,7 @@ class msg_getheaders(object):
         self.locator.deserialize(f)
         self.hashstop = deser_uint256(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += self.locator.serialize()
         r += ser_uint256(self.hashstop)
@@ -1578,9 +2042,9 @@ class msg_headers(object):
         for x in blocks:
             self.headers.append(CBlockHeader(x))
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         blocks = [CBlock(x) for x in self.headers]
-        return ser_vector(blocks)
+        return ser_vector(blocks, stype)
 
     def __repr__(self):
         return "msg_headers(headers=%s)" % repr(self.headers)
@@ -1604,7 +2068,7 @@ class msg_reject(object):
                 (self.message == b"block" or self.message == b"tx")):
             self.data = deser_uint256(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = ser_string(self.message)
         r += struct.pack("<B", self.code)
         r += ser_string(self.reason)
@@ -1614,7 +2078,7 @@ class msg_reject(object):
         return r
 
     def __repr__(self):
-        return "msg_reject: %s %d %s [%064x]" \
+        return "msg_reject: message=%s code=%d reason=%s data=[%064x]" \
             % (self.message, self.code, self.reason, self.data)
 
 class msg_sendcmpct(object):
@@ -1628,7 +2092,7 @@ class msg_sendcmpct(object):
         self.announce = struct.unpack("<?", f.read(1))[0]
         self.version = struct.unpack("<Q", f.read(8))[0]
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += struct.pack("<?", self.announce)
         r += struct.pack("<Q", self.version)
@@ -1647,7 +2111,7 @@ class msg_cmpctblock(object):
         self.header_and_shortids = P2PHeaderAndShortIDs()
         self.header_and_shortids.deserialize(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += self.header_and_shortids.serialize()
         return r
@@ -1665,7 +2129,7 @@ class msg_getblocktxn(object):
         self.block_txn_request = BlockTransactionsRequest()
         self.block_txn_request.deserialize(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += self.block_txn_request.serialize()
         return r
@@ -1682,7 +2146,7 @@ class msg_blocktxn(object):
     def deserialize(self, f):
         self.block_transactions.deserialize(f)
 
-    def serialize(self):
+    def serialize(self, stype=SER_DEFAULT):
         r = b""
         r += self.block_transactions.serialize()
         return r
@@ -1694,7 +2158,28 @@ class msg_blocktxn(object):
 def Test():
     import doctest
     import sys
+    varint_test()
     print(doctest.testmod(sys.modules[__name__],verbose=True))
+
+def varint_test():
+    def cv(array, val):
+        a = io.BytesIO(bytes(array))
+        vi = deser_varint(a)
+        assert vi == val
+        va = ser_varint(val)
+        assert list(va) == array
+
+    cv([0], 0)
+    cv([1], 1)
+    cv([0x7f], 127)
+    cv([0x80, 0x00], 128)
+    cv([0x80,0x7F], 255 )
+    cv([0x81, 0x00], 256 )
+    cv([0xFE, 0x7F], 16383)
+    cv([0xFF, 0x00], 16384)
+    cv([0xFF, 0x7F], 16511)
+    cv([0x82, 0xFE, 0x7F], 65535)
+    cv([0x8E, 0xFE, 0xFE, 0xFF, 0x00], 2**32)
 
 ## py.test code
 def testCTransactionCopyConstruct():

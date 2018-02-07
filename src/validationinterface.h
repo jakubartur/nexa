@@ -34,6 +34,14 @@ void UnregisterAllValidationInterfaces();
  */
 void SyncWithWallets(const CTransactionRef &ptx, const ConstCBlockRef pblock, int txIdx);
 
+class RaiiRegisterValidationInterface
+{
+public:
+    CValidationInterface *cvi;
+    RaiiRegisterValidationInterface(CValidationInterface *cviIn) : cvi(cviIn) { RegisterValidationInterface(cvi); }
+    ~RaiiRegisterValidationInterface() { UnregisterValidationInterface(cvi); }
+};
+
 class CValidationInterface
 {
 protected:

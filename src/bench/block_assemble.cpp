@@ -24,28 +24,24 @@ std::shared_ptr<CBlock> PrepareBlock(const CScript &coinbase_scriptPubKey, const
     CBlockRef block = BlockAssembler(chainparams).CreateNewBlock(coinbase_scriptPubKey)->block;
     block->nTime = chainActive.Tip()->GetMedianTimePast() + 1;
     block->hashMerkleRoot = BlockMerkleRoot(*block);
-
+    block->txCount = block->vtx.size();
+    block->UpdateHeader();
     return block;
 }
 
 static CTxIn MineBlock(const CScript &coinbase_scriptPubKey, const CChainParams &chainparams)
 {
     CBlockRef pblock = PrepareBlock(coinbase_scriptPubKey, chainparams);
-
-    pblock->nTime = chainActive.Tip()->GetMedianTimePast() + 1;
-    pblock->hashMerkleRoot = BlockMerkleRoot(*pblock);
-    while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, chainparams.GetConsensus()))
-    {
-        ++pblock->nNonce;
-        assert(pblock->nNonce);
-    }
+    pblock->nonce.resize(4);
+    bool found = MineBlock(*pblock, 100000000, chainparams.GetConsensus());
+    assert(found);
 
     CValidationState state;
     bool processed = ProcessNewBlock(state, chainparams, nullptr, pblock, true, nullptr, false);
     assert(processed);
     assert(state.IsValid());
 
-    return CTxIn{pblock->vtx[0]->GetHash(), 0};
+    return pblock->vtx[0]->SpendOutput(0);
 }
 
 
@@ -67,25 +63,20 @@ static void AssembleBlock(benchmark::State &state)
         CMutableTransaction tx;
         tx.vin.push_back(MineBlock(SCRIPT_PUB, chainparams));
         tx.vin.back().scriptSig = scriptSig;
-        tx.vout.emplace_back(49.999 * COIN, SCRIPT_PUB);
+        tx.vout.emplace_back(CTxOut::LEGACY, 9999995 * COIN, SCRIPT_PUB);
         if (NUM_BLOCKS - b >= COINBASE_MATURITY)
         {
             txs.at(b) = MakeTransactionRef(tx);
         }
     }
 
+    for (const auto &txr : txs)
     {
-        // Required for AcceptToMemoryPool.
-        LOCK(cs_main);
-
-        for (const auto &txr : txs)
-        {
-            CValidationState vstate;
-            bool ret{AcceptToMemoryPool(mempool, vstate, txr, false, /* fLimitFree */
-                nullptr /* pfMissingInputs */, true, /* fRejectAbsurdFee */
-                TransactionClass::DEFAULT)};
-            assert(ret);
-        }
+        CValidationState vstate;
+        bool ret{AcceptToMemoryPool(mempool, vstate, txr, false, /* fLimitFree */
+            nullptr /* pfMissingInputs */, true, /* fRejectAbsurdFee */
+            TransactionClass::DEFAULT)};
+        assert(ret);
     }
 
     while (state.KeepRunning())

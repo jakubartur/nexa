@@ -56,6 +56,7 @@ check-formatting:
     extends: .cache-linting
     needs: []
     script:
+        - apt-get install -y libgmp-dev
         - apt-get install -y wget gpg-agent
         - wget https://apt.llvm.org/llvm.sh
         - chmod +x llvm.sh
@@ -77,6 +78,7 @@ build-debian-nodeps:
     extends: .cache-debian-nodeps
     needs: []
     script:
+        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
@@ -96,6 +98,7 @@ build-debian-nodeps-qt:
     extends: .cache-debian-nodeps
     needs: []
     script:
+        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-tests
@@ -145,6 +148,7 @@ build-debian:
     extends: .cache-debian
     needs: [build-debian-deps]
     script:
+        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --enable-shared --enable-debug --enable-zmq --enable-glibc-back-compat --enable-reduce-exports --cache-file=config.cache --prefix=$PWD/../depends/x86_64-unknown-linux-gnu CPPFLAGS=-DDEBUG_LOCKORDER
@@ -183,6 +187,7 @@ build-debian-electrscash:
       - mkdir -p build
 
     script:
+        - apt-get install -y libgmp-dev
         # add cargo to PATH
         - export PATH=$PATH:`pwd`/depends/x86_64-unknown-linux-gnu/native/bin
 
@@ -239,40 +244,6 @@ test-debian-benchmarks:
     dependencies:
         - build-debian-nodeps
 
-test-debian-qa-electrscash:
-    stage: qa_tests
-    extends: .cache-debian
-    needs: ["build-debian", "build-debian-electrscash"]
-    script:
-        - mkdir -p $CI_PROJECT_DIR/cores
-        - mkdir -p $CI_PROJECT_DIR/saved-cores
-        - echo $CI_PROJECT_DIR/cores/core.%e.%p.%h.%t | tee /proc/sys/kernel/core_pattern
-        - (cd build;
-            ./qa/pull-tester/rpc-tests.py --electrum-only --no-ipv6-rpc-listen --gitlab)
-    dependencies:
-        - build-debian-electrscash
-        - build-debian
-    artifacts:
-        when: on_failure
-        paths:
-            - ./qa/qa_tests/
-            - $CI_PROJECT_DIR/saved-cores
-            - ./build/src/bitcoind
-            - ./build/ctorout.txt
-# TODO: Use Junit as a logger
-#test-debian-unittests:
-#    stage: test
-#    cache: {}
-#    needs: ["build-debian-tests"]
-#    script:
-#        - (cd src; ./test/test_bitcoin --logger=HRF:JUNIT,message,junit_unit_tests.xml)
-#    dependencies:
-#        - build-debian-tests
-#    artifacts:
-#        reports:
-#            junit: junit_unit_tests.xml
-
-
 # bitcoind clang (no depend, only system lib installed via apt)
 .cache-debian-clang:
     extends: .ccache_scripts
@@ -291,6 +262,7 @@ build-debian-clang:
     extends: .debian-clang-env
     needs: []
     script:
+        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --cache-file=config.cache --enable-zmq --with-gui=qt5 --with-incompatible-bdb CPPFLAGS=-DDEBUG_LOCKORDER CXXFLAGS="-std=c++14"

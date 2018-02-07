@@ -9,11 +9,11 @@
 #include <algorithm>
 
 
-static int64_t slow_pos_lookup(const CBlock &block, const uint256 &tx)
+static int64_t pos_lookup_by_idem(const CBlock &block, const uint256 &tx)
 {
     for (size_t i = 0; i < block.vtx.size(); ++i)
     {
-        if (block.vtx[i]->GetHash() == tx)
+        if (block.vtx[i]->GetIdem() == tx)
         {
             return i;
         }
@@ -24,12 +24,12 @@ static int64_t slow_pos_lookup(const CBlock &block, const uint256 &tx)
 static int64_t ctor_pos_lookup(const CBlock &block, const uint256 &tx)
 {
     // Coinbase is not sorted and thus needs special treatment
-    if (block.vtx[0]->GetHash() == tx)
+    if (block.vtx[0]->GetId() == tx)
     {
         return 0;
     }
 
-    auto compare = [](auto &blocktx, const uint256 &lookuptx) { return blocktx->GetHash() < lookuptx; };
+    auto compare = [](auto &blocktx, const uint256 &lookuptx) { return blocktx->GetId() < lookuptx; };
 
     auto it = std::lower_bound(begin(block.vtx) + 1, end(block.vtx), tx, compare);
 
@@ -37,19 +37,40 @@ static int64_t ctor_pos_lookup(const CBlock &block, const uint256 &tx)
     {
         return TX_NOT_FOUND;
     }
-    return std::distance(begin(block.vtx), it);
+    if ((*it)->GetId() == tx)
+    {
+        return std::distance(begin(block.vtx), it);
+    }
+    else
+    {
+        return TX_NOT_FOUND;
+    }
 }
 
 
 /// Finds the position of a transaction in a block.
-/// \param ctor Optimized lookup if it's known that block has CTOR ordering
 /// \return
-int64_t FindTxPosition(const CBlock &block, const uint256 &txhash, bool ctor_optimized)
+int64_t FindTxPositionById(const CBlock &block, const uint256 &txhash)
 {
     if (block.vtx.size() == 0)
     {
         // invalid block
         return TX_NOT_FOUND;
     }
-    return ctor_optimized ? ctor_pos_lookup(block, txhash) : slow_pos_lookup(block, txhash);
+    return ctor_pos_lookup(block, txhash);
+}
+
+/// Finds the position of a transaction in a block by idem.
+/// \return
+int64_t FindTxPosition(const CBlock &block, const uint256 &txhash)
+{
+    if (block.vtx.size() == 0)
+    {
+        // invalid block
+        return TX_NOT_FOUND;
+    }
+    int64_t ret = ctor_pos_lookup(block, txhash);
+    if (ret == TX_NOT_FOUND)
+        return pos_lookup_by_idem(block, txhash);
+    return ret;
 }

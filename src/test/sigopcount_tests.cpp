@@ -102,8 +102,8 @@ ScriptError VerifyWithFlag(const CTransaction &output, const CMutableTransaction
 {
     ScriptError error;
     CTransaction inputi(input);
-    TransactionSignatureChecker tsc(&inputi, 0, output.vout[0].nValue);
-    ScriptImportedState sis(&tsc, nullptr, std::vector<CTxOut>(), 0, output.vout[0].nValue);
+    TransactionSignatureChecker tsc(&inputi, 0, input.vout[0].nValue, flags);
+    ScriptImportedState sis(&tsc, nullptr, std::vector<CTxOut>(), 0, input.vout[0].nValue);
     bool ret =
         VerifyScript(inputi.vin[0].scriptSig, output.vout[0].scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &error);
     BOOST_CHECK_EQUAL((ret == true), (error == SCRIPT_ERR_OK));
@@ -126,13 +126,14 @@ void BuildTxs(CMutableTransaction &spendingTx,
     creationTx.vin.resize(1);
     creationTx.vin[0].prevout = COutPoint();
     creationTx.vin[0].scriptSig = CScript();
+    creationTx.vin[0].amount = CAmount(1);
     creationTx.vout.resize(1);
     creationTx.vout[0].nValue = CAmount(1);
     creationTx.vout[0].scriptPubKey = scriptPubKey;
 
     spendingTx.nVersion = 1;
     spendingTx.vin.resize(1);
-    spendingTx.vin[0].prevout = COutPoint(creationTx.GetHash(), 0);
+    spendingTx.vin[0] = creationTx.SpendOutput(0);
     spendingTx.vin[0].scriptSig = scriptSig;
     spendingTx.vout.resize(1);
     spendingTx.vout[0].nValue = CAmount(1);
@@ -164,7 +165,7 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
         CScript scriptPubKey = CScript() << 1 << ToByteVector(pubkey) << ToByteVector(pubkey) << 2
                                          << OP_CHECKMULTISIGVERIFY;
         // Do not use a valid signature to avoid using wallet operations.
-        CScript scriptSig = CScript() << OP_0 << OP_0;
+        CScript scriptSig = CScript() << OP_0 << OP_1;
 
         BuildTxs(spendingTx, coins, creationTx, scriptPubKey, scriptSig);
 
@@ -195,7 +196,7 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
         CScript redeemScript = CScript() << 1 << ToByteVector(pubkey) << ToByteVector(pubkey) << 2
                                          << OP_CHECKMULTISIGVERIFY;
         CScript scriptPubKey = GetScriptForDestination(CScriptID(redeemScript));
-        CScript scriptSig = CScript() << OP_0 << OP_0 << ToByteVector(redeemScript);
+        CScript scriptSig = CScript() << OP_0 << OP_1 << ToByteVector(redeemScript);
 
         BuildTxs(spendingTx, coins, creationTx, scriptPubKey, scriptSig);
         BOOST_CHECK_EQUAL(GetTransactionSigOpCount(MakeTransactionRef(CTransaction(spendingTx)), coins, flags), 2);
@@ -210,61 +211,33 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
 
 BOOST_AUTO_TEST_CASE(test_consensus_sigops_limit)
 {
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(1), MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(123456), MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(1000000), MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(1000001), 2 * MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(1348592), 2 * MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(2000000), 2 * MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(2000001), 3 * MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(2654321), 3 * MAX_BLOCK_SIGOPS_PER_MB);
-    BOOST_CHECK_EQUAL(GetMaxBlockSigOpsCount(std::numeric_limits<uint32_t>::max()), 4295 * MAX_BLOCK_SIGOPS_PER_MB);
-}
-
-BOOST_AUTO_TEST_CASE(test_max_sigops_per_tx)
-{
-    CMutableTransaction tx;
-    tx.nVersion = 1;
-    tx.vin.resize(1);
-    tx.vin[0].prevout = COutPoint(InsecureRand256(), 0);
-    tx.vin[0].scriptSig = CScript();
-    tx.vout.resize(1);
-    tx.vout[0].nValue = CAmount(1);
-    tx.vout[0].scriptPubKey = CScript();
-
-    {
-        CValidationState state;
-        BOOST_CHECK(CheckTransaction(MakeTransactionRef(CTransaction(tx)), state));
-    }
-
-    // Get just before the limit.
-    for (size_t i = 0; i < MAX_TX_SIGOPS_COUNT; i++)
-    {
-        tx.vout[0].scriptPubKey << OP_CHECKSIG;
-    }
-
-    {
-        CValidationState state;
-        BOOST_CHECK(CheckTransaction(MakeTransactionRef(CTransaction(tx)), state));
-    }
-
-    // And go over.
-    tx.vout[0].scriptPubKey << OP_CHECKSIG;
-
-    {
-        CValidationState state;
-        BOOST_CHECK(!ContextualCheckTransaction(MakeTransactionRef(CTransaction(tx)), state, nullptr, Params()));
-        BOOST_CHECK_EQUAL(state.GetRejectReason(), "bad-txns-too-many-sigops");
-    }
+    // Set and unset the tweak (which is only used in testing) and perform a few tests.  This allows
+    // us to check that we can avoid hitting the assert() in GetMaxBlockSigChecks().
+    nextMaxBlockSize.Set(1);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(0), 0);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(1), 0);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(141), 1);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(211), 1);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(212), 1);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(281), 1);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(282), 2);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(14240), 100);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(14241), 101);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(21200), 150);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(28100), 199);
+    nextMaxBlockSize.Set(0);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(DEFAULT_NEXT_MAX_BLOCK_SIZE), 709);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(123456), 875);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(1000000), 7092);
+    BOOST_CHECK_EQUAL(GetMaxBlockSigChecks(1000001), 7092);
 }
 
 
 class AlwaysGoodSignatureChecker : public BaseSignatureChecker
 {
-protected:
-    unsigned int nFlags = SCRIPT_ENABLE_SIGHASH_FORKID;
-
 public:
+    AlwaysGoodSignatureChecker(unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID) { nFlags = flags; }
+
     //! Verifies a signature given the pubkey, signature and sighash
     virtual bool VerifySignature(const std::vector<uint8_t> &vchSig,
         const CPubKey &vchPubKey,
@@ -295,7 +268,7 @@ unsigned int evalForSigChecks(const CScript &scriptSig,
     unsigned int flags,
     BaseSignatureChecker *checker = nullptr)
 {
-    AlwaysGoodSignatureChecker sigChecker;
+    AlwaysGoodSignatureChecker sigChecker(flags);
     ScriptError serror;
     ScriptMachineResourceTracker tracker;
     ScriptImportedState sis(checker ? checker : &sigChecker, nullptr, std::vector<CTxOut>(), 0, 0);
@@ -333,8 +306,7 @@ CMutableTransaction BuildSpendingTransaction(const CScript &scriptSig, const CMu
     txSpend.nLockTime = 0;
     txSpend.vin.resize(1);
     txSpend.vout.resize(1);
-    txSpend.vin[0].prevout.hash = txCredit.GetHash();
-    txSpend.vin[0].prevout.n = 0;
+    txSpend.vin[0].prevout = txCredit.OutpointAt(0);
     txSpend.vin[0].scriptSig = scriptSig;
     txSpend.vin[0].nSequence = CTxIn::SEQUENCE_FINAL;
     txSpend.vout[0].scriptPubKey = CScript();
@@ -363,7 +335,7 @@ CScript sign_multisig(const CScript &scriptPubKey, std::vector<CKey> keys, const
     for (const CKey &key : keys)
     {
         vector<unsigned char> vchSig;
-        BOOST_CHECK(key.SignECDSA(hash, vchSig));
+        BOOST_CHECK(key.SignSchnorr(hash, vchSig));
         vchSig.push_back(sighashType);
         result << vchSig;
     }
@@ -404,9 +376,8 @@ BOOST_AUTO_TEST_CASE(consensusSigCheck)
         CMutableTransaction txTo12 = BuildSpendingTransaction(CScript(), txFrom12);
 
         CScript goodsig1 = sign_multisig(scriptPubKey12, key1, CTransaction(txTo12), txFrom12.vout[0].nValue);
-
         sigchecks = evalForSigChecks(goodsig1, scriptPubKey12, flags);
-        BOOST_CHECK(sigchecks == 2); // ECDSA multisig sigchecks is N in a M-of-N sig
+        BOOST_CHECK(sigchecks == 2); // Schnorr multisig sigchecks is N in a M-of-N sig
     }
 
     {
@@ -420,9 +391,9 @@ BOOST_AUTO_TEST_CASE(consensusSigCheck)
     {
         CScript constraint = CScript() << OP_2 << ToByteVector(key1.GetPubKey()) << ToByteVector(key2.GetPubKey())
                                        << ToByteVector(key3.GetPubKey()) << OP_3 << OP_CHECKMULTISIG << OP_DROP << OP_1;
-        CScript satisfier = CScript() << OP_0 << OP_0 << OP_0;
+        CScript satisfier = CScript() << OP_3 << fakeSchnorrSig << fakeSchnorrSig;
         sigchecks = evalForSigChecks(satisfier, constraint, flags);
-        BOOST_CHECK(sigchecks == 0);
+        BOOST_CHECK(sigchecks == 2); // Schnorr multisig sigchecks is M in a M-of-N sig
     }
 
     { // CHECKSIG is 1

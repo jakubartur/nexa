@@ -30,22 +30,18 @@ class BIP69Test (BitcoinTestFramework):
         self.sync_blocks()
 
     def validate_inputs(self, inputs):
-        last_hash = ""
-        last_n = 0;
+        last_outpoint = ""
         first = False
         for tx_input in inputs:
             if (first == False):
                 first = True
-                last_hash = tx_input["txid"]
-                last_n = tx_input["vout"]
+                last_outpoint = tx_input["outpoint"]
                 continue
-            if last_hash > tx_input["txid"]:
+            if last_outpoint > tx_input["outpoint"]:
                 return False
-            if last_hash == tx_input["txid"]:
-                if last_n > tx_input["vout"]:
-                    return False
-            last_hash = tx_input["txid"]
-            last_n = tx_input["vout"]
+            if last_outpoint == tx_input["outpoint"]:
+                assert False  # hash collision?!!?
+            last_outpoint = tx_input["outpoint"]
         return True
 
     def validate_outputs(self, outputs):
@@ -86,7 +82,7 @@ class BIP69Test (BitcoinTestFramework):
         addr5 = self.nodes[1].getnewaddress()
         addr6 = self.nodes[1].getnewaddress()
         # make a large transaction with multiple inputs and outputs
-        txid1 = self.nodes[0].sendmany("", {addr1:2.345, addr2:1.23, addr3:55, addr4:23.478, addr5:60, addr6:55})
+        txid1 = self.nodes[0].sendmany("", {addr1:"7.34", addr2:"8.23", addr3:55, addr4:23.47, addr5:60, addr6:55})
 
         # check that the transaction is BIP69 sorted
         tx1 = self.nodes[0].getrawtransaction(txid1, True)
@@ -100,6 +96,7 @@ if __name__ == '__main__':
 
 def Test():
     t = BIP69Test()
+    t.drop_to_pdb = True
     bitcoinConf = {
         "debug": ["selectcoins", "rpc","net", "blk", "thin", "mempool", "req", "bench", "evict"]
     }

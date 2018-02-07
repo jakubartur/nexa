@@ -22,7 +22,6 @@ class MempoolSyncTest(BitcoinTestFramework):
             "-debug=mempoolsync",
             "-net.syncMempoolWithPeers=1",
             "-net.randomlyDontInv=100",
-            "-excessiveblocksize=6000000",
             "-blockprioritysize=6000000",
             "-blockmaxsize=6000000"]
 
@@ -54,3 +53,12 @@ class MempoolSyncTest(BitcoinTestFramework):
 
 if __name__ == '__main__':
     MempoolSyncTest().main()
+
+def Test():
+    t = MempoolSyncTest()
+    t.drop_to_pdb = True
+    bitcoinConf = {
+        "debug": ["rpc", "net", "blk", "thin", "mempool", "req", "bench", "evict"],
+    }
+    flags = standardFlags()
+    t.main(flags, bitcoinConf, None)

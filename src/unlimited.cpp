@@ -56,11 +56,12 @@
 #include <queue>
 #include <stack>
 #include <thread>
+// Execute a command, as given by -alertnotify, on certain events such as a long fork being seen
+extern void AlertNotify(const std::string &strMessage);
 
 using namespace std;
 
 extern CTxMemPool mempool; // from main.cpp
-static atomic<uint64_t> nLargestBlockSeen{BLOCKSTREAM_CORE_MAX_BLOCK_SIZE}; // track the largest block we've seen
 static atomic<bool> fIsChainNearlySyncd{false};
 
 // We always start with true so that when ActivateBestChain is called during the startup (init.cpp)
@@ -74,69 +75,12 @@ int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 bool IsTrafficShapingEnabled();
 UniValue validateblocktemplate(const UniValue &params, bool fHelp);
 UniValue validatechainhistory(const UniValue &params, bool fHelp);
+UniValue issuealert(const UniValue &params, bool fHelp);
 
-bool MiningAndExcessiveBlockValidatorRule(const uint64_t newExcessiveBlockSize, const uint64_t newMiningBlockSize)
+void makeLowercase(std::string &input)
 {
-    // The mined block size must be less then or equal too the excessive block size.
-    LOGA("newMiningBlockSize: %d - newExcessiveBlockSize: %d\n", newMiningBlockSize, newExcessiveBlockSize);
-    return (newMiningBlockSize <= newExcessiveBlockSize);
-}
-
-std::string AcceptDepthValidator(const unsigned int &value, unsigned int *item, bool validate)
-{
-    if (!validate)
-    {
-        settingsToUserAgentString();
-    }
-    return std::string();
-}
-
-std::string ExcessiveBlockValidator(const uint64_t &value, uint64_t *item, bool validate)
-{
-    if (validate)
-    {
-        if (!MiningAndExcessiveBlockValidatorRule(value, maxGeneratedBlock))
-        {
-            std::ostringstream ret;
-            ret << "Sorry, your maximum mined block (" << maxGeneratedBlock
-                << ") is larger than your proposed excessive size (" << value
-                << ").  This would cause you to orphan your own blocks.";
-            return ret.str();
-        }
-        if (value < Params().MinMaxBlockSize())
-        {
-            std::ostringstream ret;
-            ret << Params().NetworkIDString() << "Sorry, your proposed excessive block size (" << value
-                << ") is smaller than the minimum EB size (" << Params().MinMaxBlockSize()
-                << ").  This would cause you to orphan blocks from the rest of the net.";
-            return ret.str();
-        }
-    }
-    else // Do anything to "take" the new value
-    {
-        settingsToUserAgentString();
-    }
-    return std::string();
-}
-
-std::string MiningBlockSizeValidator(const uint64_t &value, uint64_t *item, bool validate)
-{
-    if (validate)
-    {
-        if (!MiningAndExcessiveBlockValidatorRule(excessiveBlockSize, value))
-        {
-            std::ostringstream ret;
-            ret << "Sorry, your excessive block size (" << excessiveBlockSize
-                << ") is smaller than your proposed mined block size (" << value
-                << ").  This would cause you to orphan your own blocks.";
-            return ret.str();
-        }
-    }
-    else // Do anything to "take" the new value
-    {
-        // nothing needed
-    }
-    return std::string();
+    for (auto &c : input)
+        c = ::tolower(c);
 }
 
 std::string OutboundConnectionValidator(const int &value, int *item, bool validate)
@@ -161,22 +105,6 @@ std::string OutboundConnectionValidator(const int &value, int *item, bool valida
                 for (int i = 0; i < diff; i++)
                     semOutboundAddNode->post();
         }
-    }
-    return std::string();
-}
-
-std::string MaxDataCarrierValidator(const unsigned int &value, unsigned int *item, bool validate)
-{
-    if (validate)
-    {
-        if (value < MAX_OP_RETURN_RELAY) // sanity check
-        {
-            return "Invalid Value. Data Carrier minimum size has to be greater of equal to 223 bytes";
-        }
-    }
-    else // Do anything to "take" the new value
-    {
-        // nothing needed
     }
     return std::string();
 }
@@ -210,7 +138,7 @@ std::string Bip135VoteValidator(const std::string &value, std::string *item, boo
     return std::string();
 }
 
-// Ensure that only one fork can be active at a time, update the UA string, and convert values of 1 to the
+// Ensure that only one fork can be active at a time, and convert values of 1 to the
 // fork time default.
 std::string ForkTimeValidator(const uint64_t &value, uint64_t *item, bool validate)
 {
@@ -221,9 +149,8 @@ std::string ForkTimeValidator(const uint64_t &value, uint64_t *item, bool valida
     {
         if (*item == 1)
         {
-            *item = Params().GetConsensus().nov2020ActivationTime;
+            *item = Params().GetConsensus().nextForkActivationTime;
         }
-        settingsToUserAgentString();
     }
     return std::string();
 }
@@ -379,7 +306,7 @@ UniValue pushtx(const UniValue &params, bool fHelp)
 void UnlimitedPushTxns(CNode *dest)
 {
     std::vector<uint256> vtxid;
-    mempool.queryHashes(vtxid);
+    mempool.queryIds(vtxid);
     vector<CInv> vInv;
     unsigned int count = 0;
     for (uint256 &hash : vtxid)
@@ -413,53 +340,18 @@ void UnlimitedPushTxns(CNode *dest)
         dest->PushMessage("inv", vInv);
 }
 
-void settingsToUserAgentString()
-{
-    BUComments.clear();
-
-    std::string flavor;
-
-    std::stringstream ebss;
-    ebss << (excessiveBlockSize / 100000);
-    std::string eb = ebss.str();
-    eb.insert(eb.size() - 1, ".", 1);
-    if (eb.substr(0, 1) == ".")
-        eb = "0" + eb;
-    if (eb.at(eb.size() - 1) == '0')
-        eb = eb.substr(0, eb.size() - 2);
-
-    BUComments.push_back("EB" + eb);
-
-    int ad_formatted;
-    ad_formatted = (excessiveAcceptDepth >= 9999999 ? 9999999 : excessiveAcceptDepth);
-    BUComments.push_back("AD" + boost::lexical_cast<std::string>(ad_formatted));
-}
-
 void UnlimitedSetup(void)
 {
     MIN_TX_REQUEST_RETRY_INTERVAL = GetArg("-txretryinterval", DEFAULT_MIN_TX_REQUEST_RETRY_INTERVAL);
     MIN_BLK_REQUEST_RETRY_INTERVAL = GetArg("-blkretryinterval", DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL);
-    maxGeneratedBlock = GetArg("-blockmaxsize", Params().DefaultMaxBlockMiningSize());
+    maxGeneratedBlock = GetArg("-blockmaxsize", Params().GetConsensus().nDefaultMaxBlockSize);
     blockVersion = GetArg("-blockversion", blockVersion);
-    excessiveBlockSize = GetArg("-excessiveblocksize", Params().DefaultExcessiveBlockSize());
-    LOG(TWEAKS, "TWEAKS: UnlimitedSetup() set excessiveBlockSize to %u", excessiveBlockSize);
-    excessiveAcceptDepth = GetArg("-excessiveacceptdepth", excessiveAcceptDepth);
-    maxSigChecks = excessiveBlockSize / BLOCK_MAXBYTES_MAXSIGCHECKS_RATIO;
     LoadTweaks(); // The above options are deprecated so the same parameter defined as a tweak will override them
 
     // If the user configures it to 1, assume this means default
     if (miningForkTime.Value() == 1)
-        miningForkTime = Params().GetConsensus().may2022ActivationTime;
+        miningForkTime = Params().GetConsensus().nextForkActivationTime;
 
-    if (maxGeneratedBlock > excessiveBlockSize)
-    {
-        LOGA("Reducing the maximum mined block from the configured %d to your excessive block size %d.  Otherwise "
-             "you would orphan your own blocks.\n",
-            maxGeneratedBlock, excessiveBlockSize);
-        maxGeneratedBlock = excessiveBlockSize;
-    }
-
-    settingsToUserAgentString();
     //  Init network shapers
     int64_t rb = GetArg("-receiveburst", DEFAULT_MAX_RECV_BURST);
     // parameter is in KBytes/sec, leaky bucket is in bytes/sec.  But if it is "off" then don't multiply
@@ -546,85 +438,6 @@ std::string LicenseInfo()
            "\n";
 }
 
-int chainContainsExcessive(const CBlockIndex *blk, unsigned int goBack)
-{
-    AssertLockHeld(cs_mapBlockIndex);
-
-    if (goBack == 0)
-        goBack = excessiveAcceptDepth + EXCESSIVE_BLOCK_CHAIN_RESET;
-    for (unsigned int i = 0; i < goBack; i++, blk = blk->pprev)
-    {
-        if (!blk)
-            break; // we hit the beginning
-        if (blk->nStatus & BLOCK_EXCESSIVE)
-            return true;
-    }
-    return false;
-}
-
-int isChainExcessive(const CBlockIndex *blk, unsigned int goBack)
-{
-    AssertLockHeld(cs_mapBlockIndex);
-
-    if (goBack == 0)
-        goBack = excessiveAcceptDepth;
-    bool recentExcessive = false;
-    bool oldExcessive = false;
-    for (unsigned int i = 0; i < goBack; i++, blk = blk->pprev)
-    {
-        if (!blk)
-            break; // we hit the beginning
-        if (blk->nStatus & BLOCK_EXCESSIVE)
-            recentExcessive = true;
-    }
-
-    // Once an excessive block is built upon the chain is not excessive even if more large blocks appear.
-    // So look back to make sure that this is the "first" excessive block for a while
-    for (unsigned int i = 0; i < EXCESSIVE_BLOCK_CHAIN_RESET; i++, blk = blk->pprev)
-    {
-        if (!blk)
-            break; // we hit the beginning
-        if (blk->nStatus & BLOCK_EXCESSIVE)
-            oldExcessive = true;
-    }
-
-    return (recentExcessive && !oldExcessive);
-}
-
-bool CheckExcessive(const ConstCBlockRef pblock, uint64_t blockSize, uint64_t nTx, uint64_t largestTx)
-{
-    if (blockSize > excessiveBlockSize)
-    {
-        LOGA("Excessive block: ver:%x time:%d size: %" PRIu64 " Tx:%" PRIu64 "  :too many bytes\n", pblock->nVersion,
-            pblock->nTime, blockSize, nTx);
-        return true;
-    }
-
-    if (blockSize > BLOCKSTREAM_CORE_MAX_BLOCK_SIZE)
-    {
-        // Check transaction size to limit sighash
-        if (largestTx > maxTxSize.Value())
-        {
-            LOGA("Excessive block: ver:%x time:%d size: %" PRIu64 " Tx:%" PRIu64
-                 " largest TX:%d  :tx too large.  Expected less than: %d\n",
-                pblock->nVersion, pblock->nTime, blockSize, nTx, largestTx, maxTxSize.Value());
-            return true;
-        }
-    }
-    else
-    {
-        // Within a 1MB block transactions can be 1MB, so nothing to check WRT transaction size
-    }
-
-    if ((pblock->nVersion >= 2) && (pblock->nTime >= 1364140153)) // BIP34 time and block version for use of GetHeight
-        LOGA("Acceptable block %s at %d: ver:%x time:%d size: %" PRIu64 " Tx:%" PRIu64 " \n",
-            pblock->GetHash().ToString(), pblock->GetHeight(), pblock->nVersion, pblock->nTime, blockSize, nTx);
-    else
-        LOGA("Acceptable block %s: ver:%x time:%d size: %" PRIu64 " Tx:%" PRIu64 " \n", pblock->GetHash().ToString(),
-            pblock->nVersion, pblock->nTime, blockSize, nTx);
-    return false;
-}
-
 extern UniValue getminercomment(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
@@ -652,74 +465,6 @@ extern UniValue setminercomment(const UniValue &params, bool fHelp)
     minerComment = params[0].getValStr();
     return NullUniValue;
 }
-
-UniValue getexcessiveblock(const UniValue &params, bool fHelp)
-{
-    if (fHelp || params.size() != 0)
-        throw runtime_error("getexcessiveblock\n"
-                            "\nReturn the excessive block size and accept depth."
-                            "\nResult\n"
-                            "  excessiveBlockSize (integer) block size in bytes\n"
-                            "  excessiveAcceptDepth (integer) if the chain gets this much deeper than the excessive "
-                            "block, then accept the chain as active (if it has the most work)\n"
-                            "\nExamples:\n" +
-                            HelpExampleCli("getexcessiveblock", "") + HelpExampleRpc("getexcessiveblock", ""));
-
-    UniValue ret(UniValue::VOBJ);
-    ret.pushKV("excessiveBlockSize", excessiveBlockSize);
-    ret.pushKV("excessiveAcceptDepth", (uint64_t)excessiveAcceptDepth);
-    return ret;
-}
-
-UniValue setexcessiveblock(const UniValue &params, bool fHelp)
-{
-    if (fHelp || params.size() < 2 || params.size() >= 3)
-        throw runtime_error("setexcessiveblock blockSize acceptDepth\n"
-                            "\nSet the excessive block size and accept depth.  Excessive blocks will not be used in "
-                            "the active chain or relayed until they are several blocks deep in the blockchain.  This "
-                            "discourages the propagation of blocks that you consider excessively large.  However, if "
-                            "the mining majority of the network builds upon the block then you will eventually accept "
-                            "it, maintaining consensus."
-                            "\nResult\n"
-                            "  blockSize (integer) excessive block size in bytes\n"
-                            "  acceptDepth (integer) if the chain gets this much deeper than the excessive block, then "
-                            "accept the chain as active (if it has the most work)\n"
-                            "\nExamples:\n" +
-                            HelpExampleCli("getexcessiveblock", "") + HelpExampleRpc("getexcessiveblock", ""));
-
-    uint64_t ebs = 0;
-    if (params[0].isNum())
-        ebs = params[0].get_int64();
-    else
-    {
-        string temp = params[0].get_str();
-        if (temp[0] == '-')
-            throw runtime_error("Excessive block size has to be a positive number");
-        ebs = std::stoull(temp);
-    }
-
-    std::string estr = ebTweak.Validate(ebs);
-    if (!estr.empty())
-        throw runtime_error(estr);
-    ebTweak.Set(ebs);
-
-    if (params[1].isNum())
-        excessiveAcceptDepth = params[1].get_int64();
-    else
-    {
-        string temp = params[1].get_str();
-        if (temp[0] == '-')
-            boost::throw_exception(boost::bad_lexical_cast());
-        excessiveAcceptDepth = boost::lexical_cast<unsigned int>(temp);
-    }
-
-    settingsToUserAgentString();
-    std::ostringstream ret;
-    ret << "Excessive Block set to " << excessiveBlockSize << " bytes.  Accept Depth set to " << excessiveAcceptDepth
-        << " blocks.";
-    return UniValue(ret.str());
-}
-
 
 UniValue getminingmaxblock(const UniValue &params, bool fHelp)
 {
@@ -782,7 +527,7 @@ UniValue getblockversion(const UniValue &params, bool fHelp)
                             "\nExamples:\n" +
                             HelpExampleCli("getblockversion", "") + HelpExampleRpc("getblockversion", ""));
     const CBlockIndex *pindex = chainActive.Tip();
-    return UnlimitedComputeBlockVersion(pindex, Params().GetConsensus(), pindex->nTime);
+    return UnlimitedComputeBlockVersion(pindex, Params().GetConsensus(), pindex->time());
 }
 
 UniValue setblockversion(const UniValue &params, bool fHelp)
@@ -993,7 +738,7 @@ void IsInitialBlockDownloadInit(bool *fInit)
         return;
     }
 
-    bool state = (chainActive.Height() < pindexBestHeader.load()->nHeight - 24 * 6 ||
+    bool state = (chainActive.Height() < pindexBestHeader.load()->height() - 24 * 6 ||
                   std::max(chainActive.Tip()->GetBlockTime(), pindexBestHeader.load()->GetBlockTime()) <
                       GetTime() - nMaxTipAge);
     if (!state)
@@ -1015,7 +760,7 @@ void IsChainNearlySyncdInit()
     }
     else
     {
-        if (chainActive.Height() < pindexBestHeader.load()->nHeight - DEFAULT_BLOCKS_FROM_TIP)
+        if (chainActive.Height() < pindexBestHeader.load()->height() - DEFAULT_BLOCKS_FROM_TIP)
             fIsChainNearlySyncd.store(false);
         else
             fIsChainNearlySyncd.store(true);
@@ -1029,28 +774,6 @@ bool IsChainSyncd()
 {
     // lock free since both are atomics
     return pindexBestHeader.load() == chainActive.Tip();
-}
-uint64_t LargestBlockSeen(uint64_t nBlockSize)
-{
-    // C++98 lacks the capability to do static initialization properly
-    // so we need a runtime check to make sure it is.
-    // This can be removed when moving to C++11 .
-    if (nBlockSize < BLOCKSTREAM_CORE_MAX_BLOCK_SIZE)
-    {
-        nBlockSize = BLOCKSTREAM_CORE_MAX_BLOCK_SIZE;
-    }
-
-    // Return the largest block size that we have seen since startup
-    uint64_t nSize = nLargestBlockSeen.load();
-    while (nBlockSize > nSize)
-    {
-        if (nLargestBlockSeen.compare_exchange_weak(nSize, nBlockSize))
-        {
-            return nBlockSize;
-        }
-    }
-
-    return nSize;
 }
 
 /** Returns the block height of the current active chain tip. **/
@@ -1312,7 +1035,7 @@ static void RmOldMiningCandidates()
     LOCK(csMiningCandidates);
     unsigned int height = GetBlockchainHeight();
 
-    int64_t tdiff = GetTime() - (chainActive.Tip()->nTime + minMiningCandidateInterval.Value());
+    int64_t tdiff = GetTime() - (chainActive.Tip()->time() + minMiningCandidateInterval.Value());
     if (tdiff >= 0)
     {
         // Clean out mining candidates that are the same height as a discovered block.
@@ -1359,14 +1082,14 @@ std::vector<uint256> GetMerkleProofBranches(CBlock *pblock)
 
     for (int i = 0; i < len; i++)
     {
-        leaves.push_back(pblock->vtx[i].get()->GetHash());
+        leaves.push_back(pblock->vtx[i].get()->GetId());
     }
 
     ret = ComputeMerkleBranch(leaves, 0);
     return ret;
 }
 
-static CMiningCandidate *FindRecentMiningCandidate(CScript *coinbaseScript, int32_t desiredVersion)
+static CMiningCandidate *FindRecentMiningCandidate(CScript *coinbaseScript)
 {
     LOCK(csMiningCandidates);
     if ((lastMiningCandidateId == 0) || (miningCandidatesMap.size() == 0))
@@ -1377,10 +1100,6 @@ static CMiningCandidate *FindRecentMiningCandidate(CScript *coinbaseScript, int3
     CMiningCandidate &candid = it->second;
     if (candid.creationTime + minMiningCandidateInterval.Value() < (uint64_t)GetTime())
         return nullptr; // Too old
-
-    // desired version bits changed
-    if (candid.block->nVersion != desiredVersion)
-        return nullptr;
 
     // I don't care what the coinbase script is (probably because its anything from this wallet)
     if (coinbaseScript == nullptr)
@@ -1399,15 +1118,18 @@ static UniValue MkMiningCandidateJson(CMiningCandidate &candid)
     UniValue ret(UniValue::VOBJ);
     CBlock &block = *(candid.block);
 
-    ret.pushKV("prevhash", block.hashPrevBlock.GetHex());
     ret.pushKV("id", candid.id);
+    ret.pushKV("headerCommitment", block.GetMiningHeaderCommitment().GetHex());
+
+#if 0 // Merkle path is no longer needed for mining.  Mining pool should provide us with its output script and we'll
+      // make the coinbase tx.  However, leave this code for demonstration purposes.
+    ret.pushKV("prevhash", block.hashPrevBlock.GetHex());
 
     {
         const CTransaction *tran = block.vtx[0].get();
         ret.pushKV("coinbase", EncodeHexTx(*tran));
     }
 
-    ret.pushKV("version", block.nVersion);
     ret.pushKV("nBits", strprintf("%08x", block.nBits));
     ret.pushKV("time", block.GetBlockTime());
 
@@ -1431,6 +1153,7 @@ static UniValue MkMiningCandidateJson(CMiningCandidate &candid)
 
         // ret.pushKV("merklePath", 0);
     }
+#endif
 
     return ret;
 }
@@ -1470,10 +1193,9 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
             throw std::runtime_error("Requested coinbase size is less than 0");
         }
 
-        if (coinbaseSize > BLOCKSTREAM_CORE_MAX_BLOCK_SIZE)
+        if (coinbaseSize > ONE_MEGABYTE)
         {
-            throw std::runtime_error(
-                strprintf("Requested coinbase size too big. Max allowed: %u", BLOCKSTREAM_CORE_MAX_BLOCK_SIZE));
+            throw std::runtime_error(strprintf("Requested coinbase size too big. Max allowed: %u", ONE_MEGABYTE));
         }
     }
     if (params.size() == 2)
@@ -1482,8 +1204,6 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
     }
 
     RmOldMiningCandidates();
-    uint32_t blockVer = UtilMkBlockTmplVersionBits(
-        CBlockHeader::CURRENT_VERSION, std::set<std::string>(), chainActive.Tip(), nullptr, nullptr);
 
     {
         // Lock the mining candidates so that another request or a solution does not modify the coinbase while we are
@@ -1502,14 +1222,14 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
             candid.localCoinbase = false;
 
             // Look for a recent candidate
-            recentCandidate = FindRecentMiningCandidate(&coinbaseScript, blockVer);
+            recentCandidate = FindRecentMiningCandidate(&coinbaseScript);
         }
         else
         {
             candid.localCoinbase = true;
 
             // Look for a recent candidate
-            recentCandidate = FindRecentMiningCandidate(nullptr, blockVer);
+            recentCandidate = FindRecentMiningCandidate(nullptr);
         }
 
         if (recentCandidate)
@@ -1574,12 +1294,18 @@ UniValue submitminingsolution(const UniValue &params, bool fHelp)
     {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "nonce not found");
     }
-    block->nNonce = (uint32_t)nonce.get_int64(); // 64 bit to deal with sign bit in 32 bit unsigned int
+    block->nonce = ParseHex(nonce.get_str()); // 64 bit to deal with sign bit in 32 bit unsigned int
 
+    if (block->nonce.size() > CBlockHeader::MAX_NONCE_SIZE)
+    {
+        throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "nonce too large");
+    }
+
+#if 0 // no longer needed
     UniValue time = rcvd["time"];
     if (!time.isNull())
     {
-        block->nTime = (uint32_t)time.get_int64();
+        block->header.time = (uint32_t)time.get_int64();
     }
 
     UniValue version = rcvd["version"];
@@ -1607,6 +1333,7 @@ UniValue submitminingsolution(const UniValue &params, bool fHelp)
         uint256 t = block->vtx[0]->GetHash();
         block->hashMerkleRoot = CalculateMerkleRoot(t, merkleProof);
     }
+#endif
 
     UniValue uvsub = SubmitBlock(*block); // returns string on failure
     RmOldMiningCandidates();
@@ -1660,8 +1387,6 @@ static const CRPCCommand commands[] =
     { "network",            "settrafficshaping",      &settrafficshaping,      true  },
     { "network",            "gettrafficshaping",      &gettrafficshaping,      true  },
     { "network",            "pushtx",                 &pushtx,                 true  },
-    { "network",            "getexcessiveblock",      &getexcessiveblock,      true  },
-    { "network",            "setexcessiveblock",      &setexcessiveblock,      true  },
     { "network",            "expedited",              &expedited,              true  },
 
     /* Mining */
@@ -1687,6 +1412,7 @@ static const CRPCCommand commands[] =
 #endif
     { "util",               "getaddressforms",        &getaddressforms,        true  },
     { "util",               "log",                    &setlog,                 true  },
+    { "util",               "issuealert",             &issuealert,             true  },
 };
 /* clang-format on */
 
@@ -1717,13 +1443,13 @@ UniValue validatechainhistory(const UniValue &params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
     }
 
-    LOGA("validatechainhistory starting at %d %s\n", pos->nHeight, pos->phashBlock->ToString());
+    LOGA("validatechainhistory starting at %d %s\n", pos->height(), pos->phashBlock->ToString());
 
     LOCK(cs_main); // modifying contents of CBlockIndex and setDirtyBlockIndex
 
     while (pos && !failedChain)
     {
-        // LOGA("validate %d %s\n", pos->nHeight, pos->phashBlock->ToString());
+        // LOGA("validate %d %s\n", pos->height(), pos->phashBlock->ToString());
         READLOCK(cs_mapBlockIndex);
         failedChain = pos->nStatus & BLOCK_FAILED_MASK;
         if (!failedChain)
@@ -1807,11 +1533,6 @@ UniValue validateblocktemplate(const UniValue &params, bool fHelp)
         if (!TestBlockValidity(state, chainparams, pblock, pindexPrev, false, true))
         {
             throw runtime_error(std::string("invalid block: ") + state.GetRejectReason());
-        }
-
-        if (pblock->fExcessive)
-        {
-            throw runtime_error("invalid block: excessive");
         }
     }
 
@@ -1948,8 +1669,8 @@ struct CompareBlocksByHeight
         /* Make sure that unequal blocks with the same height do not compare
            equal. Use the pointers themselves to make a distinction. */
 
-        if (a->nHeight != b->nHeight)
-            return (a->nHeight > b->nHeight);
+        if (a->height() != b->height())
+            return (a->height() > b->height());
 
         return a < b;
     }
@@ -1990,7 +1711,7 @@ void MarkAllContainingChainsInvalid(CBlockIndex *invalidBlock)
 
     for (CBlockIndex *tip : setTips)
     {
-        if (tip->GetAncestor(invalidBlock->nHeight) == invalidBlock)
+        if (tip->GetAncestor(invalidBlock->height()) == invalidBlock)
         {
             for (CBlockIndex *blk = tip; blk != invalidBlock; blk = blk->pprev)
             {
@@ -2020,7 +1741,7 @@ UniValue getaddressforms(const UniValue &params, bool fHelp)
                             "\nResult:\n"
                             "{\n"
                             "\"legacy\": \"1 or 3 prefixed address\",\n"
-                            "\"bitcoincash\": \"bitcoincash prefixed address\",\n"
+                            "\"nexa\": \"nexa prefixed address\",\n"
                             "\"bitpay\": \"C or H prefixed address\"\n"
                             "}\n"
                             "\nExamples:\n" +
@@ -2043,9 +1764,26 @@ UniValue getaddressforms(const UniValue &params, bool fHelp)
 
     UniValue node(UniValue::VOBJ);
     node.pushKV("legacy", legacyAddr);
-    node.pushKV("bitcoincash", cashAddr);
+    node.pushKV("nexa", cashAddr);
     node.pushKV("bitpay", bitpayAddr);
     return node;
+}
+
+UniValue issuealert(const UniValue &params, bool fHelp)
+{
+    if (fHelp || params.size() < 1 || params.size() > 1)
+        throw runtime_error("issuealert \"alert\"\n"
+                            "\ntrigger an alert (executes configured -alertnotify string).\n"
+                            "\nArguments\n"
+                            "1. \"alert\"    (string, required) the alert text (in quotes if in a shell)\n"
+                            "\nExamples:\n" +
+                            HelpExampleCli("issuealert", "\"this is an alert\"") +
+                            HelpExampleRpc("issuealert", "\"this is an alert\""));
+
+    UniValue ret(UniValue::VARR);
+
+    AlertNotify(params[0].get_str());
+    return UniValue();
 }
 
 
@@ -2075,4 +1813,37 @@ void CStatusString::Clear(const std::string &yourStatus)
 {
     LOCK(cs_status_string);
     strSet.erase(yourStatus);
+}
+
+
+#include "core_io.h"
+#include "utilstrencodings.h"
+
+void dbgDumpStack(const Stack &stack)
+{
+    printf("stack %lu items (bottom to top): \n", stack.size());
+    auto sz = stack.size();
+    for (unsigned int i = 0; i < stack.size(); i++)
+    {
+        auto item = stack[i];
+        if (item.isVch())
+        {
+            try
+            {
+                CScriptNum itemAsInt(item, false, CScriptNum::MAXIMUM_ELEMENT_SIZE_64_BIT);
+                printf("%u (top%d) Num: %ld Hex: %s Script: %s\n", i, (int)i - (int)sz, itemAsInt.getint64(),
+                    item.hex().c_str(), ScriptToAsmStr(CScript(item), false).c_str());
+            }
+            catch (scriptnum_error)
+            {
+                printf("%u (top%d) Num: NaN Hex: %s Script: %s\n", i, (int)i - (int)sz, item.hex().c_str(),
+                    ScriptToAsmStr(CScript(item), false).c_str());
+            }
+        }
+        else if (item.type == StackElementType::BIGNUM)
+        {
+            const BigNum &bn = item.num();
+            printf("%u (top%d) BigNum: %s Hex: %s\n", i, (int)i - (int)sz, bn.str().c_str(), bn.str(16).c_str());
+        }
+    }
 }

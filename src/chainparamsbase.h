@@ -23,6 +23,7 @@ public:
     static const std::string TESTNET4;
     static const std::string SCALENET;
     static const std::string REGTEST;
+    static const std::string NEXTCHAIN;
 
     const std::string &DataDir() const { return strDataDir; }
     int RPCPort() const { return nRPCPort; }
@@ -31,6 +32,10 @@ protected:
     CBaseChainParams() {}
     int nRPCPort;
     std::string strDataDir;
+
+public:
+    CBaseChainParams(const char *dataDir, int rpcPort) : nRPCPort(rpcPort), strDataDir(dataDir) {}
+    CBaseChainParams(const std::string &dataDir, int rpcPort) : nRPCPort(rpcPort), strDataDir(dataDir) {}
 };
 
 /**

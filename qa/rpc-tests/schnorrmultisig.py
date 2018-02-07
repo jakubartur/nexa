@@ -26,6 +26,7 @@ from test_framework.nodemessages import (
     CTxOut,
     FromHex,
     ToHex,
+    msg_tx,
 )
 from test_framework.mininode import (
     P2PDataStore,
@@ -44,7 +45,7 @@ from test_framework.script import (
     SignatureHashForkId,
 )
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import assert_equal, assert_raises_rpc_error, p2p_port, waitFor
+from test_framework.util import assert_equal, assert_raises_rpc_error, p2p_port, waitFor, uint256ToRpcHex
 import logging
 
 # ECDSA checkmultisig with non-null dummy are invalid since the new mode
@@ -75,6 +76,7 @@ class SchnorrMultisigTest(BitcoinTestFramework):
     def set_test_params(self):
         self.num_nodes = 1
         self.block_heights = {}
+        self.block_chainwork = {}
         self.extra_args = [["-debug=mempool"]]
 
     def bootstrap_p2p(self):
@@ -93,25 +95,28 @@ class SchnorrMultisigTest(BitcoinTestFramework):
         block_height = node.getblockcount()
         blockhash = node.getblockhash(block_height)
         block = FromHex(CBlock(), node.getblock(blockhash, 0))
-        block.calc_sha256()
-        self.block_heights[block.sha256] = block_height
+        block.rehash()
+        self.block_heights[block.gethash()] = block_height
+        self.block_chainwork[block.gethash()] = block.chainWork
         return block
 
     def build_block(self, parent, transactions=(), nTime=None):
         """Make a new block with an OP_1 coinbase output.
 
         Requires parent to have its height registered."""
-        parent.calc_sha256()
-        block_height = self.block_heights[parent.sha256] + 1
+        parent.rehash()
+        block_height = self.block_heights[parent.gethash()] + 1
+        work = self.block_chainwork[parent.gethash()] + 2
         block_time = (parent.nTime + 1) if nTime is None else nTime
 
         block = create_block(
-            parent.sha256, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), block_time)
+            parent.gethash(), block_height, work, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), block_time)
         block.vtx.extend(transactions)
         make_conform_to_ctor(block)
-        block.hashMerkleRoot = block.calc_merkle_root()
+        block.update_fields()
         block.solve()
-        self.block_heights[block.sha256] = block_height
+        self.block_heights[block.gethash()] = block_height
+        self.block_chainwork[block.gethash()] = work
         return block
 
     def check_for_ban_on_rejected_tx(self, tx, reject_reason=None):
@@ -176,7 +181,7 @@ class SchnorrMultisigTest(BitcoinTestFramework):
             txspend.vout.append(
                 CTxOut(value-1000, CScript([OP_TRUE])))
             txspend.vin.append(
-                CTxIn(COutPoint(txfund.sha256, 0), b''))
+                CTxIn(txfund.OutpointAt(0), txfund.vout[0].nValue , b''))
 
             # Sign the transaction
             sighashtype = SIGHASH_ALL | SIGHASH_FORKID
@@ -192,7 +197,7 @@ class SchnorrMultisigTest(BitcoinTestFramework):
 
             return txspend
 
-        # This is valid.
+        # This is invalid.
         ecdsa0tx = create_fund_and_spend_tx(OP_0, 'ecdsa')
 
         # This is invalid.
@@ -207,38 +212,20 @@ class SchnorrMultisigTest(BitcoinTestFramework):
         tip = self.build_block(tip, fundings)
         self.p2p.send_blocks_and_test([tip], node)
 
-        logging.info("Send a legacy ECDSA multisig into mempool.")
-        self.p2p.send_txs_and_test([ecdsa0tx], node)
-        waitFor(10, lambda: node.getrawmempool() == [ecdsa0tx.hash])
-
-        logging.info("Trying to mine a non-null-dummy ECDSA.")
-        self.check_for_ban_on_rejected_block(
-            self.build_block(tip, [ecdsa1tx]), BADINPUTS_ERROR)
-        logging.info(
-            "If we try to submit it by mempool or RPC, it is rejected and we are banned")
-        assert_raises_rpc_error(-26, ECDSA_NULLDUMMY_ERROR, node.sendrawtransaction, ToHex(ecdsa1tx))
-        self.check_for_ban_on_rejected_tx(ecdsa1tx, ECDSA_NULLDUMMY_ERROR)
-
         logging.info(
             "Submitting a Schnorr-multisig via net, and mining it in a block")
         self.p2p.send_txs_and_test([schnorr1tx], node)
-        waitFor(10, lambda: set(node.getrawmempool()) == {ecdsa0tx.hash, schnorr1tx.hash})
+        waitFor(10, lambda: set(node.getrawmempool()) == {uint256ToRpcHex(schnorr1tx.GetIdem())})
         tip = self.build_block(tip, [schnorr1tx])
-        self.p2p.send_blocks_and_test([tip], node)
-
-        logging.info(
-            "That legacy ECDSA multisig is still in mempool, let's mine it")
-        waitFor(10, lambda: node.getrawmempool() == [ecdsa0tx.hash])
-        tip = self.build_block(tip, [ecdsa0tx])
         self.p2p.send_blocks_and_test([tip], node)
         waitFor(10, lambda: node.getrawmempool() == [])
 
-        logging.info(
-            "Trying Schnorr in legacy multisig is invalid and banworthy.")
-        self.check_for_ban_on_rejected_tx(
-            schnorr0tx, SCHNORR_LEGACY_MULTISIG_ERROR)
-        self.check_for_ban_on_rejected_block(
-            self.build_block(tip, [schnorr0tx]), BADINPUTS_ERROR)
+        # This should no longer work since ECDSA is not allowed in the mempool
+        logging.info("Try to send a legacy ECDSA multisig into mempool.")
+        self.p2p.send_message(msg_tx(ecdsa0tx))
+        self.p2p.send_message(msg_tx(ecdsa1tx))
+        assert_equal(node.getmempoolinfo()["size"], 0)
+
 
 if __name__ == '__main__':
     SchnorrMultisigTest().main()

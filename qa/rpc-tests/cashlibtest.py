@@ -9,6 +9,7 @@ import copy
 if sys.version_info[0] < 3:
     raise "Use Python 3"
 import logging
+import enum
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
@@ -36,17 +37,21 @@ class MyTest (BitcoinTestFramework):
         assert(worked)
         # Check stack
         stk = sm.stack()
-        assert_equal(int.from_bytes(stk[1], byteorder='little'), 1)
-        assert_equal(len(stk[0]), 0)
+        assert_equal(stk[1][0], cashlib.StackItemType.BYTES)
+        assert_equal(int.from_bytes(stk[1][1], byteorder='little'), 1)
+        assert_equal(len(stk[0][1]), 0)
 
         altstk = sm.altstack()
-        assert_equal(int.from_bytes(altstk[0], byteorder='little'), 5)
-        assert_equal(int.from_bytes(altstk[1], byteorder='little'), 6)
+        assert_equal(stk[0][0], cashlib.StackItemType.BYTES)
+        assert_equal(int.from_bytes(altstk[0][1], byteorder='little'), 5)
+        assert_equal(stk[1][0], cashlib.StackItemType.BYTES)
+        assert_equal(int.from_bytes(altstk[1][1], byteorder='little'), 6)
 
         worked = sm.eval(CScript([OP_FROMALTSTACK, OP_FROMALTSTACK]))
         assert(worked)
         stk = sm.stack()
-        assert_equal(int.from_bytes(stk[0], byteorder='little'), 6)
+        assert_equal(stk[0][0], cashlib.StackItemType.BYTES)
+        assert_equal(int.from_bytes(stk[0][1], byteorder='little'), 6)
 
         # Check reset
         sm.reset()
@@ -68,7 +73,7 @@ class MyTest (BitcoinTestFramework):
         except cashlib.Error as e:
             assert(str(e) == 'stepped beyond end of script')
         stk = sm.stack()
-        assert_equal(int.from_bytes(stk[0], byteorder='little'), 2)
+        assert_equal(int.from_bytes(stk[0][1], byteorder='little'), 2)
 
         sm.reset()
         # Check clone
@@ -77,39 +82,39 @@ class MyTest (BitcoinTestFramework):
         sm2 = sm.clone()
         worked = sm.eval(CScript([OP_IF, OP_IF, OP_2, OP_ELSE, OP_3, OP_ENDIF, OP_ENDIF]))
         stk = sm.stack()
-        assert_equal(int.from_bytes(stk[0], byteorder='little'), 2)
+        assert_equal(int.from_bytes(stk[0][1], byteorder='little'), 2)
         sm.cleanup()
 
         worked = sm2.eval(CScript([OP_IF, OP_IF, OP_3, OP_ELSE, OP_2, OP_ENDIF, OP_ENDIF]))
         assert(worked)
         stk = sm2.stack()
-        assert_equal(int.from_bytes(stk[0], byteorder='little'), 3)
+        assert_equal(int.from_bytes(stk[0][1], byteorder='little'), 3)
         sm2.cleanup()
 
         # Check stack assignment
         sm = cashlib.ScriptMachine()
         worked = sm.eval(CScript([OP_1, OP_1]))
         assert(worked)
-        sm.setStackItem(1, b"")
+        sm.setStackItem(1, cashlib.StackItemType.BYTES, b"")
         worked = sm.eval(CScript([OP_IF, OP_IF, OP_2, OP_ELSE, OP_3, OP_ENDIF, OP_ENDIF]))
         assert(worked)
         stk = sm.stack()
         # since I overwrote a true with a false, the else condition should have been taken
-        assert_equal(int.from_bytes(stk[0], byteorder='little'), 3)
+        assert_equal(int.from_bytes(stk[0][1], byteorder='little'), 3)
 
         # Check stack push
         sm.reset()
-        sm.setStackItem(-1, b"")
-        sm.setStackItem(-1, bytes([1]))
+        sm.setStackItem(-1, cashlib.StackItemType.BYTES, b"")
+        sm.setStackItem(-1, cashlib.StackItemType.BYTES, bytes([1]))
         worked = sm.eval(CScript([OP_IF, OP_IF, OP_2, OP_ELSE, OP_3, OP_ENDIF, OP_ENDIF]))
         assert(worked)
         stk = sm.stack()
-        assert_equal(int.from_bytes(stk[0], byteorder='little'), 3)
+        assert_equal(int.from_bytes(stk[0][1], byteorder='little'), 3)
         assert(sm.error()[0] == 0)
 
         # Check script error
         sm.reset()
-        sm.setStackItem(-1, bytes([1]))
+        sm.setStackItem(-1, cashlib.StackItemType.BYTES, bytes([1]))
         worked = sm.eval(CScript([OP_IF, OP_IF, OP_2, OP_ELSE, OP_3, OP_ENDIF, OP_ENDIF]))
         assert(not worked)
         err = sm.error()
@@ -134,6 +139,20 @@ class MyTest (BitcoinTestFramework):
             pass
         assert faulted, "not signing with bitcoin cash forkid"
 
+        # Sanity check id and idem for an empty transaction
+        tx = CTransaction()
+        ret = cashlib.txid(tx)
+        assert ret.hex() == 'c8e6c337c4fce20c6fc5861225591e1104c559c038fcf6f7429837f664209c7e'
+        ret = cashlib.txidem(tx)
+        assert ret.hex() == 'df297c043efd84657387d675de57f8c8d69ac2290644aff12ac5ad66555a0980'
+
+        try:
+            ret = cashlib.txid(bytes([0,1,2,3]))  # bad tx decode
+            assert False
+        except AssertionError:
+            pass
+
+
         # grab inputs from 2 different full nodes and sign a single tx that spends them both
         wallets = [self.nodes[0].listunspent(), self.nodes[1].listunspent()]
         inputs = [x[0] for x in wallets]
@@ -144,7 +163,7 @@ class MyTest (BitcoinTestFramework):
 
         tx = CTransaction()
         for i in inputs:
-            tx.vin.append(CTxIn(COutPoint(i["txid"], i["vout"]), b"", 0xffffffff))
+            tx.vin.append(CTxIn(COutPoint(i["outpoint"]), i["amount"], b"", 0xffffffff))
 
         destPrivKey = cashlib.randombytes(32)
         destPubKey = cashlib.pubkey(destPrivKey)
@@ -163,13 +182,12 @@ class MyTest (BitcoinTestFramework):
             n += 1
 
         txhex = hexlify(tx.serialize()).decode("utf-8")
-        txid = self.nodes[0].enqueuerawtransaction(txhex)
-
-        assert txid == hexlify(cashlib.txid(txhex)[::-1]).decode("utf-8")
+        txidem = self.nodes[0].enqueuerawtransaction(txhex)
+        assert txidem == hexlify(cashlib.txidem(txhex)[::-1]).decode("utf-8")
 
         # Now spend the created output to an anyone can spend address
         tx2 = CTransaction()
-        tx2.vin.append(CTxIn(COutPoint(cashlib.txid(txhex), 0), b"", 0xffffffff))
+        tx2.vin.append(CTxIn(COutPoint().fromIdemAndIdx(txidem, 0), amt, b"", 0xffffffff))
         tx2.vout.append(CTxOut(amt, CScript([OP_1])))
         sig2 = cashlib.signTxInput(tx2, 0, amt, output, destPrivKey, sighashtype)
         tx2.vin[0].scriptSig = cashlib.spendscript(sig2, destPubKey)
@@ -226,13 +244,15 @@ if __name__ == '__main__':
 
 def Test():
     t = MyTest()
+    t.drop_to_pdb = True
+    # install ctrl-c handler
+    #import signal, pdb
+    #signal.signal(signal.SIGINT, lambda sig, stk: pdb.Pdb().set_trace(stk))
     bitcoinConf = {
         "debug": ["rpc", "net", "blk", "thin", "mempool", "req", "bench", "evict"],
     }
-
-    flags = [] # ["--nocleanup", "--noshutdown"]
-    if os.path.isdir("/ramdisk/test"):
-        flags.append("--tmpdir=/ramdisk/test/cashlibtest")
+    logging.getLogger().setLevel(logging.INFO)
+    flags = standardFlags() # ["--nocleanup", "--noshutdown"]
     binpath = findBitcoind()
     flags.append("--srcdir=%s" % binpath)
     cashlib.init(binpath + os.sep + ".libs" + os.sep + "libbitcoincash.so")

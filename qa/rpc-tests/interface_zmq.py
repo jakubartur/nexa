@@ -13,6 +13,7 @@ from io import BytesIO
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.nodemessages import CTransaction
 from test_framework.util import *
+from test_framework.nodemessages import *
 
 try:
     import zmq
@@ -77,15 +78,15 @@ class ZMQTest (BitcoinTestFramework):
 
         # Subscribe to all available topics.
         self.hashblock = ZMQSubscriber(socket, b"hashblock")
-        self.hashtx = ZMQSubscriber(socket, b"hashtx")
+        self.hashtx = ZMQSubscriber(socket, b"txidem")
         self.rawblock = ZMQSubscriber(socket, b"rawblock")
         self.rawtx = ZMQSubscriber(socket, b"rawtx")
 
-        self.hashds = ZMQSubscriber(socket, b"hashds")
+        self.hashds = ZMQSubscriber(socket, b"dsidem")
         self.rawds = ZMQSubscriber(socket, b"rawds")
 
-        self.extra_args = [["-zmqpub{}={}".format(sub.topic.decode(), address) for sub in [
-            self.hashblock, self.hashtx, self.rawblock, self.rawtx, self.hashds, self.rawds]], []]
+        self.extra_args = [["-{}={}".format(sub, address) for sub in [
+            "zmqpubhashblock", "zmqpubhashtx", "zmqpubrawblock", "zmqpubrawtx", "zmqpubhashds", "zmqpubrawds"]], []]
         self.extra_args[0].append("-debug=dsproof")
         self.extra_args[0].append("-debug=zmq")
         ret  = start_nodes(self.num_nodes, self.options.tmpdir, self.extra_args)
@@ -115,6 +116,7 @@ class ZMQTest (BitcoinTestFramework):
         assert fundTx == zmqNotif
         zmqNotif = self.rawtx.receive()
 
+        self.nodes[0].setminercomment("got one")
         genhashes = self.nodes[0].generate(1)
         # notify tx 1
         zmqNotif1 = self.hashtx.receive().hex()
@@ -123,7 +125,7 @@ class ZMQTest (BitcoinTestFramework):
         # notify coinbase
         zmqNotif2 = self.hashtx.receive().hex()
         zmqNotif2r = self.rawtx.receive()
-        assert b"/EB32/AD12" in zmqNotif2r
+        assert b"got one" in zmqNotif2r
         # notify tx 1 again
         zmqNotif = self.hashtx.receive().hex()
         assert fundTx == zmqNotif
@@ -139,28 +141,30 @@ class ZMQTest (BitcoinTestFramework):
 
         for x in range(num_blocks):
             # Should receive the coinbase txid.
-            txid = self.hashtx.receive()
+            txidem = self.hashtx.receive()
             # Should receive the coinbase raw transaction.
             hex = self.rawtx.receive()
             tx = CTransaction()
             tx.deserialize(BytesIO(hex))
-            tx.calc_sha256()
-            assert_equal(tx.hash, txid.hex())
+            txidem2 = tx.GetIdem()
+            assert_equal(txidem.hex(), uint256ToRpcHex(txidem2))
 
 
             # Should receive the generated block hash.
             hash = self.hashblock.receive().hex()
             assert_equal(genhashes[x], hash)
             # The block should only have the coinbase txid.
-            assert_equal([txid.hex()], self.nodes[1].getblock(hash)["tx"])
+            assert_equal([uint256ToRpcHex(tx.GetId())], self.nodes[1].getblock(hash)["txid"])
 
             # Should receive the generated raw block.
-            block = self.rawblock.receive()
-            assert_equal(genhashes[x], hash256(block[:80])[::-1].hex())
+            blockBin = self.rawblock.receive()
+            block = CBlock()
+            block.deserialize(BytesIO(blockBin))
+            assert_equal(genhashes[x], block.gethashhex())
 
         logging.info("Wait for tx from second node")
         payment_txid = self.nodes[1].sendtoaddress(
-            self.nodes[0].getnewaddress(), 1.0)
+            self.nodes[0].getnewaddress(), 10000000)
         self.sync_all()
 
         # Should receive the broadcasted txid.
@@ -169,7 +173,9 @@ class ZMQTest (BitcoinTestFramework):
 
         # Should receive the broadcasted raw transaction.
         hex = self.rawtx.receive()
-        assert_equal(payment_txid, hash256(hex)[::-1].hex())
+        tx = CTransaction()
+        tx.deserialize(hex)
+        assert_equal(payment_txid, uint256ToRpcHex(tx.GetIdem()))
 
         if 1: # Send 2 transactions that double spend each other
 
@@ -181,7 +187,7 @@ class ZMQTest (BitcoinTestFramework):
             walletp2pkh = list(filter(lambda x : len(x["scriptPubKey"]) != 70, wallet)) # Find an input that is not P2PK
             t = walletp2pkh.pop()
             inputs = []
-            inputs.append({ "txid" : t["txid"], "vout" : t["vout"]})
+            inputs.append({ "outpoint" : t["outpoint"], "amount" : t["amount"]})
             outputs = { self.nodes[1].getnewaddress() : t["amount"] }
 
             rawtx   = self.nodes[0].createrawtransaction(inputs, outputs)

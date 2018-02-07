@@ -9,7 +9,9 @@
 
 #include "crypto/common.h"
 #include "prevector.h"
-#include "script_error.h"
+#include "script/script_error.h"
+#include "script/stackitem.h"
+#include "uint256.h"
 
 #include <assert.h>
 #include <climits>
@@ -47,6 +49,12 @@ static const int MAX_STACK_SIZE = 1000;
 // Threshold for nLockTime: below this value it is interpreted as block number,
 // otherwise as UNIX timestamp.
 static const unsigned int LOCKTIME_THRESHOLD = 500000000; // Tue Nov  5 00:53:20 1985 UTC
+
+// Maximum OP_EXEC recursion level
+const unsigned int MAX_EXEC_DEPTH = 3;
+// Maximum OP_EXEC calls in a script execution (including in subscripts)
+const unsigned int MAX_OP_EXEC = 20;
+
 
 template <typename T>
 std::vector<uint8_t> ToByteVector(const T &in)
@@ -226,11 +234,7 @@ enum opcodetype
     // (200) Pop the top item from the stack as an input index (Script Number). From that input, push the outpoint
     // transaction hash - the hash of the transaction which created the Unspent Transaction Output (UTXO) which is being
     // spent - to the stack in OP_HASH256 byte order1.
-    OP_OUTPOINTTXHASH = 0xc8,
-    // (201) Pop the top item from the stack as an input index (Script Number). From that input, push the outpoint index
-    // - the index of the output in the transaction which created the Unspent Transaction Output (UTXO) which is being
-    // spent - to the stack as a Script Number.
-    OP_OUTPOINTINDEX = 0xc9,
+    OP_OUTPOINTHASH = 0xc8,
     // (202) Pop the top item from the stack as an input index (Script Number). Push the unlocking bytecode of the input
     // at that index to the stack.
     OP_INPUTBYTECODE = 0xca,
@@ -248,6 +252,14 @@ enum opcodetype
     // 207
     OP_NATIVE_INTROSPECTION_RESERVED2 = 0xcf,
 
+    // NEXA opcodes
+    OP_PLACE = 0xe9,
+    OP_PUSH_TX_STATE = 0xea,
+    OP_SETBMD = 0xeb,
+    OP_BIN2BIGNUM = 0xec,
+    OP_EXEC = 0xed,
+    OP_GROUP = 0xee,
+    OP_TEMPLATE = 0xef,
     // The first op_code value after all defined opcodes
     FIRST_UNDEFINED_OP_VALUE,
 
@@ -323,7 +335,12 @@ protected:
     static constexpr bool valid64BitRange(int64_t x) { return x != std::numeric_limits<int64_t>::min(); }
 
 public:
-    explicit CScriptNum(const std::vector<uint8_t> &vch, bool fRequireMinimal, size_t nMaxNumSize)
+    explicit CScriptNum(const StackItem &vch, bool fRequireMinimal, const size_t nMaxNumSize)
+        : CScriptNum(vch.data(), fRequireMinimal, nMaxNumSize)
+    {
+    }
+
+    explicit CScriptNum(const std::vector<uint8_t> &vch, bool fRequireMinimal, const size_t nMaxNumSize)
     {
         if (vch.size() > nMaxNumSize)
         {
@@ -462,11 +479,9 @@ public:
         }
         return _value;
     }
-
     constexpr int64_t getint64() const { return _value; }
-
     std::vector<uint8_t> getvch() const { return serialize(_value); }
-
+    StackItem vchStackItem() const { return StackItem(serialize(_value)); }
     static std::vector<uint8_t> serialize(const int64_t &value)
     {
         if (value == 0)
@@ -548,6 +563,11 @@ public:
     {
     }
     CScript(const uint8_t *pbegin, const uint8_t *pend) : CScriptBase(pbegin, pend) {}
+
+    CScript(const StackItem &s) : CScriptBase(s.data().begin(), s.data().end())
+    {
+        // already called: s.requireType(StackElementType::VCH);
+    }
     CScript &operator+=(const CScript &b)
     {
         reserve(size() + b.size());
@@ -640,7 +660,28 @@ public:
         return *this;
     }
 
-    bool GetOp(iterator &pc, opcodetype &opcodeRet, std::vector<uint8_t> &vchRet)
+    CScript &operator<<(const uint256 &data)
+    {
+        std::vector<unsigned char> v(data.begin(), data.end());
+        *this << v;
+        return *this;
+    }
+
+    bool GetOp(const_iterator &pcRet, opcodetype &opcodeRet, VchType &vchRet) const
+    {
+        StackItem data;
+        const_iterator pc = pcRet;
+        opcodeRet = OP_VER; // initialize this to something broken
+        opcodetype opcode = opcodeRet;
+        bool ret = GetOp2(pc, opcode, &data);
+        vchRet = data.data(); // will throw if not a vch
+        // If it didn't throw I can advance the pc
+        pcRet = pc;
+        opcodeRet = opcode;
+        return ret;
+    }
+
+    bool GetOp(iterator &pc, opcodetype &opcodeRet, StackItem &vchRet)
     {
         // Wrapper so it can be called with either iterator or const_iterator
         const_iterator pc2 = pc;
@@ -657,13 +698,13 @@ public:
         return fRet;
     }
 
-    bool GetOp(const_iterator &pc, opcodetype &opcodeRet, std::vector<uint8_t> &vchRet) const
+    bool GetOp(const_iterator &pc, opcodetype &opcodeRet, StackItem &vchRet) const
     {
         return GetOp2(pc, opcodeRet, &vchRet);
     }
 
     bool GetOp(const_iterator &pc, opcodetype &opcodeRet) const { return GetOp2(pc, opcodeRet, nullptr); }
-    bool GetOp2(const_iterator &pc, opcodetype &opcodeRet, std::vector<uint8_t> *pvchRet) const
+    bool GetOp2(const_iterator &pc, opcodetype &opcodeRet, StackItem *pvchRet) const
     {
         opcodeRet = OP_INVALIDOPCODE;
         if (pvchRet)
@@ -800,7 +841,8 @@ public:
      */
     unsigned int GetSigOpCount(const uint32_t flags, const CScript &scriptSig) const;
 
-    bool IsPayToScriptHash() const;
+    // if this is a p2sh then the script hash is filled into the passed param if its not null
+    bool IsPayToScriptHash(std::vector<unsigned char> *hashBytes = nullptr) const;
     bool IsWitnessProgram(int &version, std::vector<uint8_t> &program) const;
     bool IsWitnessProgram() const;
 
@@ -814,12 +856,15 @@ public:
      * instantly when entering the UTXO set.
      */
     bool IsUnspendable() const { return (size() > 0 && *begin() == OP_RETURN) || (size() > MAX_SCRIPT_SIZE); }
+    /** Remove all instructions in this script. */
     void clear()
     {
         // The default prevector::clear() does not release memory
         CScriptBase::clear();
         shrink_to_fit();
     }
+
+    std::string GetHex() const { return HexStr(begin(), end()); }
 };
 
 class CReserveScript

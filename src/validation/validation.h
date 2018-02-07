@@ -16,10 +16,8 @@
 #include "txmempool.h"
 #include "versionbits.h"
 
-extern std::atomic<uint64_t> nBlockSizeAtChainTip;
-
-/** Default for -blockchain.maxReorgDepth */
-static const int DEFAULT_MAX_REORG_DEPTH = 10;
+/** Default for -blockchain.maxReorgDepth. A value less than zero disables the feature */
+static const int DEFAULT_MAX_REORG_DEPTH = -1; // disabled
 /**
  * Default for -finalizationdelay
  * This is the minimum time between a block header reception and the block
@@ -39,19 +37,30 @@ enum DisconnectResult
 };
 
 /** Context-independent validity checks */
-bool CheckBlockHeader(const CBlockHeader &block, CValidationState &state, bool fCheckPOW = true);
+bool CheckBlockHeader(const Consensus::Params &consensusParams,
+    const CBlockHeader &block,
+    CValidationState &state,
+    bool fCheckPOW = true);
 
 /** Context-dependent validity header checks */
-bool ContextualCheckBlockHeader(const CBlockHeader &block, CValidationState &state, CBlockIndex *pindexPrev);
+bool ContextualCheckBlockHeader(const CChainParams &chainparams,
+    const CBlockHeader &block,
+    CValidationState &state,
+    CBlockIndex *const pindexPrev);
 
 bool AcceptBlockHeader(const CBlockHeader &block,
     CValidationState &state,
     const CChainParams &chainparams,
     CBlockIndex **ppindex = nullptr);
 
-CBlockIndex *AddToBlockIndex(const CBlockHeader &block);
+/** Create a new block index entry for a new block or header that has arrived.
+ *  This updates setDirtyBlockIndex only.
+ */
+CBlockIndex *AddToBlockIndex(const CChainParams &chainparams, const CBlockHeader &block);
 
-/** Create a new block index entry for a given block hash */
+/** Add a block index entry for a given block hash.
+ *  This is used when loading the block index at startup or upgrading the database.
+ */
 CBlockIndex *InsertBlockIndex(const uint256 &hash);
 
 /** Look up the block index entry for a given block hash. returns nullptr if it does not exist */
@@ -115,8 +124,12 @@ void InvalidChainFound(CBlockIndex *pindexNew);
 /** Context-dependent validity block checks */
 bool ContextualCheckBlock(ConstCBlockRef pblock, CValidationState &state, CBlockIndex *pindexPrev);
 
-// BU: returns the blocksize if block is valid.  Otherwise 0
-bool CheckBlock(ConstCBlockRef pblock, CValidationState &state, bool fCheckPOW = true, bool fCheckMerkleRoot = true);
+/** returns the blocksize if block is valid.  Otherwise 0 */
+bool CheckBlock(const Consensus::Params &consensusParams,
+    ConstCBlockRef pblock,
+    CValidationState &state,
+    bool fCheckPOW = true,
+    bool fCheckMerkleRoot = true);
 
 /** Mark a block as having its data received and checked (up to BLOCK_VALID_TRANSACTIONS). */
 bool ReceivedBlockTransactions(ConstCBlockRef pblock,
@@ -144,13 +157,20 @@ bool ConnectBlock(ConstCBlockRef pblock,
 /** Disconnect the current chainActive.Tip() */
 bool DisconnectTip(CValidationState &state, const Consensus::Params &consensusParams, const bool fRollBack = false);
 
-/** Find the best known block, and make it the tip of the block chain */
+/** Find the best known block, and make it the tip of the block chain.  Locks cs_main and pauses tx admission. */
 bool ActivateBestChain(CValidationState &state,
     const CChainParams &chainparams,
     ConstCBlockRef pblock = nullptr,
     bool fParallel = false,
     CNode *pfrom = nullptr);
 
+/** Find the best known block, and make it the tip of the block chain.  Expects that cs_main is taken and
+    tx admission is paused. */
+bool _ActivateBestChain(CValidationState &state,
+    const CChainParams &chainparams,
+    ConstCBlockRef pblock = nullptr,
+    bool fParallel = false,
+    CNode *pfrom = nullptr);
 /**
  * Process an incoming block. This only returns after the best known valid
  * block is made active. Note that it does not, however, guarantee that the

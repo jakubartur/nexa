@@ -13,21 +13,25 @@
 
 BOOST_FIXTURE_TEST_SUITE(activation_tests, BasicTestingSetup)
 
+#if 0
 static void SetMTP(std::array<CBlockIndex, 12> &blocks, int64_t mtp) {
     size_t len = blocks.size();
 
     for (size_t i = 0; i < len; ++i) {
-        blocks[i].nTime = mtp + (i - (len / 2));
+        blocks[i].header.nTime = mtp + (i - (len / 2));
     }
 
     assert(blocks.back().GetMedianTimePast() == mtp);
 }
+#endif
 
-BOOST_AUTO_TEST_CASE(isMay2022Enabled) {
+BOOST_AUTO_TEST_CASE(isMay2022Enabled)
+{
     const CChainParams config = Params(CBaseChainParams::REGTEST);
     CBlockIndex prev;
 
-    const auto activation = config.GetConsensus().may2022ActivationTime;
+#if 0 // Enable when next activation decided
+    const auto activation = config.GetConsensus().nextForkActivationTime;
 
     BOOST_CHECK(!IsMay2022Next(config.GetConsensus(), nullptr));
 
@@ -48,6 +52,7 @@ BOOST_AUTO_TEST_CASE(isMay2022Enabled) {
     SetMTP(blocks, activation + 1);
     BOOST_CHECK(!IsMay2022Next(config.GetConsensus(), &blocks.back()));
     BOOST_CHECK(IsMay2022Enabled(config.GetConsensus(), &blocks.back()));
+#endif
 }
 
 BOOST_AUTO_TEST_SUITE_END()

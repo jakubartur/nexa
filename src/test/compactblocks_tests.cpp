@@ -43,27 +43,26 @@ static CBlock TestBlock()
 
     block.vtx.resize(3);
     block.vtx[0] = MakeTransactionRef(tx);
-    block.nVersion = 42;
     block.hashPrevBlock = InsecureRand256();
     block.nBits = 0x207fffff;
 
     tx.vin[0].prevout.hash = InsecureRand256();
-    tx.vin[0].prevout.n = 0;
     block.vtx[1] = MakeTransactionRef(tx);
 
     tx.vin.resize(10);
     for (size_t i = 0; i < tx.vin.size(); i++)
     {
         tx.vin[i].prevout.hash = InsecureRand256();
-        tx.vin[i].prevout.n = 0;
     }
     block.vtx[2] = MakeTransactionRef(tx);
 
     bool mutated;
     block.hashMerkleRoot = BlockMerkleRoot(block, &mutated);
     assert(!mutated);
-    while (!CheckProofOfWork(block.GetHash(), block.nBits, Params().GetConsensus()))
-        ++block.nNonce;
+    block.UpdateHeader(); // make sure the size field is properly calculated
+    block.nonce.resize(5);
+    bool worked = MineBlock(block, 1UL<<(5*8), Params().GetConsensus());
+    assert(worked);
     return block;
 }
 

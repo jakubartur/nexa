@@ -86,7 +86,7 @@ passOn = ""
 showHelp = False  # if we need to print help
 p = re.compile("^--")
 p_parallel = re.compile('^-parallel=')
-run_parallel = 3
+run_parallel = 2
 
 # some of the single-dash options applicable only to this runner script
 # are also allowed in double-dash format (but are not passed on to the
@@ -196,30 +196,28 @@ if ENABLE_ZMQ:
 
 #Tests
 testScripts = [ RpcTest(t) for t in [
+    'testpynode',
+    'grouptokens',
     Disabled('sigchecks_inputstandardness_activation', 'Already activated, and mempool bad sigcheck mempool cleanup removed so test will fail'),
     'command_line_args',
     'finalizeblock',
     'txindex',
-    Disabled('schnorr-activation', 'Need to be updated to work with BU'),
-    'schnorrsig',
-    'segwit_recovery',
-    'bip135basic',
-    'ctor',
+    Disabled('segwit_recovery', 'not needed in nextchain'),
+    Disabled('bip135basic', 'bip135 uses removed nVersion field'),
+    Disabled('ctor', "ctor always on in regtest"),
     'mining_ctor',
+    'mining_adaptive_blocksize',
     Disabled('nov152018_forkactivation','Nov 2018 already activated'),
     'blockstorage',
     'miningtest',
     'cashlibtest',
     'tweak',
     'notify',
-    Disabled('may152018_forkactivation_1','May 2018 already activated, use it as template to test future upgrade activation'),
-    Disabled('may152018_forkactivation_2','May 2018 already activated, use it as template to test future upgrade activation'),
     'validateblocktemplate',
     'parallel',
     'wallet',
     'wallet-hd',
     'wallet-dump',
-    'excessive',
     Disabled('uahf', 'temporary disable while waiting, to use as a template for future tests'),
     'listtransactions',
     'receivedby',
@@ -278,11 +276,9 @@ testScripts = [ RpcTest(t) for t in [
 
 testScriptsExt = [ RpcTest(t) for t in [
     'walletbackup',
-    'bip68-112-113-p2p',
     'limits',
     'weirdtx',
     'txPerf',
-    'excessive --extensive',
     'parallel --extensive',
     'bip65-cltv',
     'bip68_sequence',
@@ -552,7 +548,9 @@ class RPCTestHandler:
                               log_stdout, log_stderr, got_outputs))
         if not self.jobs:
             raise IndexError('pop from empty list')
+        count = 0
         while True:
+            count+=1
             # Return first proc that finishes
             time.sleep(.5)
             for j in self.jobs:
@@ -668,7 +666,7 @@ class RPCTestHandler:
                     self.num_running -= 1
                     self.jobs.remove(j)
                     return name, returnCode, coreOutput, stdout, stderr, stderr_filtered, passed, int(time.time() - time0)
-            print('.', end='', flush=True)
+            print('.', end=('' if count%160!=0 else '\n'), flush=True)
 
 class RPCCoverage(object):
     """

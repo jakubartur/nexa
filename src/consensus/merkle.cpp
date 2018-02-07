@@ -221,7 +221,17 @@ uint256 BlockMerkleRoot(const CBlock &block, bool *mutated)
     leaves.resize(block.vtx.size());
     for (size_t s = 0; s < block.vtx.size(); s++)
     {
-        leaves[s] = block.vtx[s]->GetHash();
+        leaves[s] = block.vtx[s]->GetId();
+    }
+    return ComputeMerkleRoot(std::move(leaves), mutated);
+}
+uint256 BlockMerkleRoot(const SatoshiBlock &block, bool *mutated)
+{
+    std::vector<uint256> leaves;
+    leaves.resize(block.vtx.size());
+    for (size_t s = 0; s < block.vtx.size(); s++)
+    {
+        leaves[s] = block.vtx[s]->GetId();
     }
     return ComputeMerkleRoot(std::move(leaves), mutated);
 }
@@ -232,7 +242,17 @@ std::vector<uint256> BlockMerkleBranch(const CBlock &block, uint32_t position)
     leaves.resize(block.vtx.size());
     for (size_t s = 0; s < block.vtx.size(); s++)
     {
-        leaves[s] = block.vtx[s]->GetHash();
+        leaves[s] = block.vtx[s]->GetId();
+    }
+    return ComputeMerkleBranch(std::move(leaves), position);
+}
+std::vector<uint256> BlockMerkleBranch(const SatoshiBlock &block, uint32_t position)
+{
+    std::vector<uint256> leaves;
+    leaves.resize(block.vtx.size());
+    for (size_t s = 0; s < block.vtx.size(); s++)
+    {
+        leaves[s] = block.vtx[s]->GetId();
     }
     return ComputeMerkleBranch(std::move(leaves), position);
 }

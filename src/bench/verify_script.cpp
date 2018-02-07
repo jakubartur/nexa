@@ -23,6 +23,7 @@ static CMutableTransaction BuildCreditingTransaction(const CScript &scriptPubKey
     txCredit.vin.resize(1);
     txCredit.vout.resize(1);
     txCredit.vin[0].prevout.SetNull();
+    txCredit.vin[0].amount = 1;
     txCredit.vin[0].scriptSig = CScript() << CScriptNum::fromIntUnchecked(0) << CScriptNum::fromIntUnchecked(0);
     txCredit.vin[0].nSequence = CTxIn::SEQUENCE_FINAL;
     txCredit.vout[0].scriptPubKey = scriptPubKey;
@@ -39,8 +40,8 @@ static CMutableTransaction BuildSpendingTransaction(const CScript &scriptSig, co
     txSpend.nLockTime = 0;
     txSpend.vin.resize(1);
     txSpend.vout.resize(1);
-    txSpend.vin[0].prevout.hash = txCredit.GetHash();
-    txSpend.vin[0].prevout.n = 0;
+    txSpend.vin[0].prevout = txCredit.OutpointAt(0);
+    txSpend.vin[0].amount = txCredit.vout[0].nValue;
     txSpend.vin[0].scriptSig = scriptSig;
     txSpend.vin[0].nSequence = CTxIn::SEQUENCE_FINAL;
     txSpend.vout[0].scriptPubKey = CScript();
@@ -78,7 +79,7 @@ static void VerifyScriptBench(benchmark::State &state)
     uint256 sighash = SignatureHash(witScriptPubkey, txSpend, 0, SIGHASH_ALL, txCredit.vout[0].nValue);
     assert(sighash != SIGNATURE_HASH_ERROR);
     std::vector<unsigned char> sig1;
-    key.SignECDSA(sighash, sig1);
+    key.SignSchnorr(sighash, sig1);
     sig1.push_back(static_cast<unsigned char>(SIGHASH_ALL));
     auto pubkeyvec = ToByteVector(pubkey);
     sig1.insert(sig1.end(), pubkeyvec.begin(), pubkeyvec.end());
@@ -100,7 +101,7 @@ static void VerifyScriptBench(benchmark::State &state)
 
 static void VerifyNestedIfScript(benchmark::State &state)
 {
-    std::vector<std::vector<unsigned char> > stack;
+    Stack stack;
     CScript script;
     for (int i = 0; i < 100; ++i)
     {

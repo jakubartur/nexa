@@ -28,18 +28,20 @@ def create_broken_transaction(prevtx, n, sig, value, out=PADDED_ANY_SPEND):
     if not type(value) is list:
         value = [value]
     tx = CTransaction()
-    tx.vin.append(CTxIn(COutPoint(prevtx.sha256, n), sig, 0xffffffff))
+    amt = 1000 if len(prevtx.vout) <= n else prevtx.vout[n].nValue  # make up a fake amt if n is bad
+    tx.vin.append(CTxIn(COutPoint().fromIdemAndIdx(prevtx.GetIdem(), n), amt, sig, 0xffffffff))
     for v in value:
         tx.vout.append(CTxOut(v, out))
-    tx.calc_sha256()
+    tx.calcId()
     return tx
 
 class ValidateblocktemplateTest(BitcoinTestFramework):
 
     def setup_network(self):
         self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir))
-        self.nodes.append(start_node(1, self.options.tmpdir))
+        self.nodes.append(start_node(0, self.options.tmpdir, ["-test.nextMaxBlockSize=1000000"]))
+        self.nodes.append(start_node(1, self.options.tmpdir, ["-test.nextMaxBlockSize=1000000"]))
+
         self.is_network_split = False
         connect_nodes(self.nodes[0], 1)
 
@@ -57,15 +59,16 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
         logging.info("not on chain tip")
         badtip = int(self.nodes[0].getblockhash(self.nodes[0].getblockcount() - 1), 16)
         height = self.nodes[0].getblockcount()
+        nextheight = height + 1
         tip = int(self.nodes[0].getblockhash(height), 16)
-
-        coinbase = create_coinbase(height + 1)
+        tipHdr = self.nodes[0].getblock(height)
+        work = int(tipHdr["chainwork"],16) + 2
+        coinbase = create_coinbase(nextheight)
         cur_time = int(time.time())
         self.nodes[0].setmocktime(cur_time)
         self.nodes[1].setmocktime(cur_time)
 
-        block = create_block(badtip, coinbase, cur_time + 600)
-        block.nVersion = 0x20000000
+        block = create_block(badtip, nextheight, work, coinbase, cur_time + 600)
         block.rehash()
 
         hexblk = ToHex(block)
@@ -73,55 +76,55 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
                         JSONRPCException, "invalid block: does not build on chain tip")
 
         logging.info("time too far in the past")
-        block = create_block(tip, coinbase, cur_time - 100)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, cur_time - 100)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(
             hexblk), JSONRPCException, "invalid block: time-too-old")
 
         logging.info("time too far in the future")
-        block = create_block(tip, coinbase, cur_time + 10000000)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, cur_time + 10000000)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(
             hexblk), JSONRPCException, "invalid block: time-too-new")
 
-        logging.info("bad version 1")
-        block = create_block(tip, coinbase, cur_time + 600)
-        block.nVersion = 1
+        logging.info("bad height 1")
+        block = create_block(tip, height+2, work, coinbase, cur_time + 600)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(
-            hexblk), JSONRPCException, "invalid block: bad-version")
-        logging.info("bad version 2")
-        block = create_block(tip, coinbase, cur_time + 600)
-        block.nVersion = 2
+            hexblk), JSONRPCException, "invalid block: bad-height")
+        logging.info("bad height 2")
+        block = create_block(tip, height, work, coinbase, cur_time + 600)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(
-            hexblk), JSONRPCException, "invalid block: bad-version")
-        logging.info("bad version 3")
-        block = create_block(tip, coinbase, cur_time + 600)
-        block.nVersion = 3
+            hexblk), JSONRPCException, "invalid block: bad-height")
+
+        logging.info("bad work")
+        block = create_block(tip, nextheight, work+1, coinbase, cur_time + 600)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(
-            hexblk), JSONRPCException, "invalid block: bad-version")
+            hexblk), JSONRPCException, "invalid block: bad-chainwork")
+        logging.info("bad work")
+        block = create_block(tip, nextheight, work-1, coinbase, cur_time + 600)
+        block.rehash()
+        hexblk = ToHex(block)
+        expectException(lambda: self.nodes[0].validateblocktemplate(
+            hexblk), JSONRPCException, "invalid block: bad-chainwork")
 
         logging.info("bad coinbase height")
         tip = int(self.nodes[0].getblockhash(height), 16)
-        block = create_block(tip, create_coinbase(height), cur_time + 600)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, create_coinbase(height), cur_time + 600)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(
             hexblk), JSONRPCException, "invalid block: bad-cb-height")
 
         logging.info("bad merkle root")
-        block = create_block(tip, coinbase, cur_time + 600)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, cur_time + 600)
         block.hashMerkleRoot = 0x12345678
         block.rehash()
         hexblk = ToHex(block)
@@ -129,16 +132,14 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
                         JSONRPCException, "invalid block: bad-txnmrklroot")
 
         logging.info("no tx")
-        block = create_block(tip, None, cur_time + 600)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, None, cur_time + 600)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
                         JSONRPCException, "invalid block: bad-blk-length")
 
         logging.info("good block")
-        block = create_block(tip, coinbase, cur_time + 600)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, cur_time + 600)
         block.rehash()
         hexblk = ToHex(block)
 
@@ -154,13 +155,16 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
         out_value = block.vtx[0].vout[0].nValue
         tx1 = create_transaction(prev_block.vtx[0], 0, b'\x61'*50 + b'\x51', [int(out_value / 2), int(out_value / 2)])
         height = self.nodes[0].getblockcount()
+        nextheight = height + 1
         tip = int(self.nodes[0].getblockhash(height), 16)
-        coinbase = create_coinbase(height + 1)
+        tipHdr = self.nodes[0].getblock(height)
+        work = int(tipHdr["chainwork"],16) + 2
+
+        coinbase = create_coinbase(nextheight)
         next_time = cur_time + 1200
 
         logging.info("no coinbase")
-        block = create_block(tip, None, next_time, [tx1])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, None, next_time, [tx1])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
@@ -172,17 +176,15 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
         coinbase_key.set_secretbytes(b"horsebattery")
         coinbase_pubkey = coinbase_key.get_pubkey()
 
-        coinbase2 = create_coinbase(height + 1, coinbase_pubkey)
-        block = create_block(tip, coinbase, next_time, [coinbase2, tx1])
-        block.nVersion = 0x20000000
+        coinbase2 = create_coinbase(nextheight, coinbase_pubkey)
+        block = create_block(tip, nextheight, work, coinbase, next_time, [coinbase2, tx1])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
                         JSONRPCException, "invalid block: bad-cb-multiple")
 
         logging.info("premature coinbase spend")
-        block = create_block(tip, coinbase, next_time, [tx1])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx1])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
@@ -191,25 +193,27 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
         self.nodes[0].generate(100)
         self.sync_all()
         height = self.nodes[0].getblockcount()
+        nextheight = height + 1
         tip = int(self.nodes[0].getblockhash(height), 16)
-        coinbase = create_coinbase(height + 1)
+        tipHdr = self.nodes[0].getblock(height)
+        work = int(tipHdr["chainwork"],16) + 2
+
+        coinbase = create_coinbase(nextheight)
         next_time = cur_time + 1200
 
         op1 = OP_1.toBin()
 
         logging.info("inputs below outputs")
-        tx6 = create_transaction(prev_block.vtx[0], 0, op1, [out_value + COINBASE_REWARD*COIN])
-        block = create_block(tip, coinbase, next_time, [tx6])
-        block.nVersion = 0x20000000
+        tx6 = create_transaction(prev_block.vtx[0], 0, op1, [out_value + int(COINBASE_REWARD*COIN)])
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx6])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
                         JSONRPCException, "invalid block: bad-txns-in-belowout")
 
-        tx5 = create_transaction(prev_block.vtx[0], 0, op1, [int(21000001 * COIN)])
+        tx5 = create_transaction(prev_block.vtx[0], 0, op1, [int(21000000000001 * COIN)])
         logging.info("money range")
-        block = create_block(tip, coinbase, next_time, [tx5])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx5])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
@@ -217,8 +221,7 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
 
         logging.info("bad tx offset")
         tx_bad = create_broken_transaction(prev_block.vtx[0], 1, op1, [int(out_value / 4)])
-        block = create_block(tip, coinbase, next_time, [tx_bad])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx_bad])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
@@ -226,8 +229,7 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
 
         logging.info("bad tx offset largest number")
         tx_bad = create_broken_transaction(prev_block.vtx[0], 0xffffffff, op1, [int(out_value / 4)])
-        block = create_block(tip, coinbase, next_time, [tx_bad])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx_bad])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
@@ -236,8 +238,7 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
 
         logging.info("double tx")
         tx2 = create_transaction(prev_block.vtx[0], 0, op1, [int(out_value / 4)])
-        block = create_block(tip, coinbase, next_time, [tx2, tx2])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx2, tx2])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
@@ -246,18 +247,16 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
         tx3 = create_transaction(prev_block.vtx[0], 0, op1, [int(out_value / 9), int(out_value / 10)])
         tx4 = create_transaction(prev_block.vtx[0], 0, op1, [int(out_value / 8), int(out_value / 7)])
         logging.info("double spend")
-        block = create_block(tip, coinbase, next_time, [tx3, tx4])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx3, tx4])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
                         JSONRPCException, "invalid block: bad-txns-inputs-missingorspent")
 
         txes = [tx3, tx4]
-        txes.sort(key=lambda x: x.hash, reverse=True)
+        txes.sort(key=lambda x: x.GetId(), reverse=True)
         logging.info("bad tx ordering")
-        block = create_block(tip, coinbase, next_time, txes, ctor=False)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, txes, ctor=False)
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
@@ -265,8 +264,7 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
 
         tx_good = create_transaction(prev_block.vtx[0], 0, b'\x51', [int(out_value / 50)] * 50, out=b"")
         logging.info("good tx")
-        block = create_block(tip, coinbase, next_time, [tx_good])
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, [tx_good])
         block.rehash()
         block.solve()
         hexblk = ToHex(block)
@@ -276,40 +274,32 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
         self.sync_all()
 
         height = self.nodes[0].getblockcount()
+        nextheight = height + 1
         tip = int(self.nodes[0].getblockhash(height), 16)
-        coinbase = create_coinbase(height + 1)
+        tipHdr = self.nodes[0].getblock(height)
+        work = int(tipHdr["chainwork"],16) + 2
+
+        coinbase = create_coinbase(nextheight)
         next_time = next_time + 600
 
         coinbase_key = CECKey()
         coinbase_key.set_secretbytes(b"horsebattery")
         coinbase_pubkey = coinbase_key.get_pubkey()
-        coinbase3 = create_coinbase(height + 1, coinbase_pubkey)
+        coinbase3 = create_coinbase(nextheight, coinbase_pubkey)
 
         txl = []
         for i in range(0, 50):
             ov = block.vtx[1].vout[i].nValue
             txl.append(create_transaction(block.vtx[1], i, op1, [int(ov / 50)] * 50))
-        block = create_block(tip, coinbase, next_time, txl)
-        block.nVersion = 0x20000000
+        block = create_block(tip, nextheight, work, coinbase, next_time, txl)
         block.rehash()
         block.solve()
         hexblk = ToHex(block)
         for n in self.nodes:
             n.validateblocktemplate(hexblk)
 
-        logging.info("excessive")
-        self.nodes[0].setminingmaxblock(1000)
-        self.nodes[0].setexcessiveblock(1000, 12)
-        expectException(lambda: self.nodes[0].validateblocktemplate(hexblk),
-                        JSONRPCException, "invalid block: excessive")
-
-        logging.info("EB min value")
-        self.nodes[0].setminingmaxblock(1000)
-        expectException(lambda: self.nodes[0].setexcessiveblock(999, 12),
-                        JSONRPCException, "Sorry, your maximum mined block (1000) is larger than your proposed excessive size (999).  This would cause you to orphan your own blocks.")
-
-        self.nodes[0].setexcessiveblock(16 * 1000 * 1000, 12)
         self.nodes[0].setminingmaxblock(1000 * 1000)
+        self.nodes[0].set("test.nextMaxBlockSize=10000000")
 
         for it in range(0, 100):
             # if (it&1023)==0: print(it)
@@ -328,18 +318,20 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
         self.sync_all()
 
         height = self.nodes[0].getblockcount()
+        nextheight = height + 1
         tip = int(self.nodes[0].getblockhash(height), 16)
-        coinbase = create_coinbase(height + 1)
+        tipHdr = self.nodes[0].getblock(height)
+        work = int(tipHdr["chainwork"],16) + 2
+        coinbase = create_coinbase(nextheight)
         next_time = next_time + 600
         prev_block = block
         txl = []
-        for tx in prev_block.vtx:
+        for tx in prev_block.vtx[0:1]:
             for outp in range(0, len(tx.vout)):
                 ov = tx.vout[outp].nValue
-                txl.append(create_transaction(tx, outp, CScript([OP_CHECKSIG] * 100), [int(ov / 2)] * 2))
-        block = create_block(tip, coinbase, next_time, txl)
-        block.nVersion = 0x20000000
-        block.rehash()
+                if ov > 0:  # not data
+                    txl.append(create_transaction(tx, outp, CScript([OP_CHECKSIG] * 100), [int(ov / 2)] * 2))
+        block = create_block(tip, nextheight, work, coinbase, next_time, txl)
         block.solve()
         hexblk = ToHex(block)
         for n in self.nodes:
@@ -380,10 +372,18 @@ def Test():
 
 if __name__ == '__main__':
     bitcoinConf = {
-        "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "consensus.enableCanonicalTxOrder": "1",
+        "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"]
     }
     args = sys.argv
     if "--no-ipv6-rpc-listen":
         args.append("--no-ipv6-rpc-listen")
     ValidateblocktemplateTest().main(args,bitcoinConf)
+
+def Test():
+    t = ValidateblocktemplateTest()
+    t.drop_to_pdb = True
+    bitcoinConf = {
+        "debug": ["rpc", "net", "blk", "thin", "mempool", "req", "bench", "evict"],
+    }
+    flags = standardFlags()
+    t.main(flags, bitcoinConf, None)

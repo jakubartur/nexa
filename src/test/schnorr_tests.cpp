@@ -14,8 +14,8 @@
 #include <array>
 #include <bitset>
 
-typedef std::vector<uint8_t> valtype;
-typedef std::vector<valtype> stacktype;
+typedef StackItem valtype;
+typedef Stack stacktype;
 
 const unsigned int MAXOPS = 100000; // not relevant for these tests
 
@@ -46,12 +46,6 @@ static void CheckError(uint32_t flags, const stacktype &original_stack,
     bool r = EvalScript(stack, script, flags, MAXOPS, fsis, &err);
     BOOST_CHECK(!r);
     BOOST_CHECK_EQUAL(err, expected);
-    if (err != expected)
-    {
-        printf("err\n");
-        stacktype stack2{original_stack};
-        r = EvalScript(stack2, script, flags, MAXOPS, fsis, &err);
-    }
 }
 
 static void CheckPass(uint32_t flags, const stacktype &original_stack,
@@ -162,17 +156,6 @@ BOOST_AUTO_TEST_CASE(opcodes_random_flags) {
             CheckError(flags, {DER64, {}, pubkeyC}, scriptCHECKDATASIGVERIFY,
                        SCRIPT_ERR_CHECKDATASIGVERIFY);
         }
-
-        // test OP_CHECKMULTISIG/VERIFY
-        // We fail with BADLENGTH no matter what.
-        CheckError(flags, {{}, Zero64_with_hashtype, {1}, pubkeyC, {1}},
-                   scriptCHECKMULTISIG, SCRIPT_ERR_SIG_BADLENGTH);
-        CheckError(flags, {{}, Zero64_with_hashtype, {1}, pubkeyC, {1}},
-                   scriptCHECKMULTISIGVERIFY, SCRIPT_ERR_SIG_BADLENGTH);
-        CheckError(flags, {{}, DER64_with_hashtype, {1}, pubkeyC, {1}},
-                   scriptCHECKMULTISIG, SCRIPT_ERR_SIG_BADLENGTH);
-        CheckError(flags, {{}, DER64_with_hashtype, {1}, pubkeyC, {1}},
-                   scriptCHECKMULTISIGVERIFY, SCRIPT_ERR_SIG_BADLENGTH);
     }
 }
 

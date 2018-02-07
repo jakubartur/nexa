@@ -44,7 +44,7 @@ CThinBlock::CThinBlock(const CBlock &block, const CBloomFilter &filter) : nSize(
     vTxHashes.reserve(nTx);
     for (unsigned int i = 0; i < nTx; i++)
     {
-        const uint256 &hash = block.vtx[i]->GetHash();
+        const uint256 &hash = block.vtx[i]->GetId();
         vTxHashes.push_back(hash);
 
         // Find the transactions that do not match the filter.
@@ -85,7 +85,7 @@ bool CThinBlock::HandleMessage(CDataStream &vRecv, CNode *pfrom)
             thinBlock->header.hashPrevBlock.ToString());
 
     CValidationState state;
-    if (!ContextualCheckBlockHeader(thinBlock->header, state, pprev))
+    if (!ContextualCheckBlockHeader(Params(), thinBlock->header, state, pprev))
     {
         // Thin block does not fit within our blockchain
         dosMan.Misbehaving(pfrom, 100);
@@ -123,12 +123,7 @@ bool CThinBlock::HandleMessage(CDataStream &vRecv, CNode *pfrom)
 
 bool CThinBlock::process(CNode *pfrom, std::shared_ptr<CBlockThinRelay> pblock)
 {
-    pblock->nVersion = header.nVersion;
-    pblock->nBits = header.nBits;
-    pblock->nNonce = header.nNonce;
-    pblock->nTime = header.nTime;
-    pblock->hashMerkleRoot = header.hashMerkleRoot;
-    pblock->hashPrevBlock = header.hashPrevBlock;
+    *((CBlockHeader *)(pblock.get())) = header;
 
     DbgAssert(pblock->thinblock != nullptr, return false);
     DbgAssert(pblock->thinblock.get() == this, return false);
@@ -150,7 +145,7 @@ bool CThinBlock::process(CNode *pfrom, std::shared_ptr<CBlockThinRelay> pblock)
 
     // Create the mapMissingTx from all the supplied tx's in the xthinblock
     for (const CTransaction &tx : vMissingTx)
-        pblock->thinblock->mapMissingTx[tx.GetHash().GetCheapHash()] = MakeTransactionRef(tx);
+        pblock->thinblock->mapMissingTx[tx.GetId().GetCheapHash()] = MakeTransactionRef(tx);
 
     {
         int missingCount = 0;
@@ -213,7 +208,7 @@ CXThinBlock::CXThinBlock(const CBlock &block, const CBloomFilter *filter) : nSiz
     std::set<uint64_t> setPartialTxHash;
     for (unsigned int i = 0; i < nTx; i++)
     {
-        const uint256 hash256 = block.vtx[i]->GetHash();
+        const uint256 hash256 = block.vtx[i]->GetId();
         uint64_t cheapHash = hash256.GetCheapHash();
         vTxHashes.push_back(cheapHash);
 
@@ -242,7 +237,7 @@ CXThinBlock::CXThinBlock(const CBlock &block) : nSize(0), collision(false)
     READLOCK(orphanpool.cs_orphanpool);
     for (unsigned int i = 0; i < nTx; i++)
     {
-        const uint256 hash256 = block.vtx[i]->GetHash();
+        const uint256 hash256 = block.vtx[i]->GetId();
         uint64_t cheapHash = hash256.GetCheapHash();
         vTxHashes.push_back(cheapHash);
 
@@ -317,7 +312,7 @@ bool CXThinBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
 
     // Create the mapMissingTx from all the supplied tx's in the xthinblock
     for (const CTransaction &tx : thinBlockTx.vMissingTx)
-        thinBlock->mapMissingTx[tx.GetHash().GetCheapHash()] = MakeTransactionRef(tx);
+        thinBlock->mapMissingTx[tx.GetId().GetCheapHash()] = MakeTransactionRef(tx);
 
     // Get the full hashes from the xblocktx and add them to the thinBlockHashes vector.  These should
     // be all the missing or null hashes that we re-requested.
@@ -330,7 +325,7 @@ bool CXThinBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
             std::map<uint64_t, CTransactionRef>::iterator val = thinBlock->mapMissingTx.find(thinBlock->vTxHashes[i]);
             if (val != thinBlock->mapMissingTx.end())
             {
-                vFullTxHashes[i] = val->second->GetHash();
+                vFullTxHashes[i] = val->second->GetId();
             }
             count++;
         }
@@ -433,7 +428,7 @@ bool CXRequestThinBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
     }
     else
     {
-        if (hdr->nHeight < (chainActive.Tip()->nHeight - (int)thinrelay.MAX_THINTYPE_BLOCKS_IN_FLIGHT))
+        if (hdr->height() < (chainActive.Tip()->height() - (int)thinrelay.MAX_THINTYPE_BLOCKS_IN_FLIGHT))
             return error(THIN, "get_xblocktx request too far from the tip");
 
         const Consensus::Params &consensusParams = Params().GetConsensus();
@@ -449,7 +444,7 @@ bool CXRequestThinBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
         {
             for (unsigned int i = 0; i < pblock->vtx.size(); i++)
             {
-                uint64_t cheapHash = pblock->vtx[i]->GetHash().GetCheapHash();
+                uint64_t cheapHash = pblock->vtx[i]->GetId().GetCheapHash();
                 if (thinRequestBlockTx.setCheapHashesToRequest.count(cheapHash))
                     vTx.push_back(*(pblock->vtx[i]));
             }
@@ -465,7 +460,7 @@ bool CXRequestThinBlockTx::HandleMessage(CDataStream &vRecv, CNode *pfrom)
 bool CXThinBlock::CheckBlockHeader(const CBlockHeader &block, CValidationState &state)
 {
     // Check proof of work matches claimed amount
-    if (!CheckProofOfWork(header.GetHash(), header.nBits, Params().GetConsensus()))
+    if (!CheckProofOfWork(header.GetMiningHash(), header.nBits, Params().GetConsensus()))
         return state.DoS(50, error("CheckBlockHeader(): proof of work failed"), REJECT_INVALID, "high-hash");
 
     // Check timestamp
@@ -544,7 +539,7 @@ bool CXThinBlock::HandleMessage(CDataStream &vRecv, CNode *pfrom, std::string st
         }
 
         // Request full block if it isn't extending the best chain
-        if (pIndex->nChainWork <= chainActive.Tip()->nChainWork)
+        if (pIndex->chainWork() <= chainActive.Tip()->chainWork())
         {
             thinrelay.RequestBlock(pfrom, thinBlock->header.GetHash());
             thinrelay.ClearAllBlockData(pfrom, inv.hash);
@@ -588,30 +583,25 @@ bool CXThinBlock::HandleMessage(CDataStream &vRecv, CNode *pfrom, std::string st
 bool CXThinBlock::process(CNode *pfrom, std::string strCommand, std::shared_ptr<CBlockThinRelay> pblock)
 // TODO: request from the "best" txn source not necessarily from the block source
 {
-    // In PV we must prevent two thinblocks from simulaneously processing from that were recieved from the
-    // same peer. This would only happen as in the example of an expedited block coming in
-    // after an xthin request, because we would never explicitly request two xthins from the same peer.
-    if (PV->IsAlreadyValidating(pfrom->id, pblock->GetHash()))
-    {
-        LOGA("Not processing this xthin because %s is already validating in another thread\n",
-            pblock->GetHash().ToString().c_str());
-        return false;
-    }
-
-    pblock->nVersion = header.nVersion;
-    pblock->nBits = header.nBits;
-    pblock->nNonce = header.nNonce;
-    pblock->nTime = header.nTime;
-    pblock->hashMerkleRoot = header.hashMerkleRoot;
-    pblock->hashPrevBlock = header.hashPrevBlock;
-
     DbgAssert(pblock->xthinblock != nullptr, return false);
     DbgAssert(pblock->xthinblock.get() == this, return false);
     std::shared_ptr<CXThinBlock> thinBlock = pblock->xthinblock;
 
+    // In PV we must prevent two thinblocks from simulaneously processing from that were recieved from the
+    // same peer. This would only happen as in the example of an expedited block coming in
+    // after an xthin request, because we would never explicitly request two xthins from the same peer.
+    if (PV->IsAlreadyValidating(pfrom->id, thinBlock->header.GetHash()))
+    {
+        LOGA("Not processing this xthin because %s is already validating in another thread\n",
+            thinBlock->header.GetHash().ToString().c_str());
+        return false;
+    }
+
+    *((CBlockHeader *)(pblock.get())) = header;
+
     // Create the mapMissingTx from all the supplied tx's in the xthinblock
     for (const CTransaction &tx : vMissingTx)
-        thinBlock->mapMissingTx[tx.GetHash().GetCheapHash()] = MakeTransactionRef(tx);
+        thinBlock->mapMissingTx[tx.GetId().GetCheapHash()] = MakeTransactionRef(tx);
 
     // Create a map of all 8 bytes tx hashes pointing to their full tx hash counterpart
     // We need to check all transaction sources (orphan list, mempool, and new (incoming) transactions in this block)
@@ -643,7 +633,7 @@ bool CXThinBlock::process(CNode *pfrom, std::string strCommand, std::shared_ptr<
                 mapPartialTxHash[cheapHash] = mi.first;
             }
 
-            mempool.queryHashes(memPoolHashes);
+            mempool.queryIds(memPoolHashes);
             for (uint64_t i = 0; i < memPoolHashes.size(); i++)
             {
                 uint64_t cheapHash = memPoolHashes[i].GetCheapHash();
@@ -664,12 +654,12 @@ bool CXThinBlock::process(CNode *pfrom, std::string strCommand, std::shared_ptr<
             if (!existingHash.IsNull())
             {
                 // Check if it really is a cheap hash collision and not just the same transaction
-                if (existingHash != mi.second->GetHash())
+                if (existingHash != mi.second->GetId())
                 {
                     _collision = true;
                 }
             }
-            mapPartialTxHash[cheapHash] = mi.second->GetHash();
+            mapPartialTxHash[cheapHash] = mi.second->GetId();
         }
 
         if (!_collision)
@@ -1053,12 +1043,6 @@ void CThinBlockData::UpdateInBoundReRequestedTx(int nReRequestedTx)
     updateStats(mapThinBlocksInBoundReRequestedTx, nReRequestedTx);
 }
 
-void CThinBlockData::UpdateMempoolLimiterBytesSaved(unsigned int nBytesSaved)
-{
-    LOCK(cs_thinblockstats);
-    nMempoolLimiterBytesSaved += nBytesSaved;
-}
-
 void CThinBlockData::UpdateThinBlock(uint64_t nThinBlockSize)
 {
     LOCK(cs_thinblockstats);
@@ -1225,15 +1209,6 @@ std::string CThinBlockData::ReRequestedTxToString()
     return ss.str();
 }
 
-std::string CThinBlockData::MempoolLimiterBytesSavedToString()
-{
-    LOCK(cs_thinblockstats);
-    double size = (double)nMempoolLimiterBytesSaved();
-    std::ostringstream ss;
-    ss << "Thinblock mempool limiting has saved " << formatInfoUnit(size) << " of bandwidth";
-    return ss.str();
-}
-
 // Calculate the average xthin block size
 std::string CThinBlockData::ThinBlockToString()
 {
@@ -1262,7 +1237,6 @@ void CThinBlockData::ClearThinBlockStats()
     nThinSize.Clear();
     nInBoundBlocks.Clear();
     nOutBoundBlocks.Clear();
-    nMempoolLimiterBytesSaved.Clear();
     nTotalBloomFilterBytes.Clear();
     nTotalThinBlockBytes.Clear();
     nTotalFullTxBytes.Clear();
@@ -1432,7 +1406,7 @@ bool IsThinBlockValid(CNode *pfrom,
 
     // check block header
     CValidationState state;
-    if (!CheckBlockHeader(header, state, true))
+    if (!CheckBlockHeader(Params().GetConsensus(), header, state, true))
     {
         return error("Received invalid header for thinblock or xthinblock %s from peer %s", header.GetHash().ToString(),
             pfrom->GetLogName());
@@ -1460,7 +1434,7 @@ void BuildSeededBloomFilter(CBloomFilter &filterMemPool,
     std::vector<uint256> vMempoolHashes;
 
     // Add all the transaction hashes currently in the mempool
-    mempool.queryHashes(vMempoolHashes);
+    mempool.queryIds(vMempoolHashes);
     setHighScoreMemPoolHashes.insert(vMempoolHashes.begin(), vMempoolHashes.end());
 
     // Also add all the transaction hashes currently in the txCommitQ

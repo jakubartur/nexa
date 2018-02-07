@@ -45,7 +45,7 @@ from test_framework.script import (
     SignatureHashForkId,
 )
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import assert_equal, assert_raises_rpc_error, p2p_port, waitFor
+from test_framework.util import assert_equal, assert_raises_rpc_error, p2p_port, waitFor, standardFlags
 import logging
 
 # Blocks with invalid scripts give this error:
@@ -83,27 +83,31 @@ class OpReversebytesActivationTest(BitcoinTestFramework):
         block_height = node.getblockcount()
         blockhash = node.getblockhash(block_height)
         block = FromHex(CBlock(), node.getblock(blockhash, 0))
-        block.calc_sha256()
-        self.block_heights[block.sha256] = block_height
+        block.rehash()
+        self.block_heights[block.hashNum] = block_height
         return block
 
     def build_block(self, parent, transactions=(), n_time=None):
         """Make a new block with an OP_1 coinbase output.
 
         Requires parent to have its height registered."""
-        parent.calc_sha256()
-        block_height = self.block_heights[parent.sha256] + 1
+        parent.rehash()
+        block_height = self.block_heights[parent.hashNum] + 1
         block_time = (parent.nTime + 1) if n_time is None else n_time
 
         # the script in create_coinbase differs for BU and ABC
         # you need to let coinbase script be CScript([OP_TRUE])
         block = create_block(
-            parent.sha256, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), block_time)
+            parent.hashNum, block_height, parent.chainWork+2, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), block_time)
         block.vtx.extend(transactions)
+        block.txCount = len(block.vtx)
+        block.nonce = bytearray(12)
+        block.size = len(block.serialize()) - (len(block.nonce) + 1)
         make_conform_to_ctor(block)
         block.hashMerkleRoot = block.calc_merkle_root()
         block.solve()
-        self.block_heights[block.sha256] = block_height
+        block.rehash()
+        self.block_heights[block.hashNum] = block_height
         return block
 
     def check_for_no_ban_on_rejected_tx(self, tx, reject_reason):
@@ -174,7 +178,7 @@ class OpReversebytesActivationTest(BitcoinTestFramework):
         # Spend transaction: <x>
         tx_reversebytes_spend = CTransaction()
         tx_reversebytes_spend.vout.append(CTxOut(value - 1000, CScript([b'x' * 100, OP_RETURN])))
-        tx_reversebytes_spend.vin.append(CTxIn(COutPoint(tx_reversebytes_fund.sha256, 0), b''))
+        tx_reversebytes_spend.vin.append(tx_reversebytes_fund.SpendOutput(0, b''))
         tx_reversebytes_spend.vin[0].scriptSig = CScript([data])
         tx_reversebytes_spend.rehash()
 
@@ -189,7 +193,7 @@ class OpReversebytesActivationTest(BitcoinTestFramework):
         self.p2p.send_txs_and_test([tx_reversebytes_spend], node)
 
         # Verify OP_REVERSEBYTES tx is in mempool
-        waitFor(10, lambda: set(node.getrawmempool()) == {tx_reversebytes_spend.hash})
+        waitFor(10, lambda: set(node.getrawmempool()) == {tx_reversebytes_spend.GetRpcHexIdem()})
 
         # Mine OP_REVERSEBYTES tx into block
         tip = self.build_block(tip, [tx_reversebytes_spend])
@@ -198,3 +202,13 @@ class OpReversebytesActivationTest(BitcoinTestFramework):
 
 if __name__ == '__main__':
     OpReversebytesActivationTest().main()
+
+# Create a convenient function for an interactive python debugging session
+def Test():
+    t = OpReversebytesActivationTest()
+    t.drop_to_pdb = True
+    bitcoinConf = {
+        "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
+    }
+    flags = standardFlags()
+    t.main(flags, bitcoinConf, None)

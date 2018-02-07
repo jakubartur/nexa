@@ -42,7 +42,7 @@ CScript sign_multisig(const CScript scriptPubKey,
     for (const CKey &key : keys)
     {
         vector<uint8_t> vchSig;
-        BOOST_CHECK(key.SignECDSA(hash, vchSig));
+        BOOST_CHECK(key.SignSchnorr(hash, vchSig));
         vchSig.push_back((uint8_t)SIGHASH_ALL | SIGHASH_FORKID);
         result << vchSig;
     }
@@ -72,16 +72,18 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
     CMutableTransaction txFrom; // Funding transaction
     txFrom.vout.resize(3);
     txFrom.vout[0].scriptPubKey = a_and_b;
+    txFrom.vout[0].nValue = 10 * COIN;
     txFrom.vout[1].scriptPubKey = a_or_b;
+    txFrom.vout[1].nValue = 10 * COIN;
     txFrom.vout[2].scriptPubKey = escrow;
+    txFrom.vout[2].nValue = 10 * COIN;
 
     CMutableTransaction txTo[3]; // Spending transaction
     for (int i = 0; i < 3; i++)
     {
         txTo[i].vin.resize(1);
         txTo[i].vout.resize(1);
-        txTo[i].vin[0].prevout.n = i;
-        txTo[i].vin[0].prevout.hash = txFrom.GetHash();
+        txTo[i].vin[0] = txFrom.SpendOutput(i);
         txTo[i].vout[0].nValue = 1;
     }
 
@@ -92,7 +94,8 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
     keys.assign(1, key[0]);
     keys.push_back(key[1]);
     s = sign_multisig(a_and_b, keys, txTo[0], 0);
-    MutableTransactionSignatureChecker tsc(&txTo[0], 0, amount);
+    amount = txTo[0].vin[0].amount;
+    MutableTransactionSignatureChecker tsc(&txTo[0], 0, amount, flags);
     // test isn't going to use any prevout introspection so just pass no coins there
     ScriptImportedState sis(&tsc, MakeTransactionRef(txTo[0]), std::vector<CTxOut>(), 0, amount);
     BOOST_CHECK(VerifyScript(s, a_and_b, flags, MAX_OPS_PER_SCRIPT, sis, &err));
@@ -112,7 +115,8 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
         BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_EVAL_FALSE, ScriptErrorString(err));
     }
 
-    MutableTransactionSignatureChecker tsc1(&txTo[1], 0, amount);
+    amount = txTo[1].vin[0].amount;
+    MutableTransactionSignatureChecker tsc1(&txTo[1], 0, amount, flags);
     ScriptImportedState sis1(&tsc1, MakeTransactionRef(txTo[1]), std::vector<CTxOut>(), 0, amount);
     // Test a OR b:
     for (int i = 0; i < 4; i++)
@@ -137,7 +141,8 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
     BOOST_CHECK(!VerifyScript(s, a_or_b, flags, MAX_OPS_PER_SCRIPT, sis1, &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_SIG_DER, ScriptErrorString(err));
 
-    MutableTransactionSignatureChecker tsc2(&txTo[2], 0, amount);
+    amount = txTo[2].vin[0].amount;
+    MutableTransactionSignatureChecker tsc2(&txTo[2], 0, amount, flags);
     ScriptImportedState sis2(&tsc2, MakeTransactionRef(txTo[2]), std::vector<CTxOut>(), 0, amount);
 
     for (int i = 0; i < 4; i++)
@@ -227,22 +232,25 @@ BOOST_AUTO_TEST_CASE(multisig_Sign)
     CMutableTransaction txFrom; // Funding transaction
     txFrom.vout.resize(3);
     txFrom.vout[0].scriptPubKey = a_and_b;
+    txFrom.vout[0].nValue = 1;
     txFrom.vout[1].scriptPubKey = a_or_b;
+    txFrom.vout[1].nValue = 1;
     txFrom.vout[2].scriptPubKey = escrow;
+    txFrom.vout[2].nValue = 1;
 
     CMutableTransaction txTo[3]; // Spending transaction
     for (int i = 0; i < 3; i++)
     {
         txTo[i].vin.resize(1);
         txTo[i].vout.resize(1);
-        txTo[i].vin[0].prevout.n = i;
-        txTo[i].vin[0].prevout.hash = txFrom.GetHash();
+        txTo[i].vin[0].prevout = txFrom.OutpointAt(i);
+        txTo[i].vin[0].amount = 1;
         txTo[i].vout[0].nValue = 1;
     }
 
     for (int i = 0; i < 3; i++)
     {
-        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom, txTo[i], 0), strprintf("SignSignature %d", i));
+        BOOST_CHECK_MESSAGE(SignSignature(keystore, txFrom.vout[i], txTo[i], 0), strprintf("SignSignature %d", i));
     }
 }
 

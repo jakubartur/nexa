@@ -2,8 +2,6 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "data/tx_invalid.json.h"
-#include "data/tx_valid.json.h"
 #include "test/test_bitcoin.h"
 
 #include "clientversion.h"
@@ -28,7 +26,7 @@
 
 #include <univalue.h>
 
-BOOST_FIXTURE_TEST_SUITE(uahf_tests, BasicTestingSetup)
+BOOST_FIXTURE_TEST_SUITE(uahf_test, BasicTestingSetup)
 
 // Helper: create two dummy transactions, each with
 // two outputs.  The first has 11 and 50 CENT outputs
@@ -77,10 +75,9 @@ BOOST_AUTO_TEST_CASE(uahf_sighash)
 
     CMutableTransaction t;
     t.vin.resize(1);
-    t.vin[0].prevout.hash = dummyTransactions[0].GetHash();
-    t.vin[0].prevout.n = 1;
+    t.vin[0] = dummyTransactions[0].SpendOutput(1);
     t.vout.resize(1);
-    t.vout[0].nValue = 90 * CENT;
+    t.vout[0].nValue = 40 * CENT;
     CKey key;
     key.MakeNewKey(true);
     t.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
@@ -88,16 +85,18 @@ BOOST_AUTO_TEST_CASE(uahf_sighash)
     CTransaction tx(t);
 
     {
-        TransactionSignatureCreator tsc(&keystore, &tx, 0, 90 * CENT, SIGHASH_ALL);
+        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SIGHASH_ALL);
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
-        BOOST_CHECK(worked);
+        // The return value will indicate that the signature is not fully valid (because SIGHASH_FORKID is missing)
+        // however it will have been signed correctly and can be used for our testing purpose.
+        BOOST_CHECK(!worked);
         BOOST_CHECK(IsTxProbablyNewSigHash(t) == false);
     }
 
     {
-        TransactionSignatureCreator tsc(&keystore, &tx, 0, 90 * CENT, SIGHASH_ALL | SIGHASH_FORKID);
+        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SIGHASH_ALL | SIGHASH_FORKID);
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);

@@ -144,7 +144,7 @@ inline uint160 Hash160(const prevector<N, unsigned char> &vch)
     return Hash160(vch.begin(), vch.end());
 }
 
-/** A writer stream (for serialization) that computes a 256-bit hash. */
+/** A writer stream (for serialization) that computes a 256-bit hash (double SHA256). */
 class CHashWriter
 {
 private:
@@ -154,7 +154,7 @@ private:
     const int nVersion;
 
 public:
-    CHashWriter(int nTypeIn, int nVersionIn) : nType(nTypeIn), nVersion(nVersionIn) {}
+    CHashWriter(int nTypeIn = SER_GETHASH, int nVersionIn = 0) : nType(nTypeIn), nVersion(nVersionIn) {}
     int GetType() const { return nType; }
     int GetVersion() const { return nVersion; }
     void write(const char *pch, size_t size) { ctx.Write((const unsigned char *)pch, size); }
@@ -176,6 +176,40 @@ public:
         return (*this);
     }
 };
+
+/** A writer stream (for serialization) that computes a 256-bit hash. */
+class CSHA256Writer
+{
+private:
+    CSHA256 ctx;
+
+    const int nType;
+    const int nVersion;
+
+public:
+    CSHA256Writer(int nTypeIn = SER_GETHASH, int nVersionIn = 0) : nType(nTypeIn), nVersion(nVersionIn) {}
+    int GetType() const { return nType; }
+    int GetVersion() const { return nVersion; }
+    void write(const char *pch, size_t size) { ctx.Write((const unsigned char *)pch, size); }
+    // invalidates the object
+    uint256 GetHash()
+    {
+        uint256 result;
+        ctx.Finalize((unsigned char *)&result);
+        return result;
+    }
+
+    /** Return the total number of bytes hashed by this object */
+    size_t GetNumBytesHashed() const { return ctx.GetNumBytesHashed(); }
+    template <typename T>
+    CSHA256Writer &operator<<(const T &obj)
+    {
+        // Serialize to this stream
+        ::Serialize(*this, obj);
+        return (*this);
+    }
+};
+
 
 /** Reads data from an underlying stream, while hashing the read data. */
 template <typename Source>
@@ -215,6 +249,15 @@ public:
 /** Compute the 256-bit hash of an object's serialization. */
 template <typename T>
 uint256 SerializeHash(const T &obj, int nType = SER_GETHASH, int nVersion = PROTOCOL_VERSION)
+{
+    CHashWriter ss(nType, nVersion);
+    ss << obj;
+    return ss.GetHash();
+}
+
+/** Compute the 256-bit hash of an object's serialization. */
+template <typename T>
+uint256 SerializeIdem(const T &obj, int nType = SER_GETIDEM, int nVersion = PROTOCOL_VERSION)
 {
     CHashWriter ss(nType, nVersion);
     ss << obj;

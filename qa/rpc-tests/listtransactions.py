@@ -31,7 +31,7 @@ class ListTransactionsTest(BitcoinTestFramework):
         self.sync_all()
         tmp = self.nodes[2].listtransactionsfrom("*", 10000, 0)
         curpos = len(tmp)
-        txid = self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 0.1)
+        txid = self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 100000)
         self.sync_all()
         self.nodes[0].generate(1)
         self.sync_blocks()
@@ -39,7 +39,7 @@ class ListTransactionsTest(BitcoinTestFramework):
         # Basic positive test
         tmp = self.nodes[2].listtransactionsfrom("*", 1, curpos)
         assert len(tmp) == 1
-        assert tmp[0]["txid"] == txid
+        assert tmp[0]["txidem"] == txid
 
         tmp = self.nodes[2].listtransactionsfrom("*", 10, curpos)
         assert len(tmp) == 1
@@ -64,29 +64,29 @@ class ListTransactionsTest(BitcoinTestFramework):
         # test multiple rows
         curpos += 1
 
-        txidsA = [self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 0.2), self.nodes[2].sendtoaddress(
-            self.nodes[3].getnewaddress(), 0.3), self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 0.4)]
+        txidsA = [self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 200000), self.nodes[2].sendtoaddress(
+            self.nodes[3].getnewaddress(), 300000), self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 400000)]
         self.sync_all()
         self.nodes[0].generate(1)
         self.sync_blocks()
 
         tmp = self.nodes[2].listtransactionsfrom("*", 100, curpos)
         assert len(tmp) == 3
-        assert tmp[0]["txid"] == txidsA[0]
-        assert tmp[1]["txid"] == txidsA[1]
-        assert tmp[2]["txid"] == txidsA[2]
+        assert tmp[0]["txidem"] == txidsA[0]
+        assert tmp[1]["txidem"] == txidsA[1]
+        assert tmp[2]["txidem"] == txidsA[2]
 
-        txidsB = [self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 0.5), self.nodes[2].sendtoaddress(
-            self.nodes[3].getnewaddress(), 0.6), self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 0.7)]
+        txidsB = [self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 500000), self.nodes[2].sendtoaddress(
+            self.nodes[3].getnewaddress(), 600000), self.nodes[2].sendtoaddress(self.nodes[3].getnewaddress(), 700000)]
 
         tmp = self.nodes[2].listtransactionsfrom("*", 100, curpos)
         assert len(tmp) == 6
-        assert tmp[0]["txid"] == txidsA[0]
-        assert tmp[1]["txid"] == txidsA[1]
-        assert tmp[2]["txid"] == txidsA[2]
-        assert tmp[3]["txid"] == txidsB[0]
-        assert tmp[4]["txid"] == txidsB[1]
-        assert tmp[5]["txid"] == txidsB[2]
+        assert tmp[0]["txidem"] == txidsA[0]
+        assert tmp[1]["txidem"] == txidsA[1]
+        assert tmp[2]["txidem"] == txidsA[2]
+        assert tmp[3]["txidem"] == txidsB[0]
+        assert tmp[4]["txidem"] == txidsB[1]
+        assert tmp[5]["txidem"] == txidsB[2]
 
         # test when I advance to the end, I get nothing
         curpos += len(tmp)
@@ -95,74 +95,74 @@ class ListTransactionsTest(BitcoinTestFramework):
 
     def test_listtransactions(self):
         # Simple send, 0 to 1:
-        txid = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 0.1)
+        txid = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100000)
         self.sync_all()
         assert_array_result(self.nodes[0].listtransactions(),
-                            {"txid": txid},
-                            {"category": "send", "account": "", "amount": Decimal("-0.1"), "confirmations": 0})
+                            {"txidem": txid},
+                            {"category": "send", "account": "", "amount": Decimal("-100000"), "confirmations": 0})
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"txid": txid},
-                            {"category": "receive", "account": "", "amount": Decimal("0.1"), "confirmations": 0})
+                            {"txidem": txid},
+                            {"category": "receive", "account": "", "amount": Decimal("100000"), "confirmations": 0})
         # mine a block, confirmations should change:
         self.nodes[0].generate(1)
         self.sync_blocks()
         assert_array_result(self.nodes[0].listtransactions(),
-                            {"txid": txid},
-                            {"category": "send", "account": "", "amount": Decimal("-0.1"), "confirmations": 1})
+                            {"txidem": txid},
+                            {"category": "send", "account": "", "amount": Decimal("-100000"), "confirmations": 1})
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"txid": txid},
-                            {"category": "receive", "account": "", "amount": Decimal("0.1"), "confirmations": 1})
+                            {"txidem": txid},
+                            {"category": "receive", "account": "", "amount": Decimal("100000"), "confirmations": 1})
 
         # send-to-self:
-        txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 0.2)
+        txid = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), 200000)
         assert_array_result(self.nodes[0].listtransactions(),
-                            {"txid": txid, "category": "send"},
-                            {"amount": Decimal("-0.2")})
+                            {"txidem": txid, "category": "send"},
+                            {"amount": Decimal("-200000")})
         assert_array_result(self.nodes[0].listtransactions(),
-                            {"txid": txid, "category": "receive"},
-                            {"amount": Decimal("0.2")})
+                            {"txidem": txid, "category": "receive"},
+                            {"amount": Decimal("200000")})
 
         # sendmany from node1: twice to self, twice to node2:
-        send_to = {self.nodes[0].getnewaddress(): 0.11,
-                   self.nodes[1].getnewaddress(): 0.22,
-                   self.nodes[0].getaccountaddress("from1"): 0.33,
-                   self.nodes[1].getaccountaddress("toself"): 0.44}
+        send_to = {self.nodes[0].getnewaddress(): 110000.11,
+                   self.nodes[1].getnewaddress(): 220000.22,
+                   self.nodes[0].getaccountaddress("from1"): 330000.33,
+                   self.nodes[1].getaccountaddress("toself"): 440000.44}
         txid = self.nodes[1].sendmany("", send_to)
         self.sync_all()
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"category": "send", "amount": Decimal("-0.11")},
-                            {"txid": txid})
+                            {"category": "send", "amount": Decimal("-110000.11")},
+                            {"txidem": txid})
         assert_array_result(self.nodes[0].listtransactions(),
-                            {"category": "receive", "amount": Decimal("0.11")},
-                            {"txid": txid})
+                            {"category": "receive", "amount": Decimal("110000.11")},
+                            {"txidem": txid})
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"category": "send", "amount": Decimal("-0.22")},
-                            {"txid": txid})
+                            {"category": "send", "amount": Decimal("-220000.22")},
+                            {"txidem": txid})
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"category": "receive", "amount": Decimal("0.22")},
-                            {"txid": txid})
+                            {"category": "receive", "amount": Decimal("220000.22")},
+                            {"txidem": txid})
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"category": "send", "amount": Decimal("-0.33")},
-                            {"txid": txid})
+                            {"category": "send", "amount": Decimal("-330000.33")},
+                            {"txidem": txid})
         assert_array_result(self.nodes[0].listtransactions(),
-                            {"category": "receive", "amount": Decimal("0.33")},
-                            {"txid": txid, "account": "from1"})
+                            {"category": "receive", "amount": Decimal("330000.33")},
+                            {"txidem": txid, "account": "from1"})
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"category": "send", "amount": Decimal("-0.44")},
-                            {"txid": txid, "account": ""})
+                            {"category": "send", "amount": Decimal("-440000.44")},
+                            {"txidem": txid, "account": ""})
         assert_array_result(self.nodes[1].listtransactions(),
-                            {"category": "receive", "amount": Decimal("0.44")},
-                            {"txid": txid, "account": "toself"})
+                            {"category": "receive", "amount": Decimal("440000.44")},
+                            {"txidem": txid, "account": "toself"})
 
         multisig = self.nodes[1].createmultisig(1, [self.nodes[1].getnewaddress()])
         self.nodes[0].importaddress(multisig["redeemScript"], "watchonly", False, True)
-        txid = self.nodes[1].sendtoaddress(multisig["address"], 0.1)
+        txid = self.nodes[1].sendtoaddress(multisig["address"], 100000)
         self.nodes[1].generate(1)
         self.sync_blocks()
         assert(len(self.nodes[0].listtransactions("watchonly", 100, 0, False)) == 0)
         assert_array_result(self.nodes[0].listtransactions("watchonly", 100, 0, True),
-                            {"category": "receive", "amount": Decimal("0.1")},
-                            {"txid": txid, "account": "watchonly"})
+                            {"category": "receive", "amount": Decimal("100000")},
+                            {"txidem": txid, "account": "watchonly"})
 
 
 if __name__ == '__main__':

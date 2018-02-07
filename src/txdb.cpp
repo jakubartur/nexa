@@ -23,6 +23,8 @@ static const char DB_COIN = 'C';
 static const char DB_COINS = 'c';
 static const char DB_BLOCK_FILES = 'f';
 static const char DB_TXINDEX = 't';
+static const char DB_TXIDEM_INDEX = 'i';
+static const char DB_OUTPOINT_INDEX = 'p';
 static const char DB_TXINDEX_BLOCK = 'T';
 static const char DB_BLOCK_INDEX = 'b';
 
@@ -44,7 +46,6 @@ struct CoinEntry
     {
         s << key;
         s << outpoint->hash;
-        s << VARINT(outpoint->n);
     }
 
     template <typename Stream>
@@ -52,7 +53,6 @@ struct CoinEntry
     {
         s >> key;
         s >> outpoint->hash;
-        s >> VARINT(outpoint->n);
     }
 };
 } // namespace
@@ -192,7 +192,7 @@ bool CCoinsViewDB::BatchWrite(CCoinsMap &mapCoins,
     size_t batch_size = nMaxDBBatchSize;
     size_t spent_coins = 0;
 
-    LOG(COINDB, "starting Commiting process\n");
+    LOG(COINDB, "starting committing process\n");
     for (CCoinsMap::iterator it = mapCoins.begin(); it != mapCoins.end();)
     {
         if (it->second.flags & CCoinsCacheEntry::DIRTY)
@@ -394,10 +394,12 @@ bool CBlockTreeDB::FindBlockIndex(uint256 blockhash, CDiskBlockIndex *pindex)
             {
                 if (pcursor->GetValue(*pindex))
                 {
-                    if (!CheckProofOfWork(blockhash, pindex->nBits, Params().GetConsensus()))
+                    /* TODO: blockhash is different than mining hash
+                    if (!CheckProofOfWork(blockhash, pindex->tgtBits(), Params().GetConsensus()))
                     {
                         return error("LoadBlockIndex(): CheckProofOfWork failed: %s", pindex->ToString());
                     }
+                    */
                     return true;
                 }
                 else
@@ -439,20 +441,18 @@ bool CBlockTreeDB::LoadBlockIndexGuts()
             {
                 // Construct block index object
                 CBlockIndex *pindexNew = InsertBlockIndex(diskindex.GetBlockHash());
-                pindexNew->pprev = InsertBlockIndex(diskindex.hashPrev);
-                pindexNew->nHeight = diskindex.nHeight;
+                pindexNew->pprev = InsertBlockIndex(diskindex.header.hashPrevBlock);
                 pindexNew->nFile = diskindex.nFile;
                 pindexNew->nDataPos = diskindex.nDataPos;
                 pindexNew->nUndoPos = diskindex.nUndoPos;
-                pindexNew->nVersion = diskindex.nVersion;
-                pindexNew->hashMerkleRoot = diskindex.hashMerkleRoot;
-                pindexNew->nTime = diskindex.nTime;
-                pindexNew->nBits = diskindex.nBits;
-                pindexNew->nNonce = diskindex.nNonce;
+                // TODO add new fields
+                pindexNew->header = diskindex.header;
                 pindexNew->nStatus = diskindex.nStatus;
-                pindexNew->nTx = diskindex.nTx;
+                pindexNew->nSequenceId = diskindex.nSequenceId;
+                pindexNew->nTimeReceived = diskindex.nTimeReceived;
+                pindexNew->nNextMaxBlockSize = diskindex.nNextMaxBlockSize;
 
-                if (!CheckProofOfWork(pindexNew->GetBlockHash(), pindexNew->nBits, Params().GetConsensus()))
+                if (!CheckProofOfWork(pindexNew->header.GetMiningHash(), pindexNew->tgtBits(), Params().GetConsensus()))
                     return error("LoadBlockIndex(): CheckProofOfWork failed: %s", pindexNew->ToString());
 
                 pcursor->Next();
@@ -488,7 +488,7 @@ bool CBlockTreeDB::GetSortedHashIndex(std::vector<std::pair<int, CDiskBlockIndex
             if (pcursor->GetValue(diskindex))
             {
                 // Construct block index object
-                hashesByHeight.push_back(std::make_pair(diskindex.nHeight, diskindex));
+                hashesByHeight.push_back(std::make_pair(diskindex.height(), diskindex));
                 pcursor->Next();
             }
             else
@@ -596,13 +596,12 @@ bool CCoinsViewDB::Upgrade()
             {
                 return error("%s: cannot parse CCoins record", __func__);
             }
-            COutPoint outpoint(key.second, 0);
             for (size_t i = 0; i < old_coins.vout.size(); ++i)
             {
                 if (!old_coins.vout[i].IsNull() && !old_coins.vout[i].scriptPubKey.IsUnspendable())
                 {
                     Coin newcoin(std::move(old_coins.vout[i]), old_coins.nHeight, old_coins.fCoinBase);
-                    outpoint.n = i;
+                    COutPoint outpoint(key.second, i); // FUTURE: Handle script hash outputs
                     CoinEntry entry(&outpoint);
                     batch.Write(entry, newcoin);
                 }
@@ -887,17 +886,38 @@ TxIndexDB::TxIndexDB(size_t n_cache_size, bool f_memory, bool f_wipe)
 {
 }
 
-bool TxIndexDB::ReadTxPos(const uint256 &txid, CDiskTxPos &pos) const
+bool TxIndexDB::ReadTxIdPos(const uint256 &txid, CDiskTxPos &pos) const
 {
     return Read(std::make_pair(DB_TXINDEX, txid), pos);
 }
 
-bool TxIndexDB::WriteTxs(const std::vector<std::pair<uint256, CDiskTxPos> > &v_pos)
+bool TxIndexDB::ReadTxIdemPos(const uint256 &txidem, CDiskTxPos &pos) const
+{
+    return Read(std::make_pair(DB_TXIDEM_INDEX, txidem), pos);
+}
+
+bool TxIndexDB::ReadOutpointPos(const uint256 &outpointid, CDiskTxPos &pos) const
+{
+    return Read(std::make_pair(DB_OUTPOINT_INDEX, outpointid), pos);
+}
+
+
+bool TxIndexDB::WriteTxs(const std::vector<std::pair<uint256, CDiskTxPos> > &v_pos,
+    const std::vector<std::pair<uint256, CDiskTxPos> > &idem_pos,
+    const std::vector<std::pair<uint256, CDiskTxPos> > &prevout_pos)
 {
     CDBBatch batch(*this);
     for (const auto &tuple : v_pos)
     {
         batch.Write(std::make_pair(DB_TXINDEX, tuple.first), tuple.second);
+    }
+    for (const auto &tuple : idem_pos)
+    {
+        batch.Write(std::make_pair(DB_TXIDEM_INDEX, tuple.first), tuple.second);
+    }
+    for (const auto &tuple : prevout_pos)
+    {
+        batch.Write(std::make_pair(DB_OUTPOINT_INDEX, tuple.first), tuple.second);
     }
     return WriteBatch(batch);
 }

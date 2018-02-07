@@ -22,6 +22,48 @@ class ScriptDebugError(Exception):
     pass
 
 
+def prettyStk(t):
+    ret = ""
+    if t[0] == cashlib.StackItemType.BYTES:
+        return "d_"+hexlify(t[1]).decode()
+    if t[0] == cashlib.StackItemType.BIGNUM:
+        return "n_"+hexlify(t[1]).decode()
+    else:
+        return "u_"+hexlify(t[1]).decode()
+
+def stepEval(sm, script):
+        worked = sm.begin(script)
+        count = 0
+        pos = 0
+        try:
+            while 1:
+                stk = sm.stack()
+                print("step %d" % count)
+                rest = CScript(script[pos:])
+                textrest = []
+                for (opcode, data, sop_idx) in rest.raw_iter():
+                    if not data:
+                        try:
+                            textrest.append(OPCODE_NAMES[opcode])
+                        except KeyError as e:
+                            textrest.append("OP_x%X" % opcode)
+                    else:
+                        textrest.append("DATA(%s)" % hexlify(data))
+                print("  stack: ", [ prettyStk(x) for x in stk])
+                print("  script: ", textrest)
+                count += 1
+                pos = sm.step()
+
+        except cashlib.Error as e:
+            if str(e) == 'stepped beyond end of script':
+                return (cashlib.ScriptError.SCRIPT_ERR_OK, pos)
+            else:
+                (err, pos) = sm.error()
+                print("Error: %d (%s): %s" % (err, err.name, str(e)))
+                return (err, pos)
+        return (cashlib.ScriptError.SCRIPT_ERR_OK, pos)
+
+
 def MakeCTransaction(data):
     if type(data) is str:
         data = unhexlify(data)
@@ -90,16 +132,16 @@ class DebugSession:
             self.sm.eval(CScript([OP_DROP]))
             if self.flags & cashlib.ScriptFlags.SCRIPT_VERIFY_CLEANSTACK:
                 if len(stk) > 1:
-                    print("Script finished with result %s but unclean stack" % hexlify(stkTop))
+                    print("Script finished with result %s but unclean stack: %s" % (prettyStk(stkTop), [ prettyStk(x) for x in stk]))
                     return (cashlib.ScriptError.SCRIPT_ERR_CLEANSTACK, result[1])
-            if ord(stkTop) == 1:
+            if stkTop[0] == cashlib.StackItemType.BYTES and ord(stkTop[1]) == 1:
                 return (cashlib.ScriptError.SCRIPT_ERR_OK, result[1])
             else:
                 return (cashlib.ScriptError.SCRIPT_EVAL_FALSE, result[1])
         return None
 
     def evalRedeemScript(self):
-        return self.evalWithReturn(self.redeemScript)
+        return self.evalWithReturn(self.redeemScript[1])
 
     def evals(self, script):
         worked = self.sm.begin(script)
@@ -119,7 +161,7 @@ class DebugSession:
                             textrest.append("OPx%x" % opcode)
                     else:
                         textrest.append("DATA(%s)" % hexlify(data))
-                print("  stack: ", [ hexlify(x) for x in stk])
+                print("  stack: ", [ prettyStk(x) for x in stk])
                 print("  script: ", textrest)
                 count += 1
                 pos = self.sm.step()
@@ -132,7 +174,6 @@ class DebugSession:
                 print("Error: %d (%s): %s" % (err, err.name, str(e)))
                 return (err, pos)
         return (cashlib.ScriptError.SCRIPT_ERR_OK, pos)
-
 
 class ScriptDebugTest (BitcoinTestFramework):
 
@@ -173,6 +214,15 @@ class ScriptDebugTest (BitcoinTestFramework):
             print(sm.error())
         pdb.set_trace()
 
+    def runAscript(self):
+        pdb.set_trace()
+        flags=cashlib.ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS | cashlib.ScriptFlags.SCRIPT_ENABLE_CHECKDATASIG
+        sm = cashlib.ScriptMachine(flags=flags, tx=None, inputIdx=0, inputAmount=1*cashlib.BCH)
+        # s = CScript([ unhexlify("000000000000000000000000000000000000000000000000000001"), OP_SETBMD, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_BIN2BIGNUM, OP_DUP, OP_ADD])
+        s = CScript([ unhexlify("000000000000000000000000000000000000000000000000000001"), OP_SETBMD, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_DUP, OP_BIN2BIGNUM, OP_SWAP, OP_BIN2BIGNUM, OP_ADD])
+        # s = CScript([ unhexlify("000000000000000000000000000000000000000000000000000001"), OP_SETBMD, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_BIN2BIGNUM, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_BIN2BIGNUM, OP_ADD, 26, OP_NUM2BIN])
+        stepEval(sm, s)
+
     def runDSVtest(self):
 
         # this DATASIGVERIFY transaction has a non-minimal number encoding so will fail with the default flags but succeed without MINIMALDATA
@@ -193,8 +243,26 @@ class ScriptDebugTest (BitcoinTestFramework):
         result = dbg.evalConstraintScript()
         assert(result[0] == cashlib.ScriptError.SCRIPT_ERR_OK)
 
+    def multisigTest(self):
+        prevTx = "0100000001622614617497345f05d732f51d93a2be4e82d3e0753d9fb8f12602267241b518060000006441823adf2066b671ac1a0d9ea0bb1fffcd38e3689d03e41127f3a70edd6f2bdfa0af22292faadccfcd3a0fb513650e57320e4e2c94968eb5edceec591728c63def412103c1294d14e5daa5c55e7a9c2f7d92cb134d3d2302b2b54712ea7c588240064c85feffffff01624e00000000000017a9143509b289c19490e9bf123d07eca281c80bfab18d873c7d0900"
+        spendTx ="010000000103ff48b851370170e26f2a47bc9eb02ba146a6ae7593ba1aa13172eecb980cad00000000f05541645b754af4bc4bea3ce8f1a29cbbd5cf40bba5982a9b50920f1488a9a22c37064b60155b20fca82760ca9834b13d1eae3396cefa6dfc178f7ec06dd580f4974a4141bc1e337422a4c71100726a8d27f58ba908ffd2a72d2015e8f03021be319a32c5b521cd1c4a46e0c4567c83b8aa158e9a2df8701d7a44630d54a63b8e8def01d8414c695221032fed71dcd99e1c7f74b828b85f9bd45f1a7e8b96dfbf0d56a66ac6ae4bc1209e210341f6b344c440f0c2dc592cd1c6783a82fded9bfb6dd1beba44d30a694aa382272103ffbc963d0cd9160dd7d153400f094629afbf1fc793fba147888d3beff02bec3653aeffffffff01d24c0000000000001976a914254a0a048668e68ba545f1a24ea7e6a05cdec66988ac00000000"
+
+        dbg = DebugSession(prevTx, spendTx, flags=cashlib.ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS | cashlib.ScriptFlags.SCRIPT_ENABLE_SCHNORR_MULTISIG | cashlib.ScriptFlags.SCRIPT_ENABLE_CHECKDATASIG )
+        print("Evaluating spend script")
+        dbg.evalSpendScript()
+        print("Evaluating constraint script")
+        result = dbg.evalConstraintScript()
+        print(result)
+        print("Evaluating redeem script")
+        pdb.set_trace()
+        redeemResult = dbg.evalRedeemScript()
+        print(redeemResult)
+
+
     def run_test(self):
-        self.runDSVtest()
+        self.multisigTest()
+        # self.runAscript()
+        # self.runDSVtest()
 
 
 

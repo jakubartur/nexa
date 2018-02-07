@@ -31,6 +31,7 @@
 #include "policy/policy.h"
 #include "primitives/block.h"
 #include "requestManager.h"
+#include "respend/respendrelayer.h"
 #include "rpc/server.h"
 #include "script/standard.h"
 #include "stat.h"
@@ -61,6 +62,9 @@
 #include <thread>
 
 using namespace std;
+
+uint32_t enforceOpGroupStartHeight = 0;
+bool miningForkOpGroup = false;
 
 #ifdef DEBUG_LOCKORDER
 std::atomic<bool> lockdataDestructed{false};
@@ -186,12 +190,8 @@ vector<std::string> vUseDNSSeeds;
 vector<std::string> vAddedNodes;
 set<CNetAddr> setservAddNodeAddresses;
 
-uint64_t maxGeneratedBlock = DEFAULT_BLOCK_MAX_SIZE;
-uint64_t excessiveBlockSize = DEFAULT_EXCESSIVE_BLOCK_SIZE;
-unsigned int excessiveAcceptDepth = DEFAULT_EXCESSIVE_ACCEPT_DEPTH;
-unsigned int maxMessageSizeMultiplier = DEFAULT_MAX_MESSAGE_SIZE_MULTIPLIER;
+uint64_t maxGeneratedBlock = 0;
 int nMaxOutConnections = DEFAULT_MAX_OUTBOUND_CONNECTIONS;
-bool fCanonicalTxsOrder = true;
 uint32_t blockVersion = 0; // Overrides the mined block version if non-zero
 uint64_t max_blockfile_size = MAX_BLOCKFILE_SIZE;
 
@@ -261,6 +261,7 @@ std::queue<CTxInputData> txDeferQ GUARDED_BY(csTxInQ);
 // Transactions that have been validated and are waiting to be committed into the mempool
 CWaitableCriticalSection csCommitQ;
 CConditionVariable cvCommitQ GUARDED_BY(csCommitQ);
+// CConditionVariable cvCommitted GUARDED_BY(csCommitQ);
 std::map<uint256, CTxCommitData> *txCommitQ GUARDED_BY(csCommitQ) = nullptr;
 
 // Control the execution of the parallel tx validation and serial mempool commit phases
@@ -286,10 +287,6 @@ CTweak<uint32_t> randomlyDontInv("net.randomlyDontInv",
     "Skip sending an INV for some percent of transactions (default: 0)",
     0);
 
-CTweakRef<uint64_t> ebTweak("net.excessiveBlock",
-    strprintf("Excessive block size in bytes (default: %d)", excessiveBlockSize),
-    &excessiveBlockSize,
-    &ExcessiveBlockValidator);
 CTweak<bool> ignoreNetTimeouts("net.ignoreTimeouts",
     "ignore inactivity timeouts, used during debugging (default: false)",
     false);
@@ -321,12 +318,7 @@ CTweakRef<uint64_t> miningBlockSize("mining.blockSize",
     strprintf("Maximum block size in bytes.  The maximum block size returned from 'getblocktemplate' will be this "
               "value minus mining.coinbaseReserve (default: %d)",
         maxGeneratedBlock),
-    &maxGeneratedBlock,
-    &MiningBlockSizeValidator);
-CTweakRef<unsigned int> maxDataCarrierTweak("mining.dataCarrierSize",
-    strprintf("Maximum size of OP_RETURN data script in bytes (default: %d)", nMaxDatacarrierBytes),
-    &nMaxDatacarrierBytes,
-    &MaxDataCarrierValidator);
+    &maxGeneratedBlock);
 
 CTweakRef<uint64_t> miningForkTime("consensus.forkMay2022Time",
     "Time in seconds since the epoch to initiate the Bitcoin Cash protocol upgraded scheduled on 15th May 2022.  A "
@@ -334,16 +326,26 @@ CTweakRef<uint64_t> miningForkTime("consensus.forkMay2022Time",
     &nMiningForkTime,
     &ForkTimeValidator); // Saturday May 15 12:00:00 UTC 2022
 
-CTweak<uint64_t> maxScriptOps("consensus.maxScriptOps",
-    strprintf("Maximum number of script operations allowed.  Stack pushes are excepted (default: %ld)",
+CTweakRef<uint32_t> miningEnforceOpGroup("mining.opgroup",
+    "Enable enforcement of the OP_GROUP opcode at this block height",
+    &enforceOpGroupStartHeight);
+
+CTweakRef<bool> miningForkOpGroupTweak("mining.forkOpgroup",
+    "Enable enforcement of the OP_GROUP opcode at the fork point",
+    &miningForkOpGroup);
+
+CTweak<uint64_t> maxScriptOps("test.maxScriptOps",
+    strprintf("Maximum number of script operations allowed.  Stack pushes are excepted.  Use for testing only! "
+              "(default: %ld)",
         MAX_OPS_PER_SCRIPT),
     MAX_OPS_PER_SCRIPT);
 
-CTweak<uint64_t> maxSigChecks("consensus.maxBlockSigChecks",
-    strprintf("Consensus parameter specifying the maximum sigchecks in a block.  Use for testing only! (default for "
-              "mainnet: %ld)",
-        MAY2020_MAX_BLOCK_SIGCHECK_COUNT),
-    MAY2020_MAX_BLOCK_SIGCHECK_COUNT);
+CTweak<uint64_t> maxSigChecks("test.maxBlockSigChecks",
+    strprintf(
+        "Override the adaptive consensus parameter specifying the maximum sigchecks in a block. A value of zero means"
+        " this override is turned off.  Use for testing only! (default: %ld)",
+        0),
+    0);
 
 CTweak<bool> unsafeGetBlockTemplate("mining.unsafeGetBlockTemplate",
     "Allow getblocktemplate to succeed even if the chain tip is old or this node is not connected to other nodes "
@@ -354,13 +356,6 @@ CTweak<bool> xvalTweak("mining.xval",
     strprintf("Turn on/off Xpress Validation when mining a new block(true/false - default: %d)", DEFAULT_XVAL_ENABLED),
     DEFAULT_XVAL_ENABLED);
 
-CTweak<unsigned int> maxTxSize("net.excessiveTx",
-    strprintf("Largest transaction size in bytes (default: %ld)", DEFAULT_LARGEST_TRANSACTION),
-    DEFAULT_LARGEST_TRANSACTION);
-CTweakRef<unsigned int> eadTweak("net.excessiveAcceptDepth",
-    "Excessive block chain acceptance depth in blocks",
-    &excessiveAcceptDepth,
-    &AcceptDepthValidator);
 CTweakRef<int> maxOutConnectionsTweak("net.maxOutboundConnections",
     "Maximum number of outbound connections",
     &nMaxOutConnections,
@@ -383,21 +378,25 @@ CTweakRef<unsigned int> briTweak("net.blockRetryInterval",
     &MIN_BLK_REQUEST_RETRY_INTERVAL);
 
 CTweak<unsigned int> blockLookAheadInterval("test.blockLookAheadInterval",
-    "How long to wait in microseconds before requesting a block from another source when we currently downloading "
-    "the block from another peer",
+    strprintf(
+        "How long to wait in microseconds before requesting a block from another source when we currently downloading "
+        "the block from another peer (default: %d)",
+        MIN_BLK_REQUEST_RETRY_INTERVAL),
     MIN_BLK_REQUEST_RETRY_INTERVAL);
+
+CTweak<uint64_t> maxAllowedNetMessage("test.maxAllowedNetMessage",
+    strprintf("What is the maximum allowed net message size in bytes (zero means use adaptive setting, default: %d)",
+        0),
+    0);
+
+CTweak<uint64_t> nextMaxBlockSize("test.nextMaxBlockSize",
+    strprintf("What is the maximum allowed block size in bytes (zero means use adaptive setting, default: %d)", 0),
+    0);
 
 CTweakRef<std::string> subverOverrideTweak("net.subversionOverride",
     "If set, this field will override the normal subversion field.  This is useful if you need to hide your node",
     &subverOverride,
     &SubverValidator);
-
-CTweakRef<bool> enableCanonicalTxOrder("consensus.enableCanonicalTxOrder",
-    strprintf(
-        "True if canonical transaction ordering is enabled.  Reflects the actual state so may be switched on or off by"
-        " fork time flags and blockchain reorganizations (true/false - default: %d)",
-        fCanonicalTxsOrder),
-    &fCanonicalTxsOrder);
 
 CTweak<unsigned int> numMsgHandlerThreads("net.msgHandlerThreads",
     "Max message handler threads. Auto detection is zero (default: 0).",
@@ -405,6 +404,10 @@ CTweak<unsigned int> numMsgHandlerThreads("net.msgHandlerThreads",
 CTweak<unsigned int> numTxAdmissionThreads("net.txAdmissionThreads",
     "Max transaction mempool admission threads Auto detection is zero (default: 0).",
     0);
+
+CTweak<bool> enforceMinTxSize("test.enforceMinTxSize",
+    "Whether we will enforce the min tx size limit of 100 bytes or not (default: true)",
+    true);
 
 CTweak<bool> allowp2pTxVal("net.allowp2pTxVal",
     strprintf(
@@ -556,21 +559,44 @@ CTweak<int> maxReorgDepth("blockchain.maxReorgDepth",
 /** Dust Threshold (in satoshis) defines the minimum quantity an output may contain for the
     transaction to be considered standard, and therefore relayable.
  */
-CTweak<unsigned int> nDustThreshold("net.dustThreshold",
+CTweak<uint32_t> dustThreshold("relay.dustThreshold",
     strprintf("Dust Threshold in satoshis (default: %d)", DEFAULT_DUST_THRESHOLD),
     DEFAULT_DUST_THRESHOLD);
 
-/** The maxlimitertxfee (in satoshi's per byte) */
-CTweak<double> dMaxLimiterTxFee("maxlimitertxfee",
-    strprintf("Fees (in satoshi/byte) larger than this are always relayed (default: %.4f)", DEFAULT_MAXLIMITERTXFEE),
-    DEFAULT_MAXLIMITERTXFEE);
+/** The minrelaytxfee (in satoshi's per KB) */
+CTweak<uint32_t> minRelayFee("relay.minRelayTxFee",
+    strprintf("Fees (in satoshi/KB) smaller than this are considered "
+              "zero fee and subject to -relay.limitFreeRelay (default: %ld)",
+        DEFAULT_MINRELAYTXFEE),
+    DEFAULT_MINRELAYTXFEE);
 
-/** The minlimitertxfee (in satoshi's per byte) */
-CTweak<double> dMinLimiterTxFee("minlimitertxfee",
-    strprintf("Fees (in satoshi/byte) smaller than this are considered "
-              "zero fee and subject to -limitfreerelay (default: %.4f)",
-        DEFAULT_MINLIMITERTXFEE),
-    DEFAULT_MINLIMITERTXFEE);
+/** The free relay limit (KB allowed per 1 minute period) */
+CTweak<uint32_t> limitFreeRelay("relay.limitFreeRelay",
+    strprintf("Continuously rate-limit free transactions to <n>*1000 bytes per minute (default: %u)",
+        DEFAULT_LIMITFREERELAY),
+    DEFAULT_LIMITFREERELAY);
+
+/** The respend relay limit (KB allowed per 1 minute period) */
+CTweak<uint32_t> limitRespendRelay("relay.limitRespendRelay",
+    strprintf("Continuously rate-limit double spend transactions to <n>*1000 bytes per minute (default: %u)",
+        respend::DEFAULT_LIMITRESPENDRELAY),
+    respend::DEFAULT_LIMITRESPENDRELAY);
+
+/** Relay priority */
+CTweak<bool> relayPriority("relay.priority",
+    strprintf("Require high priority for relaying free or low-fee transactions (default: %u)", DEFAULT_RELAYPRIORITY),
+    DEFAULT_RELAYPRIORITY);
+
+/** Data Carrier on/off */
+CTweak<bool> dataCarrier("relay.dataCarrier",
+    strprintf("Relay and mine OP_RETURN transactions (default: %d)", DEFAULT_ACCEPT_DATACARRIER),
+    DEFAULT_ACCEPT_DATACARRIER);
+
+/** The data carrier size in bytes */
+CTweak<uint32_t> dataCarrierSize("relay.dataCarrierSize",
+    strprintf("Maximum size of OP_RETURN data script in bytes that we relay and mine (default: %u)",
+        MAX_OP_RETURN_RELAY),
+    MAX_OP_RETURN_RELAY);
 
 /** Disable reconsidermostworkchain during initial bootstrap when chain is not synced.
  * This is for testing purpose only and hence it is disabled by default.
@@ -613,10 +639,6 @@ uint64_t lastMempoolSyncClear = GetStopwatchMicros();
 
 // Are we shutting down. Replaces boost interrupts.
 std::atomic<bool> shutdown_threads{false};
-
-// Size of last block that was successfully connected at the tip.
-std::atomic<uint64_t> nBlockSizeAtChainTip{0};
-
 
 #ifdef ENABLE_MUTRACE
 class CPrintSomePointers

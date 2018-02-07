@@ -25,7 +25,6 @@ class ThinBlockTest(BitcoinTestFramework):
             "-debug=net",
             "-use-grapheneblocks=0",
             "-use-thinblocks=1",
-            "-excessiveblocksize=6000000",
             "-blockprioritysize=6000000",
             "-blockmaxsize=6000000",
             "-peerbloomfilters=1"]
@@ -37,7 +36,6 @@ class ThinBlockTest(BitcoinTestFramework):
             "-debug=net",
             "-use-grapheneblocks=0",
             "-use-thinblocks=1",
-            "-excessiveblocksize=6000000",
             "-blockprioritysize=6000000",
             "-blockmaxsize=6000000",
             "-peerbloomfilters=0"]
@@ -49,7 +47,6 @@ class ThinBlockTest(BitcoinTestFramework):
             "-debug=net",
             "-use-grapheneblocks=0",
             "-use-thinblocks=1",
-            "-excessiveblocksize=6000000",
             "-blockprioritysize=6000000",
             "-blockmaxsize=6000000",
             "-peerbloomfilters=1"]
@@ -78,7 +75,7 @@ class ThinBlockTest(BitcoinTestFramework):
         send_to = {}
         self.nodes[0].keypoolrefill(20)
         for i in range(20):
-            send_to[self.nodes[1].getnewaddress()] = Decimal("0.01")
+            send_to[self.nodes[1].getnewaddress()] = Decimal("1000000.01")
         self.nodes[0].sendmany("", send_to)
         self.sync_all()
 
@@ -90,7 +87,7 @@ class ThinBlockTest(BitcoinTestFramework):
         send_to = {}
         self.nodes[0].keypoolrefill(20)
         for i in range(20):
-            send_to[self.nodes[1].getnewaddress()] = Decimal("0.01")
+            send_to[self.nodes[1].getnewaddress()] = Decimal("1000000.01")
         self.nodes[0].sendmany("", send_to)
         self.sync_all()
 
@@ -107,7 +104,6 @@ class ThinBlockTest(BitcoinTestFramework):
 
         assert set(tbs) == {"enabled",
                             "summary",
-                            "mempool_limiter",
                             "inbound_percent",
                             "outbound_percent",
                             "response_time",

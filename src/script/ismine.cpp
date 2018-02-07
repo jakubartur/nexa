@@ -114,6 +114,7 @@ static isminetype IsMine(const CKeyStore &keystore,
     }
     break;
     case TX_PUBKEYHASH:
+    case TX_GRP_PUBKEYHASH:
     {
         keyID = CKeyID(uint160(vSolutions[0]));
         bool haveKey = alreadyLocked ? keystore._HaveKey(keyID) : keystore.HaveKey(keyID);
@@ -122,6 +123,7 @@ static isminetype IsMine(const CKeyStore &keystore,
     }
     break;
     case TX_SCRIPTHASH:
+    case TX_GRP_SCRIPTHASH:
     {
         CScriptID scriptID = CScriptID(uint160(vSolutions[0]));
         CScript subscript;
@@ -158,11 +160,11 @@ static isminetype IsMine(const CKeyStore &keystore,
 
             // FIXME do not always log, use a  specific debug category or create one if no others fit
             LOGA("Found Freeze Have Key. nFreezeLockTime=%d. BestBlockHeight=%d \n", nFreezeLockTime.getint64(),
-                bestBlock->nHeight);
+                bestBlock->height());
             if (nFreezeLockTime < LOCKTIME_THRESHOLD)
             {
                 // locktime is a block
-                if (nFreezeLockTime > bestBlock->nHeight)
+                if (nFreezeLockTime > bestBlock->height())
                     return ISMINE_WATCH_SOLVABLE;
                 else
                     return ISMINE_SPENDABLE;

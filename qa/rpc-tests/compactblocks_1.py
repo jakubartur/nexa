@@ -9,7 +9,7 @@ from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
 
 
-class ThinBlockTest(BitcoinTestFramework):
+class CBTest(BitcoinTestFramework):
     def __init__(self):
         self.rep = False
         BitcoinTestFramework.__init__(self)
@@ -26,7 +26,6 @@ class ThinBlockTest(BitcoinTestFramework):
             "-use-grapheneblocks=0",
             "-use-thinblocks=0",
             "-use-compactblocks=1",
-            "-excessiveblocksize=6000000",
             "-blockprioritysize=6000000",
             "-blockmaxsize=6000000",
             "-peerbloomfilters=1"]
@@ -39,7 +38,6 @@ class ThinBlockTest(BitcoinTestFramework):
             "-use-grapheneblocks=0",
             "-use-thinblocks=0",
             "-use-compactblocks=1",
-            "-excessiveblocksize=6000000",
             "-blockprioritysize=6000000",
             "-blockmaxsize=6000000",
             "-peerbloomfilters=0"]
@@ -52,7 +50,6 @@ class ThinBlockTest(BitcoinTestFramework):
             "-use-grapheneblocks=0",
             "-use-thinblocks=0",
             "-use-compactblocks=1",
-            "-excessiveblocksize=6000000",
             "-blockprioritysize=6000000",
             "-blockmaxsize=6000000",
             "-peerbloomfilters=1"]
@@ -81,7 +78,7 @@ class ThinBlockTest(BitcoinTestFramework):
         send_to = {}
         self.nodes[0].keypoolrefill(20)
         for i in range(20):
-            send_to[self.nodes[1].getnewaddress()] = Decimal("0.01")
+            send_to[self.nodes[1].getnewaddress()] = Decimal("100000.01")
         self.nodes[0].sendmany("", send_to)
         self.sync_all()
 
@@ -93,7 +90,7 @@ class ThinBlockTest(BitcoinTestFramework):
         send_to = {}
         self.nodes[0].keypoolrefill(20)
         for i in range(20):
-            send_to[self.nodes[1].getnewaddress()] = Decimal("0.01")
+            send_to[self.nodes[1].getnewaddress()] = Decimal("100000.01")
         self.nodes[0].sendmany("", send_to)
         self.sync_all()
 
@@ -110,7 +107,6 @@ class ThinBlockTest(BitcoinTestFramework):
 
         assert set(tbs) == {"enabled",
                             "summary",
-                            "mempool_limiter",
                             "inbound_percent",
                             "outbound_percent",
                             "response_time",
@@ -128,4 +124,17 @@ class ThinBlockTest(BitcoinTestFramework):
         #assert tbs['summary'] == '0 inbound and 0 outbound compact blocks have saved 0.00B of bandwidth'
 
 if __name__ == '__main__':
-    ThinBlockTest().main()
+    CBTest().main()
+
+def Test():
+    t = CBTest()
+    t.drop_to_pdb = True
+    # install ctrl-c handler
+    #import signal, pdb
+    #signal.signal(signal.SIGINT, lambda sig, stk: pdb.Pdb().set_trace(stk))
+    bitcoinConf = {
+        "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
+        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
+    }
+    flags = standardFlags()
+    t.main(flags, bitcoinConf, None)

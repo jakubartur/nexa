@@ -15,12 +15,6 @@
 
 class CCoinsViewCache;
 
-/** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
-// this is now set in chain params
-static const unsigned int DEFAULT_BLOCK_MAX_SIZE_REGTEST = 1000;
-static const unsigned int DEFAULT_BLOCK_MAX_SIZE = 8 * ONE_MEGABYTE;
-static const unsigned int DEFAULT_BLOCK_MAX_SIZE_TESTNET4 = 2 * ONE_MEGABYTE;
-static const unsigned int DEFAULT_BLOCK_MAX_SIZE_SCALENET = 256 * ONE_MEGABYTE;
 // Maximum number of mining candidates that this node will remember simultaneously
 static const unsigned int DEFAULT_MAX_MINING_CANDIDATES = 10;
 // Send an existing mining candidate if a request comes in within this many seconds of its construction
@@ -78,6 +72,11 @@ static const unsigned int STANDARD_NOT_MANDATORY_VERIFY_FLAGS =
 /** Used as the flags parameter to sequence and nLocktime checks in non-consensus code. */
 static const unsigned int STANDARD_LOCKTIME_VERIFY_FLAGS = LOCKTIME_VERIFY_SEQUENCE | LOCKTIME_MEDIAN_TIME_PAST;
 
+/** largest OP_RETURN, in bytes, allowed */
+static const unsigned int MAX_OP_RETURN_RELAY = 223; //! bytes (+1 for OP_RETURN, +2 for the pushdata opcodes)
+/** Do we accept OP_RETURN transactions */
+static const bool DEFAULT_ACCEPT_DATACARRIER = true;
+
 bool IsStandard(const CScript &scriptPubKey, txnouttype &whichType);
 /**
  * Check for standard transaction types
@@ -89,6 +88,6 @@ bool IsStandardTx(const CTransactionRef tx, std::string &reason);
  * @param[in] mapInputs    Map of previous transactions that have outputs we're spending
  * @return True if all inputs (scriptSigs) use only standard transaction forms
  */
-bool AreInputsStandard(const CTransactionRef tx, const CCoinsViewCache &mapInputs, bool isMay2020Enabled);
+bool AreInputsStandard(const CTransactionRef tx, const CCoinsViewCache &mapInputs);
 
 #endif // BITCOIN_POLICY_POLICY_H

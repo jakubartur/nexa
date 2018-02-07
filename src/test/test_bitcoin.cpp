@@ -42,6 +42,8 @@ FalseScriptImportedState fsis;
 extern bool fPrintToConsole;
 extern void noui_connect();
 
+extern CTweak<uint32_t> limitFreeRelay;
+
 BasicTestingSetup::BasicTestingSetup(const std::string &chainName)
 {
     // Do not place the data created by these unit tests on top of any existing chain,
@@ -79,8 +81,8 @@ TestingSetup::TestingSetup(const std::string &chainName) : BasicTestingSetup(cha
     bool worked = InitBlockIndex(chainparams);
     assert(worked);
 
-    // -limitfreerelay is diabled by default but some tests rely on it so make sure to set it here.
-    SetArg("-limitfreerelay", std::to_string(15));
+    // -relay.limitFreeRelay is diabled by default but some tests rely on it so make sure to set it here.
+    limitFreeRelay.Set(15);
 
     // Initial dbcache settings so that the automatic cache setting don't kick in and allow
     // us to accidentally use up our RAM on Travis, and also so that we are not prevented from flushing the
@@ -107,12 +109,6 @@ TestingSetup::~TestingSetup()
     delete pblocktree;
     fs::remove_all(pathTemp);
 }
-
-struct NumericallyLessTxHashComparator
-{
-public:
-    bool operator()(const CTransactionRef &a, const CTransactionRef &b) const { return a->GetHash() < b->GetHash(); }
-};
 
 TestChain100Setup::TestChain100Setup() : TestingSetup(CBaseChainParams::REGTEST)
 {
@@ -149,17 +145,14 @@ CBlock TestChain100Setup::CreateAndProcessBlock(const std::vector<CMutableTransa
     // enfore LTOR ordering of transactions
     std::sort(pblock->vtx.begin() + 1, pblock->vtx.end(), NumericallyLessTxHashComparator());
 
-    // IncrementExtraNonce creates a valid coinbase and merkleRoot
-    unsigned int extraNonce = 0;
-    IncrementExtraNonce(pblock, extraNonce);
-
-    while (!CheckProofOfWork(pblock->GetHash(), pblock->nBits, chainparams.GetConsensus()))
-    {
-        ++pblock->nNonce;
-    }
+    pblock->UpdateHeader(); // make sure the size field is properly calculated
+    pblock->nonce.resize(3);
+    bool worked = MineBlock(*pblock, 1 << 23, chainparams.GetConsensus());
+    assert(worked);
 
     CValidationState state;
-    ProcessNewBlock(state, chainparams, nullptr, pblock, true, nullptr, false);
+    worked = ProcessNewBlock(state, chainparams, nullptr, pblock, true, nullptr, false);
+    // ProcessNewBlock will fail here in some negative tests so no: assert(worked);
 
     CBlock result = *pblock;
     return result;
@@ -180,6 +173,8 @@ CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CTransaction &txn, CTxMemPo
 
     CTxMemPoolEntry ret(MakeTransactionRef(txn), nFee, nTime, dPriority, nHeight, hasNoDependencies, inChainValue,
         spendsCoinbase, sigOpCount, lp);
+    ret.dbgName = dbgName;
+    dbgName = ""; // Reset to no name every time we pull a new entry from this object
     ret.sighashType = SIGHASH_ALL; // For testing, give the transaction any valid sighashtype
     return ret;
 }
