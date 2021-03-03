@@ -43,7 +43,6 @@ For linux (including i386, ARM) cross compilation:
 
     sudo apt-get install curl linux-libc-dev:i386 g++-aarch64-linux-gnu g++-aarch64-linux-gnu gcc-aarch64-linux-gnu binutils-aarch64-linux-gnu g++-arm-linux-gnueabihf g++-arm-linux-gnueabihf gcc-arm-linux-gnueabihf binutils-arm-linux-gnueabihf g++-multilib gcc-multilib binutils-gold bsdmainutils
 
-
 Dependency Options:
 The following can be set when running make: make FOO=bar
 
