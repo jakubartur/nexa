@@ -34,7 +34,7 @@ CScript sign_multisig(const CScript scriptPubKey,
     const CMutableTransaction &transaction,
     int whichIn)
 {
-    uint256 hash = SignatureHash(scriptPubKey, transaction, whichIn, SIGHASH_ALL | SIGHASH_FORKID, 0);
+    uint256 hash = SignatureHash(scriptPubKey, transaction, whichIn, defaultSigHashType, 0);
     BOOST_CHECK(hash != SIGNATURE_HASH_ERROR);
 
     CScript result;
@@ -43,7 +43,7 @@ CScript sign_multisig(const CScript scriptPubKey,
     {
         vector<uint8_t> vchSig;
         BOOST_CHECK(key.SignSchnorr(hash, vchSig));
-        vchSig.push_back((uint8_t)SIGHASH_ALL | SIGHASH_FORKID);
+        defaultSigHashType.appendToSig(vchSig);
         result << vchSig;
     }
     return result;

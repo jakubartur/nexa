@@ -369,7 +369,6 @@ protected:
         {
             CDataStream out(output, SER_NETWORK, INIT_PROTO_VERSION);
             out << result;
-            out << stats.sighashtype;
             out << scriptsig_raw;
             out << scriptpubkey_raw;
             output.insert(output.begin(), out.begin(), out.end());

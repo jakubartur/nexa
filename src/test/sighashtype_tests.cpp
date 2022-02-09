@@ -22,7 +22,7 @@ static void CheckSigHashType(SigHashType t,
     BOOST_CHECK(t.getBaseType() == baseType);
     BOOST_CHECK_EQUAL(t.isDefined(), isDefined);
     BOOST_CHECK_EQUAL(t.getForkValue(), forkValue);
-    BOOST_CHECK_EQUAL(t.hasForkId(), hasForkId);
+    BOOST_CHECK_EQUAL(t.isBch(), hasForkId);
     BOOST_CHECK_EQUAL(t.hasAnyoneCanPay(), hasAnyoneCanPay);
 }
 

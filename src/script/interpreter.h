@@ -170,13 +170,6 @@ bool CheckDataSignatureEncoding(const std::vector<uint8_t> &vchSig, uint32_t fla
 // problems during signature hash calculations for any current BCH signature hash functions!
 extern const uint256 SIGNATURE_HASH_ERROR;
 
-// If you are signing you may call this function and the BitcoinCash or Legacy method will be chosen based on nHashType
-uint256 SignatureHash(const CScript &scriptCode,
-    const CTransaction &txTo,
-    unsigned int nIn,
-    uint32_t nHashType,
-    const CAmount &amount,
-    size_t *nHashedOut = nullptr);
 
 class BaseSignatureChecker
 {
@@ -329,8 +322,6 @@ class ScriptMachineResourceTracker
 public:
     /** 2020-05-15 sigchecks consensus rule */
     uint64_t consensusSigCheckCount = 0;
-    /** the bitwise OR of all sighashtypes in executed signature checks */
-    uint32_t sighashtype = 0;
     /** Number of instructions executed */
     unsigned int nOpCount = 0;
     /** Number of op_execs executed */
@@ -342,7 +333,6 @@ public:
     {
         consensusSigCheckCount += stats.consensusSigCheckCount;
         nOpCount += stats.nOpCount;
-        sighashtype |= stats.sighashtype;
         nOpExec += stats.nOpExec;
     }
 
@@ -350,7 +340,6 @@ public:
     void clear(void)
     {
         consensusSigCheckCount = 0;
-        sighashtype = 0;
         nOpCount = 0;
         nOpExec = 0;
     }
@@ -365,8 +354,6 @@ protected:
     BigNum bigNumModulo = 0x10000000000000000_BN; // 64 bit magnitude
     const CScript *script;
     ScriptError error;
-
-    uint32_t sighashtype;
 
     CScript::const_iterator pc;
     CScript::const_iterator pbegin;
@@ -588,8 +575,6 @@ public:
     const Stack &getAltStack() { return altstack; }
     // Get any error that may have occurred
     const ScriptError &getError() { return error; }
-    // Get the bitwise OR of all sighashtype bytes that occurred in the script
-    uint32_t getSigHashType() { return sighashtype; }
     // Return the number of instructions executed since the last Reset()
     unsigned int getOpCount() { return stats.nOpCount; }
     /** Return execution statistics */
@@ -601,8 +586,7 @@ bool EvalScript(Stack &stack,
     unsigned int flags,
     unsigned int maxOps,
     const ScriptImportedState &sis,
-    ScriptError *error = nullptr,
-    uint32_t *sighashtype = nullptr);
+    ScriptError *error = nullptr);
 bool VerifyScript(const CScript &scriptSig,
     const CScript &scriptPubKey,
     unsigned int flags,

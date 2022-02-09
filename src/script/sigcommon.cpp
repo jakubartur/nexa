@@ -9,13 +9,14 @@
 /* clang-format on */
 #include "base58.h"
 #include "primitives/transaction.h"
+#include "script/sighashtype.h"
 #include "script/sign.h"
+#include "stdio.h"
 #include "streams.h"
 #include "uint256.h"
 #include "utilstrencodings.h"
 
-#include "stdio.h"
-
+#include <boost/algorithm/string.hpp>
 #include <string>
 #include <vector>
 
@@ -27,6 +28,7 @@
 // tinyformat::format(std::cout, __VA_ARGS__)
 #endif
 
+const SigHashType defaultSigHashType(SIGHASH_ALL | SIGHASH_FORKID);
 
 uint256 GetPrevoutHash(const CTransaction &txTo)
 {
@@ -86,9 +88,9 @@ public:
     CTransactionSignatureSerializer(const CTransaction &txToIn,
         const CScript &scriptCodeIn,
         unsigned int nInIn,
-        int nHashTypeIn)
-        : txTo(txToIn), scriptCode(scriptCodeIn), nIn(nInIn), fAnyoneCanPay(!!(nHashTypeIn & SIGHASH_ANYONECANPAY)),
-          fHashSingle((nHashTypeIn & 0x1f) == SIGHASH_SINGLE), fHashNone((nHashTypeIn & 0x1f) == SIGHASH_NONE)
+        SigHashType hashTypeIn)
+        : txTo(txToIn), scriptCode(scriptCodeIn), nIn(nInIn), fAnyoneCanPay(hashTypeIn.hasAnyoneCanPay()),
+          fHashSingle(hashTypeIn.hasSingle()), fHashNone(hashTypeIn.hasNone())
     {
     }
 
@@ -179,11 +181,10 @@ public:
 // WARNING: Never use this to signal errors in a signature hash function. This is here solely for legacy reasons!
 const uint256 SIGNATURE_HASH_ERROR(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
 
-uint256 SignatureHashLegacy(const CScript &scriptCode,
+uint256 SignatureHashBitcoin(const CScript &scriptCode,
     const CTransaction &txTo,
     unsigned int nIn,
-    uint32_t nHashType,
-    const CAmount &amount,
+    const SigHashType &sigHashType,
     size_t *nHashedOut)
 {
     if (nIn >= txTo.vin.size())
@@ -199,6 +200,7 @@ uint256 SignatureHashLegacy(const CScript &scriptCode,
     }
 
     // Check for invalid use of SIGHASH_SINGLE
+    uint8_t nHashType = sigHashType.btcSigHashType();
     if ((nHashType & 0x1f) == SIGHASH_SINGLE)
     {
         if (nIn >= txTo.vout.size())
@@ -215,21 +217,21 @@ uint256 SignatureHashLegacy(const CScript &scriptCode,
     }
 
     // Wrapper to serialize only the necessary parts of the transaction being signed
-    CTransactionSignatureSerializer txTmp(txTo, scriptCode, nIn, nHashType);
+    CTransactionSignatureSerializer txTmp(txTo, scriptCode, nIn, sigHashType);
 
     // Serialize and hash
     CHashWriter ss(SER_GETHASH, 0);
-    ss << txTmp << nHashType;
+    ss << txTmp << sigHashType.getRawSigHashType();
     if (nHashedOut != nullptr)
         *nHashedOut = ss.GetNumBytesHashed();
     return ss.GetHash();
 }
 
 // ONLY to be called with SIGHASH_FORKID set in nHashType!
-static uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
+uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     const CTransaction &txTo,
     unsigned int nIn,
-    uint32_t nHashType,
+    const SigHashType &sigHashType,
     const CAmount &amount,
     size_t *nHashedOut)
 {
@@ -237,6 +239,8 @@ static uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     uint256 hashSequence;
     uint256 hashInputAmounts;
     uint256 hashOutputs;
+
+    uint8_t nHashType = sigHashType.bchSigHashType();
 
     p("Signature hash calculation with type: 0x%x\n", nHashType);
     if (!(nHashType & SIGHASH_ANYONECANPAY))
@@ -293,8 +297,10 @@ static uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     ss << txTo.nLockTime;
     p("Locktime: %d\n", txTo.nLockTime);
     // Sighash type
-    ss << nHashType;
+    ss << sigHashType;
+    p("sigHashType: %x\n", sigHashType.getRawSigHashType());
 
+    p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
     uint256 sighash = ss.GetHash();
     p("Final sighash is: %s\n", sighash.GetHex().c_str());
     return sighash;
@@ -304,13 +310,61 @@ static uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
 uint256 SignatureHash(const CScript &scriptCode,
     const CTransaction &txTo,
     unsigned int nIn,
-    uint32_t nHashType,
+    const SigHashType &sigHashType,
     const CAmount &amount,
     size_t *nHashedOut)
 {
-    if (nHashType & SIGHASH_FORKID)
+    if (sigHashType.isInvalid())
     {
-        return SignatureHashBitcoinCash(scriptCode, txTo, nIn, nHashType, amount, nHashedOut);
+        return SIGNATURE_HASH_ERROR;
     }
-    return SignatureHashLegacy(scriptCode, txTo, nIn, nHashType, amount, nHashedOut);
+    if (sigHashType.isBch())
+    {
+        return SignatureHashBitcoinCash(scriptCode, txTo, nIn, sigHashType, amount, nHashedOut);
+    }
+    return SignatureHashBitcoin(scriptCode, txTo, nIn, sigHashType, nHashedOut);
+}
+
+SigHashType GetSigHashType(const std::vector<unsigned char> &vchSig)
+{
+    if (vchSig.size() == 0)
+    {
+        return SigHashType(BaseSigHashType::UNSUPPORTED);
+    }
+
+    return SigHashType(vchSig[vchSig.size() - 1]);
+}
+
+void RemoveSigHashType(std::vector<unsigned char> &vchSig)
+{
+    vchSig.resize(64); // Schnorr signatures are 64 bytes
+}
+
+SigHashType &SigHashType::from(const std::string &flagStr)
+{
+    std::vector<std::string> strings;
+    std::istringstream ss(flagStr);
+    std::string s;
+    while (getline(ss, s, '|'))
+    {
+        boost::trim(s);
+        if (s == "ALL")
+            sigHash = SIGHASH_ALL;
+        else if (s == "NONE")
+            sigHash = SIGHASH_NONE;
+        else if (s == "SINGLE")
+            sigHash = SIGHASH_SINGLE;
+        else if (s == "ANYONECANPAY")
+            sigHash |= SIGHASH_ANYONECANPAY;
+        else if (s == "FORKID")
+            sigHash |= SIGHASH_FORKID;
+        else if (s == "NOFORKID")
+            sigHash &= ~SIGHASH_FORKID;
+        else // Abort if incorrect string
+        {
+            sigHash = (uint32_t)BaseSigHashType::UNSUPPORTED;
+            return *this;
+        }
+    }
+    return *this;
 }

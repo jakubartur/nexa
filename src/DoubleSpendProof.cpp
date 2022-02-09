@@ -59,25 +59,26 @@ void hashTx(DoubleSpendProof::Spender &spender, const CTransaction &tx, int inpu
 {
     DbgAssert(!spender.pushData.empty(), return );
     DbgAssert(!spender.pushData.front().empty(), return );
-    auto hashType = spender.pushData.front().back();
-    if (!(hashType & SIGHASH_ANYONECANPAY))
+    auto sigHashType = SigHashType(spender.pushData.front());
+    auto hashType = sigHashType.getRawSigHashType();
+    if (!sigHashType.hasAnyoneCanPay())
     {
         spender.hashPrevOutputs = GetPrevoutHash(tx);
         spender.hashInAmounts = GetInputAmountHash(tx);
     }
     p("Hashing prevouts to: %s\n", spender.hashPrevOutputs.GetHex().c_str());
     p("Hashing input amounts to: %s\n", spender.hashInAmounts.GetHex().c_str());
-    if (!(hashType & SIGHASH_ANYONECANPAY) && (hashType & 0x1f) != SIGHASH_SINGLE && (hashType & 0x1f) != SIGHASH_NONE)
+    if (!sigHashType.hasAnyoneCanPay() && !sigHashType.hasSingle() && !sigHashType.hasNone())
     {
         spender.hashSequence = GetSequenceHash(tx);
         p("Hashing input sequence numbers to: %s\n", spender.hashSequence.GetHex().c_str());
     }
-    if ((hashType & 0x1f) != SIGHASH_SINGLE && (hashType & 0x1f) != SIGHASH_NONE)
+    if (!sigHashType.hasSingle() && !sigHashType.hasNone())
     {
         spender.hashOutputs = GetOutputsHash(tx);
         p("Hashing every output to: %s\n", spender.hashOutputs.GetHex().c_str());
     }
-    else if ((hashType & 0x1f) == SIGHASH_SINGLE && (size_t)inputIndex < tx.vout.size())
+    else if (sigHashType.hasSingle() && (size_t)inputIndex < tx.vout.size())
     {
         CHashWriter ss(SER_GETHASH, 0);
         ss << tx.vout[inputIndex];
@@ -123,10 +124,13 @@ public:
         p("Amount: %ld\n", (long int)m_amount);
         p("This input sequence: %d\n", m_spender.outSequence);
         p("hashOutputs: %s\n", m_spender.hashOutputs.GetHex().c_str());
-        ss << m_spender.lockTime << (int)m_spender.pushData.front().back();
+        SigHashType sighashtype(m_spender.pushData.front());
+        ss << m_spender.lockTime << sighashtype;
         p("Locktime: %d\n", m_spender.lockTime);
-        p("hashtype: %x\n", (int)m_spender.pushData.front().back());
+        p("sighashtype: %x\n", sighashtype.getRawSigHashType());
+        p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
         const uint256 sighash = ss.GetHash();
+        p("Final sighash is: %s\n", sighash.GetHex().c_str());
 
         return pubkey.VerifySchnorr(sighash, vchSig);
     }
@@ -186,12 +190,12 @@ DoubleSpendProof DoubleSpendProof::create(const CTransaction &t1, const CTransac
                 assert(!s2.pushData.empty()); // we resized it
                 if (s1.pushData.front().empty() || s2.pushData.front().empty())
                     throw std::runtime_error("scriptSig has no signature");
-                auto hashType = s1.pushData.front().back();
-                if (!(hashType & SIGHASH_FORKID))
+                auto hashType = SigHashType(s1.pushData.front());
+                if (!hashType.isBch())
                     throw std::runtime_error("Tx1 is not a Bitcoin Cash transaction");
 
-                hashType = s2.pushData.front().back();
-                if (!(hashType & SIGHASH_FORKID))
+                hashType = SigHashType(s2.pushData.front());
+                if (!hashType.isBch())
                     throw std::runtime_error("Tx2 is not a Bitcoin Cash transaction");
 
                 break;

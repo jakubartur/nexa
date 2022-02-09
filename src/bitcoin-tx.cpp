@@ -380,35 +380,6 @@ static void MutateTxDelOutput(CMutableTransaction &tx, const string &strOutIdx)
     tx.vout.erase(tx.vout.begin() + outIdx);
 }
 
-
-static bool findSighashFlags(int &flags, const string &flagStr)
-{
-    flags = 0;
-
-    std::vector<string> strings;
-    std::istringstream ss(flagStr);
-    std::string s;
-    while (getline(ss, s, '|'))
-    {
-        boost::trim(s);
-        if (boost::iequals(s, "ALL"))
-            flags = SIGHASH_ALL;
-        else if (boost::iequals(s, "NONE"))
-            flags = SIGHASH_NONE;
-        else if (boost::iequals(s, "SINGLE"))
-            flags = SIGHASH_SINGLE;
-        else if (boost::iequals(s, "ANYONECANPAY"))
-            flags |= SIGHASH_ANYONECANPAY;
-        else if (boost::iequals(s, "FORKID"))
-            flags |= SIGHASH_FORKID;
-        else
-        {
-            return false;
-        }
-    }
-    return true;
-}
-
 uint256 ParseHashUO(map<string, UniValue> &o, string strKey)
 {
     if (!o.count(strKey))
@@ -440,11 +411,12 @@ static CAmount AmountFromValue(const UniValue &value)
 
 static void MutateTxSign(CMutableTransaction &tx, const string &flagStr)
 {
-    int nHashType = SIGHASH_ALL;
+    SigHashType sigHashType;
 
     if (flagStr.size() > 0)
-        if (!findSighashFlags(nHashType, flagStr))
-            throw runtime_error("unknown sighash flag/sign option");
+        sigHashType.from(flagStr);
+    if (sigHashType.isInvalid())
+        throw runtime_error("unknown sighash flag/sign option");
 
     vector<CTransaction> txVariants;
     txVariants.push_back(tx);
@@ -534,7 +506,7 @@ static void MutateTxSign(CMutableTransaction &tx, const string &flagStr)
 
     const CKeyStore &keystore = tempKeystore;
 
-    bool fHashSingle = ((nHashType & ~(SIGHASH_ANYONECANPAY | SIGHASH_FORKID)) == SIGHASH_SINGLE);
+    bool fHashSingle = sigHashType.hasSingle();
 
     std::vector<CTxOut> spendingCoins;
     for (size_t i = 0; i < mergedTx.vin.size(); i++)
@@ -559,7 +531,7 @@ static void MutateTxSign(CMutableTransaction &tx, const string &flagStr)
         txin.scriptSig.clear();
         // Only sign SIGHASH_SINGLE if there's a corresponding output:
         if (!fHashSingle || (i < mergedTx.vout.size()))
-            SignSignature(keystore, prevPubKey, mergedTx, i, amount, nHashType);
+            SignSignature(keystore, prevPubKey, mergedTx, i, amount, sigHashType);
 
         unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID | STANDARD_SCRIPT_VERIFY_FLAGS;
         // ... and merge in other signatures:

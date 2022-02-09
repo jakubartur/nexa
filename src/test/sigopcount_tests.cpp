@@ -317,9 +317,7 @@ CMutableTransaction BuildSpendingTransaction(const CScript &scriptSig, const CMu
 
 CScript sign_multisig(const CScript &scriptPubKey, std::vector<CKey> keys, const CTransaction &transaction, CAmount amt)
 {
-    unsigned char sighashType = SIGHASH_ALL | SIGHASH_FORKID;
-
-    uint256 hash = SignatureHash(scriptPubKey, transaction, 0, sighashType, amt, nullptr);
+    uint256 hash = SignatureHash(scriptPubKey, transaction, 0, defaultSigHashType, amt, nullptr);
     assert(hash != SIGNATURE_HASH_ERROR);
 
     CScript result;
@@ -336,7 +334,7 @@ CScript sign_multisig(const CScript &scriptPubKey, std::vector<CKey> keys, const
     {
         vector<unsigned char> vchSig;
         BOOST_CHECK(key.SignSchnorr(hash, vchSig));
-        vchSig.push_back(sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         result << vchSig;
     }
     return result;
