@@ -17,6 +17,7 @@
 #include "pubkey.h"
 #include "script/script.h"
 #include "script/script_error.h"
+#include "sighashtype.h"
 #include "uint256.h"
 #include "util.h"
 
@@ -31,13 +32,6 @@ bool BigNumScriptOp(BigNum &bn,
     ScriptError *serror);
 
 const std::string strMessageMagic = "Bitcoin Signed Message:\n";
-
-extern uint256 SignatureHashLegacy(const CScript &scriptCode,
-    const CTransaction &txTo,
-    unsigned int nIn,
-    uint32_t nHashType,
-    const CAmount &amount,
-    size_t *nHashedOut);
 
 using namespace std;
 
@@ -58,16 +52,6 @@ bool CastToBool(const valtype &vch)
         }
     }
     return false;
-}
-
-static uint32_t GetHashType(const valtype &vchSig)
-{
-    if (vchSig.size() == 0)
-    {
-        return 0;
-    }
-
-    return vchSig[vchSig.size() - 1];
 }
 
 /**
@@ -96,8 +80,8 @@ static inline void popstack(Stack &stack)
 static void CleanupScriptCode(CScript &scriptCode, const std::vector<uint8_t> &vchSig, uint32_t flags)
 {
     // Drop the signature in scripts when SIGHASH_FORKID is not used.
-    uint32_t sigHashType = GetHashType(vchSig);
-    if (!(flags & SCRIPT_ENABLE_SIGHASH_FORKID) || !(sigHashType & SIGHASH_FORKID))
+    SigHashType sigHashType(vchSig);
+    if (!(flags & SCRIPT_ENABLE_SIGHASH_FORKID) || sigHashType.isBtc())
     {
         scriptCode.FindAndDelete(CScript(vchSig));
     }
@@ -149,292 +133,6 @@ static bool IsCompressedPubKey(const valtype &vchPubKey)
     return true;
 }
 
-/**
- * A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len S> <S> <hashtype>
- * Where R and S are not negative (their first byte has its highest bit not set), and not
- * excessively padded (do not start with a 0 byte, unless an otherwise negative number follows,
- * in which case a single 0 byte is necessary and even required).
- *
- * See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
- *
- * This function is consensus-critical since BIP66.
- */
-bool static IsValidSignatureEncoding(const std::vector<unsigned char> &sig)
-{
-    // Format: 0x30 [total-length] 0x02 [R-length] [R] 0x02 [S-length] [S] [sighash]
-    // * total-length: 1-byte length descriptor of everything that follows,
-    //   excluding the sighash byte.
-    // * R-length: 1-byte length descriptor of the R value that follows.
-    // * R: arbitrary-length big-endian encoded R value. It must use the shortest
-    //   possible encoding for a positive integers (which means no null bytes at
-    //   the start, except a single one when the next byte has its highest bit set).
-    // * S-length: 1-byte length descriptor of the S value that follows.
-    // * S: arbitrary-length big-endian encoded S value. The same rules apply.
-    // * sighash: 1-byte value indicating what data is hashed (not part of the DER
-    //   signature)
-
-    // Minimum and maximum size constraints.
-    if (sig.size() < 9)
-        return false;
-    if (sig.size() > 73)
-        return false;
-
-    // A signature is of type 0x30 (compound).
-    if (sig[0] != 0x30)
-        return false;
-
-    // Make sure the length covers the entire signature.
-    if (sig[1] != sig.size() - 3)
-        return false;
-
-    // Extract the length of the R element.
-    unsigned int lenR = sig[3];
-
-    // Make sure the length of the S element is still inside the signature.
-    if (5 + lenR >= sig.size())
-        return false;
-
-    // Extract the length of the S element.
-    unsigned int lenS = sig[5 + lenR];
-
-    // Verify that the length of the signature matches the sum of the length
-    // of the elements.
-    if ((size_t)(lenR + lenS + 7) != sig.size())
-        return false;
-
-    // Check whether the R element is an integer.
-    if (sig[2] != 0x02)
-        return false;
-
-    // Zero-length integers are not allowed for R.
-    if (lenR == 0)
-        return false;
-
-    // Negative numbers are not allowed for R.
-    if (sig[4] & 0x80)
-        return false;
-
-    // Null bytes at the start of R are not allowed, unless R would
-    // otherwise be interpreted as a negative number.
-    if (lenR > 1 && (sig[4] == 0x00) && !(sig[5] & 0x80))
-        return false;
-
-    // Check whether the S element is an integer.
-    if (sig[lenR + 4] != 0x02)
-        return false;
-
-    // Zero-length integers are not allowed for S.
-    if (lenS == 0)
-        return false;
-
-    // Negative numbers are not allowed for S.
-    if (sig[lenR + 6] & 0x80)
-        return false;
-
-    // Null bytes at the start of S are not allowed, unless S would otherwise be
-    // interpreted as a negative number.
-    if (lenS > 1 && (sig[lenR + 6] == 0x00) && !(sig[lenR + 7] & 0x80))
-        return false;
-
-    return true;
-}
-
-
-//! Check signature encoding without sighash byte
-//! This is a copy of Bitcoin ABC's code, written mainly by deadalnix, from
-//! revision: f8283a3f284fc4722c1d6583b8746a17831d3bd0
-/**
- * A canonical signature exists of: <30> <total len> <02> <len R> <R> <02> <len
- * S> <S> <hashtype>, where R and S are not negative (their first byte has its
- * highest bit not set), and not excessively padded (do not start with a 0 byte,
- * unless an otherwise negative number follows, in which case a single 0 byte is
- * necessary and even required).
- *
- * See https://bitcointalk.org/index.php?topic=8392.msg127623#msg127623
- *
- * This function is consensus-critical since BIP66.
- */
-bool IsValidSignatureEncodingWithoutSigHash(const valtype &sig)
-{
-    // Format: 0x30 [total-length] 0x02 [R-length] [R] 0x02 [S-length] [S]
-    // * total-length: 1-byte length descriptor of everything that follows,
-    // excluding the sighash byte.
-    // * R-length: 1-byte length descriptor of the R value that follows.
-    // * R: arbitrary-length big-endian encoded R value. It must use the
-    // shortest possible encoding for a positive integers (which means no null
-    // bytes at the start, except a single one when the next byte has its
-    // highest bit set).
-    // * S-length: 1-byte length descriptor of the S value that follows.
-    // * S: arbitrary-length big-endian encoded S value. The same rules apply.
-
-    // Minimum and maximum size constraints.
-    if (sig.size() < 8 || sig.size() > 72)
-    {
-        return false;
-    }
-
-    //
-    // Check that the signature is a compound structure of proper size.
-    //
-
-    // A signature is of type 0x30 (compound).
-    if (sig[0] != 0x30)
-    {
-        return false;
-    }
-
-    // Make sure the length covers the entire signature.
-    // Remove:
-    // * 1 byte for the coupound type.
-    // * 1 byte for the length of the signature.
-    if (sig[1] != sig.size() - 2)
-    {
-        return false;
-    }
-
-    //
-    // Check that R is an positive integer of sensible size.
-    //
-
-    // Check whether the R element is an integer.
-    if (sig[2] != 0x02)
-    {
-        return false;
-    }
-
-    // Extract the length of the R element.
-    const uint32_t lenR = sig[3];
-
-    // Zero-length integers are not allowed for R.
-    if (lenR == 0)
-    {
-        return false;
-    }
-
-    // Negative numbers are not allowed for R.
-    if (sig[4] & 0x80)
-    {
-        return false;
-    }
-
-    // Make sure the length of the R element is consistent with the signature
-    // size.
-    // Remove:
-    // * 1 byte for the coumpound type.
-    // * 1 byte for the length of the signature.
-    // * 2 bytes for the integer type of R and S.
-    // * 2 bytes for the size of R and S.
-    // * 1 byte for S itself.
-    if (lenR > (sig.size() - 7))
-    {
-        return false;
-    }
-
-    // Null bytes at the start of R are not allowed, unless R would otherwise be
-    // interpreted as a negative number.
-    //
-    // /!\ This check can only be performed after we checked that lenR is
-    //     consistent with the size of the signature or we risk to access out of
-    //     bound elements.
-    if (lenR > 1 && (sig[4] == 0x00) && !(sig[5] & 0x80))
-    {
-        return false;
-    }
-
-    //
-    // Check that S is an positive integer of sensible size.
-    //
-
-    // S's definition starts after R's definition:
-    // * 1 byte for the coumpound type.
-    // * 1 byte for the length of the signature.
-    // * 1 byte for the size of R.
-    // * lenR bytes for R itself.
-    // * 1 byte to get to S.
-    const uint32_t startS = lenR + 4;
-
-    // Check whether the S element is an integer.
-    if (sig[startS] != 0x02)
-    {
-        return false;
-    }
-
-    // Extract the length of the S element.
-    const uint32_t lenS = sig[startS + 1];
-
-    // Zero-length integers are not allowed for S.
-    if (lenS == 0)
-    {
-        return false;
-    }
-
-    // Negative numbers are not allowed for S.
-    if (sig[startS + 2] & 0x80)
-    {
-        return false;
-    }
-
-    // Verify that the length of S is consistent with the size of the signature
-    // including metadatas:
-    // * 1 byte for the integer type of S.
-    // * 1 byte for the size of S.
-    if (size_t(startS + lenS + 2) != sig.size())
-    {
-        return false;
-    }
-
-    // Null bytes at the start of S are not allowed, unless S would otherwise be
-    // interpreted as a negative number.
-    //
-    // /!\ This check can only be performed after we checked that lenR and lenS
-    //     are consistent with the size of the signature or we risk to access
-    //     out of bound elements.
-    if (lenS > 1 && (sig[startS + 2] == 0x00) && !(sig[startS + 3] & 0x80))
-    {
-        return false;
-    }
-
-    return true;
-}
-
-bool static IsLowDERSignature(const valtype &vchSig, ScriptError *serror, const bool check_sighash)
-{
-    if (check_sighash)
-    {
-        if (!IsValidSignatureEncoding(vchSig))
-            return set_error(serror, SCRIPT_ERR_SIG_DER);
-    }
-    else
-    {
-        if (!IsValidSignatureEncodingWithoutSigHash(vchSig))
-            return set_error(serror, SCRIPT_ERR_SIG_DER);
-    }
-    // https://bitcoin.stackexchange.com/a/12556:
-    //     Also note that inside transaction signatures, an extra hashtype byte
-    //     follows the actual signature data.
-    std::vector<unsigned char> vchSigCopy(vchSig.begin(), vchSig.begin() + vchSig.size() - (check_sighash ? 1 : 0));
-    // If the S value is above the order of the curve divided by two, its
-    // complement modulo the order could have been used instead, which is
-    // one byte shorter when encoded correctly.
-    if (!CPubKey::CheckLowS(vchSigCopy))
-    {
-        return set_error(serror, SCRIPT_ERR_SIG_HIGH_S);
-    }
-    return true;
-}
-
-static bool IsDefinedHashtypeSignature(const valtype &vchSig)
-{
-    if (vchSig.size() == 0)
-    {
-        return false;
-    }
-    uint32_t nHashType = GetHashType(vchSig) & ~(SIGHASH_ANYONECANPAY | SIGHASH_FORKID);
-    if (nHashType < SIGHASH_ALL || nHashType > SIGHASH_SINGLE)
-        return false;
-
-    return true;
-}
 
 static bool CheckSignatureEncodingSigHashChoice(const vector<unsigned char> &vchSig,
     unsigned int flags,
@@ -448,43 +146,20 @@ static bool CheckSignatureEncodingSigHashChoice(const vector<unsigned char> &vch
         return true;
     }
 
-    if (vchSig.size() == 64 + ((check_sighash == true) ? 1 : 0)) // 64 sig length plus 1 sighashtype
-    {
-        // In a generic-signature context, 64-byte signatures are interpreted
-        // as Schnorr signatures (always correctly encoded) when flag set.
-        if (check_sighash && ((flags & SCRIPT_VERIFY_STRICTENC) != 0))
-        {
-            if (!IsDefinedHashtypeSignature(vchSig))
-                return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
+    unsigned int expectedSize = 64 + ((check_sighash == true) ? 1 : 0); // 64 sig length plus 1 sighashtype
+    // "DER" encoding doesn't make sense for Schnorr sigs, but this err communi
+    if (vchSig.size() != expectedSize)
+        return set_error(serror, SCRIPT_ERR_SIG_NONSCHNORR);
 
-            // schnorr sigs must use forkid sighash if forkid flag set
-            if ((flags & SCRIPT_ENABLE_SIGHASH_FORKID) && ((vchSig[64] & SIGHASH_FORKID) == 0))
-                return set_error(serror, SCRIPT_ERR_MUST_USE_FORKID);
-        }
-        return true;
-    }
+    if (check_sighash && ((flags & SCRIPT_VERIFY_STRICTENC) != 0))
+    {
+        SigHashType sighashtype = SigHashType(vchSig);
+        if (!sighashtype.isDefined())
+            return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
 
-    if ((flags & (SCRIPT_VERIFY_DERSIG | SCRIPT_VERIFY_LOW_S | SCRIPT_VERIFY_STRICTENC)) != 0)
-    {
-        if (check_sighash)
-        {
-            if (!IsValidSignatureEncoding(vchSig))
-                return set_error(serror, SCRIPT_ERR_SIG_DER);
-        }
-        else
-        {
-            if (!IsValidSignatureEncodingWithoutSigHash(vchSig))
-                return set_error(serror, SCRIPT_ERR_SIG_DER);
-        }
-    }
-    if ((flags & SCRIPT_VERIFY_LOW_S) != 0 && !IsLowDERSignature(vchSig, serror, check_sighash))
-    {
-        // serror is set
-        return false;
-    }
-    else if (check_sighash && ((flags & SCRIPT_VERIFY_STRICTENC) != 0) && !IsDefinedHashtypeSignature(vchSig))
-    {
-        return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
+        // schnorr sigs must use forkid sighash if forkid flag set
+        if ((flags & SCRIPT_ENABLE_SIGHASH_FORKID) && sighashtype.isBtc())
+            return set_error(serror, SCRIPT_ERR_MUST_USE_FORKID);
     }
     return true;
 }
@@ -502,16 +177,6 @@ bool CheckDataSignatureEncoding(const valtype &vchSig, uint32_t flags, ScriptErr
     return CheckSignatureEncodingSigHashChoice(vchSig, flags, serror, false);
 }
 
-/* Commented out to avoid "unused" compile errors but kept here in case anyone needs to uncomment
-static bool CheckTransactionECDSASignatureEncoding(const valtype &vchSig, uint32_t flags, ScriptError *serror)
-{
-    // In an ECDSA-only context, 64-byte signatures + 1 sighash type bit are forbidden since they are Schnorr.
-    if (vchSig.size() == 65)
-        return set_error(serror, SCRIPT_ERR_SIG_BADLENGTH);
-    return CheckSignatureEncodingSigHashChoice(vchSig, flags, serror, true);
-}
-*/
-
 /**
  * Check that the signature provided to authenticate a transaction is properly
  * encoded Schnorr signature (or null). Signatures passed to the new-mode
@@ -519,8 +184,8 @@ static bool CheckTransactionECDSASignatureEncoding(const valtype &vchSig, uint32
  */
 static bool CheckTransactionSchnorrSignatureEncoding(const valtype &vchSig, uint32_t flags, ScriptError *serror)
 {
-    // Insist that this sig is Schnorr (64-byte signatures + 1 sighash type bit), or null (1 sighash type bit)
-    if (vchSig.size() != 65 && vchSig.size() != 1)
+    // Insist that this sig is Schnorr (64-byte signatures + 1 sighash type bit)
+    if (vchSig.size() != 65)
         return set_error(serror, SCRIPT_ERR_SIG_NONSCHNORR);
     return CheckSignatureEncodingSigHashChoice(vchSig, flags, serror, true);
 }
@@ -561,8 +226,7 @@ bool EvalScript(Stack &stack,
     unsigned int flags,
     unsigned int maxOps,
     const ScriptImportedState &sis,
-    ScriptError *serror,
-    uint32_t *sighashtype)
+    ScriptError *serror)
 {
     ScriptMachine sm(flags, sis, maxOps, 0xffffffff);
     sm.setStack(stack);
@@ -571,10 +235,6 @@ bool EvalScript(Stack &stack,
     if (serror)
     {
         *serror = sm.getError();
-    }
-    if (sighashtype)
-    {
-        *sighashtype = sm.getSigHashType();
     }
     return result;
 }
@@ -614,7 +274,6 @@ bool ScriptMachine::BeginStep(const CScript &_script)
     pend = script->end();
     pbegincodehash = pc;
 
-    sighashtype = 0;
     stats.nOpCount = 0;
     vfExec.clear();
 
@@ -1721,12 +1380,6 @@ bool ScriptMachine::Step()
                     // Subset of script starting at the most recent codeseparator
                     CScript scriptCode(pbegincodehash, pend);
 
-                    // Drop the signature in scripts when SIGHASH_FORKID is
-                    // not used.
-                    uint32_t nHashType = GetHashType(vchSig);
-                    // BU remember the sighashtype so we can use it to choose when to allow this tx
-                    sighashtype |= nHashType;
-
                     // Drop the signature, since there's no way for a signature to sign itself
                     scriptCode.FindAndDelete(CScript(vchSig));
 
@@ -1818,10 +1471,12 @@ bool ScriptMachine::Step()
                     // Subset of script starting at the most recent codeseparator
                     CScript scriptCode(pbegincodehash, pend);
 
-                    // Assuming success is usually a bad idea, but the schnorr path can only succeed.
-                    bool fSuccess = true;
-                    if ((flags & SCRIPT_ENABLE_SCHNORR_MULTISIG) && stacktop(-idxDummy).size() != 0)
+                    // 0 size is no bits so invalid bit count
+                    bool fSuccess = false;
+                    if (stacktop(-idxDummy).size() != 0) // if checkBits is empty, "soft" fail (push false on stack)
                     {
+                        // Assuming success is usually a bad idea, but the schnorr path can only succeed.
+                        fSuccess = true;
                         stats.consensusSigCheckCount += nSigsCount; // 2020-05-15 sigchecks consensus rule
                         // SCHNORR MULTISIG
                         static_assert(MAX_PUBKEYS_PER_MULTISIG < 32,
@@ -1887,9 +1542,8 @@ bool ScriptMachine::Step()
                             // Check signature
                             if (!sis.checker->CheckSig(vchSig, vchPubKey, scriptCode))
                             {
-                                // This can fail if the signature is empty, which also is a NULLFAIL error as the
-                                // bitfield should have been null in this situation.
-                                return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
+                                // The only way to "soft" fail the MULTISIG is to give no signatures
+                                return set_error(serror, SCRIPT_ERR_CHECKMULTISIGVERIFY);
                             }
                         }
 
@@ -1900,73 +1554,6 @@ bool ScriptMachine::Step()
                         }
                         // If the operation failed, we require that all signatures must be empty vector
                         if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL))
-                        {
-                            return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
-                        }
-                    }
-                    else
-                    {
-                        // LEGACY MULTISIG (ECDSA / NULL)
-                        // 2020-05-15 sigchecks consensus rule
-                        // Determine whether all signatures are null
-                        bool allNull = true;
-                        for (int32_t i = 0; i < nSigsCount; i++)
-                        {
-                            if (stacktop(-idxTopSig - i).size())
-                            {
-                                allNull = false;
-                                break;
-                            }
-                        }
-
-                        if (!allNull)
-                            stats.consensusSigCheckCount += nKeysCount; // 2020-05-15 sigchecks consensus rule
-
-                        // Remove signature for pre-fork scripts
-                        for (int32_t k = 0; k < nSigsCount; k++)
-                        {
-                            valtype &vchSig = stacktop(-idxTopSig - k);
-                            CleanupScriptCode(scriptCode, vchSig, flags);
-                        }
-
-                        int64_t nSigsRemaining = nSigsCount;
-                        int64_t nKeysRemaining = nKeysCount;
-                        while (fSuccess && nSigsRemaining > 0)
-                        {
-                            const valtype &vchSig = stacktop(-idxTopSig - (nSigsCount - nSigsRemaining));
-                            const valtype &vchPubKey = stacktop(-idxTopKey - (nKeysCount - nKeysRemaining));
-
-                            // Note how this makes the exact order of pubkey/signature evaluation distinguishable
-                            // by CHECKMULTISIG NOT if the STRICTENC flag is set. See the script_(in)valid tests for
-                            // details.
-                            if (!CheckTransactionSchnorrSignatureEncoding(vchSig, flags, serror) ||
-                                !CheckPubKeyEncoding(vchPubKey, flags, serror))
-                            {
-                                // serror is set
-                                return false;
-                            }
-
-                            if (!sis.checker)
-                                return set_error(serror, SCRIPT_ERR_DATA_REQUIRED);
-                            // Check signature
-                            bool fOk = sis.checker->CheckSig(vchSig, vchPubKey, scriptCode);
-
-                            if (fOk)
-                            {
-                                nSigsRemaining--;
-                            }
-                            nKeysRemaining--;
-
-                            // If there are more signatures left than keys left, then too many signatures have failed.
-                            // Exit early, without checking any further signatures.
-                            if (nSigsRemaining > nKeysRemaining)
-                            {
-                                fSuccess = false;
-                            }
-                        }
-
-                        // If the operation failed, we require that all signatures must be empty vector
-                        if (!fSuccess && (flags & SCRIPT_VERIFY_NULLFAIL) && !allNull)
                         {
                             return set_error(serror, SCRIPT_ERR_SIG_NULLFAIL);
                         }
@@ -2542,8 +2129,8 @@ bool TransactionSignatureChecker::CheckSig(const vector<uint8_t> &vchSigIn,
     {
         return false;
     }
-    int nHashType = vchSig.back();
-    vchSig.pop_back();
+    SigHashType sigHashType = GetSigHashType(vchSig);
+    RemoveSigHashType(vchSig);
 
     uint256 sighash;
     size_t nHashed = 0;
@@ -2554,9 +2141,9 @@ bool TransactionSignatureChecker::CheckSig(const vector<uint8_t> &vchSigIn,
     // the bit is undefined (can be any value) before the fork. See block 264084 tx 102
     if (nFlags & SCRIPT_ENABLE_SIGHASH_FORKID)
     {
-        if (nHashType & SIGHASH_FORKID)
+        if (sigHashType.isBch())
         {
-            sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, &nHashed);
+            sighash = SignatureHash(scriptCode, *txTo, nIn, sigHashType, amount, &nHashed);
         }
         else
         {
@@ -2565,7 +2152,7 @@ bool TransactionSignatureChecker::CheckSig(const vector<uint8_t> &vchSigIn,
     }
     else
     {
-        sighash = SignatureHashLegacy(scriptCode, *txTo, nIn, nHashType, amount, &nHashed);
+        sighash = SignatureHashBitcoin(scriptCode, *txTo, nIn, sigHashType, &nHashed);
     }
     nBytesHashed += nHashed;
     ++nSigops;

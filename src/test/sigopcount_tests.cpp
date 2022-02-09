@@ -160,12 +160,21 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
     // Default flags
     const uint32_t flags = SCRIPT_VERIFY_P2SH;
 
+    SigHashType sigHashType = SigHashType().withForkId();
+    // Any non-0-size sig will be interpreted as a good signature by the sigchecker used in this code.
+    // use 65 so this looks like a good schnorr signature.
+    std::vector<unsigned char> fakeSchnorrSig(65);
+    fakeSchnorrSig[64] = static_cast<uint8_t>(sigHashType.getRawSigHashType());
+
+
     // Multisig script (legacy counting)
     {
         CScript scriptPubKey = CScript() << 1 << ToByteVector(pubkey) << ToByteVector(pubkey) << 2
                                          << OP_CHECKMULTISIGVERIFY;
         // Do not use a valid signature to avoid using wallet operations.
-        CScript scriptSig = CScript() << OP_0 << OP_1;
+        // claiming 0 signatures triggers the CHECKMULTISIG "soft fail" mode (pushes false on stack rather then failing
+        // the script.
+        CScript scriptSig = CScript() << OP_1 << fakeSchnorrSig;
 
         BuildTxs(spendingTx, coins, creationTx, scriptPubKey, scriptSig);
 
@@ -315,11 +324,13 @@ CMutableTransaction BuildSpendingTransaction(const CScript &scriptSig, const CMu
     return txSpend;
 }
 
-CScript sign_multisig(const CScript &scriptPubKey, std::vector<CKey> keys, const CTransaction &transaction, CAmount amt)
+CScript sign_multisig(const CScript &scriptPubKey,
+    std::vector<CKey> keys,
+    const CTransaction &transaction,
+    CAmount amt,
+    uint32_t keyBitmap)
 {
-    unsigned char sighashType = SIGHASH_ALL | SIGHASH_FORKID;
-
-    uint256 hash = SignatureHash(scriptPubKey, transaction, 0, sighashType, amt, nullptr);
+    uint256 hash = SignatureHash(scriptPubKey, transaction, 0, defaultSigHashType, amt, nullptr);
     assert(hash != SIGNATURE_HASH_ERROR);
 
     CScript result;
@@ -331,21 +342,25 @@ CScript sign_multisig(const CScript &scriptPubKey, std::vector<CKey> keys, const
     // clients would not accept new CHECKMULTISIG transactions,
     // and vice-versa)
     //
-    result << OP_0;
+    result << keyBitmap;
     for (const CKey &key : keys)
     {
         vector<unsigned char> vchSig;
         BOOST_CHECK(key.SignSchnorr(hash, vchSig));
-        vchSig.push_back(sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         result << vchSig;
     }
     return result;
 }
-CScript sign_multisig(const CScript &scriptPubKey, const CKey &key, const CTransaction &transaction, CAmount amt)
+CScript sign_multisig(const CScript &scriptPubKey,
+    const CKey &key,
+    const CTransaction &transaction,
+    CAmount amt,
+    uint32_t keyBitmap)
 {
     std::vector<CKey> keys;
     keys.push_back(key);
-    return sign_multisig(scriptPubKey, keys, transaction, amt);
+    return sign_multisig(scriptPubKey, keys, transaction, amt, keyBitmap);
 }
 
 BOOST_AUTO_TEST_CASE(consensusSigCheck)
@@ -367,6 +382,21 @@ BOOST_AUTO_TEST_CASE(consensusSigCheck)
     key2.MakeNewKey(false);
     key3.MakeNewKey(true);
 
+    // Check that a deliberate multisig fail checks no signatures
+    {
+        CScript scriptPubKey12;
+        scriptPubKey12 << OP_1 << ToByteVector(key1.GetPubKey()) << ToByteVector(key2.GetPubKey()) << OP_2
+                       << OP_CHECKMULTISIG << OP_FALSE << OP_EQUAL;
+
+        CMutableTransaction txFrom12 = BuildCreditingTransaction(scriptPubKey12, 1);
+        CMutableTransaction txTo12 = BuildSpendingTransaction(CScript(), txFrom12);
+
+        // fail the multisig by passing 0 in checkbits (and padding out the sigs)
+        CScript sig = CScript() << OP_0 << OP_0;
+        sigchecks = evalForSigChecks(sig, scriptPubKey12, flags);
+        BOOST_CHECK(sigchecks == 0); // "soft" (deliberate) multisig fail checks no signatures
+    }
+
     {
         CScript scriptPubKey12;
         scriptPubKey12 << OP_1 << ToByteVector(key1.GetPubKey()) << ToByteVector(key2.GetPubKey()) << OP_2
@@ -375,9 +405,9 @@ BOOST_AUTO_TEST_CASE(consensusSigCheck)
         CMutableTransaction txFrom12 = BuildCreditingTransaction(scriptPubKey12, 1);
         CMutableTransaction txTo12 = BuildSpendingTransaction(CScript(), txFrom12);
 
-        CScript goodsig1 = sign_multisig(scriptPubKey12, key1, CTransaction(txTo12), txFrom12.vout[0].nValue);
+        CScript goodsig1 = sign_multisig(scriptPubKey12, key1, CTransaction(txTo12), txFrom12.vout[0].nValue, 1);
         sigchecks = evalForSigChecks(goodsig1, scriptPubKey12, flags);
-        BOOST_CHECK(sigchecks == 2); // Schnorr multisig sigchecks is N in a M-of-N sig
+        BOOST_CHECK(sigchecks == 1); // Schnorr multisig sigchecks is M in a M-of-N sig
     }
 
     {

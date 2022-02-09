@@ -46,10 +46,10 @@ class GroupTokensTest (BitcoinTestFramework):
 
             if asm[2] == "OP_GROUP":
                 hasGroupOutput += 1
-                groupFlags = int(asm[1], 16)
+                groupFlags = int(asm[1], 10)
 
         assert(hasGroupOutput == 1)
-        assert(groupFlags > (1 >> 63))  # verify group bit set
+        assert(groupFlags < 0)  # verify group bit set (highest bit set causes bitcoind asm script decoder to output a negative number)
 
     def examineTx(self, tx, node):
         txjson = node.decoderawtransaction(node.gettransaction(tx)["hex"])

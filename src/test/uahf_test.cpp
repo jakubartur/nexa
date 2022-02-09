@@ -13,6 +13,7 @@
 #include "policy/policy.h"
 #include "script/script.h"
 #include "script/script_error.h"
+#include "script/sighashtype.h"
 #include "script/sign.h"
 #include "utilstrencodings.h"
 #include "validation/forks.h"
@@ -85,7 +86,7 @@ BOOST_AUTO_TEST_CASE(uahf_sighash)
     CTransaction tx(t);
 
     {
-        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SIGHASH_ALL);
+        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SigHashType(BaseSigHashType::ALL));
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -96,7 +97,7 @@ BOOST_AUTO_TEST_CASE(uahf_sighash)
     }
 
     {
-        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SIGHASH_ALL | SIGHASH_FORKID);
+        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SigHashType(SIGHASH_ALL | SIGHASH_FORKID));
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);

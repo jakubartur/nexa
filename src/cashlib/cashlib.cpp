@@ -258,6 +258,7 @@ SLAPI int SignTxECDSA(unsigned char *txData,
     unsigned int resultLen)
 {
     DbgAssert(nHashType & SIGHASH_FORKID, return 0);
+    SigHashType sigHashType(nHashType);
     checkSigInit();
     CTransaction tx;
     result[0] = 0;
@@ -279,13 +280,13 @@ SLAPI int SignTxECDSA(unsigned char *txData,
     CKey key = LoadKey(keyData);
 
     size_t nHashedOut = 0;
-    uint256 sighash = SignatureHash(priorScript, tx, inputIdx, nHashType, inputAmount, &nHashedOut);
+    uint256 sighash = SignatureHash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
     std::vector<unsigned char> sig;
     if (!key.SignECDSA(sighash, sig))
     {
         return 0;
     }
-    sig.push_back((unsigned char)nHashType);
+    sigHashType.appendToSig(sig);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
         return 0;
@@ -310,6 +311,7 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     unsigned int resultLen)
 {
     DbgAssert(nHashType & SIGHASH_FORKID, return 0);
+    SigHashType sigHashType(nHashType);
     checkSigInit();
     CTransaction tx;
     result[0] = 0;
@@ -331,7 +333,7 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     CKey key = LoadKey(keyData);
 
     size_t nHashedOut = 0;
-    uint256 sighash = SignatureHash(priorScript, tx, inputIdx, nHashType, inputAmount, &nHashedOut);
+    uint256 sighash = SignatureHash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
     std::vector<unsigned char> sig;
     CPubKey pub = key.GetPubKey();
     if (!key.SignSchnorr(sighash, sig))
@@ -339,7 +341,7 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
         return 0;
     }
     p("Sign Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig), HexStr(pub.begin(), pub.end()), sighash.GetHex());
-    sig.push_back((unsigned char)nHashType);
+    sigHashType.appendToSig(sig);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
         return 0;

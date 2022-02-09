@@ -132,15 +132,11 @@ BOOST_AUTO_TEST_CASE(checkdatasig_test)
 
     // clang-format off
     const valtype minimalsig{0x30, 0x06, 0x02, 0x01, 0x01, 0x02, 0x01, 0x01};
-    const valtype nondersig{0x30, 0x80, 0x06, 0x02, 0x01,
-                            0x01, 0x02, 0x01, 0x01};
-    const valtype highSSig{
-        0x30, 0x45, 0x02, 0x20, 0x3e, 0x45, 0x16, 0xda, 0x72, 0x53, 0xcf, 0x06,
-        0x8e, 0xff, 0xec, 0x6b, 0x95, 0xc4, 0x12, 0x21, 0xc0, 0xcf, 0x3a, 0x8e,
-        0x6c, 0xcb, 0x8c, 0xbf, 0x17, 0x25, 0xb5, 0x62, 0xe9, 0xaf, 0xde, 0x2c,
-        0x02, 0x21, 0x00, 0xab, 0x1e, 0x3d, 0xa7, 0x3d, 0x67, 0xe3, 0x20, 0x45,
-        0xa2, 0x0e, 0x0b, 0x99, 0x9e, 0x04, 0x99, 0x78, 0xea, 0x8d, 0x6e, 0xe5,
-        0x48, 0x0d, 0x48, 0x5f, 0xcf, 0x2c, 0xe0, 0xd0, 0x3b, 0x2e, 0xf0};
+
+    VchType badsigdata;
+    badsigdata.resize(64);
+    badsigdata[0] = 1;
+    valtype badsig(badsigdata);
     // clang-format on
 
     // If we add many more flags, this loop can get too expensive, but we can
@@ -176,39 +172,12 @@ BOOST_AUTO_TEST_CASE(checkdatasig_test)
         else
         {
             // When nullfail is not enforced, invalid signature are just false.
-            CheckPass(flags, {minimalsig, message, pubkey}, script, {});
-            CheckError(flags, {minimalsig, message, pubkey}, scriptverify, SCRIPT_ERR_CHECKDATASIGVERIFY);
+            CheckPass(flags, {badsig, message, pubkey}, script, {});
+            CheckError(flags, {badsig, message, pubkey}, scriptverify, SCRIPT_ERR_CHECKDATASIGVERIFY);
 
             // Invalid message cause checkdatasig to fail.
             CheckPass(flags, {validsig, {0x01}, pubkey}, script, {});
             CheckError(flags, {validsig, {0x01}, pubkey}, scriptverify, SCRIPT_ERR_CHECKDATASIGVERIFY);
-        }
-
-        if (flags & SCRIPT_VERIFY_LOW_S)
-        {
-            // If we do enforce low S, then high S sigs are rejected.
-            CheckError(flags, {highSSig, message, pubkey}, script, SCRIPT_ERR_SIG_HIGH_S);
-            CheckError(flags, {highSSig, message, pubkey}, scriptverify, SCRIPT_ERR_SIG_HIGH_S);
-        }
-        else
-        {
-            // If we do not enforce low S, then high S sigs are accepted.
-            CheckPass(flags, {highSSig, message, pubkey}, script, {});
-            CheckError(flags, {highSSig, message, pubkey}, scriptverify, SCRIPT_ERR_CHECKDATASIGVERIFY);
-        }
-
-        if (flags & (SCRIPT_VERIFY_DERSIG | SCRIPT_VERIFY_LOW_S | SCRIPT_VERIFY_STRICTENC))
-        {
-            // If we get any of the dersig flags, the non canonical dersig
-            // signature fails.
-            CheckError(flags, {nondersig, message, pubkey}, script, SCRIPT_ERR_SIG_DER);
-            CheckError(flags, {nondersig, message, pubkey}, scriptverify, SCRIPT_ERR_SIG_DER);
-        }
-        else
-        {
-            // If we do not check, then it is accepted.
-            CheckPass(flags, {nondersig, message, pubkey}, script, {});
-            CheckError(flags, {nondersig, message, pubkey}, scriptverify, SCRIPT_ERR_CHECKDATASIGVERIFY);
         }
     }
 }

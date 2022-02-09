@@ -864,7 +864,8 @@ public:
         shrink_to_fit();
     }
 
-    std::string GetHex() const { return HexStr(begin(), end()); }
+    std::string GetHex() const;
+    std::string GetAsm() const;
 };
 
 class CReserveScript

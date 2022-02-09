@@ -448,6 +448,7 @@ script/stackitem.cpp
 script/stackitem.h
 script/standard.cpp
 script/standard.h
+script/sighashtype.h
 respend/respendaction.h
 respend/respenddetector.cpp
 respend/respenddetector.h

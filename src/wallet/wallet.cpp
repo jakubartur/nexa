@@ -2721,7 +2721,7 @@ bool CWallet::SignTransaction(CMutableTransaction &tx)
 {
     AssertLockHeld(cs_wallet); // mapWallet
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
+    SigHashType sighashType = defaultSigHashType;
 
     CTransaction txNewConst(tx);
     int nIn = 0;
@@ -3156,7 +3156,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                     }
 
                     // Sign
-                    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
+                    SigHashType sighashType = defaultSigHashType;
                     size_t nIn = 0;
                     CTransaction txNewConst(txNew);
                     while (nIn < setCoins.size())
@@ -3180,10 +3180,6 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                         if (!signSuccess)
                         {
                             strFailReason = _("Signing transaction failed");
-                            CScript ss;
-                            bool signSuccessDBG = ProduceSignature(
-                                TransactionSignatureCreator(this, &txNewConst, nIn, amountIn, sighashType),
-                                scriptPubKey, ss);
                             return false;
                         }
                         nIn++;

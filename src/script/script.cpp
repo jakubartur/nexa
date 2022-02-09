@@ -4,8 +4,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#include "script.h"
+#include "script/script.h"
+#include "core_io.h"
 #include "interpreter.h"
+#include "script/sighashtype.h"
 
 #include "consensus/grouptokens.h"
 #include "tinyformat.h"
@@ -461,6 +463,9 @@ bool CScriptNum::MinimallyEncode(std::vector<uint8_t> &data)
     data = {};
     return true;
 }
+
+std::string CScript::GetHex() const { return HexStr(begin(), end()); }
+std::string CScript::GetAsm() const { return ScriptToAsmStr(*this, true); }
 
 unsigned int CScript::GetSigOpCount(const uint32_t flags, bool fAccurate) const
 {

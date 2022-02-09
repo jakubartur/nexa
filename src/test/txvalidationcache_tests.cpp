@@ -11,6 +11,7 @@
 #include "miner.h"
 #include "pubkey.h"
 #include "random.h"
+#include "script/sighashtype.h"
 #include "script/standard.h"
 #include "test/test_bitcoin.h"
 #include "txadmission.h"
@@ -54,8 +55,6 @@ BOOST_FIXTURE_TEST_CASE(tx_mempool_block_doublespend, TestChain100Setup)
     CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
 
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
-
     // Create a double-spend of mature coinbase txn:
     std::vector<CMutableTransaction> spends;
     spends.resize(2);
@@ -69,10 +68,10 @@ BOOST_FIXTURE_TEST_CASE(tx_mempool_block_doublespend, TestChain100Setup)
 
         // Sign:
         std::vector<uint8_t> vchSig;
-        uint256 hash = SignatureHash(scriptPubKey, spends[i], 0, sighashType, coinbaseTxns[0].vout[0].nValue, 0);
+        uint256 hash = SignatureHash(scriptPubKey, spends[i], 0, defaultSigHashType, coinbaseTxns[0].vout[0].nValue, 0);
         BOOST_CHECK(hash != SIGNATURE_HASH_ERROR);
         BOOST_CHECK(coinbaseKey.SignSchnorr(hash, vchSig));
-        vchSig.push_back((uint8_t)sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         spends[i].vin[0].scriptSig << vchSig;
     }
 
@@ -177,8 +176,6 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
     // orphan cache or the transaction memory pool.
     CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
-
     std::vector<CMutableTransaction> spends;
 
     // Add valid txns to the memory pool.  The coins should be present in the coins cache.
@@ -191,10 +188,10 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig1;
-    uint256 hash1 = SignatureHash(scriptPubKey, spends[0], 0, sighashType, coinbaseTxns[0].vout[0].nValue, 0);
+    uint256 hash1 = SignatureHash(scriptPubKey, spends[0], 0, defaultSigHashType, coinbaseTxns[0].vout[0].nValue, 0);
     BOOST_CHECK(hash1 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash1, vchSig1));
-    vchSig1.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig1);
     spends[0].vin[0].scriptSig << vchSig1;
 
     BOOST_CHECK(ToMemPool(spends[0]));
@@ -217,10 +214,10 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig2;
-    uint256 hash2 = SignatureHash(scriptPubKey, spends[1], 0, sighashType, coinbaseTxns[1].vout[0].nValue, 0);
+    uint256 hash2 = SignatureHash(scriptPubKey, spends[1], 0, defaultSigHashType, coinbaseTxns[1].vout[0].nValue, 0);
     BOOST_CHECK(hash2 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash2, vchSig2));
-    vchSig2.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig2);
     spends[1].vin[0].scriptSig << vchSig2;
 
     BOOST_CHECK(!ToMemPool(spends[1], "bad-txns-premature-spend-of-coinbase"));
@@ -243,11 +240,11 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig3;
-    uint256 hash3 = SignatureHash(scriptPubKey, spends[2], 0, sighashType, coinbaseTxns[2].vout[0].nValue, 0);
+    uint256 hash3 = SignatureHash(scriptPubKey, spends[2], 0, defaultSigHashType, coinbaseTxns[2].vout[0].nValue, 0);
     BOOST_CHECK(hash3 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash3, vchSig3));
-    vchSig3.push_back((unsigned char)sighashType);
-    spends[2].vin[0].scriptSig << vchSig2;
+    defaultSigHashType.appendToSig(vchSig3);
+    spends[2].vin[0].scriptSig << vchSig3;
 
     BOOST_CHECK(!ToMemPool(spends[2]));
     BOOST_CHECK(pcoinsTip->HaveCoinInCache(spends[2].vin[0].prevout, fSpent)); // the only valid coin from the orphantx
@@ -315,10 +312,10 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig4;
-    uint256 hash4 = SignatureHash(scriptPubKey, spends[3], 0, sighashType, coinbaseTxns[3].vout[0].nValue, 0);
+    uint256 hash4 = SignatureHash(scriptPubKey, spends[3], 0, defaultSigHashType, coinbaseTxns[3].vout[0].nValue, 0);
     BOOST_CHECK(hash4 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash4, vchSig4));
-    vchSig4.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig4);
     spends[3].vin[0].scriptSig << vchSig4;
 
     BOOST_CHECK(ToMemPool(spends[3]));
@@ -364,10 +361,10 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig5;
-    uint256 hash5 = SignatureHash(scriptPubKey, spends[2], 0, sighashType, coinbaseTxns[5].vout[0].nValue, 0);
+    uint256 hash5 = SignatureHash(scriptPubKey, spends[2], 0, defaultSigHashType, coinbaseTxns[5].vout[0].nValue, 0);
     BOOST_CHECK(hash5 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash5, vchSig5));
-    vchSig5.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig5);
     spends[4].vin[0].scriptSig << vchSig5;
 
     BOOST_CHECK(!ToMemPool(spends[4]));
@@ -413,8 +410,6 @@ BOOST_FIXTURE_TEST_CASE(long_unconfirmed_chains, TestChain100Setup)
     CBlock b = CreateAndProcessBlock(noTxns, scriptPubKey);
     coinbaseTxns.push_back(*b.vtx[0]);
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
-
     auto prevout = coinbaseTxns[0].SpendOutput(0);
     uint256 hash;
 
@@ -432,15 +427,15 @@ BOOST_FIXTURE_TEST_CASE(long_unconfirmed_chains, TestChain100Setup)
         std::vector<unsigned char> vchSig;
         if (i == 1)
         {
-            hash = SignatureHash(scriptPubKey, tx, 0, sighashType, coinbaseTxns[0].vout[0].nValue, 0);
+            hash = SignatureHash(scriptPubKey, tx, 0, defaultSigHashType, coinbaseTxns[0].vout[0].nValue, 0);
         }
         else
         {
-            hash = SignatureHash(scriptPubKey, tx, 0, sighashType, 11 * CENT, 0);
+            hash = SignatureHash(scriptPubKey, tx, 0, defaultSigHashType, 11 * CENT, 0);
         }
         BOOST_CHECK(hash != SIGNATURE_HASH_ERROR);
         BOOST_CHECK(coinbaseKey.SignSchnorr(hash, vchSig));
-        vchSig.push_back((unsigned char)sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         tx.vin[0].scriptSig << vchSig;
         BOOST_CHECK(ToMemPool(tx));
 
@@ -458,10 +453,10 @@ BOOST_FIXTURE_TEST_CASE(long_unconfirmed_chains, TestChain100Setup)
 
         // Sign:
         std::vector<unsigned char> vchSig;
-        hash = SignatureHash(scriptPubKey, tx, 0, sighashType, 11 * CENT, 0);
+        hash = SignatureHash(scriptPubKey, tx, 0, defaultSigHashType, 11 * CENT, 0);
         BOOST_CHECK(hash != SIGNATURE_HASH_ERROR);
         BOOST_CHECK(coinbaseKey.SignSchnorr(hash, vchSig));
-        vchSig.push_back((unsigned char)sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         tx.vin[0].scriptSig << vchSig;
         BOOST_CHECK(ToMemPool(tx));
         prevout = tx.SpendOutput(0);
@@ -479,17 +474,17 @@ BOOST_FIXTURE_TEST_CASE(long_unconfirmed_chains, TestChain100Setup)
 
         // Sign:
         std::vector<unsigned char> vchSig;
-        hash = SignatureHash(scriptPubKey, tx, 0, sighashType, coinbaseTxns[1].vout[0].nValue, 0);
+        hash = SignatureHash(scriptPubKey, tx, 0, defaultSigHashType, coinbaseTxns[1].vout[0].nValue, 0);
         BOOST_CHECK(hash != SIGNATURE_HASH_ERROR);
         BOOST_CHECK(coinbaseKey.SignSchnorr(hash, vchSig));
-        vchSig.push_back((unsigned char)sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         tx.vin[0].scriptSig << vchSig;
 
         std::vector<unsigned char> vchSig1;
-        hash = SignatureHash(scriptPubKey, tx, 1, sighashType, coinbaseTxns[1].vout[0].nValue, 0);
+        hash = SignatureHash(scriptPubKey, tx, 1, defaultSigHashType, coinbaseTxns[1].vout[0].nValue, 0);
         BOOST_CHECK(hash != SIGNATURE_HASH_ERROR);
         BOOST_CHECK(coinbaseKey.SignSchnorr(hash, vchSig1));
-        vchSig1.push_back((unsigned char)sighashType);
+        defaultSigHashType.appendToSig(vchSig1);
         tx.vin[1].scriptSig << vchSig1;
 
         BOOST_CHECK(ToMemPool(tx));
@@ -507,10 +502,10 @@ BOOST_FIXTURE_TEST_CASE(long_unconfirmed_chains, TestChain100Setup)
 
         // Sign:
         std::vector<unsigned char> vchSig;
-        hash = SignatureHash(scriptPubKey, tx, 0, sighashType, 11 * CENT, 0);
+        hash = SignatureHash(scriptPubKey, tx, 0, defaultSigHashType, 11 * CENT, 0);
         BOOST_CHECK(hash != SIGNATURE_HASH_ERROR);
         BOOST_CHECK(coinbaseKey.SignSchnorr(hash, vchSig));
-        vchSig.push_back((unsigned char)sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         tx.vin[0].scriptSig << vchSig;
         BOOST_CHECK(ToMemPool(tx));
 
@@ -536,8 +531,6 @@ BOOST_FIXTURE_TEST_CASE(limitfreerelay, TestChain100Setup)
     // orphan cache or the transaction memory pool.
     CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
-
     std::vector<CMutableTransaction> spends;
 
     // Try to add a transaction with that is considered free (the fee is less than the minrelaytxfee)
@@ -550,10 +543,10 @@ BOOST_FIXTURE_TEST_CASE(limitfreerelay, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig1;
-    uint256 hash1 = SignatureHash(scriptPubKey, spends[0], 0, sighashType, coinbaseTxns[0].vout[0].nValue, 0);
+    uint256 hash1 = SignatureHash(scriptPubKey, spends[0], 0, defaultSigHashType, coinbaseTxns[0].vout[0].nValue, 0);
     BOOST_CHECK(hash1 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash1, vchSig1));
-    vchSig1.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig1);
     spends[0].vin[0].scriptSig << vchSig1;
 
     BOOST_CHECK(!ToMemPool(spends[0], "mempool min fee not met"));
@@ -571,10 +564,10 @@ BOOST_FIXTURE_TEST_CASE(limitfreerelay, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig2;
-    uint256 hash2 = SignatureHash(scriptPubKey, spends[1], 0, sighashType, coinbaseTxns[0].vout[0].nValue, 0);
+    uint256 hash2 = SignatureHash(scriptPubKey, spends[1], 0, defaultSigHashType, coinbaseTxns[0].vout[0].nValue, 0);
     BOOST_CHECK(hash2 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash2, vchSig2));
-    vchSig2.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig2);
     spends[1].vin[0].scriptSig << vchSig2;
 
     BOOST_CHECK(ToMemPool(spends[1]));
@@ -594,10 +587,10 @@ BOOST_FIXTURE_TEST_CASE(limitfreerelay, TestChain100Setup)
 
     // Sign:
     std::vector<unsigned char> vchSig3;
-    uint256 hash3 = SignatureHash(scriptPubKey, spends[2], 0, sighashType, coinbaseTxns[0].vout[0].nValue, 0);
+    uint256 hash3 = SignatureHash(scriptPubKey, spends[2], 0, defaultSigHashType, coinbaseTxns[0].vout[0].nValue, 0);
     BOOST_CHECK(hash3 != SIGNATURE_HASH_ERROR);
     BOOST_CHECK(coinbaseKey.SignSchnorr(hash3, vchSig3));
-    vchSig3.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig3);
     spends[2].vin[0].scriptSig << vchSig3;
 
     CValidationState state;

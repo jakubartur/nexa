@@ -10,6 +10,7 @@
 #include "keystore.h"
 #include "policy/policy.h"
 #include "primitives/transaction.h"
+#include "script/sighashtype.h"
 #include "script/standard.h"
 #include "uint256.h"
 
@@ -33,14 +34,14 @@ TransactionSignatureCreator::TransactionSignatureCreator(const CKeyStore *keysto
     const CTransaction *txToIn,
     unsigned int nInIn,
     const CAmount &amountIn,
-    uint32_t nHashTypeIn,
+    SigHashType sigHashTypeIn,
     uint32_t nSigTypeIn)
-    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), nHashType(nHashTypeIn),
+    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), sigHashType(sigHashTypeIn),
       nSigType(nSigTypeIn),
       checker(txTo,
           nIn,
           amount,
-          STANDARD_SCRIPT_VERIFY_FLAGS | ((nHashTypeIn & SIGHASH_FORKID) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
+          STANDARD_SCRIPT_VERIFY_FLAGS | ((sigHashTypeIn.isBch()) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
 {
     for (unsigned int i = 0; i < txToIn->vin.size(); i++) // catch uninitialized amounts
     {
@@ -64,7 +65,7 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
         return false;
     }
 
-    uint256 hash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount);
+    uint256 hash = SignatureHash(scriptCode, *txTo, nIn, sigHashType, amount);
     if (nSigType != SIGTYPE_SCHNORR)
     {
         LOGA("CreateSig(): Invalid signature type requested \n");
@@ -72,7 +73,7 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
     }
     if (!key.SignSchnorr(hash, vchSig))
         return false;
-    vchSig.push_back((unsigned char)nHashType);
+    sigHashType.appendToSig(vchSig);
 
     CPubKey pub = key.GetPubKey();
     p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig), HexStr(pub.begin(), pub.end()), hash.GetHex());
@@ -100,15 +101,20 @@ static bool SignN(const std::vector<valtype> &multisigdata,
 {
     int nSigned = 0;
     int nRequired = multisigdata.front()[0];
+    uint32_t signedBitmap = 0;
+    CScript tmp;
     for (unsigned int i = 1; i < multisigdata.size() - 1 && nSigned < nRequired; i++)
     {
         const valtype &pubkey = multisigdata[i];
         CKeyID keyID = CPubKey(pubkey).GetID();
-        if (Sign1(keyID, creator, scriptCode, scriptSigRet))
+        if (Sign1(keyID, creator, scriptCode, tmp))
         {
             ++nSigned;
+            signedBitmap |= 1 << (i - 1);
         }
     }
+    scriptSigRet << signedBitmap;
+    scriptSigRet.insert(scriptSigRet.end(), tmp.begin(), tmp.end());
     return nSigned == nRequired;
 }
 
@@ -171,7 +177,6 @@ static bool SignStep(const BaseSignatureCreator &creator,
         return creator.KeyStore().GetCScript(uint160(vSolutions[0]), scriptSigRet);
 
     case TX_MULTISIG:
-        scriptSigRet << OP_0; // workaround CHECKMULTISIG bug
         return (SignN(vSolutions, creator, scriptPubKey, scriptSigRet));
     }
 
@@ -230,15 +235,14 @@ bool SignSignature(const CKeyStore &keystore,
     CMutableTransaction &txTo,
     unsigned int nIn,
     const CAmount &amount,
-    uint32_t nHashType,
+    SigHashType sigHashType,
     uint32_t nSigType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
 
     CTransaction txToConst(txTo);
-    TransactionSignatureCreator creator(&keystore, &txToConst, nIn, amount, nHashType, nSigType);
-
+    TransactionSignatureCreator creator(&keystore, &txToConst, nIn, amount, sigHashType, nSigType);
     return ProduceSignature(creator, fromPubKey, txin.scriptSig);
 }
 
@@ -246,14 +250,14 @@ bool SignSignature(const CKeyStore &keystore,
     const CTxOut &spendingThis,
     CMutableTransaction &txTo,
     unsigned int nIn,
-    uint32_t nHashType,
+    SigHashType sigHashType,
     uint32_t nSigType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
     if (spendingThis.nValue != txin.amount)
         return false;
-    return SignSignature(keystore, spendingThis.scriptPubKey, txTo, nIn, txin.amount, nHashType);
+    return SignSignature(keystore, spendingThis.scriptPubKey, txTo, nIn, txin.amount, sigHashType);
 }
 
 static CScript PushAll(const Stack &values)
@@ -288,7 +292,7 @@ static CScript CombineMultisig(const CScript &scriptPubKey,
     // Build a map of pubkey -> signature by matching sigs to pubkeys:
     assert(vSolutions.size() > 1);
     unsigned int nSigsRequired = vSolutions.front()[0];
-    unsigned int nPubKeys = vSolutions.size() - 2;
+    unsigned int nPubKeys = vSolutions.size() - 2; // vSolutions is [ required, pubkey0, ... pubkeyN, Num pubkeys]
     std::map<valtype, valtype> sigs;
     for (const valtype &sig : allsigs)
     {
@@ -309,16 +313,21 @@ static CScript CombineMultisig(const CScript &scriptPubKey,
     }
     // Now build a merged CScript:
     unsigned int nSigsHave = 0;
-    CScript result;
-    result << OP_0; // pop-one-too-many workaround
+    CScript tmp;
+    uint32_t signedBitmap = 0;
     for (unsigned int i = 0; i < nPubKeys && nSigsHave < nSigsRequired; i++)
     {
         if (sigs.count(vSolutions[i + 1]))
         {
-            result << sigs[vSolutions[i + 1]];
+            tmp << sigs[vSolutions[i + 1]];
             ++nSigsHave;
+            signedBitmap |= (1 << i);
         }
     }
+    CScript result;
+    result << signedBitmap;
+    result.insert(result.end(), tmp.begin(), tmp.end());
+
     // Fill any missing with OP_0:
     for (unsigned int i = nSigsHave; i < nSigsRequired; i++)
         result << OP_0;

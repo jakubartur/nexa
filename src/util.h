@@ -29,6 +29,9 @@
 #include <string>
 #include <vector>
 
+#define Stringify(x) #x
+#define StringifyIntLiteral(x) Stringify(x)
+
 #ifndef ANDROID
 #include <boost/signals2/signal.hpp>
 #include <boost/thread.hpp>

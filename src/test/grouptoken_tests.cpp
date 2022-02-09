@@ -6,6 +6,7 @@
 #include "consensus/merkle.h"
 #include "main.h"
 #include "miner.h"
+#include "script/sighashtype.h"
 #include "test/test_bitcoin.h"
 #include "test/testutil.h"
 #include "txadmission.h"
@@ -188,19 +189,17 @@ CTransaction tx(const std::vector<InputData> in, const std::vector<OutputData> o
 
     tx.nLockTime = 0;
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
-
     idx = 0;
     for (auto i : in)
     {
         std::vector<unsigned char> vchSig;
         uint256 hash = SignatureHash(
-            i.prevtx.vout[i.prevout].scriptPubKey, tx, idx, sighashType, i.prevtx.vout[i.prevout].nValue, 0);
+            i.prevtx.vout[i.prevout].scriptPubKey, tx, idx, defaultSigHashType, i.prevtx.vout[i.prevout].nValue, 0);
         if (!i.key.SignSchnorr(hash, vchSig))
         {
             assert(0);
         }
-        vchSig.push_back((unsigned char)sighashType);
+        defaultSigHashType.appendToSig(vchSig);
         tx.vin[idx].scriptSig << vchSig;
         if (i.p2pkh)
         {
@@ -236,15 +235,15 @@ CTransaction tx2x2(const InputData &in1,
     tx.nLockTime = 0;
 
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
+    SigHashType sigHashType = defaultSigHashType;
     std::vector<unsigned char> vchSig;
     uint256 hash = SignatureHash(
-        in1.prevtx.vout[in1.prevout].scriptPubKey, tx, 0, sighashType, in1.prevtx.vout[in1.prevout].nValue, 0);
+        in1.prevtx.vout[in1.prevout].scriptPubKey, tx, 0, sigHashType, in1.prevtx.vout[in1.prevout].nValue, 0);
     if (!in1.key.SignSchnorr(hash, vchSig))
     {
         assert(0);
     }
-    vchSig.push_back((unsigned char)sighashType);
+    sigHashType.appendToSig(vchSig);
     tx.vin[0].scriptSig << vchSig;
     if (in1.p2pkh)
     {
@@ -253,12 +252,12 @@ CTransaction tx2x2(const InputData &in1,
 
     std::vector<unsigned char> vchSig2;
     hash = SignatureHash(
-        in2.prevtx.vout[in2.prevout].scriptPubKey, tx, 1, sighashType, in2.prevtx.vout[in2.prevout].nValue, 0);
+        in2.prevtx.vout[in2.prevout].scriptPubKey, tx, 1, sigHashType, in2.prevtx.vout[in2.prevout].nValue, 0);
     if (!in2.key.SignSchnorr(hash, vchSig2))
     {
         assert(0);
     }
-    vchSig2.push_back((unsigned char)sighashType);
+    sigHashType.appendToSig(vchSig);
 
     tx.vin[0].scriptSig << vchSig;
     if (in1.p2pkh)

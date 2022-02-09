@@ -25,6 +25,11 @@ CMutableTransaction CreateRandomTx();
 CScript p2pkh(const CKeyID &dest);
 CScript p2sh(const CScriptID &dest);
 
+CScript sign_multisig(const CScript scriptPubKey,
+    const std::vector<CKey> &keys,
+    const CMutableTransaction &transaction,
+    int whichIn,
+    uint32_t whichSigBitmap);
 
 // Create basic transactions.  All functions assume that the input amount is the sum of the output amounts
 CTransaction tx1x1(const COutPoint &utxo, const CScript &txo, CAmount amt);
