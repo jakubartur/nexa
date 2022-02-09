@@ -190,7 +190,6 @@ vector<std::string> vUseDNSSeeds;
 vector<std::string> vAddedNodes;
 set<CNetAddr> setservAddNodeAddresses;
 
-uint64_t maxGeneratedBlock = 0;
 int nMaxOutConnections = DEFAULT_MAX_OUTBOUND_CONNECTIONS;
 uint32_t blockVersion = 0; // Overrides the mined block version if non-zero
 uint64_t max_blockfile_size = MAX_BLOCKFILE_SIZE;
@@ -314,14 +313,20 @@ CTweak<uint64_t> minMiningCandidateInterval("mining.minCandidateInterval",
 
 CTweakRef<std::string> miningCommentTweak("mining.comment", "Include this text in a block's coinbase.", &minerComment);
 
-CTweakRef<uint64_t> miningBlockSize("mining.blockSize",
-    strprintf("Maximum block size in bytes.  The maximum block size returned from 'getblocktemplate' will be this "
-              "value minus mining.coinbaseReserve (default: %d)",
-        maxGeneratedBlock),
-    &maxGeneratedBlock);
+CTweak<uint64_t> miningBlockSize("mining.blockSize",
+    strprintf(
+        "Maximum block size in bytes.  The maximum block size returned from 'getblocktemplate' will be this "
+        "value minus mining.coinbaseReserve. A value of Zero means use the adaptive block size algorithm (default: %d)",
+        0),
+    0);
 
-CTweakRef<uint64_t> miningForkTime("consensus.forkMay2022Time",
-    "Time in seconds since the epoch to initiate the Bitcoin Cash protocol upgraded scheduled on 15th May 2022.  A "
+CTweak<uint64_t> miningPrioritySize("mining.prioritySize",
+    strprintf("Set maximum size, in bytes, of the high-priority/low-fee transaction area within a block(default: %d)",
+        DEFAULT_BLOCK_PRIORITY_SIZE),
+    DEFAULT_BLOCK_PRIORITY_SIZE);
+
+CTweakRef<uint64_t> miningForkTime("consensus.forkMay2021Time",
+    "Time in seconds since the epoch to initiate the Bitcoin Cash protocol upgraded scheduled on 15th May 2021.  A "
     "setting of 1 will turn on the fork at the appropriate time.",
     &nMiningForkTime,
     &ForkTimeValidator); // Saturday May 15 12:00:00 UTC 2022

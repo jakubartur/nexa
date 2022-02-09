@@ -21,9 +21,7 @@ class MempoolSyncTest(BitcoinTestFramework):
             "-rpcservertimeout=0",
             "-debug=mempoolsync",
             "-net.syncMempoolWithPeers=1",
-            "-net.randomlyDontInv=100",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000"]
+            "-net.randomlyDontInv=100"]
 
         self.nodes = [
             start_node(0, self.options.tmpdir, node_opts),

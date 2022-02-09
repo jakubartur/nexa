@@ -39,9 +39,7 @@ class GrapheneBlockTest(BitcoinTestFramework):
             "-rpcservertimeout=0",
             "-debug=graphene",
             "-use-grapheneblocks=1",
-            "-use-thinblocks=0",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000"]
+            "-use-thinblocks=0"]
 
         self.nodes = [
             start_node(0, self.options.tmpdir, node_opts),

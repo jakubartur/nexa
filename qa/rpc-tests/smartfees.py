@@ -38,7 +38,7 @@ def small_txpuzzle_randfee(from_node, conflist, unconflist, amount, min_fee, fee
     # Total fee ranges from min_fee to min_fee + 127*fee_increment
     fee = min_fee - fee_increment + satoshi_round(rand_fee)
     inputs = []
-    total_in = Decimal("0.00000000")
+    total_in = Decimal("0.00")
     while total_in <= (amount + fee) and len(conflist) > 0:
         t = conflist.pop(0)
         total_in += t["amount"]
@@ -158,7 +158,7 @@ class EstimateFeeTest(BitcoinTestFramework):
         self.nodes = []
         # Use node0 to mine blocks for input splitting
         self.nodes.append(start_node(0, self.options.tmpdir, ["-maxorphantx=1000",
-                                                              "-relaypriority=0", "-whitelist=127.0.0.1"]))
+                                                              "-relay.priority=0", "-whitelist=127.0.0.1"]))
 
         print("This test is time consuming, please be patient")
         print("Splitting inputs to small size so we can generate low priority tx's")
@@ -195,13 +195,13 @@ class EstimateFeeTest(BitcoinTestFramework):
         # NOTE: the CreateNewBlock code starts counting block size at 1,000 bytes,
         # (17k is room enough for 110 or so transactions)
         self.nodes.append(start_node(1, self.options.tmpdir,
-                                     ["-blockprioritysize=1500", "-blockmaxsize=17000", "-maxlimitertxfee=1000", "-minlimitertxfee=1000",
-                                      "-maxorphantx=1000", "-relaypriority=0", "-debug=estimatefee"]))
+                                     ["-blockprioritysize=1500", "-test.blockSize=17000", "-relay.minRelayTxFee=1000",
+                                      "-maxorphantx=1000", "-relay.priority=0", "-debug=estimatefee"]))
         connect_nodes(self.nodes[1], 0)
 
         # Node2 is a stingy miner, that
         # produces too small blocks (room for only 55 or so transactions)
-        node2args = ["-blockprioritysize=0", "-blockmaxsize=8000", "-maxorphantx=1000", "-relaypriority=0"]
+        node2args = ["-blockprioritysize=0", "-test.blockSize=8000", "-maxorphantx=1000", "-relay.priority=0"]
 
         self.nodes.append(start_node(2, self.options.tmpdir, node2args))
         connect_nodes(self.nodes[0], 2)

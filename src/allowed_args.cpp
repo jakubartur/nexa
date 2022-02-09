@@ -641,17 +641,7 @@ static void addNodeRelayOptions(AllowedArgs &allowedArgs)
                 DEFAULT_PREFERENTIAL_TIMER));
 }
 
-static void addBlockCreationOptions(AllowedArgs &allowedArgs)
-{
-    allowedArgs.addHeader(_("Block creation options:"))
-        .addArg("blockmaxsize=<n>", requiredInt,
-            strprintf("Set maximum block size in bytes (default: %d)", DEFAULT_MAX_BLOCK_SIZE))
-        .addArg("blockprioritysize=<n>", requiredInt,
-            strprintf(_("Set maximum size of high-priority/low-fee transactions in bytes (default: %d)"),
-                DEFAULT_BLOCK_PRIORITY_SIZE))
-        .addArg("blockversion=<n>", requiredInt, _("Generated block version number.  Value must be an integer"));
-}
-
+static void addBlockCreationOptions(AllowedArgs &allowedArgs) {}
 static void addRpcServerOptions(AllowedArgs &allowedArgs)
 {
     allowedArgs.addHeader(_("RPC server options:"))
