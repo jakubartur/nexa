@@ -344,7 +344,6 @@ void UnlimitedSetup(void)
 {
     MIN_TX_REQUEST_RETRY_INTERVAL = GetArg("-txretryinterval", DEFAULT_MIN_TX_REQUEST_RETRY_INTERVAL);
     MIN_BLK_REQUEST_RETRY_INTERVAL = GetArg("-blkretryinterval", DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL);
-    maxGeneratedBlock = GetArg("-blockmaxsize", Params().GetConsensus().nDefaultMaxBlockSize);
     blockVersion = GetArg("-blockversion", blockVersion);
     LoadTweaks(); // The above options are deprecated so the same parameter defined as a tweak will override them
 
@@ -476,7 +475,13 @@ UniValue getminingmaxblock(const UniValue &params, bool fHelp)
                             "\nExamples:\n" +
                             HelpExampleCli("getminingmaxblock", "") + HelpExampleRpc("getminingmaxblock", ""));
 
-    return maxGeneratedBlock;
+    uint64_t nBlockMaxSize = miningBlockSize.Value();
+    if (nBlockMaxSize == 0)
+        nBlockMaxSize = chainActive.Tip()->GetNextMaxBlockSize();
+    if (nBlockMaxSize > DEFAULT_LARGEST_BLOCKSIZE_POSSIBLE)
+        nBlockMaxSize = DEFAULT_LARGEST_BLOCKSIZE_POSSIBLE;
+
+    return nBlockMaxSize;
 }
 
 

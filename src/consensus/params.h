@@ -150,7 +150,6 @@ struct Params
     uint64_t nextForkActivationTime;
 
     /** Adaptive Block Size settings */
-    uint64_t nDefaultMaxBlockSize;
     uint64_t nShortBlockWindow;
     uint64_t nLongBlockWindow;
     uint64_t nBlockSizeMultiplier;

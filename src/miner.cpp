@@ -43,6 +43,7 @@ std::atomic<int64_t> nTotalPackage{0};
 static const unsigned int MAX_PACKAGE_FAILURES = 5;
 extern CTweak<unsigned int> xvalTweak;
 extern CTweak<uint32_t> dataCarrierSize;
+extern CTweak<uint64_t> miningPrioritySize;
 
 using namespace std;
 
@@ -202,13 +203,12 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript &sc
     CBlockIndex *pindexPrev = chainActive.Tip();
     assert(pindexPrev); // can't make a new block if we don't even have the genesis block
     nBlockMaxSize = pindexPrev->GetNextMaxBlockSize();
-    if (nBlockMaxSize > maxGeneratedBlock)
-        nBlockMaxSize = maxGeneratedBlock;
+    if (miningBlockSize.Value() > 0 && nBlockMaxSize > miningBlockSize.Value())
+        nBlockMaxSize = miningBlockSize.Value();
 
     // Minimum block size you want to create; block will be filled with free transactions
     // until there are no more or the block reaches this size:
-    static const uint64_t nConfiguredBlockPrioritySize = GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE);
-    nBlockMinSize = std::min(nBlockMaxSize, nConfiguredBlockPrioritySize);
+    nBlockMinSize = std::min(nBlockMaxSize, miningPrioritySize.Value());
 
     // Maximum sigops allowed in this block based on largest block size we're willing to create.
     maxSigOpsAllowed = GetMaxBlockSigChecks(pindexPrev->GetNextMaxBlockSize());
@@ -521,8 +521,7 @@ void BlockAssembler::addPriorityTxs(std::vector<const CTxMemPoolEntry *> *vtxe)
 {
     // How much of the block should be dedicated to high-priority transactions,
     // included regardless of the fees they pay
-    static const uint64_t nConfiguredBlockPrioritySize = GetArg("-blockprioritysize", DEFAULT_BLOCK_PRIORITY_SIZE);
-    uint64_t nBlockPrioritySize = nConfiguredBlockPrioritySize;
+    uint64_t nBlockPrioritySize = miningPrioritySize.Value();
     nBlockPrioritySize = std::min(nBlockMaxSize, nBlockPrioritySize);
     if (nBlockPrioritySize == 0)
     {

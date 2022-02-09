@@ -26,8 +26,6 @@ class CBTest(BitcoinTestFramework):
             "-use-grapheneblocks=0",
             "-use-thinblocks=0",
             "-use-compactblocks=1",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000",
             "-peerbloomfilters=1"]
 
         # These options have peerbloomfiters turned off.  Xthin's should still work with this option turned off.
@@ -38,8 +36,6 @@ class CBTest(BitcoinTestFramework):
             "-use-grapheneblocks=0",
             "-use-thinblocks=0",
             "-use-compactblocks=1",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000",
             "-peerbloomfilters=0"]
 
         # This node has bloom filter targeting enabled.
@@ -50,8 +46,6 @@ class CBTest(BitcoinTestFramework):
             "-use-grapheneblocks=0",
             "-use-thinblocks=0",
             "-use-compactblocks=1",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000",
             "-peerbloomfilters=1"]
 
         self.nodes = [
@@ -134,7 +128,7 @@ def Test():
     #signal.signal(signal.SIGINT, lambda sig, stk: pdb.Pdb().set_trace(stk))
     bitcoinConf = {
         "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
+        "mining.prioritySize": 2000000  # we don't want any transactions rejected due to insufficient fees...
     }
     flags = standardFlags()
     t.main(flags, bitcoinConf, None)

@@ -150,8 +150,7 @@ void CRequestManager::AskFor(const CInv &obj, CNode *from, unsigned int priority
     if (obj.type == MSG_TX)
     {
         // Don't allow the in flight requests to grow unbounded.
-        if (mapTxnInfo.size() >=
-            (size_t)(MAX_INV_SZ * 2 * GetArg("-blockmaxsize", Params().GetConsensus().nDefaultMaxBlockSize)))
+        if (mapTxnInfo.size() >= (size_t)(MAX_INV_SZ * 2 * chainActive.Tip()->GetNextMaxBlockSize()))
         {
             LOG(REQ, "Tx request buffer full: Dropping request for %s", obj.hash.ToString());
             return;

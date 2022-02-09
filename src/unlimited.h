@@ -67,7 +67,6 @@ extern CStatusString statusStrings;
 
 extern std::set<CBlockIndex *> setDirtyBlockIndex;
 extern uint32_t blockVersion; // Overrides the mined block version if non-zero
-extern uint64_t maxGeneratedBlock;
 
 // Fork configuration
 /** This specifies the MTP time of the next fork */
@@ -235,8 +234,7 @@ std::string Bip135VoteValidator(const std::string &value, std::string *item, boo
 std::string ForkTimeValidator(const uint64_t &value, uint64_t *item, bool validate);
 
 extern CTweak<uint64_t> coinbaseReserve;
-extern CTweakRef<uint64_t> miningBlockSize;
-extern CTweakRef<uint64_t> ebTweak;
+extern CTweak<uint64_t> miningBlockSize;
 extern CTweak<uint64_t> maxMiningCandidates;
 extern CTweak<uint64_t> minMiningCandidateInterval;
 extern CTweakRef<uint32_t> miningEnforceOpGroup;

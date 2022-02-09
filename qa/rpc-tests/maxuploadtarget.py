@@ -133,7 +133,7 @@ class MaxUploadTest(BitcoinTestFramework):
                           "-use-thinblocks=0", # turned off to predict size of transmitted data
                           "-excessiveblocksize=%s" % EXCESSIVE_BLOCKSIZE,
                           "-maxuploadtarget=%s" % self.maxuploadtarget,
-                          "-blockmaxsize=%s" % self.blockmaxsize]]
+                          "-mining.blockSize=%s" % self.blockmaxsize]]
 
     def mine_big_block(self, node, address):
         # Want to create a big block
@@ -293,7 +293,7 @@ class MaxUploadTest(BitcoinTestFramework):
         #stop and start node 0 with 1MB maxuploadtarget, whitelist 127.0.0.1
         print("Restarting nodes with -whitelist=127.0.0.1")
         stop_node(self.nodes[0], 0)
-        self.nodes[0] = start_node(0, self.options.tmpdir, ["-debug", "-use-thinblocks=0", "-whitelist=127.0.0.1", "-excessiveblocksize=1000000", "-maxuploadtarget=1", "-blockmaxsize=999000"])
+        self.nodes[0] = start_node(0, self.options.tmpdir, ["-debug", "-use-thinblocks=0", "-whitelist=127.0.0.1", "-excessiveblocksize=1000000", "-maxuploadtarget=1", "-mining.blockSize=999000"])
 
         #recreate/reconnect 3 test nodes
         test_nodes = []

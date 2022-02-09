@@ -66,7 +66,7 @@ uint64_t CalculateNextMaxBlockSize(CBlockIndex *pindexPrev, uint64_t nBlockSize)
     nNextMaxBlockSize = std::max(nNextMaxBlockSize, DEFAULT_NEXT_MAX_BLOCK_SIZE);
 
     // make sure we are not over the maximum allowed
-    nNextMaxBlockSize = std::min(nNextMaxBlockSize, Params().GetConsensus().nDefaultMaxBlockSize);
+    nNextMaxBlockSize = std::min(nNextMaxBlockSize, DEFAULT_LARGEST_BLOCKSIZE_POSSIBLE);
 
     return nNextMaxBlockSize;
 }

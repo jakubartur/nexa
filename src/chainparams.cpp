@@ -262,7 +262,6 @@ public:
         pchCashMessageStart[3] = 0xe8;
         nDefaultPort = DEFAULT_MAINNET_PORT;
         nPruneAfterHeight = 100000;
-        consensus.nDefaultMaxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
         consensus.nLongBlockWindow = LONG_BLOCK_WINDOW;
         consensus.nBlockSizeMultiplier = BLOCK_SIZE_MULTIPLIER;
@@ -361,7 +360,6 @@ public:
         pchCashMessageStart[3] = 0xfa;
         nDefaultPort = DEFAULT_REGTESTNET_PORT;
         nPruneAfterHeight = 1000;
-        consensus.nDefaultMaxBlockSize = DEFAULT_MAX_BLOCK_SIZE_REGTEST;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW_REGTEST;
         consensus.nLongBlockWindow = LONG_BLOCK_WINDOW_REGTEST;
         consensus.nBlockSizeMultiplier = BLOCK_SIZE_MULTIPLIER;
@@ -464,7 +462,6 @@ public:
         nDefaultPort = 7230;
         nPruneAfterHeight = 100000;
 
-        consensus.nDefaultMaxBlockSize = DEFAULT_MAX_BLOCK_SIZE_TESTNET4;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
         consensus.nLongBlockWindow = LONG_BLOCK_WINDOW;
         consensus.nBlockSizeMultiplier = BLOCK_SIZE_MULTIPLIER;
@@ -560,7 +557,6 @@ public:
         nDefaultPort = 7228;
         nPruneAfterHeight = 100000;
 
-        consensus.nDefaultMaxBlockSize = DEFAULT_MAX_BLOCK_SIZE;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
         consensus.nLongBlockWindow = LONG_BLOCK_WINDOW;
         consensus.nBlockSizeMultiplier = BLOCK_SIZE_MULTIPLIER;

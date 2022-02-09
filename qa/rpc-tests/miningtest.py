@@ -155,7 +155,7 @@ class MiningTest (BitcoinTestFramework):
 
 
 if __name__ == '__main__':
-    MiningTest().main(None, {  "blockprioritysize": 1500, "blockmaxsize":1800 })
+    MiningTest().main(None, { "mining.prioritySize": 1500, "mining.blockSize":1800 })
 
 # Create a convenient function for an interactive python debugging session
 
@@ -164,8 +164,8 @@ def Test():
     t = MiningTest()
     bitcoinConf = {
         "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 1500,
-        "blockmaxsize":1800
+        "mining.prioritySize": 1500,
+        "mining.blockSize":1800
     }
 
     flags = standardFlags()

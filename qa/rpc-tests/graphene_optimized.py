@@ -18,9 +18,7 @@ class GrapheneOptimizedTest(GrapheneBlockTest):
             "-use-grapheneblocks=1",
             "-use-thinblocks=0",
             "-use-compactblocks=0",
-            "-net.grapheneFastFilterCompatibility=2",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000"]
+            "-net.grapheneFastFilterCompatibility=2"]
 
         optimized_node_opts = [
             "-rpcservertimeout=0",
@@ -28,9 +26,7 @@ class GrapheneOptimizedTest(GrapheneBlockTest):
             "-use-grapheneblocks=1",
             "-use-thinblocks=0",
             "-use-compactblocks=0",
-            "-net.grapheneFastFilterCompatibility=0",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000"]
+            "-net.grapheneFastFilterCompatibility=0"]
 
         self.nodes = [
             start_node(0, self.options.tmpdir, optimized_node_opts),

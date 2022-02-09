@@ -51,7 +51,7 @@ public:
 
 
     /* Explicit getters */
-    uint64_t getMaxGeneratedBlock() { return ::maxGeneratedBlock; }
+    uint64_t getMaxGeneratedBlock() { return ::miningBlockSize.Value(); }
     const QString &getOverriddenByCommandLine() { return strOverriddenByCommandLine; }
     /* Restart flag helper */
     void setRestartRequired(bool fRequired);

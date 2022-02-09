@@ -47,9 +47,7 @@ class GrapheneStage2Test(BitcoinTestFramework):
             "-use-thinblocks=0",
             "-net.grapheneIbltSizeOverride=1",
             "-net.grapheneBloomFprOverride=0.0",
-            "-net.randomlyDontInv=100",
-            "-blockprioritysize=6000000",
-            "-blockmaxsize=6000000"]
+            "-net.randomlyDontInv=100"]
 
         self.nodes = [
             start_node(0, self.options.tmpdir, node_opts),

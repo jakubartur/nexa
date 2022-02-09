@@ -27,12 +27,8 @@ static const uint64_t SHORT_BLOCK_WINDOW_REGTEST = 150; // used for testing only
 static const uint64_t LONG_BLOCK_WINDOW_REGTEST = 300; // used for testing only!
 static const uint64_t BLOCK_SIZE_MULTIPLIER = 10;
 
-/** Default for -blockmaxsize and -blockminsize, which control the range of sizes the mining code will create **/
-// this is now set in chain params
-static const unsigned int DEFAULT_MAX_BLOCK_SIZE_REGTEST = 8 * ONE_MEGABYTE;
-static const unsigned int DEFAULT_MAX_BLOCK_SIZE = 1000 * ONE_MEGABYTE;
-static const unsigned int DEFAULT_MAX_BLOCK_SIZE_TESTNET4 = 2 * ONE_MEGABYTE;
-static const unsigned int DEFAULT_MAX_BLOCK_SIZE_SCALENET = 256 * ONE_MEGABYTE;
+/** Largest block possible */
+static const uint64_t DEFAULT_LARGEST_BLOCKSIZE_POSSIBLE = 1000 * ONE_MEGABYTE;
 
 /** The maximum allowed number of signature check operations in a 1MB block (network rule), and the suggested max sigops
  * per (MB rounded up) in blocks > 1MB. */
