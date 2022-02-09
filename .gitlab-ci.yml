@@ -265,7 +265,7 @@ build-debian-clang:
         - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
-        - ../configure --cache-file=config.cache --enable-zmq --with-gui=qt5 --with-incompatible-bdb CPPFLAGS=-DDEBUG_LOCKORDER CXXFLAGS="-std=c++14"
+        - ../configure --cache-file=config.cache --enable-zmq --with-gui=qt5 --with-incompatible-bdb CPPFLAGS=-DDEBUG_LOCKORDER
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
