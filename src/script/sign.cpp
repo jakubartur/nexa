@@ -10,6 +10,7 @@
 #include "keystore.h"
 #include "policy/policy.h"
 #include "primitives/transaction.h"
+#include "script/sighashtype.h"
 #include "script/standard.h"
 #include "uint256.h"
 
@@ -33,14 +34,14 @@ TransactionSignatureCreator::TransactionSignatureCreator(const CKeyStore *keysto
     const CTransaction *txToIn,
     unsigned int nInIn,
     const CAmount &amountIn,
-    uint32_t nHashTypeIn,
+    SigHashType sigHashTypeIn,
     uint32_t nSigTypeIn)
-    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), nHashType(nHashTypeIn),
+    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), sigHashType(sigHashTypeIn),
       nSigType(nSigTypeIn),
       checker(txTo,
           nIn,
           amount,
-          STANDARD_SCRIPT_VERIFY_FLAGS | ((nHashTypeIn & SIGHASH_FORKID) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
+          STANDARD_SCRIPT_VERIFY_FLAGS | ((sigHashTypeIn.isBch()) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
 {
     for (unsigned int i = 0; i < txToIn->vin.size(); i++) // catch uninitialized amounts
     {
@@ -64,7 +65,7 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
         return false;
     }
 
-    uint256 hash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount);
+    uint256 hash = SignatureHash(scriptCode, *txTo, nIn, sigHashType, amount);
     if (nSigType != SIGTYPE_SCHNORR)
     {
         LOGA("CreateSig(): Invalid signature type requested \n");
@@ -72,7 +73,7 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
     }
     if (!key.SignSchnorr(hash, vchSig))
         return false;
-    vchSig.push_back((unsigned char)nHashType);
+    sigHashType.appendToSig(vchSig);
 
     CPubKey pub = key.GetPubKey();
     p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig), HexStr(pub.begin(), pub.end()), hash.GetHex());
@@ -230,15 +231,14 @@ bool SignSignature(const CKeyStore &keystore,
     CMutableTransaction &txTo,
     unsigned int nIn,
     const CAmount &amount,
-    uint32_t nHashType,
+    SigHashType sigHashType,
     uint32_t nSigType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
 
     CTransaction txToConst(txTo);
-    TransactionSignatureCreator creator(&keystore, &txToConst, nIn, amount, nHashType, nSigType);
-
+    TransactionSignatureCreator creator(&keystore, &txToConst, nIn, amount, sigHashType, nSigType);
     return ProduceSignature(creator, fromPubKey, txin.scriptSig);
 }
 
@@ -246,14 +246,14 @@ bool SignSignature(const CKeyStore &keystore,
     const CTxOut &spendingThis,
     CMutableTransaction &txTo,
     unsigned int nIn,
-    uint32_t nHashType,
+    SigHashType sigHashType,
     uint32_t nSigType)
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
     if (spendingThis.nValue != txin.amount)
         return false;
-    return SignSignature(keystore, spendingThis.scriptPubKey, txTo, nIn, txin.amount, nHashType);
+    return SignSignature(keystore, spendingThis.scriptPubKey, txTo, nIn, txin.amount, sigHashType);
 }
 
 static CScript PushAll(const Stack &values)

@@ -1352,41 +1352,16 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
 #endif
 
     bool fForkId = true;
-    int nHashType = SIGHASH_ALL | SIGHASH_FORKID;
+    SigHashType sigHashType = defaultSigHashType;
     if (params.size() > 3 && !params[3].isNull())
     {
-        std::string strHashType = params[3].get_str();
-
-        std::vector<string> strings;
-        std::istringstream ss(strHashType);
-        std::string s;
-        while (getline(ss, s, '|'))
-        {
-            boost::trim(s);
-            if (boost::iequals(s, "ALL"))
-                nHashType = SIGHASH_ALL;
-            else if (boost::iequals(s, "NONE"))
-                nHashType = SIGHASH_NONE;
-            else if (boost::iequals(s, "SINGLE"))
-                nHashType = SIGHASH_SINGLE;
-            else if (boost::iequals(s, "ANYONECANPAY"))
-                nHashType |= SIGHASH_ANYONECANPAY;
-            else if (boost::iequals(s, "FORKID"))
-                nHashType |= SIGHASH_FORKID;
-            else if (boost::iequals(s, "NOFORKID"))
-            {
-                // Still support signing legacy chain transactions
-                fForkId = false;
-                nHashType &= ~SIGHASH_FORKID;
-            }
-            else
-            {
-                throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid sighash param");
-            }
-        }
+        sigHashType.from(params[3].get_str());
+        if (sigHashType.isInvalid())
+            throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid sighash param");
+        fForkId = sigHashType.isBch();
     }
 
-    bool fHashSingle = ((nHashType & ~(SIGHASH_ANYONECANPAY | SIGHASH_FORKID)) == SIGHASH_SINGLE);
+    bool fHashSingle = sigHashType.hasSingle();
 
     uint32_t sigType = SIGTYPE_SCHNORR;
     if (params.size() > 4 && !params[4].isNull())
@@ -1426,9 +1401,8 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
         // Only sign SIGHASH_SINGLE if there's a corresponding output:
         if (!fHashSingle || (i < mergedTx.vout.size()))
         {
-            SignSignature(keystore, prevPubKey, mergedTx, i, amount, nHashType, sigType);
+            SignSignature(keystore, prevPubKey, mergedTx, i, amount, sigHashType, sigType);
         }
-
         // ... and merge in other signatures:
         if (fForkId)
         {

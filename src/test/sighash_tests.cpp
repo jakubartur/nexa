@@ -10,6 +10,7 @@
 #include "main.h" // For CheckTransaction
 #include "script/interpreter.h"
 #include "script/script.h"
+#include "script/sighashtype.h"
 #include "serialize.h"
 #include "streams.h"
 #include "test/test_bitcoin.h"
@@ -125,7 +126,15 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle)
     }
 }
 
+class HackSigHashType : public SigHashType
+{
+public:
+    explicit HackSigHashType(uint32_t val) : SigHashType() { sigHash = val; }
+};
+
+
 BOOST_FIXTURE_TEST_SUITE(sighash_tests, BasicTestingSetup)
+
 
 BOOST_AUTO_TEST_CASE(sighash_test)
 {
@@ -142,20 +151,19 @@ BOOST_AUTO_TEST_CASE(sighash_test)
 #endif
     for (int i = 0; i < nRandomTests; i++)
     {
-        int nHashType = InsecureRand32();
-
-        // Clear forkid
-        nHashType &= ~SIGHASH_FORKID;
+        HackSigHashType sigHashType(InsecureRand32() & ~SIGHASH_FORKID);
+        if (sigHashType.isInvalid())
+            continue; // Skip impossible sighashes
 
         CMutableTransaction txTo;
-        RandomTransaction(txTo, (nHashType & 0x1f) == SIGHASH_SINGLE);
+        RandomTransaction(txTo, sigHashType.hasSingle());
         CScript scriptCode;
         RandomScript(scriptCode);
         int nIn = InsecureRandRange(txTo.vin.size());
 
         uint256 sh, sho;
-        sho = SignatureHashOld(scriptCode, txTo, nIn, nHashType);
-        sh = SignatureHash(scriptCode, txTo, nIn, nHashType, 0, 0);
+        sho = SignatureHashOld(scriptCode, txTo, nIn, sigHashType.getRawSigHashType());
+        sh = SignatureHash(scriptCode, txTo, nIn, sigHashType, 0, 0);
 #if defined(PRINT_SIGHASH_JSON)
         CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
         ss << txTo;
@@ -243,10 +251,10 @@ BOOST_AUTO_TEST_CASE(sighash_test_fail)
     CScript scriptCode = CScript();
     CTransaction tx;
     const int nIn = 1;
-    const int nHashType = 0;
+    const HackSigHashType sigHashType(0);
     // should fail because nIn point is invalid
     // Note that this basically broken behavior of SignatureHashLegacy()
-    uint256 hash = SignatureHash(scriptCode, tx, nIn, nHashType, 0, 0);
+    uint256 hash = SignatureHash(scriptCode, tx, nIn, sigHashType, 0, 0);
     BOOST_CHECK(hash == SIGNATURE_HASH_ERROR);
 }
 BOOST_AUTO_TEST_SUITE_END()

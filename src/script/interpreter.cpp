@@ -17,6 +17,7 @@
 #include "pubkey.h"
 #include "script/script.h"
 #include "script/script_error.h"
+#include "sighashtype.h"
 #include "uint256.h"
 #include "util.h"
 
@@ -31,13 +32,6 @@ bool BigNumScriptOp(BigNum &bn,
     ScriptError *serror);
 
 const std::string strMessageMagic = "Bitcoin Signed Message:\n";
-
-extern uint256 SignatureHashLegacy(const CScript &scriptCode,
-    const CTransaction &txTo,
-    unsigned int nIn,
-    uint32_t nHashType,
-    const CAmount &amount,
-    size_t *nHashedOut);
 
 using namespace std;
 
@@ -561,8 +555,7 @@ bool EvalScript(Stack &stack,
     unsigned int flags,
     unsigned int maxOps,
     const ScriptImportedState &sis,
-    ScriptError *serror,
-    uint32_t *sighashtype)
+    ScriptError *serror)
 {
     ScriptMachine sm(flags, sis, maxOps, 0xffffffff);
     sm.setStack(stack);
@@ -571,10 +564,6 @@ bool EvalScript(Stack &stack,
     if (serror)
     {
         *serror = sm.getError();
-    }
-    if (sighashtype)
-    {
-        *sighashtype = sm.getSigHashType();
     }
     return result;
 }
@@ -614,7 +603,6 @@ bool ScriptMachine::BeginStep(const CScript &_script)
     pend = script->end();
     pbegincodehash = pc;
 
-    sighashtype = 0;
     stats.nOpCount = 0;
     vfExec.clear();
 
@@ -1721,12 +1709,6 @@ bool ScriptMachine::Step()
                     // Subset of script starting at the most recent codeseparator
                     CScript scriptCode(pbegincodehash, pend);
 
-                    // Drop the signature in scripts when SIGHASH_FORKID is
-                    // not used.
-                    uint32_t nHashType = GetHashType(vchSig);
-                    // BU remember the sighashtype so we can use it to choose when to allow this tx
-                    sighashtype |= nHashType;
-
                     // Drop the signature, since there's no way for a signature to sign itself
                     scriptCode.FindAndDelete(CScript(vchSig));
 
@@ -2542,8 +2524,8 @@ bool TransactionSignatureChecker::CheckSig(const vector<uint8_t> &vchSigIn,
     {
         return false;
     }
-    int nHashType = vchSig.back();
-    vchSig.pop_back();
+    SigHashType sigHashType = GetSigHashType(vchSig);
+    RemoveSigHashType(vchSig);
 
     uint256 sighash;
     size_t nHashed = 0;
@@ -2554,9 +2536,9 @@ bool TransactionSignatureChecker::CheckSig(const vector<uint8_t> &vchSigIn,
     // the bit is undefined (can be any value) before the fork. See block 264084 tx 102
     if (nFlags & SCRIPT_ENABLE_SIGHASH_FORKID)
     {
-        if (nHashType & SIGHASH_FORKID)
+        if (sigHashType.isBch())
         {
-            sighash = SignatureHash(scriptCode, *txTo, nIn, nHashType, amount, &nHashed);
+            sighash = SignatureHash(scriptCode, *txTo, nIn, sigHashType, amount, &nHashed);
         }
         else
         {
@@ -2565,7 +2547,7 @@ bool TransactionSignatureChecker::CheckSig(const vector<uint8_t> &vchSigIn,
     }
     else
     {
-        sighash = SignatureHashLegacy(scriptCode, *txTo, nIn, nHashType, amount, &nHashed);
+        sighash = SignatureHashBitcoin(scriptCode, *txTo, nIn, sigHashType, &nHashed);
     }
     nBytesHashed += nHashed;
     ++nSigops;

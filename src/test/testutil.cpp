@@ -12,6 +12,7 @@
 #include "fs.h"
 #include "key.h"
 #include "primitives/transaction.h"
+#include "script/sighashtype.h"
 #include "script/standard.h"
 #include "test/test_bitcoin.h"
 
@@ -122,14 +123,13 @@ CTransaction tx1x1(const COutPoint &utxo,
     tx.vin[0].scriptSig = CScript();
     tx.nLockTime = 0;
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
     std::vector<unsigned char> vchSig;
-    uint256 hash = SignatureHash(prevOutScript, tx, 0, sighashType, amt, 0);
+    uint256 hash = SignatureHash(prevOutScript, tx, 0, defaultSigHashType, amt, 0);
     if (!key.SignSchnorr(hash, vchSig))
     {
         assert(0);
     }
-    vchSig.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig);
     tx.vin[0].scriptSig << vchSig;
     if (p2pkh)
     {
@@ -156,14 +156,14 @@ CTransaction tx1x1(const CTransaction &prevtx,
     tx.vin[0].scriptSig = CScript();
     tx.nLockTime = 0;
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
     std::vector<unsigned char> vchSig;
-    uint256 hash = SignatureHash(prevtx.vout[prevout].scriptPubKey, tx, 0, sighashType, prevtx.vout[prevout].nValue, 0);
+    uint256 hash =
+        SignatureHash(prevtx.vout[prevout].scriptPubKey, tx, 0, defaultSigHashType, prevtx.vout[prevout].nValue, 0);
     if (!key.SignSchnorr(hash, vchSig))
     {
         assert(0);
     }
-    vchSig.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig);
     tx.vin[0].scriptSig << vchSig;
     if (p2pkh)
     {
@@ -190,14 +190,13 @@ CTransaction tx1x1_p2sh_of_p2pkh(const CTransaction &prevtx,
     tx.vin[0].scriptSig = CScript();
     tx.nLockTime = 0;
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
     std::vector<unsigned char> vchSig;
-    uint256 hash = SignatureHash(redeemScript, tx, 0, sighashType, prevtx.vout[prevout].nValue, 0);
+    uint256 hash = SignatureHash(redeemScript, tx, 0, defaultSigHashType, prevtx.vout[prevout].nValue, 0);
     if (!key.SignSchnorr(hash, vchSig))
     {
         assert(0);
     }
-    vchSig.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig);
     tx.vin[0].scriptSig << vchSig;
     tx.vin[0].scriptSig << ToByteVector(key.GetPubKey());
     tx.vin[0].scriptSig << ToByteVector(redeemScript);
@@ -228,14 +227,14 @@ CTransaction tx1x2(const CTransaction &prevtx,
 
     tx.nLockTime = 0;
 
-    unsigned int sighashType = SIGHASH_ALL | SIGHASH_FORKID;
     std::vector<unsigned char> vchSig;
-    uint256 hash = SignatureHash(prevtx.vout[prevout].scriptPubKey, tx, 0, sighashType, prevtx.vout[prevout].nValue, 0);
+    uint256 hash =
+        SignatureHash(prevtx.vout[prevout].scriptPubKey, tx, 0, defaultSigHashType, prevtx.vout[prevout].nValue, 0);
     if (!key.SignSchnorr(hash, vchSig))
     {
         assert(0);
     }
-    vchSig.push_back((unsigned char)sighashType);
+    defaultSigHashType.appendToSig(vchSig);
     tx.vin[0].scriptSig << vchSig;
     if (p2pkh)
     {
