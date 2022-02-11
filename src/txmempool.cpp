@@ -27,6 +27,8 @@
 #include "validation/validation.h"
 #include "version.h"
 
+#include <mutex>
+
 extern std::atomic<bool> fMempoolTests;
 
 using namespace std;
@@ -770,7 +772,7 @@ void CTxMemPool::ResubmitCommitQ()
 
     // Clear txCommitQ
     {
-        boost::unique_lock<boost::mutex> lock(csCommitQ);
+        std::unique_lock<std::mutex> lock(csCommitQ);
         for (auto &kv : *txCommitQ)
         {
             CTxInputData txd;
