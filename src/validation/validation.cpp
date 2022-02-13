@@ -32,8 +32,8 @@
 
 #include <algorithm>
 #include <boost/scope_exit.hpp>
-#include <unordered_set>
 #include <mutex>
+#include <unordered_set>
 
 extern CTweak<int> maxReorgDepth;
 static bool FinalizeBlockInternal(CValidationState &state, const CBlockIndex *pindex);
