@@ -17,7 +17,9 @@
 
 #include "chainparamsseeds.h"
 
+#ifdef ENABLE_WALLET
 extern UniValue token(const UniValue &params, bool fHelp);
+#endif
 UniValue genesis(const UniValue &params, bool fHelp);
 
 /* clang-format off */
@@ -25,7 +27,9 @@ static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafeMode
   //  --------------------- ------------------------  -----------------------  ----------
     { "mining",             "genesis",                &genesis,                true  },
+#ifdef ENABLE_WALLET
     { "wallet",             "token",                  &token,                  true  }
+#endif
 };
 /* clang-format on */
 
