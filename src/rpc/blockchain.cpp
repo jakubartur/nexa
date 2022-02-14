@@ -2494,6 +2494,8 @@ enum class OutputScriptType
     P2WPKH
 };
 
+#ifdef ENABLE_WALLET
+
 UniValue scantokens(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
@@ -2624,6 +2626,8 @@ UniValue scantokens(const UniValue &params, bool fHelp)
     return result;
 }
 
+#endif
+
 static const CRPCCommand commands[] = {
     //  category              name                      actor (function)         okSafeMode
     //  --------------------- ------------------------  -----------------------  ----------
@@ -2651,7 +2655,9 @@ static const CRPCCommand commands[] = {
     {"blockchain", "saveorphanpool", &saveorphanpool, true},
     {"blockchain", "verifychain", &verifychain, true},
     {"blockchain", "getblockstats", &getblockstats, true},
+#ifdef ENABLE_WALLET
     {"blockchain", "scantokens", &scantokens, true},
+#endif
     /* Not shown in help */
     {"hidden", "invalidateblock", &invalidateblock, true},
     {"hidden", "reconsiderblock", &reconsiderblock, true},

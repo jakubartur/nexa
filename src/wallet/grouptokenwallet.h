@@ -13,9 +13,6 @@
 #include "script/standard.h"
 #include <unordered_map>
 
-
-#endif
-
 // Pass a group and a destination address (or CNoDestination) to get the balance of all outputs in the group
 // or all outputs in that group and on that destination address.
 CAmount GetGroupBalance(const CGroupTokenID &grpID, const CTxDestination &dest, const CWallet *wallet);
@@ -43,3 +40,5 @@ CGroupTokenID findGroupId(const COutPoint &input,
 
 //* Group script helper function
 CScript GetScriptForDestination(const CTxDestination &dest, const CGroupTokenID &group, const CAmount &amount);
+
+#endif

@@ -685,6 +685,7 @@ BOOST_AUTO_TEST_CASE(grouptoken_fencefunctions)
     miningEnforceOpGroup = opgEnforcing;
 }
 
+#ifdef ENABLE_WALLET
 BOOST_AUTO_TEST_CASE(grouptoken_basicfunctions)
 {
     // Have to enable the function to test it.
@@ -1302,6 +1303,7 @@ BOOST_AUTO_TEST_CASE(grouptoken_basicfunctions)
     }
     miningEnforceOpGroup = opgEnforcing;
 }
+#endif
 
 static bool tryBlock(const std::vector<CMutableTransaction> &txns,
     const CScript &scriptPubKey,
@@ -1339,7 +1341,7 @@ static bool tryMempool(const CTransaction &tx, CValidationState &state)
     return AcceptToMemoryPool(mempool, state, MakeTransactionRef(tx), true, &inputsMissing, false);
 }
 
-
+#ifdef ENABLE_WALLET
 BOOST_FIXTURE_TEST_CASE(grouptoken_blockchain, TestChain100Setup)
 {
     // Have to enable the function to test it.
@@ -1564,6 +1566,6 @@ BOOST_FIXTURE_TEST_CASE(grouptoken_blockchain, TestChain100Setup)
 
     miningEnforceOpGroup = opgEnforcing;
 }
-
+#endif
 
 BOOST_AUTO_TEST_SUITE_END()
