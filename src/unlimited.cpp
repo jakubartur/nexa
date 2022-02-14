@@ -1340,7 +1340,7 @@ UniValue submitminingsolution(const UniValue &params, bool fHelp)
     }
 #endif
 
-    UniValue uvsub = SubmitBlock(*block); // returns string on failure
+    UniValue uvsub = SubmitBlock(block); // returns string on failure
     RmOldMiningCandidates();
     return uvsub;
 }
