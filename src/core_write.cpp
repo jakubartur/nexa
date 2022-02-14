@@ -8,6 +8,7 @@
 #include "dstencode.h"
 #include "primitives/transaction.h"
 #include "script/script.h"
+#include "script/sighashtype.h"
 #include "script/stackitem.h"
 #include "script/standard.h"
 #include "serialize.h"
@@ -67,22 +68,6 @@ string FormatScript(const CScript &script)
     return ret.substr(0, ret.size() - 1);
 }
 
-const map<unsigned char, string> mapSigHashTypes = {
-    {(unsigned char)SIGHASH_ALL, std::string("ALL")},
-    {(unsigned char)(SIGHASH_ALL | SIGHASH_ANYONECANPAY), std::string("ALL|ANYONECANPAY")},
-    {(unsigned char)(SIGHASH_ALL | SIGHASH_FORKID), std::string("ALL|FORKID")},
-    {(unsigned char)(SIGHASH_ALL | SIGHASH_FORKID | SIGHASH_ANYONECANPAY), std::string("ALL|FORKID|ANYONECANPAY")},
-    {(unsigned char)SIGHASH_NONE, std::string("NONE")},
-    {(unsigned char)(SIGHASH_NONE | SIGHASH_ANYONECANPAY), std::string("NONE|ANYONECANPAY")},
-    {(unsigned char)(SIGHASH_NONE | SIGHASH_FORKID), std::string("NONE|FORKID")},
-    {(unsigned char)(SIGHASH_NONE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY), std::string("NONE|FORKID|ANYONECANPAY")},
-    {(unsigned char)SIGHASH_SINGLE, std::string("SINGLE")},
-    {(unsigned char)(SIGHASH_SINGLE | SIGHASH_ANYONECANPAY), std::string("SINGLE|ANYONECANPAY")},
-    {(unsigned char)(SIGHASH_SINGLE | SIGHASH_FORKID), std::string("SINGLE|FORKID")},
-    {(unsigned char)(SIGHASH_SINGLE | SIGHASH_FORKID | SIGHASH_ANYONECANPAY),
-        std::string("SINGLE|FORKID|ANYONECANPAY")},
-};
-
 /**
  * Create the assembly string representation of a CScript object.
  * @param[in] script    CScript object to convert into the asm string representation.
@@ -92,11 +77,11 @@ const map<unsigned char, string> mapSigHashTypes = {
  * For example,
  *                                     pass false, or omit the this argument (defaults to false), for scriptPubKeys.
  */
-string ScriptToAsmStr(const CScript &script, const bool fAttemptSighashDecode, bool f64BitNums)
+string ScriptToAsmStr(const CScript &script, const bool fAttemptSighashDecode)
 {
     string str;
     opcodetype opcode;
-    vector<uint8_t> vch;
+    vector<unsigned char> vch;
     CScript::const_iterator pc = script.begin();
     while (pc < script.end())
     {
@@ -109,13 +94,11 @@ string ScriptToAsmStr(const CScript &script, const bool fAttemptSighashDecode, b
             str += "[error]";
             return str;
         }
-        size_t const maxScriptNumSize =
-            f64BitNums ? CScriptNum::MAXIMUM_ELEMENT_SIZE_64_BIT : CScriptNum::MAXIMUM_ELEMENT_SIZE_32_BIT;
         if (0 <= opcode && opcode <= OP_PUSHDATA4)
         {
-            if (vch.size() <= maxScriptNumSize)
+            if (vch.size() <= CScriptNum::MAXIMUM_ELEMENT_SIZE_64_BIT)
             {
-                str += strprintf("%d", CScriptNum(vch, false, maxScriptNumSize).getint64());
+                str += strprintf("%ld", CScriptNum(vch, false, CScriptNum::MAXIMUM_ELEMENT_SIZE_64_BIT).getint64());
             }
             else
             {
@@ -132,11 +115,13 @@ string ScriptToAsmStr(const CScript &script, const bool fAttemptSighashDecode, b
                     // checks in CheckSignatureEncoding.
                     if (CheckSignatureEncoding(vch, SCRIPT_VERIFY_STRICTENC, nullptr))
                     {
-                        const unsigned char chSigHashType = vch.back();
-                        if (mapSigHashTypes.count(chSigHashType))
+                        const SigHashType sigHashType = GetSigHashType(vch);
+                        // We are just guessing that this is a signature so the sighashtype should also be valid
+                        // if it is
+                        if (!sigHashType.isInvalid())
                         {
-                            strSigHashDecode = "[" + mapSigHashTypes.find(chSigHashType)->second + "]";
-                            vch.pop_back(); // remove the sighash type byte. it will be replaced by the decode.
+                            strSigHashDecode = "[" + sigHashType.ToString() + "]";
+                            RemoveSigHashType(vch); // remove the sighash type byte. it will be replaced by the decode.
                         }
                     }
                     str += HexStr(vch) + strSigHashDecode;

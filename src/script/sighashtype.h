@@ -74,12 +74,14 @@ public:
     bool isInvalid() const { return (sigHash == (uint32_t)BaseSigHashType::UNSUPPORTED); }
 
     bool isBch() const { return (sigHash & SIGHASH_FORKID) != 0; }
+    bool isBtc() const { return (sigHash & SIGHASH_FORKID) == 0; }
 
     // In case of SIGHASH_ANYONECANPAY, only the input being signed is serialized
     bool hasAnyoneCanPay() const { return (sigHash & SIGHASH_ANYONECANPAY) != 0; }
 
     bool hasSingle() const { return ((sigHash & 0x1f) == SIGHASH_SINGLE) != 0; }
     bool hasNone() const { return ((sigHash & 0x1f) == SIGHASH_NONE) != 0; }
+    bool hasAll() const { return ((sigHash & 0x1f) == SIGHASH_ALL) != 0; }
 
     uint32_t getRawSigHashType() const { return sigHash; }
 
@@ -104,6 +106,8 @@ public:
         if flagStr is empty, or does not define a portion of the sighash, this object is unmodified in that portion.
         If the flagStr is incorrect, this object is set to in invalid sighash  */
     SigHashType &from(const std::string &flagStr);
+    /** Convert to a human readable representation of the sighash */
+    std::string ToString() const;
 
     template <typename Stream>
     void Serialize(Stream &s) const

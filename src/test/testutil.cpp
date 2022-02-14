@@ -243,3 +243,25 @@ CTransaction tx1x2(const CTransaction &prevtx,
 
     return tx;
 }
+
+CScript sign_multisig(const CScript scriptPubKey,
+    const std::vector<CKey> &keys,
+    const CMutableTransaction &transaction,
+    int whichIn,
+    uint32_t whichSigBitmap)
+{
+    uint256 hash = SignatureHash(scriptPubKey, transaction, whichIn, defaultSigHashType, 0);
+    assert(hash != SIGNATURE_HASH_ERROR);
+
+    CScript result;
+    result << whichSigBitmap; // indicate which key is being signed
+    for (const CKey &key : keys)
+    {
+        std::vector<uint8_t> vchSig;
+        bool ret = key.SignSchnorr(hash, vchSig);
+        assert(ret);
+        defaultSigHashType.appendToSig(vchSig);
+        result << vchSig;
+    }
+    return result;
+}

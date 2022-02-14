@@ -340,6 +340,29 @@ void RemoveSigHashType(std::vector<unsigned char> &vchSig)
     vchSig.resize(64); // Schnorr signatures are 64 bytes
 }
 
+/** Convert to a human readable representation of the sighash */
+std::string SigHashType::ToString() const
+{
+    if (isInvalid())
+        return std::string("UNSUPPORTED");
+    std::string ret;
+    if (hasSingle())
+        ret = "SINGLE";
+    else if (hasNone())
+        ret = "NONE";
+    else if (hasAll())
+        ret = "ALL";
+    else
+        return std::string("UNSUPPORTED");
+
+    if (isBch())
+        ret += "|FORKID";
+    if (hasAnyoneCanPay())
+        ret += "|ANYONECANPAY";
+    return ret;
+}
+
+
 SigHashType &SigHashType::from(const std::string &flagStr)
 {
     std::vector<std::string> strings;

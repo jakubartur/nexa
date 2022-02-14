@@ -60,7 +60,6 @@ void hashTx(DoubleSpendProof::Spender &spender, const CTransaction &tx, int inpu
     DbgAssert(!spender.pushData.empty(), return );
     DbgAssert(!spender.pushData.front().empty(), return );
     auto sigHashType = SigHashType(spender.pushData.front());
-    auto hashType = sigHashType.getRawSigHashType();
     if (!sigHashType.hasAnyoneCanPay())
     {
         spender.hashPrevOutputs = GetPrevoutHash(tx);

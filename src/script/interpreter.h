@@ -131,10 +131,6 @@ enum
     // to p2sh segwit addresses is not allowed.
     SCRIPT_DISALLOW_SEGWIT_RECOVERY = (1U << 20),
 
-    // Whether to allow new OP_CHECKMULTISIG logic to trigger. (new multisig
-    // logic verifies faster, and only allows Schnorr signatures)
-    SCRIPT_ENABLE_SCHNORR_MULTISIG = (1U << 21),
-
     // May2020: Require the number of sigchecks in an input to not exceed (the scriptSig length + 60) // 43
     SCRIPT_VERIFY_INPUT_SIGCHECKS = (1U << 22),
 
