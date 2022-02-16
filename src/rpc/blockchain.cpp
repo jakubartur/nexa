@@ -239,9 +239,9 @@ std::string EntryDescriptionString()
            "    \"height\" : n,           (numeric) block height when transaction entered pool\n"
            "    \"startingpriority\" : n, (numeric) priority when transaction entered pool\n"
            "    \"currentpriority\" : n,  (numeric) transaction priority now (including manual adjustments)\n"
-           "    \"ancestorcount\" : n,    (numeric) number of in-mempool ancestor transactions (including this one)\n"
-           "    \"ancestorsize\" : n,     (numeric) size of in-mempool ancestors (including this one)\n"
-           "    \"ancestorfees\" : n,     (numeric) modified fees (see above) of in-mempool ancestors (including this "
+           "    \"ancestorcount\" : n,    (numeric) number of in-txpool ancestor transactions (including this one)\n"
+           "    \"ancestorsize\" : n,     (numeric) size of in-txpool ancestors (including this one)\n"
+           "    \"ancestorfees\" : n,     (numeric) modified fees (see above) of in-txpool ancestors (including this "
            "one)\n"
            "    \"depends\" : [           (array) unconfirmed transactions used as inputs for this transaction\n"
            "        \"transactionid\",    (string) parent transaction idem\n"
@@ -340,11 +340,11 @@ UniValue orphanpoolToJSON()
     return a;
 }
 
-UniValue getrawmempool(const UniValue &params, bool fHelp)
+UniValue getrawtxpool(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() > 2)
         throw runtime_error(
-            "getrawmempool ( verbose ) (id or idem)\n"
+            "getrawtxpool ( verbose ) (id or idem)\n"
             "\nReturns all transaction ids in memory pool as a json array of string transaction ids.\n"
             "\nArguments:\n"
             "1. verbose           (boolean, optional, default=false) true for a json object, false for array of "
@@ -362,7 +362,7 @@ UniValue getrawmempool(const UniValue &params, bool fHelp)
             "  }, ...\n"
             "}\n"
             "\nExamples\n" +
-            HelpExampleCli("getrawmempool", "true") + HelpExampleRpc("getrawmempool", "true"));
+            HelpExampleCli("getrawtxpool", "true") + HelpExampleRpc("getrawtxpool", "true"));
 
     LOCK(cs_main);
 
@@ -383,11 +383,11 @@ UniValue getrawmempool(const UniValue &params, bool fHelp)
     return mempoolToJSON(fVerbose, idem);
 }
 
-UniValue getrawmempoolbyid(const UniValue &params, bool fHelp)
+UniValue getrawtxpoolbyid(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() > 1)
         throw runtime_error(
-            "getrawmempool ( verbose ) ( id or idem)\n"
+            "getrawtxpool ( verbose ) ( id or idem)\n"
             "\nReturns all transaction ids in memory pool as a json array of string transaction ids.\n"
             "\nArguments:\n"
             "1. verbose           (boolean, optional, default=false) true for a json object, false for array of "
@@ -405,7 +405,7 @@ UniValue getrawmempoolbyid(const UniValue &params, bool fHelp)
             "  }, ...\n"
             "}\n"
             "\nExamples\n" +
-            HelpExampleCli("getrawmempool", "true") + HelpExampleRpc("getrawmempool", "true"));
+            HelpExampleCli("getrawtxpool", "true") + HelpExampleRpc("getrawtxpool", "true"));
 
     LOCK(cs_main);
 
@@ -442,20 +442,20 @@ UniValue getraworphanpool(const UniValue &params, bool fHelp)
     return orphanpoolToJSON();
 }
 
-UniValue getmempoolancestors(const UniValue &params, bool fHelp)
+UniValue gettxpoolancestors(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
     {
         throw runtime_error(
-            "getmempoolancestors txid (verbose)\n"
-            "\nIf txid is in the mempool, returns all in-mempool ancestors.\n"
+            "gettxpoolancestors txid (verbose)\n"
+            "\nIf txid is in the txpool, returns all in-txpool ancestors.\n"
             "\nArguments:\n"
-            "1. \"txid\"                   (string, required) The transaction id (must be in mempool)\n"
+            "1. \"txid\"                   (string, required) The transaction id (must be in txpool)\n"
             "2. verbose                  (boolean, optional, default=false) true for a json object, false for array of "
             "transaction ids\n"
             "\nResult (for verbose=false):\n"
             "[                       (json array of strings)\n"
-            "  \"transactionid\"           (string) The transaction id of an in-mempool ancestor transaction\n"
+            "  \"transactionid\"           (string) The transaction id of an in-txpool ancestor transaction\n"
             "  ,...\n"
             "]\n"
             "\nResult (for verbose=true):\n"
@@ -465,7 +465,7 @@ UniValue getmempoolancestors(const UniValue &params, bool fHelp)
             "  }, ...\n"
             "}\n"
             "\nExamples\n" +
-            HelpExampleCli("getmempoolancestors", "\"mytxid\"") + HelpExampleRpc("getmempoolancestors", "\"mytxid\""));
+            HelpExampleCli("gettxpoolancestors", "\"mytxid\"") + HelpExampleRpc("gettxpoolancestors", "\"mytxid\""));
     }
 
     bool fVerbose = false;
@@ -479,7 +479,7 @@ UniValue getmempoolancestors(const UniValue &params, bool fHelp)
     CTxMemPool::TxIdIter it = mempool._getIdIter(paramhash);
     if (it == mempool.mapTx.end())
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in txpool");
     }
 
     CTxMemPool::setEntries setAncestors;
@@ -512,20 +512,20 @@ UniValue getmempoolancestors(const UniValue &params, bool fHelp)
     }
 }
 
-UniValue getmempooldescendants(const UniValue &params, bool fHelp)
+UniValue gettxpooldescendants(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() < 1 || params.size() > 2)
     {
         throw runtime_error(
-            "getmempooldescendants txid (verbose)\n"
-            "\nIf txid is in the mempool, returns all in-mempool descendants.\n"
+            "gettxpooldescendants txid (verbose)\n"
+            "\nIf txid is in the txpool, returns all in-txpool descendants.\n"
             "\nArguments:\n"
-            "1. \"txid\"                   (string, required) The transaction id (must be in mempool)\n"
+            "1. \"txid\"                   (string, required) The transaction id (must be in txpool)\n"
             "2. verbose                  (boolean, optional, default=false) true for a json object, false for array of "
             "transaction ids\n"
             "\nResult (for verbose=false):\n"
             "[                       (json array of strings)\n"
-            "  \"transactionid\"           (string) The transaction id of an in-mempool descendant transaction\n"
+            "  \"transactionid\"           (string) The transaction id of an in-txpool descendant transaction\n"
             "  ,...\n"
             "]\n"
             "\nResult (for verbose=true):\n"
@@ -535,8 +535,8 @@ UniValue getmempooldescendants(const UniValue &params, bool fHelp)
             "  }, ...\n"
             "}\n"
             "\nExamples\n" +
-            HelpExampleCli("getmempooldescendants", "\"mytxid\"") +
-            HelpExampleRpc("getmempooldescendants", "\"mytxid\""));
+            HelpExampleCli("gettxpooldescendants", "\"mytxid\"") +
+            HelpExampleRpc("gettxpooldescendants", "\"mytxid\""));
     }
 
     bool fVerbose = false;
@@ -550,7 +550,7 @@ UniValue getmempooldescendants(const UniValue &params, bool fHelp)
     CTxMemPool::TxIdIter it = mempool._getIdIter(paramhash);
     if (it == mempool.mapTx.end())
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in txpool");
     }
 
     CTxMemPool::setEntries setDescendants;
@@ -583,21 +583,21 @@ UniValue getmempooldescendants(const UniValue &params, bool fHelp)
     }
 }
 
-UniValue getmempoolentry(const UniValue &params, bool fHelp)
+UniValue gettxpoolentry(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() != 1)
     {
-        throw runtime_error("getmempoolentry txid\n"
-                            "\nReturns mempool data for given transaction\n"
+        throw runtime_error("gettxpoolentry txid\n"
+                            "\nReturns txpool data for given transaction\n"
                             "\nArguments:\n"
-                            "1. \"txid\"                   (string, required) The transaction id (must be in mempool)\n"
+                            "1. \"txid\"                   (string, required) The transaction id (must be in txpool)\n"
                             "\nResult:\n"
                             "{                           (json object)\n" +
                             EntryDescriptionString() +
                             "}\n"
                             "\nExamples\n" +
-                            HelpExampleCli("getmempoolentry", "\"mytxid\"") +
-                            HelpExampleRpc("getmempoolentry", "\"mytxid\""));
+                            HelpExampleCli("gettxpoolentry", "\"mytxid\"") +
+                            HelpExampleRpc("gettxpoolentry", "\"mytxid\""));
     }
 
     uint256 hash = ParseHashV(params[0], "parameter 1");
@@ -607,7 +607,7 @@ UniValue getmempoolentry(const UniValue &params, bool fHelp)
     CTxMemPool::TxIdIter it = mempool._getIdIter(hash);
     if (it == mempool.mapTx.end())
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in mempool");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Transaction not in txpool");
     }
 
     // Update the ancestor chain state if this transaction is part of
@@ -1022,7 +1022,7 @@ UniValue evicttransaction(const UniValue &params, bool fHelp)
     if (fHelp || params.size() < 1)
         throw runtime_error(
             "evicttransaction \"txid\"\n"
-            "\nRemove transaction from mempool.  Note that it could be re-added quickly if relayed by another node\n"
+            "\nRemove transaction from txpool.  Note that it could be re-added quickly if relayed by another node\n"
             "\nArguments:\n"
             "1. \"txid\"       (string, required) The transaction id\n"
             "\nResult:\n"
@@ -1038,12 +1038,12 @@ UniValue evicttransaction(const UniValue &params, bool fHelp)
 UniValue gettxout(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() < 2 || params.size() > 3)
-        throw runtime_error("gettxout \"txid\" n ( includemempool )\n"
+        throw runtime_error("gettxout \"txid\" n ( includetxpool )\n"
                             "\nReturns details about an unspent transaction output.\n"
                             "\nArguments:\n"
                             "1. \"txid\"       (string, required) The transaction id\n"
                             "2. n              (numeric, required) vout value\n"
-                            "3. includemempool  (boolean, optional) Whether to included the mem pool\n"
+                            "3. includetxpool  (boolean, optional) Whether to included the mem pool\n"
                             "\nResult:\n"
                             "{\n"
                             "  \"bestblock\" : \"hash\",    (string) the block hash\n"
@@ -1506,10 +1506,9 @@ UniValue mempoolInfoToJSON()
     ret.pushKV("size", (int64_t)mempool.size());
     ret.pushKV("bytes", (int64_t)mempool.GetTotalTxSize());
     ret.pushKV("usage", (int64_t)mempool.DynamicMemoryUsage());
-    size_t maxmempool = GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
-    ret.pushKV("maxmempool", (int64_t)maxmempool);
+    ret.pushKV("maxtxpool", (int64_t)maxTxPool.Value() * ONE_MEGABYTE);
     int64_t minfee = (int64_t)::minRelayTxFee.GetFeePerK();
-    ret.pushKV("mempoolminfee", ValueFromAmount(minfee));
+    ret.pushKV("txpoolminfee", ValueFromAmount(minfee));
     double smoothedTps = 0.0, instantaneousTps = 0.0, peakTps = 0.0;
     mempool.GetTransactionRateStatistics(smoothedTps, instantaneousTps, peakTps);
     try
@@ -1532,23 +1531,23 @@ UniValue mempoolInfoToJSON()
     return ret;
 }
 
-UniValue getmempoolinfo(const UniValue &params, bool fHelp)
+UniValue gettxpoolinfo(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
-        throw runtime_error("getmempoolinfo\n"
+        throw runtime_error("gettxpoolinfo\n"
                             "\nReturns details on the active state of the TX memory pool.\n"
                             "\nResult:\n"
                             "{\n"
                             "  \"size\": xxxxx,               (numeric) Current tx count\n"
                             "  \"bytes\": xxxxx,              (numeric) Sum of all tx sizes\n"
-                            "  \"usage\": xxxxx,              (numeric) Total memory usage for the mempool\n"
-                            "  \"maxmempool\": xxxxx,         (numeric) Maximum memory usage for the mempool\n"
-                            "  \"mempoolminfee\": xxxxx       (numeric) Minimum fee for tx to be accepted\n"
+                            "  \"usage\": xxxxx,              (numeric) Total memory usage for the transaction pool\n"
+                            "  \"maxtxpool\": xxxxx,          (numeric) Maximum memory usage for the transaction pool\n"
+                            "  \"txpoolminfee\": xxxxx        (numeric) Minimum fee for tx to be accepted\n"
                             "  \"tps\": xxxxx                 (numeric) Transactions per second accepted\n"
                             "  \"peak_tps\": xxxxx            (numeric) Peak Transactions per second accepted\n"
                             "}\n"
                             "\nExamples:\n" +
-                            HelpExampleCli("getmempoolinfo", "") + HelpExampleRpc("getmempoolinfo", ""));
+                            HelpExampleCli("gettxpoolinfo", "") + HelpExampleRpc("gettxpoolinfo", ""));
 
     return mempoolInfoToJSON();
 }
@@ -1728,7 +1727,7 @@ std::string RollBackChain(int nRollBackHeight, bool fOverride)
 
         CValidationState state;
         // Disconnect the tip and by setting the third param (fRollBack) to true we avoid having to resurrect
-        // the transactions from the block back into the mempool, which saves a great deal of time.
+        // the transactions from the block back into the txpool, which saves a great deal of time.
         if (!DisconnectTip(state, Params().GetConsensus(), true))
         {
             return "RPC_DATABASE_ERROR: " + state.GetRejectReason();
@@ -2273,19 +2272,19 @@ static UniValue getblockstats(const UniValue &params, bool fHelp)
     return ret;
 }
 
-UniValue savemempool(const UniValue &params, bool fHelp)
+UniValue savetxpool(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() != 0)
     {
-        throw std::runtime_error("savemempool\n"
-                                 "\nDumps the mempool to disk.\n"
+        throw std::runtime_error("savetxpool\n"
+                                 "\nDumps the txpool to disk.\n"
                                  "\nExamples:\n" +
-                                 HelpExampleCli("savemempool", "") + HelpExampleRpc("savemempool", ""));
+                                 HelpExampleCli("savetxpool", "") + HelpExampleRpc("savetxpool", ""));
     }
 
     if (!DumpMempool())
     {
-        throw JSONRPCError(RPC_MISC_ERROR, "Unable to dump mempool to disk");
+        throw JSONRPCError(RPC_MISC_ERROR, "Unable to dump txpool to disk");
     }
 
     return NullUniValue;
@@ -2640,18 +2639,18 @@ static const CRPCCommand commands[] = {
     {"blockchain", "getblockheader", &getblockheader, true},
     {"blockchain", "getchaintips", &getchaintips, true},
     {"blockchain", "getdifficulty", &getdifficulty, true},
-    {"blockchain", "getmempoolancestors", &getmempoolancestors, true},
-    {"blockchain", "getmempooldescendants", &getmempooldescendants, true},
-    {"blockchain", "getmempoolentry", &getmempoolentry, true},
-    {"blockchain", "getmempoolinfo", &getmempoolinfo, true},
+    {"blockchain", "gettxpoolancestors", &gettxpoolancestors, true},
+    {"blockchain", "gettxpooldescendants", &gettxpooldescendants, true},
+    {"blockchain", "gettxpoolentry", &gettxpoolentry, true},
+    {"blockchain", "gettxpoolinfo", &gettxpoolinfo, true},
     {"blockchain", "getorphanpoolinfo", &getorphanpoolinfo, true},
     {"blockchain", "evicttransaction", &evicttransaction, true},
-    {"blockchain", "getrawmempool", &getrawmempool, true},
-    {"blockchain", "getrawmempoolbyid", &getrawmempoolbyid, true},
+    {"blockchain", "getrawtxpool", &getrawtxpool, true},
+    {"blockchain", "getrawtxpoolbyid", &getrawtxpoolbyid, true},
     {"blockchain", "getraworphanpool", &getraworphanpool, true},
     {"blockchain", "gettxout", &gettxout, true},
     {"blockchain", "gettxoutsetinfo", &gettxoutsetinfo, true},
-    {"blockchain", "savemempool", &savemempool, true},
+    {"blockchain", "savetxpool", &savetxpool, true},
     {"blockchain", "saveorphanpool", &saveorphanpool, true},
     {"blockchain", "verifychain", &verifychain, true},
     {"blockchain", "getblockstats", &getblockstats, true},

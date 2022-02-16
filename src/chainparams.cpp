@@ -405,7 +405,7 @@ class CTestNetParams : public CChainParams
 public:
     CTestNetParams()
     {
-        strNetworkID = "test"; // Do not use the const string because of ctor execution order issues
+        strNetworkID = "testnet"; // Do not use the const string because of ctor execution order issues
 
         consensus.nSubsidyHalvingInterval = 210000 * 5; // 2 minute blocks rather than 10 min -> * 5
         uint32_t tgtBits = 0x200fffff;

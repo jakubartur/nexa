@@ -46,8 +46,8 @@ class MempoolSyncTest(BitcoinTestFramework):
         for i in range(10):
             self.nodes[0].sendtoaddress(addr, Decimal("10"))
 
-        waitFor(180, lambda: len(self.nodes[1].getrawmempool()) == 10)
-        waitFor(180, lambda: len(self.nodes[2].getrawmempool()) == 10)
+        waitFor(180, lambda: len(self.nodes[1].getrawtxpool()) == 10)
+        waitFor(180, lambda: len(self.nodes[2].getrawtxpool()) == 10)
 
 if __name__ == '__main__':
     MempoolSyncTest().main()

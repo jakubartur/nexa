@@ -350,10 +350,6 @@ CGroupTokenID MakeSubgroup(CGroupTokenID g, int xtra, int size = 0)
 
 BOOST_AUTO_TEST_CASE(grouptoken_covenantfunctions)
 {
-    // Have to enable the function to test it.
-    bool opgEnforcing = miningEnforceOpGroup.Value();
-    miningEnforceOpGroup = true;
-
     // Create a utxo set that I can run tests against
     CCoinsView coinsDummy;
     CCoinsViewCache coins(&coinsDummy);
@@ -527,17 +523,11 @@ BOOST_AUTO_TEST_CASE(grouptoken_covenantfunctions)
     t = tx3x1(cfgrp1Mint, cfutxo100, bch1, gp2pkh(cfgrp1, u2.addr, 0), 10000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
-
-    miningEnforceOpGroup = opgEnforcing;
 }
 
 
 BOOST_AUTO_TEST_CASE(grouptoken_fencefunctions)
 {
-    // Have to enable the function to test it.
-    bool opgEnforcing = miningEnforceOpGroup.Value();
-    miningEnforceOpGroup = true;
-
     // Create a utxo set that I can run tests against
     CCoinsView coinsDummy;
     CCoinsViewCache coins(&coinsDummy);
@@ -680,18 +670,11 @@ BOOST_AUTO_TEST_CASE(grouptoken_fencefunctions)
     t = tx2x2(fencedGrp2Bch, fencedBch2, gp2pkh(fgrp1, u1.addr, 20), 20, gp2pkh(fgrp2, u2.addr, 30), 30);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
-
-
-    miningEnforceOpGroup = opgEnforcing;
 }
 
 #ifdef ENABLE_WALLET
 BOOST_AUTO_TEST_CASE(grouptoken_basicfunctions)
 {
-    // Have to enable the function to test it.
-    bool opgEnforcing = miningEnforceOpGroup.Value();
-    miningEnforceOpGroup = true;
-
     CKey secret;
     CPubKey pubkey;
     CKeyID addr;
@@ -1301,7 +1284,6 @@ BOOST_AUTO_TEST_CASE(grouptoken_basicfunctions)
         ok = CheckGroupTokens(t, state, coins);
         BOOST_CHECK(!ok);
     }
-    miningEnforceOpGroup = opgEnforcing;
 }
 #endif
 
@@ -1344,10 +1326,6 @@ static bool tryMempool(const CTransaction &tx, CValidationState &state)
 #ifdef ENABLE_WALLET
 BOOST_FIXTURE_TEST_CASE(grouptoken_blockchain, TestChain100Setup)
 {
-    // Have to enable the function to test it.
-    bool opgEnforcing = miningEnforceOpGroup.Value();
-    miningEnforceOpGroup = true;
-
     // fPrintToConsole = true;
     // LogToggleCategory(Logging::ALL, true);
     CScript scriptPubKey = CScript() << ToByteVector(coinbaseKey.GetPubKey()) << OP_CHECKSIG;
@@ -1563,8 +1541,6 @@ BOOST_FIXTURE_TEST_CASE(grouptoken_blockchain, TestChain100Setup)
     ret = tryBlock(txns, p2pkh(a2.addr), tipblk, state);
     BOOST_CHECK(ret);
 #endif
-
-    miningEnforceOpGroup = opgEnforcing;
 }
 #endif
 

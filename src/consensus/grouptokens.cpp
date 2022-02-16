@@ -188,9 +188,6 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
             DbgAssert(!"Checking token group for spent coin", );
             return state.Invalid(false, REJECT_INVALID, "already-spent");
         }
-        // no prior coins can be grouped.
-        if (coin->nHeight < miningEnforceOpGroup.Value())
-            continue;
         const CScript &script = coin->out.scriptPubKey;
         CGroupTokenInfo tokenGrp(script);
         // The prevout should never be invalid because that would mean that this node accepted a block with an

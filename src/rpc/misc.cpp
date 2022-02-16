@@ -64,12 +64,10 @@ UniValue getinfo(const UniValue &params, bool fHelp)
             "  \"keypoolsize\": xxxx,        (numeric) how many new keys are pre-generated\n"
             "  \"unlocked_until\": ttt,      (numeric) the timestamp in seconds since epoch (midnight Jan 1 1970 GMT) "
             "that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
-            "  \"paytxfee\": x.xxxx,         (numeric) the transaction fee set in " +
-            CURRENCY_UNIT +
-            "/kB\n"
-            "  \"relayfee\": x.xxxx,         (numeric) minimum relay fee for non-free transactions in " +
-            CURRENCY_UNIT +
-            "/kB\n"
+            "  \"paytxfee\": xxxx,           (numeric) the transaction fee set in "
+            "sat/KB\n"
+            "  \"relayfee\": xxxx,           (numeric) minimum relay fee for non-free transactions in "
+            "sat/KB\n"
             "  \"status\":\"...\"            (string) long running operations are indicated here (rescan).\n"
             "  \"errors\": \"...\"           (string) any error messages\n"
             "  \"fork\": \"...\"             (string) \"Bitcoin Cash\" or \"Bitcoin\".  Will display as Bitcoin "
@@ -120,9 +118,9 @@ UniValue getinfo(const UniValue &params, bool fHelp)
     }
     if (pwalletMain && pwalletMain->IsCrypted())
         obj.pushKV("unlocked_until", nWalletUnlockTime);
-    obj.pushKV("paytxfee", ValueFromAmount(payTxFee.GetFeePerK()));
+    obj.pushKV("paytxfee", payTxFee.GetFeePerK());
 #endif
-    obj.pushKV("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK()));
+    obj.pushKV("relayfee", ::minRelayTxFee.GetFeePerK());
     obj.pushKV("status", statusStrings.GetPrintable());
     obj.pushKV("txindex", IsTxIndexReady() ? "synced" : "not ready");
     obj.pushKV("errors", GetWarnings("statusbar"));

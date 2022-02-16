@@ -80,7 +80,7 @@ class GroupTokensTest (BitcoinTestFramework):
 
         # mint 100 tokens for node 2
         tx = self.nodes[0].token("mint",sg1a, addr2, 100)
-        waitFor(30, lambda: tx in self.nodes[2].getrawmempool())  # If this fails, remember that there's a very rare chance that a tx won't propagate due to an inv bloom filter collision.
+        waitFor(30, lambda: tx in self.nodes[2].getrawtxpool())  # If this fails, remember that there's a very rare chance that a tx won't propagate due to an inv bloom filter collision.
         assert_equal(self.nodes[2].token("balance", sg1a), 100)
         assert_equal(self.nodes[2].token("balance", grp1), 0)
 
@@ -91,7 +91,7 @@ class GroupTokensTest (BitcoinTestFramework):
             pass
 
         tx = self.nodes[0].token("authority","create", sg1a, addr2, "MELT", "NOCHILD")
-        waitFor(30, lambda: tx in self.nodes[2].getrawmempool())  # If this fails, remember that there's a very rare chance that a tx won't propagate due to an inv bloom filter collision.
+        waitFor(30, lambda: tx in self.nodes[2].getrawtxpool())  # If this fails, remember that there's a very rare chance that a tx won't propagate due to an inv bloom filter collision.
         tx = self.nodes[2].token("melt",sg1a, 50)
 
         try: # gave a nonrenewable authority

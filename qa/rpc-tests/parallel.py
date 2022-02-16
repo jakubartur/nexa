@@ -19,10 +19,10 @@ class ParallelTest (BitcoinTestFramework):
 
     def setup_network(self, split=False):
         self.nodes = []
-        self.nodes.append(start_node(0, self.options.tmpdir, ["-parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
-        self.nodes.append(start_node(1, self.options.tmpdir, ["-parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
-        self.nodes.append(start_node(2, self.options.tmpdir, ["-parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
-        self.nodes.append(start_node(3, self.options.tmpdir, ["-parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
+        self.nodes.append(start_node(0, self.options.tmpdir, ["-test.parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
+        self.nodes.append(start_node(1, self.options.tmpdir, ["-test.parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
+        self.nodes.append(start_node(2, self.options.tmpdir, ["-test.parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
+        self.nodes.append(start_node(3, self.options.tmpdir, ["-test.parallel=0", "-rpcservertimeout=0", "-use-thinblocks=0"]))
         interconnect_nodes(self.nodes)
         self.is_network_split=False
         self.sync_all()
@@ -158,13 +158,13 @@ class ParallelTest (BitcoinTestFramework):
 
         # Wait here to make sure a re-org does not happen on node0 so we want to give it some time.  If the
         # memory pool on node 0 does not change within 5 seconds then we assume a reorg is not occurring
-        # because a reorg would cause transactions to be placed in the mempool from the old block on node 0.
-        old_mempoolbytes = self.nodes[0].getmempoolinfo()["bytes"]
+        # because a reorg would cause transactions to be placed in the txpool from the old block on node 0.
+        old_txpoolbytes = self.nodes[0].gettxpoolinfo()["bytes"]
         for i in range(5):
-            mempoolbytes = self.nodes[0].getmempoolinfo()["bytes"]
-            if old_mempoolbytes != mempoolbytes:
-                assert("Reorg happened when it should not - Mempoolbytes has changed")
-            old_mempoolbytes = mempoolbytes
+            txpoolbytes = self.nodes[0].gettxpoolinfo()["bytes"]
+            if old_txpoolbytes != txpoolbytes:
+                assert("Reorg happened when it should not - Txpoolbytes has changed")
+            old_txpoolbytes = txpoolbytes
             # node0 has the bigger block and was sent and began processing first, however the block from node2
             # should have come in after and beaten node0's block.  Therefore the blockhash from chaintip from
             # node2 should now match the blockhash from the chaintip on node1; and node0 and node1 should not match.
@@ -196,12 +196,12 @@ class ParallelTest (BitcoinTestFramework):
 
         # Wait here to make sure a re-org does not happen on node0 so we want to give it some time.  If the
         # memory pool on node 0 does not change within 5 seconds then we assume a reorg is not occurring
-        # because a reorg would cause transactions to be placed in the mempool from the old block on node 0.
+        # because a reorg would cause transactions to be placed in the txpool from the old block on node 0.
         for i in range(5):
-            mempoolbytes = self.nodes[0].getmempoolinfo()["bytes"]
-            if old_mempoolbytes != mempoolbytes:
-                assert("Reorg happened when it should not - Mempoolbytes has changed")
-            old_mempoolbytes = mempoolbytes
+            txpoolbytes = self.nodes[0].gettxpoolinfo()["bytes"]
+            if old_txpoolbytes != txpoolbytes:
+                assert("Reorg happened when it should not - Txpoolbytes has changed")
+            old_txpoolbytes = txpoolbytes
             print ("check for re-org " + str(i+1))
             assert_equal(self.nodes[1].getbestblockhash(), self.nodes[2].getbestblockhash())
             assert_not_equal(self.nodes[0].getbestblockhash(), self.nodes[1].getbestblockhash())

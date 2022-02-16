@@ -21,6 +21,8 @@ class CBlockFileInfo;
 class CBlockIndex;
 class uint256;
 
+extern CTweak<uint64_t> dbcacheTweak;
+
 static const bool DEFAULT_TXINDEX = false;
 
 //! The max allowed size of the in memory UTXO cache which can also be dynamically adjusted

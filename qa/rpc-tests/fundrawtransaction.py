@@ -371,7 +371,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         fundedTx = self.nodes[0].fundrawtransaction(rawTx)
         #create same transaction over sendtoaddress
         txId = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000.1)
-        signedFee = self.nodes[0].getrawmempool(True)[txId]['fee']
+        signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
         #compare fee
         feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
@@ -387,7 +387,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         fundedTx = self.nodes[0].fundrawtransaction(rawTx)
         #create same transaction over sendtoaddress
         txId = self.nodes[0].sendmany("", outputs)
-        signedFee = self.nodes[0].getrawmempool(True)[txId]['fee']
+        signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
         #compare fee
         feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
@@ -414,7 +414,7 @@ class RawTransactionsTest(BitcoinTestFramework):
 
         #create same transaction over sendtoaddress
         txId = self.nodes[0].sendtoaddress(mSigObj, 1000.1)
-        signedFee = self.nodes[0].getrawmempool(True)[txId]['fee']
+        signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
         #compare fee
         feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
@@ -448,7 +448,7 @@ class RawTransactionsTest(BitcoinTestFramework):
 
         #create same transaction over sendtoaddress
         txId = self.nodes[0].sendtoaddress(mSigObj, 1000.1)
-        signedFee = self.nodes[0].getrawmempool(True)[txId]['fee']
+        signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
         #compare fee
         feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
@@ -590,7 +590,7 @@ class RawTransactionsTest(BitcoinTestFramework):
 
         #create same transaction over sendtoaddress
         txId = self.nodes[1].sendmany("", outputs)
-        signedFee = self.nodes[1].getrawmempool(True)[txId]['fee']
+        signedFee = self.nodes[1].getrawtxpool(True)[txId]['fee']
 
         #compare fee
         feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)

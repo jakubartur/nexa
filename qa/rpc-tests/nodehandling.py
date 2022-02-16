@@ -115,10 +115,10 @@ class NodeHandlingTest (BitcoinTestFramework):
         # Node 3 is the one we will use to evict a connection. It is set to maxconnection=3 however
         # it will only allow 2 inbound connections because "1" outbound feeler connection is assumed
         # making the total connections possible equal to three.
-        self.node_args = [['-debug=net', '-maxconnections=1', '-maxoutconnections=1'],
-                          ['-debug=net', '-maxconnections=1', '-maxoutconnections=1'],
-                          ['-debug=net', '-maxconnections=1', '-maxoutconnections=1'],
-                          ['-debug=net', '-maxconnections=3', '-maxoutconnections=0', '-debug=evict']]
+        self.node_args = [['-debug=net', '-net.maxConnections=1', '-net.maxOutboundConnections=1'],
+                          ['-debug=net', '-net.maxConnections=1', '-net.maxOutboundConnections=1'],
+                          ['-debug=net', '-net.maxConnections=1', '-net.maxOutboundConnections=1'],
+                          ['-debug=net', '-net.maxConnections=3', '-net.maxOutboundConnections=0', '-debug=evict']]
         self.nodes = start_nodes(4, self.options.tmpdir, self.node_args)
         for node in self.nodes:
             node.clearbanned();

@@ -7,7 +7,7 @@ import test_framework.loginit
 #
 # Test spending coinbase transactions.
 # The coinbase transaction in block N can appear in block
-# N+100... so is valid in the mempool when the best block
+# N+100... so is valid in the txpool when the best block
 # height is N+99.
 # This test makes sure coinbase spends that will be mature
 # in the next block are accepted into the memory pool,
@@ -32,7 +32,7 @@ class MempoolSpendCoinbaseTest(BitcoinTestFramework):
         node0_address = self.nodes[0].getnewaddress()
         waitFor(30, lambda : self.nodes[0].getblockcount() == 200, "Restoration of cached blockchain failed")
 
-        # Coinbase at height chain_height-100+1 ok in mempool, should
+        # Coinbase at height chain_height-100+1 ok in txpool, should
         # get mined. Coinbase at height chain_height-100+2 is
         # is too immature to spend.
         b = [ self.nodes[0].getblockhash(n) for n in range(101, 103) ]
@@ -44,16 +44,16 @@ class MempoolSpendCoinbaseTest(BitcoinTestFramework):
         # coinbase at height 102 should be too immature to spend
         assert_raises(JSONRPCException, self.nodes[0].sendrawtransaction, spends_raw[1])
 
-        # mempool should have just spend_101:
-        assert_equal(self.nodes[0].getrawmempool(), [ spend_101_id ])
+        # txpool should have just spend_101:
+        assert_equal(self.nodes[0].getrawtxpool(), [ spend_101_id ])
 
         # mine a block, spend_101 should get confirmed
         self.nodes[0].generate(1)
-        assert_equal(set(self.nodes[0].getrawmempool()), set())
+        assert_equal(set(self.nodes[0].getrawtxpool()), set())
 
         # ... and now height 102 can be spent:
         spend_102_id = self.nodes[0].sendrawtransaction(spends_raw[1])
-        assert_equal(self.nodes[0].getrawmempool(), [ spend_102_id ])
+        assert_equal(self.nodes[0].getrawtxpool(), [ spend_102_id ])
 
 if __name__ == '__main__':
     MempoolSpendCoinbaseTest().main()

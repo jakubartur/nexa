@@ -1846,17 +1846,17 @@ static const uint64_t MEMPOOL_DUMP_VERSION = 1541030400;
 
 bool LoadMempool(void)
 {
-    int64_t nExpiryTimeout = GetArg("-mempoolexpiry", DEFAULT_MEMPOOL_EXPIRY) * 60 * 60;
-    FILE *fileMempool = fopen((GetDataDir() / "mempool.dat").string().c_str(), "rb");
-    if (!fileMempool)
+    int64_t nExpiryTimeout = txPoolExpiry.Value();
+    FILE *fileTxpool = fopen((GetDataDir() / "txpool.dat").string().c_str(), "rb");
+    if (!fileTxpool)
     {
-        LOGA("Failed to open mempool file from disk. Continuing anyway.\n");
+        LOGA("Failed to open txpool file from disk. Continuing anyway.\n");
         return false;
     }
-    CAutoFile file(fileMempool, SER_DISK, CLIENT_VERSION);
+    CAutoFile file(fileTxpool, SER_DISK, CLIENT_VERSION);
     if (file.IsNull())
     {
-        LOGA("Failed to open mempool file from disk. Continuing anyway.\n");
+        LOGA("Failed to open txpool file from disk. Continuing anyway.\n");
         return false;
     }
 
@@ -1914,11 +1914,11 @@ bool LoadMempool(void)
     }
     catch (const std::exception &e)
     {
-        LOGA("Failed to deserialize mempool data on disk: %s. Continuing anyway.\n", e.what());
+        LOGA("Failed to deserialize txpool data on disk: %s. Continuing anyway.\n", e.what());
         return false;
     }
 
-    LOGA("Imported mempool transactions from disk: %i successes, %i expired\n", count, skipped);
+    LOGA("Imported txpool transactions from disk: %i successes, %i expired\n", count, skipped);
     return true;
 }
 
@@ -1942,14 +1942,14 @@ bool DumpMempool(void)
 
     try
     {
-        FILE *fileMempool = fopen((GetDataDir() / "mempool.dat.new").string().c_str(), "wb");
-        if (!fileMempool)
+        FILE *fileTxpool = fopen((GetDataDir() / "txpool.dat.new").string().c_str(), "wb");
+        if (!fileTxpool)
         {
-            LOGA("Could not dump mempool, failed to open mempool file from disk. Continuing anyway.\n");
+            LOGA("Could not dump txpool, failed to open the txpool file from disk. Continuing anyway.\n");
             return false;
         }
 
-        CAutoFile file(fileMempool, SER_DISK, CLIENT_VERSION);
+        CAutoFile file(fileTxpool, SER_DISK, CLIENT_VERSION);
 
         uint64_t version = MEMPOOL_DUMP_VERSION;
         file << version;
@@ -1966,13 +1966,13 @@ bool DumpMempool(void)
         file << mapDeltas;
         FileCommit(file.Get());
         file.fclose();
-        RenameOver(GetDataDir() / "mempool.dat.new", GetDataDir() / "mempool.dat");
+        RenameOver(GetDataDir() / "txpool.dat.new", GetDataDir() / "txpool.dat");
         int64_t last = GetStopwatchMicros();
-        LOGA("Dumped mempool: %gs to copy, %gs to dump\n", (mid - start) * 0.000001, (last - mid) * 0.000001);
+        LOGA("Dumped txpool: %gs to copy, %gs to dump\n", (mid - start) * 0.000001, (last - mid) * 0.000001);
     }
     catch (const std::exception &e)
     {
-        LOGA("Failed to dump mempool: %s. Continuing anyway.\n", e.what());
+        LOGA("Failed to dump txpool: %s. Continuing anyway.\n", e.what());
         return false;
     }
     return true;

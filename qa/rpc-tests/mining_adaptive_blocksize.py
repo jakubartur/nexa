@@ -113,7 +113,7 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         assert_equal(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"], 100000)
         assert_equal(self.nodes[0].getblockcount(), 150)
 
-        # Test whether we can mining from a full mempool creates a block of less than the max adaptive size
+        # Test whether we can mining from a full txpool creates a block of less than the max adaptive size
         # next block size hasn't yet changed because the median has not changed beyond the default value.
         logging.info("Test max adaptive block size not exceeded")
         self.MineBlock(self.nodes[0], 100000, 10, 11000)
@@ -314,9 +314,9 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         assert_greater_than(max_block_sigops - coinbase_sigop_padding, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["ins"])
         assert_greater_than(nextblocksize, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
 
-        # Clear out the mempool by mining several blocks
+        # Clear out the txpool by mining several blocks
         self.nodes[0].generate(5)
-        assert_equal(0, self.nodes[0].getmempoolinfo()['size'])
+        assert_equal(0, self.nodes[0].gettxpoolinfo()['size'])
         self.sync_all()
 
         # Test that we can not bypass the mining code by submitting a block to a node which is beyond the sigop limit.

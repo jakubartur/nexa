@@ -584,7 +584,7 @@ class MyTest (BitcoinTestFramework):
             # Only the node which had txns sent to its wallet should have its txns reaccepted.
             stop_nodes(self.nodes)
             wait_bitcoinds()
-            self.nodes = start_nodes(4, self.options.tmpdir, [["-minlimitertxfee=10.0", "-limitfreerelay=0", "-persistmempool=0"], ["-minlimitertxfee=1.0", "-limitfreerelay=0", "-persistmempool=0"], ["-minlimitertxfee=2.0", "-limitfreerelay=0", "-persistmempool=0"], ["-minlimitertxfee=3.0", "-limitfreerelay=0", "-persistmempool=0"]])
+            self.nodes = start_nodes(4, self.options.tmpdir, [["-minlimitertxfee=10.0", "-limitfreerelay=0", "-cache.persistTxPool=0"], ["-minlimitertxfee=1.0", "-limitfreerelay=0", "-cache.persistTxPool=0"], ["-minlimitertxfee=2.0", "-limitfreerelay=0", "-cache.persistTxPool=0"], ["-minlimitertxfee=3.0", "-limitfreerelay=0", "-cache.persistTxPool=0"]])
             interconnect_nodes(self.nodes)
             waitFor(30, lambda: self.nodes[0].getmempoolinfo()["size"] == 100)
             waitFor(30, lambda: self.nodes[0].getmempoolinfo()["bytes"] > 20000)

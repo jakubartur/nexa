@@ -5,7 +5,7 @@
 """
 This tests the CHECKMULTISIG mode that uses Schnorr transaction signatures
 and repurposes the dummy element to indicate which signatures are being checked.
-- acceptance both in mempool and blocks.
+- acceptance both in txpool and blocks.
 - check non-banning for peers who send invalid txns that would have been valid
 on the other side of the upgrade.
 - check banning of peers for some fully-invalid transactions.
@@ -215,16 +215,16 @@ class SchnorrMultisigTest(BitcoinTestFramework):
         logging.info(
             "Submitting a Schnorr-multisig via net, and mining it in a block")
         self.p2p.send_txs_and_test([schnorr1tx], node)
-        waitFor(10, lambda: set(node.getrawmempool()) == {uint256ToRpcHex(schnorr1tx.GetIdem())})
+        waitFor(10, lambda: set(node.getrawtxpool()) == {uint256ToRpcHex(schnorr1tx.GetIdem())})
         tip = self.build_block(tip, [schnorr1tx])
         self.p2p.send_blocks_and_test([tip], node)
-        waitFor(10, lambda: node.getrawmempool() == [])
+        waitFor(10, lambda: node.getrawtxpool() == [])
 
-        # This should no longer work since ECDSA is not allowed in the mempool
-        logging.info("Try to send a legacy ECDSA multisig into mempool.")
+        # This should no longer work since ECDSA is not allowed in the txpool
+        logging.info("Try to send a legacy ECDSA multisig into txpool.")
         self.p2p.send_message(msg_tx(ecdsa0tx))
         self.p2p.send_message(msg_tx(ecdsa1tx))
-        assert_equal(node.getmempoolinfo()["size"], 0)
+        assert_equal(node.gettxpoolinfo()["size"], 0)
 
 
 if __name__ == '__main__':

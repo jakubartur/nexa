@@ -1093,8 +1093,7 @@ bool CheckInputs(const CTransactionRef &tx,
             }
         }
 
-        if (((unsigned int)chainActive.Tip()->height() >= enforceOpGroupStartHeight) &&
-            !CheckGroupTokens(*tx, state, inputs))
+        if (!CheckGroupTokens(*tx, state, inputs))
         {
             return state.DoS(0, false, REJECT_MALFORMED, "token-group-imbalance", false,
                 strprintf("Token group inputs and outputs do not balance"));
@@ -1545,8 +1544,7 @@ bool InvalidateBlock(CValidationState &state, const Consensus::Params &consensus
         }
     }
 
-    LimitMempoolSize(mempool, GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000,
-        GetArg("-mempoolexpiry", DEFAULT_MEMPOOL_EXPIRY) * 60 * 60);
+    LimitMempoolSize(mempool, maxTxPool.Value() * ONE_MEGABYTE, txPoolExpiry.Value() * 60 * 60);
 
     // The resulting new best tip may not be in setBlockIndexCandidates anymore, so
     // add it again.
@@ -3367,8 +3365,7 @@ bool ActivateBestChainStep(CValidationState &state,
 
     if (fBlocksDisconnected)
     {
-        LimitMempoolSize(mempool, GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000,
-            GetArg("-mempoolexpiry", DEFAULT_MEMPOOL_EXPIRY) * 60 * 60);
+        LimitMempoolSize(mempool, maxTxPool.Value() * ONE_MEGABYTE, txPoolExpiry.Value() * 60 * 60);
     }
     mempool.check(pcoinsTip);
 

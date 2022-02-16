@@ -16,11 +16,6 @@ class CCoinsViewCache;
 /** Transaction cannot be committed on my fork */
 static const unsigned int REJECT_GROUP_IMBALANCE = 0x104;
 
-/** What block height to start enforcing groups */
-extern uint32_t enforceOpGroupStartHeight;
-/** If true, the fork will set enforceOpGroupStartHeight to the fork height */
-extern bool miningForkOpGroup;
-
 enum class GroupTokenIdFlags : uint16_t
 {
     NONE = 0,

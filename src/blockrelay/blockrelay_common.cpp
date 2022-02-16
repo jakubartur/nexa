@@ -9,7 +9,10 @@
 #include "random.h"
 #include "requestManager.h"
 #include "sync.h"
+#include "tweak.h"
 #include "util.h"
+
+extern CTweak<unsigned int> blkRetryInterval;
 
 // When a node disconnects it may not be removed from the peer tracking sets immediately and so the size
 // of those sets could temporarily rise above the maxiumum number of connections.  This padding prevents
@@ -322,8 +325,8 @@ void ThinTypeRelay::CheckForDownloadTimeout(CNode *pfrom)
         {
             // Use a timeout of 6 times the retry inverval before disconnecting.  This way only a max of 6
             // re-requested thinblocks or graphene blocks could be in memory at any one time.
-            if (!entry.fReceived &&
-                (GetTime() - entry.nRequestTime) > (int)MAX_THINTYPE_BLOCKS_IN_FLIGHT * blkReqRetryInterval / 1000000)
+            if (!entry.fReceived && (GetTime() - entry.nRequestTime) >
+                                        (int)MAX_THINTYPE_BLOCKS_IN_FLIGHT * blkRetryInterval.Value() / 1000000)
             {
                 if (!pfrom->fWhitelisted && Params().NetworkIDString() != "regtest")
                 {

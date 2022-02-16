@@ -39,7 +39,7 @@ static constexpr unsigned int MAX_TX_IN_SCRIPT_SIG_SIZE = 1650;
 static const unsigned int MAX_P2SH_SIGOPS = 15;
 /** The maximum number of sigops we're willing to relay/mine in a single tx */
 static const unsigned int MAX_STANDARD_TX_SIGOPS = MAX_TX_SIGOPS_COUNT / 5;
-/** Default for -maxmempool, maximum megabytes of mempool memory usage */
+/** Default for -cache.maxMemPool, maximum megabytes of mempool memory usage */
 static const unsigned int DEFAULT_MAX_MEMPOOL_SIZE = 300;
 /** Dust threshold in satoshis. Historically this value was calculated as
  *  minRelayTxFee/1000 * 546. However now we just allow the operator to set

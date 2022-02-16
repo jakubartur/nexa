@@ -123,7 +123,7 @@ UniValue generateBlocks(boost::shared_ptr<CReserveScript> coinbaseScript,
     {
         std::unique_ptr<CBlockTemplate> pblocktemplate;
         {
-            TxAdmissionPause lock; // flush any tx waiting to enter the mempool
+            TxAdmissionPause lock; // flush any tx waiting to enter the txpool
             pblocktemplate = BlockAssembler(Params()).CreateNewBlock(coinbaseScript->reserveScript);
         }
         if (!pblocktemplate.get())
@@ -686,7 +686,7 @@ UniValue mkblocktemplate(const UniValue &params,
     // 2. Cached block points to a different chaintip.
     // 3. Is testnet and 30 seconds have elapsed (so we pick up the testnet
     //    minimum difficulty -> 1.0 after 20 mins).
-    // 4. Mempool has changed and 5 seconds has elapsed.
+    // 4. Txpool has changed and 5 seconds has elapsed.
     // 5. Passed-in coinbaseSize differs from cached.
     // 6. Passed-in coinbaseScript differs from cached.
     if (pindexPrev != chainActive.Tip() || forceTemplateRecalc || // 1 & 2 above

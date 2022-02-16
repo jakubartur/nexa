@@ -405,7 +405,7 @@ CMempoolSyncInfo GetMempoolSyncInfo()
     }
 
     uint64_t nTxInMempool = mempool.size() + orphanpool.GetOrphanPoolSize() + nCommitQ;
-    uint64_t nMempoolMaxTxBytes = GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
+    uint64_t nMempoolMaxTxBytes = maxTxPool.Value() * ONE_MEGABYTE;
     uint64_t nSatoshiPerK = minRelayTxFee.GetFeePerK();
 
     // Form SipHash keys

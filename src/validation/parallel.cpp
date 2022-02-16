@@ -26,6 +26,8 @@
 
 #include <boost/thread/thread.hpp>
 
+extern CTweak<bool> parallelTweak;
+
 using namespace std;
 
 // see at doc/bu-parallel-validation.md to get the details
@@ -328,7 +330,7 @@ void CParallelValidation::WaitForAllValidationThreadsToStop()
     }
 }
 
-bool CParallelValidation::Enabled() { return GetBoolArg("-parallel", true); }
+bool CParallelValidation::Enabled() { return parallelTweak.Value(); }
 void CParallelValidation::InitThread(const boost::thread::id this_id,
     const CNode *pfrom,
     ConstCBlockRef pblock,

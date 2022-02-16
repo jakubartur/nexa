@@ -159,10 +159,10 @@ UniValue getrawtransaction(const UniValue &params, bool fHelp)
         throw std::runtime_error(
             "getrawtransaction \"tx id or idem\" ( verbose \"blockhash\" )\n"
 
-            "\nNOTE: By default this function only works for mempool or orphanpool transactions. If the -txindex "
+            "\nNOTE: By default this function only works for txpool or orphanpool transactions. If the -txindex "
             "option is enabled, it also works for blockchain transactions. If the block which contains the "
             "transaction is known, its hash can be provided even for nodes without -txindex. Note that if a blockhash "
-            "is provided, only that block will be searched and if the transaction is in the mempool or other\n"
+            "is provided, only that block will be searched and if the transaction is in the txpool or other\n"
             "blocks, or if this node does not have the given block available, the transaction will not be found.\n"
             "DEPRECATED: for now, it also works for transactions with unspent outputs.\n"
 
@@ -277,7 +277,7 @@ UniValue getrawtransaction(const UniValue &params, bool fHelp)
         }
         else if (!fTxIndex)
         {
-            errmsg = "No such mempool transaction. Use -txindex to enable blockchain transaction queries";
+            errmsg = "No such txpool transaction. Use -txindex to enable blockchain transaction queries";
         }
         else if (fTxIndex && !IsTxIndexReady())
         {
@@ -285,7 +285,7 @@ UniValue getrawtransaction(const UniValue &params, bool fHelp)
         }
         else
         {
-            errmsg = "No such mempool or blockchain transaction";
+            errmsg = "No such txpool or blockchain transaction";
         }
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, errmsg + ". Use gettransaction for wallet transactions.");
     }
@@ -298,7 +298,7 @@ UniValue getrawtransaction(const UniValue &params, bool fHelp)
     UniValue result(UniValue::VOBJ);
     if (blockindex)
         result.pushKV("in_active_chain", in_active_chain);
-    result.pushKV("in_mempool", fInMemPool);
+    result.pushKV("in_txpool", fInMemPool);
     result.pushKV("in_orphanpool", fInOrphanPool);
 
     TxToJSON(*tx, txTime, hash_block, result);
@@ -709,7 +709,7 @@ UniValue gettxoutproof(const UniValue &params, bool fHelp)
             std::string errmsg;
             if (!fTxIndex)
             {
-                errmsg = "No such mempool transaction. Use -txindex to enable blockchain transaction queries";
+                errmsg = "No such txpool transaction. Use -txindex to enable blockchain transaction queries";
             }
             else if (fTxIndex && !IsTxIndexReady())
                 errmsg = "Transaction index is still syncing...try again later";
@@ -1243,7 +1243,7 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
         READLOCK(mempool.cs_txmempool);
         CCoinsViewCache &viewChain = *pcoinsTip;
         CCoinsViewMemPool viewMempool(&viewChain, mempool);
-        view.SetBackend(viewMempool); // temporarily switch cache backend to db+mempool view
+        view.SetBackend(viewMempool); // temporarily switch cache backend to db+txpool view
 
         {
             WRITELOCK(view.cs_utxo);
@@ -1255,7 +1255,7 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
             }
         }
 
-        view.SetBackend(viewDummy); // switch back to avoid locking mempool for too long
+        view.SetBackend(viewDummy); // switch back to avoid locking txpool for too long
     }
 
     bool fGivenKeys = false;
@@ -1657,7 +1657,7 @@ UniValue validaterawtransaction(const UniValue &params, bool fHelp)
             "       \"feeneeded\" : value,   (numeric) The amount of fee needed for the transactio in satoshi\n"
             "    },"
             "  \"errors\" : [                 (json array) Script verification errors (if there are any)\n"
-            "      \"reason\",           (string) A reason the tx would be rejected by the mempool\n"
+            "      \"reason\",           (string) A reason the tx would be rejected by the txpool\n"
             "        ...\n"
             "    ],\n"
             "  \"input_flags\" : {\n"

@@ -46,19 +46,14 @@ using namespace std;
 extern CTweak<unsigned int> maxBlocksInTransitPerPeer;
 extern CTweak<unsigned int> blockDownloadWindow;
 extern CTweak<unsigned int> blockLookAheadInterval;
+extern CTweak<unsigned int> blkRetryInterval;
+extern CTweak<unsigned int> txRetryInterval;
 
 // Request management
 extern CRequestManager requester;
 
 // Any ping < 25 ms is good
 unsigned int ACCEPTABLE_PING_USEC = 25 * 1000;
-
-// When should I request an object from someone else (in microseconds)
-unsigned int MIN_TX_REQUEST_RETRY_INTERVAL = DEFAULT_MIN_TX_REQUEST_RETRY_INTERVAL;
-unsigned int txReqRetryInterval = MIN_TX_REQUEST_RETRY_INTERVAL;
-// When should I request a block from someone else (in microseconds)
-unsigned int MIN_BLK_REQUEST_RETRY_INTERVAL = DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL;
-unsigned int blkReqRetryInterval = MIN_BLK_REQUEST_RETRY_INTERVAL;
 
 // defined in main.cpp.  should be moved into a utilities file but want to make rebasing easier
 extern bool CanDirectFetch(const Consensus::Params &consensusParams);
@@ -662,8 +657,8 @@ void CRequestManager::SendRequests()
 
     // Modify retry interval. If we're doing IBD or if Traffic Shaping is ON we want to have a longer interval because
     // those blocks and txns can take much longer to download.
-    unsigned int _blkReqRetryInterval = MIN_BLK_REQUEST_RETRY_INTERVAL;
-    unsigned int _txReqRetryInterval = MIN_TX_REQUEST_RETRY_INTERVAL;
+    unsigned int _blkReqRetryInterval = blkRetryInterval.Value();
+    unsigned int _txReqRetryInterval = txRetryInterval.Value();
     if (IsTrafficShapingEnabled())
     {
         _blkReqRetryInterval *= 6;

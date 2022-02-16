@@ -192,8 +192,8 @@ class OpReversebytesActivationTest(BitcoinTestFramework):
         # Send OP_REVERSEBYTES tx
         self.p2p.send_txs_and_test([tx_reversebytes_spend], node)
 
-        # Verify OP_REVERSEBYTES tx is in mempool
-        waitFor(10, lambda: set(node.getrawmempool()) == {tx_reversebytes_spend.GetRpcHexIdem()})
+        # Verify OP_REVERSEBYTES tx is in txpool
+        waitFor(10, lambda: set(node.getrawtxpool()) == {tx_reversebytes_spend.GetRpcHexIdem()})
 
         # Mine OP_REVERSEBYTES tx into block
         tip = self.build_block(tip, [tx_reversebytes_spend])

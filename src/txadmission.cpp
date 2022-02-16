@@ -27,6 +27,7 @@
 #include "utiltime.h"
 #include "validation/validation.h"
 #include "validationinterface.h"
+#include "wallet/wallet.h"
 #include <map>
 #include <string>
 #include <vector>
@@ -239,8 +240,7 @@ void ThreadCommitToMempool()
             {
                 CommitTxToMempool();
                 LOG(MEMPOOL, "MemoryPool sz %u txn, %u kB\n", mempool.size(), mempool.DynamicMemoryUsage() / 1000);
-                LimitMempoolSize(mempool, GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000,
-                    GetArg("-mempoolexpiry", DEFAULT_MEMPOOL_EXPIRY) * 60 * 60);
+                LimitMempoolSize(mempool, maxTxPool.Value() * ONE_MEGABYTE, txPoolExpiry.Value() * 60 * 60);
 
                 CValidationState state;
                 FlushStateToDisk(state, FLUSH_STATE_PERIODIC);
@@ -483,11 +483,9 @@ void ThreadTxAdmission()
                             orphanpool.AddOrphanTx(tx, txd.nodeId);
 
                             // DoS prevention: do not allow mapOrphanTransactions to grow unbounded
-                            static const unsigned int nMaxOrphanTx = (unsigned int)std::max(
-                                (int64_t)0, GetArg("-maxorphantx", DEFAULT_MAX_ORPHAN_TRANSACTIONS));
-                            static const uint64_t nMaxOrphanPoolSize = (uint64_t)std::max(
-                                (int64_t)0, (GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000 / 10));
-                            unsigned int nEvicted = orphanpool.LimitOrphanTxSize(nMaxOrphanTx, nMaxOrphanPoolSize);
+                            const uint64_t nMaxOrphanPoolSize = maxTxPool.Value() * ONE_MEGABYTE / 10;
+                            unsigned int nEvicted =
+                                orphanpool.LimitOrphanTxSize(maxOrphanPool.Value(), nMaxOrphanPoolSize);
                             if (nEvicted > 0)
                                 LOG(MEMPOOL, "mapOrphan overflow, removed %u tx\n", nEvicted);
                         }
@@ -605,8 +603,7 @@ bool AcceptToMemoryPool(CTxMemPool &pool,
     if (res)
     {
         RelayTransaction(tx);
-        LimitMempoolSize(mempool, GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000,
-            GetArg("-mempoolexpiry", DEFAULT_MEMPOOL_EXPIRY) * 60 * 60);
+        LimitMempoolSize(mempool, maxTxPool.Value() * ONE_MEGABYTE, txPoolExpiry.Value() * 60 * 60);
     }
     return res;
 }
@@ -1041,7 +1038,7 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
         // We calculate the recommended fee by looking at what's in the mempool.  This starts at 0 though for an
         // empty mempool.  So set the minimum "absurd" fee to 10000 satoshies per byte.  If for some reason fees rise
         // above that, you can specify up to 100x what other txns are paying in the mempool
-        if (fRejectAbsurdFee && nFees > std::max((int64_t)100L * nSize, maxTxFee.Value()) * 100)
+        if (fRejectAbsurdFee && nFees > std::max((int64_t)100L * nSize, maxTxFeeTweak.Value()) * 100)
         {
             if (debugger)
             {
@@ -1051,7 +1048,7 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
             else
             {
                 return state.Invalid(false, REJECT_HIGHFEE, "absurdly-high-fee",
-                    strprintf("%d > %d", nFees, std::max((int64_t)100L * nSize, maxTxFee.Value()) * 100));
+                    strprintf("%d > %d", nFees, std::max((int64_t)100L * nSize, maxTxFeeTweak.Value()) * 100));
             }
         }
 

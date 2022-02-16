@@ -18,7 +18,7 @@ class MempoolLimitTest(BitcoinTestFramework):
     def setup_network(self):
         self.nodes = []
         self.nodes.append(start_node(0, self.options.tmpdir,
-        ["-maxmempool=5",
+        ["-cache.maxTxPool=5",
          "-spendzeroconfchange=0",
          "-relay.minRelayTxFee=2000"]))
         self.is_network_split = False
@@ -34,32 +34,32 @@ class MempoolLimitTest(BitcoinTestFramework):
         txids = []
         utxos = create_confirmed_utxos(self.relayfee, node, 33*12)
 
-        # create a lot of txns up to but not exceeding the maxmempool
+        # create a lot of txns up to but not exceeding the maxtxpool
         relayfee = node.getnetworkinfo()['relayfee']
         base_fee = relayfee*10
         for i in range (2):
             txids.append([])
             txids[i] = create_lots_of_big_transactions(node, self.txouts, utxos[33*i:33*i+33], 33, decimal.Decimal(i)/COIN+base_fee)
-            print(str(node.getmempoolinfo()))
+            print(str(node.gettxpoolinfo()))
 
-        num_txns_in_mempool = node.getmempoolinfo()["size"]
+        num_txns_in_txpool = node.gettxpoolinfo()["size"]
 
-        # create another txn that will exceed the maxmempool which should evict some random transaction.
-        all_txns = node.getrawmempool()
+        # create another txn that will exceed the maxtxpool which should evict some random transaction.
+        all_txns = node.getrawtxpool()
 
         tries = 0
         i = 2
         while tries < 10:
             new_txn = create_lots_of_big_transactions(node, self.txouts, utxos[33*i:33*i+33], 1, (i+1)*base_fee/10 + Decimal(0.1*tries))[0] # Adding tries to the fee changes the transaction (we are reusing the prev UTXOs)
-            assert(node.getmempoolinfo()["usage"] < node.getmempoolinfo()["maxmempool"])
+            assert(node.gettxpoolinfo()["usage"] < node.gettxpoolinfo()["maxtxpool"])
 
-            # make sure the mempool count did not change
-            waitFor(10, lambda: num_txns_in_mempool == node.getmempoolinfo()["size"])
+            # make sure the txpool count did not change
+            waitFor(10, lambda: num_txns_in_txpool == node.gettxpoolinfo()["size"])
 
-            # make sure new tx is in the mempool, but since the mempool has a random eviction policy,
+            # make sure new tx is in the txpool, but since the txpool has a random eviction policy,
             # this tx could be the one that was evicted.  So retry 10 times to make failures it VERY unlikely
             # we have a spurious failure due to ejecting the tx we just added.
-            if new_txn[0] in node.getrawmempool():
+            if new_txn[0] in node.getrawtxpool():
                 break
             tries+=1
             i+=1

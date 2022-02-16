@@ -88,7 +88,7 @@ TestingSetup::TestingSetup(const std::string &chainName) : BasicTestingSetup(cha
     // us to accidentally use up our RAM on Travis, and also so that we are not prevented from flushing the
     // dbcache if the need arises in the unit tests (dbcache must be less than the DEFAULT_HIGH_PERF_MEM_CUTOFF
     // to allow all cache entries to be flushed).
-    SoftSetArg("-dbcache", std::to_string(5));
+    dbcacheTweak.Set(5);
     nCoinCacheMaxSize.store(5000000);
 
     // Make sure there are 3 script check threads running for each queue

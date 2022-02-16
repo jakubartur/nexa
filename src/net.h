@@ -90,8 +90,6 @@ static const unsigned int DEFAULT_MAX_PEER_CONNECTIONS = 125;
 static const unsigned int DEFAULT_MAX_OUTBOUND_CONNECTIONS = 16;
 /** Limits number of IPs learned from a DNS seed */
 static const unsigned int MAX_DNS_SEEDED_IPS = 256;
-/** BU: The minimum number of xthin nodes to connect */
-static const uint8_t MIN_XTHIN_NODES = 8;
 /** BU: The daily maximum disconnects while searching for xthin nodes to connect */
 static const unsigned int MAX_DISCONNECTS = 200;
 /** The default for -maxuploadtarget. 0 = Unlimited */
@@ -205,8 +203,6 @@ extern CAddrMan addrman;
 
 /** Maximum number of connections to simultaneously allow (aka connection slots) */
 extern int nMaxConnections;
-/** The minimum number of xthin nodes to connect to */
-extern int nMinXthinNodes;
 
 extern std::vector<CNode *> vNodes;
 extern CCriticalSection cs_vNodes;

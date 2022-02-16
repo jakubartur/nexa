@@ -248,7 +248,7 @@ void Shutdown()
 
     StopTorControl();
     UnregisterNodeSignals(GetNodeSignals());
-    if (fDumpMempoolLater && GetArg("-persistmempool", DEFAULT_PERSIST_MEMPOOL))
+    if (fDumpMempoolLater && persistTxPool.Value())
     {
         DumpMempool();
         orphanpool.DumpOrphanPool();
@@ -586,7 +586,7 @@ void ThreadImport(std::vector<fs::path> vImportFiles, uint64_t nTxIndexCache)
         return;
 
     // Load the mempool if necessary
-    if (GetArg("-persistmempool", DEFAULT_PERSIST_MEMPOOL))
+    if (persistTxPool.Value())
     {
         uiInterface.InitMessage(_("Loading Mempool"));
         LoadMempool();
@@ -952,8 +952,7 @@ bool AppInit2(Config &config)
 
     // Make sure enough file descriptors are available
     int nBind = std::max((int)mapArgs.count("-bind") + (int)mapArgs.count("-whitebind"), 1);
-    int nUserMaxConnections = GetArg("-maxconnections", DEFAULT_MAX_PEER_CONNECTIONS);
-    nMaxConnections = std::max(nUserMaxConnections, 0);
+    int nUserMaxConnections = nMaxConnections;
 
     // Trim requested connection counts, to fit into system limitations
     int nFD = RaiseFileDescriptorLimit(nMaxConnections + MIN_CORE_FILEDESCRIPTORS + nBind);
@@ -967,19 +966,6 @@ bool AppInit2(Config &config)
                                 "or winsocket fd_set limitations (windows). If you are a windows user there is a hard "
                                 "upper limit of 1024 which cannot be changed by adjusting the node's configuration."),
             nUserMaxConnections, nMaxConnections));
-
-
-    // make outbound conns modifiable by the user
-    int nUserMaxOutConnections = GetArg("-maxoutconnections", DEFAULT_MAX_OUTBOUND_CONNECTIONS);
-    nMaxOutConnections = std::max(nUserMaxOutConnections, 0);
-    if (nMaxConnections < nMaxOutConnections)
-    {
-        LOGA(
-            "Reducing -maxoutconnections from %d to %d, because this value is higher than max available connections.\n",
-            nUserMaxOutConnections, nMaxConnections);
-        nMaxOutConnections = nMaxConnections;
-    }
-
 
     // ********************************************************* Step 3: parameter-to-internal-flags
 
@@ -1003,10 +989,10 @@ bool AppInit2(Config &config)
     dosMan.HandleCommandLine();
 
     // mempool limits
-    int64_t nMempoolSizeMax = GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
+    int64_t nMempoolSizeMax = maxTxPool.Value() * ONE_MEGABYTE;
     int64_t nMempoolSizeMin = 1 << 22;
     if (nMempoolSizeMax < 0 || nMempoolSizeMax < nMempoolSizeMin)
-        return InitError(strprintf(_("-maxmempool must be at least %d MB"), std::ceil(nMempoolSizeMin / 1000000.0)));
+        return InitError(strprintf(_("-maxtxpool must be at least %d MB"), std::ceil(nMempoolSizeMin / 1000000.0)));
 
     fServer = GetBoolArg("-server", false);
 

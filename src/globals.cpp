@@ -51,6 +51,7 @@
 #include "validationinterface.h"
 #include "version.h"
 #include "versionbits.h"
+#include "wallet/wallet.h"
 
 #include <atomic>
 #include <boost/lexical_cast.hpp>
@@ -62,9 +63,6 @@
 #include <thread>
 
 using namespace std;
-
-uint32_t enforceOpGroupStartHeight = 0;
-bool miningForkOpGroup = false;
 
 #ifdef DEBUG_LOCKORDER
 std::atomic<bool> lockdataDestructed{false};
@@ -325,19 +323,12 @@ CTweak<uint64_t> miningPrioritySize("mining.prioritySize",
         DEFAULT_BLOCK_PRIORITY_SIZE),
     DEFAULT_BLOCK_PRIORITY_SIZE);
 
+// Not used but kept as a temnplate
 CTweakRef<uint64_t> miningForkTime("consensus.forkMay2021Time",
     "Time in seconds since the epoch to initiate the Bitcoin Cash protocol upgraded scheduled on 15th May 2021.  A "
     "setting of 1 will turn on the fork at the appropriate time.",
     &nMiningForkTime,
     &ForkTimeValidator); // Saturday May 15 12:00:00 UTC 2022
-
-CTweakRef<uint32_t> miningEnforceOpGroup("mining.opgroup",
-    "Enable enforcement of the OP_GROUP opcode at this block height",
-    &enforceOpGroupStartHeight);
-
-CTweakRef<bool> miningForkOpGroupTweak("mining.forkOpgroup",
-    "Enable enforcement of the OP_GROUP opcode at the fork point",
-    &miningForkOpGroup);
 
 CTweak<uint64_t> maxScriptOps("test.maxScriptOps",
     strprintf("Maximum number of script operations allowed.  Stack pushes are excepted.  Use for testing only! "
@@ -351,6 +342,8 @@ CTweak<uint64_t> maxSigChecks("test.maxBlockSigChecks",
         " this override is turned off.  Use for testing only! (default: %ld)",
         0),
     0);
+
+CTweak<bool> parallelTweak("test.parallel", "Turn Parallel Block Validation on or off (default: true)", true);
 
 CTweak<bool> unsafeGetBlockTemplate("mining.unsafeGetBlockTemplate",
     "Allow getblocktemplate to succeed even if the chain tip is old or this node is not connected to other nodes "
@@ -368,26 +361,21 @@ CTweakRef<int> maxOutConnectionsTweak("net.maxOutboundConnections",
 CTweakRef<int> maxConnectionsTweak("net.maxConnections",
     strprintf("Maximum number of connections (default: %d)", nMaxConnections),
     &nMaxConnections);
-CTweakRef<int> minXthinNodesTweak("net.minXthinNodes",
-    strprintf("Minimum number of outbound xthin capable nodes to connect to (default: %d)", nMinXthinNodes),
-    &nMinXthinNodes);
-// When should I request a tx from someone else (in microseconds). cmdline/bitcoin.conf: -txretryinterval
-CTweakRef<unsigned int> triTweak("net.txRetryInterval",
+CTweak<unsigned int> txRetryInterval("net.txRetryInterval",
     strprintf("How long to wait in microseconds before requesting a transaction from another source (default: %d)",
-        MIN_TX_REQUEST_RETRY_INTERVAL),
-    &MIN_TX_REQUEST_RETRY_INTERVAL);
-// When should I request a block from someone else (in microseconds). cmdline/bitcoin.conf: -blkretryinterval
-CTweakRef<unsigned int> briTweak("net.blockRetryInterval",
+        DEFAULT_MIN_TX_REQUEST_RETRY_INTERVAL),
+    DEFAULT_MIN_TX_REQUEST_RETRY_INTERVAL);
+CTweak<unsigned int> blkRetryInterval("net.blockRetryInterval",
     strprintf("How long to wait in microseconds before requesting a block from another source (default: %d)",
-        MIN_BLK_REQUEST_RETRY_INTERVAL),
-    &MIN_BLK_REQUEST_RETRY_INTERVAL);
+        DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL),
+    DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL);
 
 CTweak<unsigned int> blockLookAheadInterval("test.blockLookAheadInterval",
     strprintf(
         "How long to wait in microseconds before requesting a block from another source when we currently downloading "
         "the block from another peer (default: %d)",
-        MIN_BLK_REQUEST_RETRY_INTERVAL),
-    MIN_BLK_REQUEST_RETRY_INTERVAL);
+        DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL),
+    DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL);
 
 CTweak<uint64_t> maxAllowedNetMessage("test.maxAllowedNetMessage",
     strprintf("What is the maximum allowed net message size in bytes (zero means use adaptive setting, default: %d)",
@@ -419,28 +407,7 @@ CTweak<bool> allowp2pTxVal("net.allowp2pTxVal",
         "allow requests to check if a transaction would be accepted into the mempool via p2p message (default: false)"),
     false);
 
-CTweak<bool> useBIP69("wallet.useBIP69",
-    strprintf("sort input and outputs of created transactions in lexicographical order (default: true)"),
-    true);
-
-CTweak<CAmount> maxTxFee("wallet.maxTxFee",
-    strprintf("Maximum total fees to use in a single wallet transaction or raw transaction; setting this too low may "
-              "abort large transactions (default: %d)",
-        DEFAULT_TRANSACTION_MAXFEE),
-    DEFAULT_TRANSACTION_MAXFEE);
-
-/** Number of blocks that can be requested at any given time from a single peer. */
-CTweak<uint64_t> maxBlocksInTransitPerPeer("net.maxBlocksInTransitPerPeer",
-    "Number of blocks that can be requested at any given time from a single peer. 0 means use algorithm (default: 0)",
-    0);
-/** Size of the "block download window": how far ahead of our current height do we fetch?
- *  Larger windows tolerate larger download speed differences between peer, but increase the potential
- *  degree of disordering of blocks on disk (which make reindexing and in the future perhaps pruning
- *  harder). We'll probably want to make this a per-peer adaptive value at some point. */
-CTweak<unsigned int> blockDownloadWindow("net.blockDownloadWindow",
-    "How far ahead of our current height do we fetch? 0 means use algorithm (default: 0)",
-    0);
-
+#ifdef ENABLE_WALLET
 /** If transactions overpay by less than this amount in Satoshis, the extra will be put in the fee rather than a
     change address.  Zero means calculate this dynamically as a fraction of the current transaction fee
     (recommended). */
@@ -467,6 +434,51 @@ CTweak<unsigned int> preferredNumUTXO("wallet.preferredNumUTXO",
     "How many UTXOs should be maintained in this wallet (on average).  If the number of UTXOs exceeds this value, "
     "transactions will be found that tend to have more inputs.  This will consolidate UTXOs (default: 5000)",
     5000);
+
+CTweak<bool> useBIP69("wallet.useBIP69",
+    strprintf("sort input and outputs of created transactions in lexicographical order (default: true)"),
+    true);
+
+/** The maximum fee that can be applied to any one transaction */
+CTweak<CAmount> maxTxFeeTweak("wallet.maxTxFee",
+    strprintf("Maximum total fees (in satoshis) to use in a single wallet transaction or raw transaction; setting "
+              "this too low may abort large transactions (default: %d)",
+        DEFAULT_TRANSACTION_MAXFEE),
+    DEFAULT_TRANSACTION_MAXFEE);
+
+/** Analogous to the minRelayTxFee, the minTxFee is the fee cutoff for what is considered a free transaction in the
+ * wallet */
+CTweak<CAmount> minTxFeeTweak("wallet.minTxFee",
+    strprintf("Fees (in sat/KB) smaller than this are considered zero fee for transaction creation (default: %s)",
+        DEFAULT_TRANSACTION_MINFEE),
+    DEFAULT_TRANSACTION_MINFEE);
+
+
+/** A fee rate (in sat/kB) that will be used when fee estimation has insufficient data */
+CTweak<CAmount> fallbackFeeTweak("wallet.fallbackFee",
+    strprintf("A fee rate (in sat/KB) that will be used when fee estimation has insufficient data (default: %s)",
+        DEFAULT_FALLBACK_FEE),
+    DEFAULT_FALLBACK_FEE);
+
+// A fee you add to every transaction */
+CTweak<CAmount> payTxFeeTweak("wallet.payTxFee",
+    strprintf("Fee (in sat/KB) to add to transactions you send (default: %s)", DEFAULT_TRANSACTION_FEE),
+    DEFAULT_TRANSACTION_FEE);
+
+#endif // ENABLE_WALLET
+
+/** Number of blocks that can be requested at any given time from a single peer. */
+CTweak<uint64_t> maxBlocksInTransitPerPeer("net.maxBlocksInTransitPerPeer",
+    "Number of blocks that can be requested at any given time from a single peer. 0 means use algorithm (default: 0)",
+    0);
+/** Size of the "block download window": how far ahead of our current height do we fetch?
+ *  Larger windows tolerate larger download speed differences between peer, but increase the potential
+ *  degree of disordering of blocks on disk (which make reindexing and in the future perhaps pruning
+ *  harder). We'll probably want to make this a per-peer adaptive value at some point. */
+CTweak<unsigned int> blockDownloadWindow("net.blockDownloadWindow",
+    "How far ahead of our current height do we fetch? 0 means use algorithm (default: 0)",
+    0);
+
 
 /** This setting specifies the minimum supported Graphene version (inclusive).
  *  The actual version used will be negotiated between sender and receiver.
@@ -560,6 +572,47 @@ CTweak<uint64_t> checkScriptDays("blockchain.checkScriptDays",
 CTweak<int> maxReorgDepth("blockchain.maxReorgDepth",
     strprintf("After how many new blocks do we consider a block final(default: %ld)", DEFAULT_MAX_REORG_DEPTH),
     DEFAULT_MAX_REORG_DEPTH);
+
+/** How large in MB do we allow in the transaction pool to get */
+CTweak<uint32_t> maxTxPool("cache.maxTxPool",
+    strprintf("Keep the transaction memory pool below <n> megabytes (default: %u)", DEFAULT_MAX_MEMPOOL_SIZE),
+    DEFAULT_MAX_MEMPOOL_SIZE);
+
+/** What is the maximum time, in hours, we keep transactions in the memory pool */
+CTweak<uint32_t> txPoolExpiry("cache.txPoolExpiry",
+    strprintf("Do not keep transactions in the mempool longer than <n> hours (default: %u)", DEFAULT_MEMPOOL_EXPIRY),
+    DEFAULT_MEMPOOL_EXPIRY);
+
+/** How many transactions do we allow in the orphan pool */
+CTweak<uint32_t> maxOrphanPool("cache.maxOrphanPool",
+    strprintf("Keep at most <n> unconnectable transactions (orphans) in memory (default: %u)",
+        DEFAULT_MAX_ORPHAN_TRANSACTIONS),
+    DEFAULT_MAX_ORPHAN_TRANSACTIONS);
+
+/** What is the maximum time, in hours, we keep unconnected transactions in the orphan pool */
+CTweak<uint32_t> orphanPoolExpiry("cache.orphanPoolExpiry",
+    strprintf("Do not keep transactions in the orphanpool longer than <n> hours (default: %u)",
+        DEFAULT_ORPHANPOOL_EXPIRY),
+    DEFAULT_ORPHANPOOL_EXPIRY);
+
+/** Are we going to save the mempool and orphanpool to disk on shutdown and load them on restart */
+CTweak<bool> persistTxPool("cache.persistTxPool",
+    strprintf("Whether to save the mempool and orphanpool on shutdown and load them on restart (default: %u)",
+        DEFAULT_PERSIST_MEMPOOL),
+    DEFAULT_PERSIST_MEMPOOL);
+
+/** What is the maximum time, in hours, we keep unconnected transactions in the orphan pool */
+// This tweak is initially set to zero by default, even through the default value is acutally nDefaultDbCache.
+// The reason for this is that the automatic dbcache sizing function needs to know whether the user actually
+// set a dbcache setting in the config file or not as evidenced by a non-zero value.  If there was no
+// configuration set by the operator then in DiscoverCacheConfiguration() the correct cache size value will be returned
+// using the auto sizing alogorithm, otherwise the user defined value will be used instead.
+CTweak<uint64_t> dbcacheTweak("cache.dbcache",
+    strprintf("Set database cache size in megabytes (%d to %d, default: %d). Zero means auto-size the cache.",
+        nMinDbCache,
+        nMaxDbCache,
+        0),
+    0);
 
 /** Dust Threshold (in satoshis) defines the minimum quantity an output may contain for the
     transaction to be considered standard, and therefore relayable.

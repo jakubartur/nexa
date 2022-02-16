@@ -51,7 +51,7 @@ class WalletTest (BitcoinTestFramework):
         initialize_chain_clean(self.options.tmpdir, 4, bitcoinConfDict, wallets)
 
     def setup_network(self, split=False):
-        self.node_args = [['-usehd=0', '-maxtxfee=100'], ['-usehd=0', '-maxtxfee=100'], ['-usehd=0', '-maxtxfee=100']]
+        self.node_args = [['-usehd=0', '-wallet.maxTxFee=10000'], ['-usehd=0', '-wallet.maxTxFee=10000'], ['-usehd=0', '-wallet.maxTxFee=10000']]
         self.nodes = start_nodes(3, self.options.tmpdir, self.node_args)
         connect_nodes_full(self.nodes)
         self.is_network_split=False
@@ -193,7 +193,7 @@ class WalletTest (BitcoinTestFramework):
         # Test ResendWalletTransactions:
         # Create a couple of transactions, then start up a fourth
         # node (nodes[3]) and ask nodes[0] to rebroadcast.
-        # EXPECT: nodes[3] should have those transactions in its mempool.
+        # EXPECT: nodes[3] should have those transactions in its txpool.
         txid1 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000000)
         txid2 = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(), 1000000)
         sync_mempools(self.nodes)
@@ -206,7 +206,7 @@ class WalletTest (BitcoinTestFramework):
         assert_equal(set(relayed), {txid1, txid2})
         sync_mempools(self.nodes)
 
-        assert(txid1 in self.nodes[3].getrawmempool())
+        assert(txid1 in self.nodes[3].getrawtxpool())
 
         # Exercise balance rpcs
         assert_equal(self.nodes[0].getwalletinfo()["unconfirmed_balance"], 1000000)
