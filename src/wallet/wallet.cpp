@@ -57,7 +57,7 @@ const char *DEFAULT_WALLET_DAT = "wallet.dat";
 
 /**
  * Fees smaller than this (in satoshi) are considered zero fee (for transaction creation)
- * Override with -mintxfee
+ * Override with -wallet.minTxFee
  */
 CFeeRate CWallet::minTxFee = CFeeRate(DEFAULT_TRANSACTION_MINFEE);
 /**
@@ -960,9 +960,9 @@ bool CWallet::AddToWallet(CWalletTxRef wtx, bool fFromLoadWallet, CWalletDB *pwa
         bool fUpdated = false;
         if (!fInsertedNew) // Merge
         {
-            // When the tx is accepted by the mempool, it will be added to the wallet but any account info is stripped
+            // When the tx is accepted by the txpool, it will be added to the wallet but any account info is stripped
             // since accounts are not part of the base CTransaction.  This addition races against the wallet adding
-            // the transaction (with account info) itself.  If the mempool path wins, we may need to update the tx with
+            // the transaction (with account info) itself.  If the txpool path wins, we may need to update the tx with
             // account info.
             fUpdated = wtx->Update(*wtxIn);
         }
@@ -1110,7 +1110,7 @@ bool CWallet::AbandonTransaction(const uint256 &hashTx)
         return false;
     }
 
-    // Remove this tx from the mempool before it is abandoned by the wallet.
+    // Remove this tx from the txpool before it is abandoned by the wallet.
     // But there is no guarantee that other nodes don't still hold this transaction, so it could still be committed
     mempool.Remove(origtx->GetId());
 
@@ -1129,7 +1129,7 @@ bool CWallet::AbandonTransaction(const uint256 &hashTx)
         // if (currentconfirm < 0) {Tx and spends are already conflicted, no need to abandon}
         if (currentconfirm == 0 && !wtx->isAbandoned())
         {
-            // If the orig tx was not in block/mempool, none of its spends can be in mempool
+            // If the orig tx was not in block/txpool, none of its spends can be in txpool
             assert(!wtx->InMempool());
             wtx->nIndex = -1;
             wtx->setAbandoned(); // Since all outputs in mapWallet point to the same object this will set all outputs
@@ -1802,7 +1802,7 @@ int CWallet::ScanForWalletTransactions(CBlockIndex *pindexStart, bool fUpdate)
 
 void CWallet::ReacceptWalletTransactions()
 {
-    // If transactions aren't being broadcasted, don't let them into local mempool either
+    // If transactions aren't being broadcasted, don't let them into local txpool either
     if (!fBroadcastTransactions)
         return;
     std::map<int64_t, CTransactionRef> mapSorted;
@@ -2055,11 +2055,11 @@ bool CWalletTx::IsTrusted() const
     if (!bSpendZeroConfChange || !IsFromMe(ISMINE_ALL)) // using wtx's cached debit
         return false;
 
-    // Don't trust unconfirmed transactions from us unless they are in the mempool.
+    // Don't trust unconfirmed transactions from us unless they are in the txpool.
     if (!InMempool())
         return false;
 
-    // Trusted if all inputs are from us and are in the mempool:
+    // Trusted if all inputs are from us and are in the txpool:
     for (const CTxIn &txin : vin)
     {
         // Transactions not sent by us: not trusted
@@ -2282,7 +2282,7 @@ unsigned int CWallet::FilterCoins(vector<COutput> &vCoins, std::function<bool(co
             if (depth < 0)
                 continue;
 
-            // We should not consider coins which aren't at least in our mempool
+            // We should not consider coins which aren't at least in our txpool
             // It's possible for these to be conflicted via ancestors which we may never be able to detect
             if (depth == 0 && !wtx->InMempool())
                 continue;
@@ -2375,7 +2375,7 @@ void CWallet::AvailableCoins(vector<COutput> &vCoins,
             if (depth < 0)
                 continue;
 
-            // We should not consider coins which aren't at least in our mempool
+            // We should not consider coins which aren't at least in our txpool
             // It's possible for these to be conflicted via ancestors which we may never be able to detect
             if (depth == 0 && !wtx->InMempool())
                 continue;
@@ -2583,7 +2583,7 @@ bool CWallet::IsTxSpendable(const CWalletTxRef pcoin) const
     if (nDepth < 0)
         return false;
 
-    // We should not consider coins which aren't in our mempool if they are not mined.
+    // We should not consider coins which aren't in our txpool if they are not mined.
     // It's possible for such coins to be conflicted via ancestors which we may never be able to detect
     if (nDepth == 0 && !pcoin->InMempool())
         return false;
@@ -2659,7 +2659,7 @@ bool CWallet::SelectCoins(const CAmount &nTargetValue,
         // are not in the list)
         if ((coinControl->HasSelected() || coinControl->fAllowWatchOnly || available.size() < 100))
         { // this "if" statement skips case where coincontrol is only used to supply a change address
-            // flush the txns waiting to enter the mempool so we can respend them
+            // flush the txns waiting to enter the txpool so we can respend them
             CommitTxToMempool();
             AvailableCoins(customAvailable, fOnlyConfirmed, coinControl);
             possibleCoins = &customAvailable; // Override what coins we can select from
@@ -2669,7 +2669,7 @@ bool CWallet::SelectCoins(const CAmount &nTargetValue,
     else if (available.size() < 100) // If there are very few TXOs, then regenerate them.  If the wallet HAS few TXOs
     // then regenerate every time -- its fast for few.
     {
-        // flush the txns waiting to enter the mempool so we can respend them
+        // flush the txns waiting to enter the txpool so we can respend them
         CommitTxToMempool();
         FillAvailableCoins(coinControl);
         filled = true;
@@ -2686,7 +2686,7 @@ bool CWallet::SelectCoins(const CAmount &nTargetValue,
     if ((!filled) && (g.first == 0)) // Ok no solution was found.  So let's regenerate the TXOs and try again.
     {
         LOG(SELECTCOINS, "Flush all pending tx and reload available coins\n");
-        // flush the txns waiting to enter the mempool so we can respend them
+        // flush the txns waiting to enter the txpool so we can respend them
         CommitTxToMempool();
         // now get all tx
         FillAvailableCoins(coinControl);
@@ -2889,7 +2889,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
     // Discourage fee sniping.
     //
     // For a large miner the value of the transactions in the best block and
-    // the mempool can exceed the cost of deliberately attempting to mine two
+    // the txpool can exceed the cost of deliberately attempting to mine two
     // blocks to orphan the current best block. By setting nLockTime such that
     // only the next block can include the transaction, we discourage this
     // practice as the height restricted and limited blocksize gives miners
@@ -3025,7 +3025,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                         // The coin age after the next block (depth+1) is used instead of the current,
                         // reflecting an assumption the user would accept a bit more delay for
                         // a chance at a free transaction.
-                        // But mempool inputs might still be in the mempool, so their age stays 0
+                        // But txpool inputs might still be in the txpool, so their age stays 0
                         int age = coin.tx->GetDepthInMainChain();
                         assert(age >= 0);
                         if (age != 0)
@@ -3238,11 +3238,11 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                     }
 
 
-                    if (nFeeNeeded > maxTxFee.Value())
+                    if (nFeeNeeded > maxTxFeeTweak.Value())
                     {
                         strFailReason = strprintf(_("Fee: %ld is larger than configured maximum allowed fee of "
                                                     ": %ld.  To change, set 'wallet.maxTxFee'."),
-                            nFeeNeeded, maxTxFee.Value());
+                            nFeeNeeded, maxTxFeeTweak.Value());
                         return false;
                     }
 
@@ -3294,7 +3294,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
 bool CWallet::CommitTransaction(CWalletTx &wtxNew, CReserveKey &reservekey)
 {
     /** When the wallet is parallelized, this will higher performing, however right now its a wash.
-        Enqueuing like this will not provide feedback if the the mempool doesn't accept the tx.
+        Enqueuing like this will not provide feedback if the the txpool doesn't accept the tx.
         And for RPC calls, you must FlushTxAdmission before returning
     CTxInputData d;
     d.tx = MakeTransactionRef(wtxNew);
@@ -3326,7 +3326,7 @@ bool CWallet::CommitTransaction(CWalletTx &wtxNew, CReserveKey &reservekey)
             EnqueueTxForAdmission(d);
 
             /* Handled below in fBroadcastTransactions
-            // wait for the tx to enter the mempool because wallet txes are traditionally synchronous
+            // wait for the tx to enter the txpool because wallet txes are traditionally synchronous
             bool inMempool = false;
             while(!shutdown_threads.load() && !inMempool)
             {
@@ -3335,7 +3335,7 @@ bool CWallet::CommitTransaction(CWalletTx &wtxNew, CReserveKey &reservekey)
                 if (mempool.exists(wtxNew.GetHash())) inMempool = true;
                 else
                 {
-                    // If its gone from the admission system, and not in the mempool return false.
+                    // If its gone from the admission system, and not in the txpool return false.
                     // This would mean that somehow the tx was valid during the parallelAccept, but now is not
                     // which could happen only in a doublespend race condition.
                     // Really, apps MUST look not at this return value but the blockchain to ensure committed,
@@ -3436,7 +3436,7 @@ CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarge
     if (nFeeNeeded == 0)
     {
         nFeeNeeded = pool.estimateFee(nConfirmTarget).GetFee(nTxBytes);
-        // ... unless we don't have enough mempool data for estimatefee, then use fallbackFee
+        // ... unless we don't have enough txpool data for estimatefee, then use fallbackFee
         if (nFeeNeeded == 0)
             nFeeNeeded = fallbackFee.GetFee(nTxBytes);
     }
@@ -3444,8 +3444,8 @@ CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarge
     // prevent user from paying a fee below minRelayTxFee or minTxFee
     nFeeNeeded = std::max(nFeeNeeded, GetRequiredFee(nTxBytes));
     // But always obey the maximum
-    if (nFeeNeeded > maxTxFee.Value())
-        nFeeNeeded = maxTxFee.Value();
+    if (nFeeNeeded > maxTxFeeTweak.Value())
+        nFeeNeeded = maxTxFeeTweak.Value();
     return nFeeNeeded;
 }
 
@@ -4333,52 +4333,41 @@ bool CWallet::InitLoadWallet()
 
 bool CWallet::ParameterInteraction()
 {
-    if (mapArgs.count("-mintxfee"))
+    // minTxFee
+    CWallet::minTxFee = CFeeRate(minTxFeeTweak.Value());
+
+    // fallbackFee
+    if (fallbackFeeTweak.Value() > HIGH_TX_FEE_PER_KB)
+        InitWarning(
+            _("-wallet.fallbackFee is set very high! This is the transaction fee you may pay when fee estimates "
+              "are not available."));
+    CWallet::fallbackFee = CFeeRate(fallbackFeeTweak.Value());
+
+    // payTxFee
+    if (payTxFeeTweak.Value() > 0)
     {
-        CAmount n = 0;
-        if (ParseMoney(mapArgs["-mintxfee"], n) && n > 0)
-            CWallet::minTxFee = CFeeRate(n);
-        else
-            return InitError(AmountErrMsg("mintxfee", mapArgs["-mintxfee"]));
-    }
-    if (mapArgs.count("-fallbackfee"))
-    {
-        CAmount nFeePerK = 0;
-        if (!ParseMoney(mapArgs["-fallbackfee"], nFeePerK))
-            return InitError(strprintf(_("Invalid amount for -fallbackfee=<amount>: '%s'"), mapArgs["-fallbackfee"]));
-        if (nFeePerK > HIGH_TX_FEE_PER_KB)
-            InitWarning(_("-fallbackfee is set very high! This is the transaction fee you may pay when fee estimates "
-                          "are not available."));
-        CWallet::fallbackFee = CFeeRate(nFeePerK);
-    }
-    if (mapArgs.count("-paytxfee"))
-    {
-        CAmount nFeePerK = 0;
-        if (!ParseMoney(mapArgs["-paytxfee"], nFeePerK))
-            return InitError(AmountErrMsg("paytxfee", mapArgs["-paytxfee"]));
-        if (nFeePerK > HIGH_TX_FEE_PER_KB)
-            InitWarning(
-                _("-paytxfee is set very high! This is the transaction fee you will pay if you send a transaction."));
-        payTxFee = CFeeRate(nFeePerK, 1000);
+        if (payTxFeeTweak.Value() > HIGH_TX_FEE_PER_KB)
+            InitWarning(_("-wallet.payTxFee is set very high! This is the transaction fee you will pay if you send a "
+                          "transaction."));
+        payTxFee = CFeeRate(payTxFeeTweak.Value(), 1000);
         if (payTxFee < ::minRelayTxFee)
         {
-            return InitError(strprintf(_("Invalid amount for -paytxfee=<amount>: '%s' (must be at least %s)"),
-                mapArgs["-paytxfee"], ::minRelayTxFee.ToString()));
+            return InitError(strprintf(_("Invalid amount for -wallet.payTxFee=<amount>: '%u' (must be at least %s)"),
+                payTxFeeTweak.Value(), ::minRelayTxFee.ToString()));
         }
     }
-    if (mapArgs.count("-maxtxfee"))
+
+    // maxTxFee
     {
-        CAmount nMaxFee = 0;
-        if (!ParseMoney(mapArgs["-maxtxfee"], nMaxFee))
-            return InitError(AmountErrMsg("maxtxfee", mapArgs["-maxtxfee"]));
+        CAmount nMaxFee = maxTxFeeTweak.Value();
         if (nMaxFee > HIGH_MAX_TX_FEE)
-            InitWarning(_("-maxtxfee is set very high! Fees this large could be paid on a single transaction."));
-        maxTxFee.Set(nMaxFee);
-        if (CFeeRate(maxTxFee.Value(), 1000) < ::minRelayTxFee)
+            InitWarning(_("-wallet.maxTxFee is set very high! Fees this large could be paid on a single transaction."));
+        if (CFeeRate(maxTxFeeTweak.Value(), 1000) < ::minRelayTxFee)
         {
-            return InitError(strprintf(_("Invalid amount for -maxtxfee=<amount>: '%s' (must be at least the minrelay "
-                                         "fee of %s to prevent stuck transactions)"),
-                mapArgs["-maxtxfee"], ::minRelayTxFee.ToString()));
+            return InitError(
+                strprintf(_("Invalid amount for -wallet.maxTxFee=<amount>: '%u' (must be at least the minrelay "
+                            "fee of %s to prevent stuck transactions)"),
+                    maxTxFeeTweak.Value(), ::minRelayTxFee.ToString()));
         }
     }
     nTxConfirmTarget = GetArg("-txconfirmtarget", DEFAULT_TX_CONFIRM_TARGET);

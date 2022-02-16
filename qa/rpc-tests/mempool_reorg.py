@@ -5,7 +5,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 import test_framework.loginit
 #
-# Test re-org scenarios with a mempool that contains transactions
+# Test re-org scenarios with a txpool that contains transactions
 # that spend (directly or indirectly) coinbase transactions.
 #
 
@@ -43,10 +43,10 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
 
         # Three scenarios for re-orging coinbase spends in the memory pool:
         # 1. Direct coinbase spend  :  spend_101
-        # 2. Indirect (coinbase spend in chain, child in mempool) : spend_102 and spend_102_1
+        # 2. Indirect (coinbase spend in chain, child in txpool) : spend_102 and spend_102_1
         # 3. Indirect (coinbase and child both in chain) : spend_103 and spend_103_1
         # Use invalidatblock to make all of the above coinbase spends invalid (immature coinbase),
-        # and make sure the mempool code behaves correctly.
+        # and make sure the txpool code behaves correctly.
         b = [ self.nodes[0].getblockhash(n) for n in range(more_blocks+101, more_blocks+105) ]
         coinbase_txids = [ self.nodes[0].getblock(h)['txidem'][0] for h in b ]
         spend_101_raw = spend_coinbase_tx(self.nodes[0], coinbase_txids[1], node1_address, COINBASE_REWARD)
@@ -83,13 +83,13 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
         spend_102_1_id = self.nodes[0].sendrawtransaction(spend_102_1_raw)
         self.sync_all()
 
-        assert_equal(set(self.nodes[0].getrawmempool()), {spend_101_id, spend_102_1_id, timelock_tx_id})
+        assert_equal(set(self.nodes[0].getrawtxpool()), {spend_101_id, spend_102_1_id, timelock_tx_id})
 
         for node in self.nodes:
             node.invalidateblock(last_block[0])
 
-        time.sleep(3) # wait for tx processing threads to put them back into the mempool
-        assert_equal(set(self.nodes[0].getrawmempool()), {spend_101_id, spend_102_1_id, spend_103_1_id})
+        time.sleep(3) # wait for tx processing threads to put them back into the txpool
+        assert_equal(set(self.nodes[0].getrawtxpool()), {spend_101_id, spend_102_1_id, spend_103_1_id})
 
         # Use invalidateblock to re-org back and make all those coinbase spends
         # immature/invalid:
@@ -97,17 +97,17 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
             node.invalidateblock(new_blocks[0])
         self.sync_all()
 
-        # mempool should be empty.
-        assert_equal(set(self.nodes[0].getrawmempool()), set())
+        # txpool should be empty.
+        assert_equal(set(self.nodes[0].getrawtxpool()), set())
 
         # test abandontransaction and evicttransaction
         abandonTx = self.nodes[0].sendtoaddress(node1_address, 1000.0)
-        waitFor(10, lambda: abandonTx in self.nodes[1].getrawmempool())
+        waitFor(10, lambda: abandonTx in self.nodes[1].getrawtxpool())
         result = self.nodes[1].evicttransaction(abandonTx)
         assert result == 1
-        assert not abandonTx in self.nodes[1].getrawmempool()
+        assert not abandonTx in self.nodes[1].getrawtxpool()
         self.nodes[0].abandontransaction(abandonTx)
-        assert not abandonTx in self.nodes[0].getrawmempool()
+        assert not abandonTx in self.nodes[0].getrawtxpool()
 
         # negative tests of abandontransaction and evicttransaction
 

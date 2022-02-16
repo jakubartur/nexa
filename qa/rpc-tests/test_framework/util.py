@@ -64,7 +64,7 @@ def getNodeInfo(node):
     PP_WIDTH=3*80
     ret = ""
     ret += "\n** getinfo:\n" + pprint.pformat(node.getinfo(),PP_INDENT,PP_WIDTH)
-    ret += "\n** getmempoolinfo:\n" + pprint.pformat(node.getmempoolinfo(),PP_INDENT,PP_WIDTH)
+    ret += "\n** gettxpoolinfo:\n" + pprint.pformat(node.gettxpoolinfo(),PP_INDENT,PP_WIDTH)
     ret += "\n** getorphanpoolinfo:\n" + pprint.pformat(node.getorphanpoolinfo(),PP_INDENT,PP_WIDTH)
     ret += "\n** getchaintips:\n" + pprint.pformat(node.getchaintips(),PP_INDENT,PP_WIDTH)
     ret += "\n** getblockchaininfo:\n" + pprint.pformat(node.getblockchaininfo(),PP_INDENT,PP_WIDTH)
@@ -149,7 +149,7 @@ BITCOIND_PROC_WAIT_TIMEOUT = 60
 #MOCKTIME is only needed for scripts that use the
 #cached version of the blockchain.  If the cached
 #version of the blockchain is used without MOCKTIME
-#then the mempools will not sync due to IBD.
+#then the txpools will not sync due to IBD.
 MOCKTIME = 0
 
 
@@ -379,16 +379,16 @@ def sync_mempools(rpc_connections, wait=1,verbose=1):
     count = 0
     while True:
         count += 1
-        pool = set(rpc_connections[0].getrawmempool())
+        pool = set(rpc_connections[0].getrawtxpool())
         num_match = 1
         pool_len = [len(pool)]
         for i in range(1, len(rpc_connections)):
-            tmp = set(rpc_connections[i].getrawmempool())
+            tmp = set(rpc_connections[i].getrawtxpool())
             if tmp == pool:
                 num_match = num_match+1
             pool_len.append(len(tmp))
         if verbose and count%30==0:
-            logging.info("sync mempool: " + str(pool_len))
+            logging.info("sync txpool: " + str(pool_len))
         if num_match == len(rpc_connections):
             break
         time.sleep(wait)
@@ -1035,7 +1035,7 @@ def split_transaction(node, prevouts, toAddrs, txfeePer=DEFAULT_TX_FEE_PER_BYTE,
                       tmp = e.error["message"]
                       (code, msg) = tmp.split(":")
                       if int(code) == 64: raise # bad transaction
-                      if int(code) == 258: # txn-mempool-conflict
+                      if int(code) == 258: # txn-txpool-conflict
                           # we are reusing inputs so this is all the splitting we can do
                           return (txn,inp,outp,txid)
                       # print tmp
@@ -1229,12 +1229,12 @@ def create_confirmed_utxos(fee, node, count):
         nUtxos += splits - 1  # consumed 1, created splits utxos
 
 
-    priorMempoolSize = node.getmempoolinfo()['size']
+    priorMempoolSize = node.gettxpoolinfo()['size']
     while (priorMempoolSize > 0):
         nhash = node.generate(1)
-        newSz = node.getmempoolinfo()['size']
+        newSz = node.gettxpoolinfo()['size']
         assert newSz != priorMempoolSize, "Block generation made no progress"  # no progress made
-        # print("blk: ", nhash, " mempool size: ", newSz, " from: ",  priorMempoolSize)
+        # print("blk: ", nhash, " txpool size: ", newSz, " from: ",  priorTxpoolSize)
         priorMempoolSize = newSz
 
 

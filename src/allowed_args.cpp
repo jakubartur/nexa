@@ -243,15 +243,11 @@ static void addHelpOptions(AllowedArgs &allowedArgs)
 static void addChainSelectionOptions(AllowedArgs &allowedArgs)
 {
     allowedArgs.addHeader(_("Chain selection options:"))
-        .addArg("chain_nol", optionalBool, _("Use the no-limit blockchain"))
-        .addArg("testnet", optionalBool, _("Use the test3 chain"))
-        .addArg("testnet4", optionalBool, _("Use the test4 chain"))
-        .addArg("scalenet", optionalBool, _("Use the scaling test chain"))
+        .addArg("testnet", optionalBool, _("Use the testnet3 chain"))
         .addDebugArg("regtest", optionalBool,
             "Enter regression test mode, which uses a special chain in which blocks can be solved instantly. "
             "This is intended for regression testing tools and app development.")
-        .addArg("nextchain", optionalBool, _("Use NextChain"))
-        .addArg("bch", optionalBool, _("Use Bitcoin Cash mainnet"));
+        .addArg("nextchain", optionalBool, _("Use Nextchain"));
 }
 
 static void addConfigurationLocationOptions(AllowedArgs &allowedArgs)
@@ -289,35 +285,14 @@ static void addGeneralOptions(AllowedArgs &allowedArgs, HelpMessageMode mode)
         allowedArgs.addArg("daemon", optionalBool, _("Run in the background as a daemon and accept commands"));
 #endif
 
-    allowedArgs
-        .addArg("dbcache=<n>", requiredInt,
-            strprintf(_("Set database cache size in megabytes (%d to %d, default: %d)"), nMinDbCache, nMaxDbCache,
-                nDefaultDbCache))
-        .addArg("loadblock=<file>", requiredStr, _("Imports blocks from external blk000??.dat file on startup"))
-        .addArg("maxorphantx=<n>", requiredInt,
-            strprintf(_("Keep at most <n> unconnectable transactions in memory (default: %u)"),
-                DEFAULT_MAX_ORPHAN_TRANSACTIONS))
-        .addArg("maxmempool=<n>", requiredInt,
-            strprintf(
-                _("Keep the transaction memory pool below <n> megabytes (default: %u)"), DEFAULT_MAX_MEMPOOL_SIZE))
-        .addArg("mempoolexpiry=<n>", requiredInt,
-            strprintf(_("Do not keep transactions in the mempool longer than <n> hours (default: %u)"),
-                DEFAULT_MEMPOOL_EXPIRY))
-        .addArg("orphanpoolexpiry=<n>", requiredInt,
-            strprintf(_("Do not keep transactions in the orphanpool longer than <n> hours (default: %u)"),
-                DEFAULT_ORPHANPOOL_EXPIRY))
+    allowedArgs.addArg("loadblock=<file>", requiredStr, _("Imports blocks from external blk000??.dat file on startup"))
         .addArg("par=<n>", requiredInt,
             strprintf(_("Set the number of script verification threads (%u to %d, 0 = "
                         "auto, <0 = leave that many cores free, default: %d)"),
                 -GetNumCores(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS))
-        .addArg("parallel={true,false,0,1}", optionalBool,
-            strprintf(_("Turn Parallel Block Validation on or off (default: %u)"), true))
 #ifndef WIN32
         .addArg("pid=<file>", requiredStr, strprintf(_("Specify pid file (default: %s)"), BITCOIN_PID_FILENAME))
 #endif
-        .addArg("persistmempool={true,false,0,1}", optionalBool,
-            strprintf(_("Whether to save the mempool on shutdown and load on restart (default: %u)"),
-                DEFAULT_PERSIST_MEMPOOL))
         .addArg("prune=<n>", requiredInt,
             strprintf(_("Reduce storage requirements by pruning (deleting) old blocks. This mode is incompatible with "
                         "-txindex and -rescan. "
@@ -346,9 +321,6 @@ static void addConnectionOptions(AllowedArgs &allowedArgs)
                         "used for RPC testing, but might find other uses.")))
         .addArg("bitnodes", optionalBool,
             _("Query for peer addresses via Bitnodes API, if low on addresses (default: 1 unless -connect)"))
-        .addArg("blkretryinterval", requiredInt,
-            strprintf(_("Time to wait before requesting a block from a different peer, in microseconds (default: %u)"),
-                DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL))
         .addArg("connect=<ip>", optionalStr, _("Connect only to the specified node(s)"))
         .addArg("discover", optionalBool,
             _("Discover own IP addresses (default: 1 when listening and no -externalip or -proxy)"))
@@ -365,20 +337,11 @@ static void addConnectionOptions(AllowedArgs &allowedArgs)
         .addArg("listen", optionalBool, _("Accept connections from outside (default: 1 if no -proxy or -connect)"))
         .addArg("listenonion", optionalBool,
             strprintf(_("Automatically create Tor hidden service (default: %d)"), DEFAULT_LISTEN_ONION))
-        .addArg("maxconnections=<n>", optionalInt,
-            strprintf(_("Maintain at most <n> connections to peers (default: %u)"), DEFAULT_MAX_PEER_CONNECTIONS))
-        .addArg("maxoutconnections=<n>", requiredInt,
-            strprintf(_("Initiate at most <n> connections to peers (default: %u).  If this number is higher than "
-                        "--maxconnections, it will be reduced to --maxconnections"),
-                DEFAULT_MAX_OUTBOUND_CONNECTIONS))
         .addArg("maxreceivebuffer=<n>", requiredInt,
             strprintf(
                 _("Maximum per-connection receive buffer, <n>*1000 bytes (default: %u)"), DEFAULT_MAXRECEIVEBUFFER))
         .addArg("maxsendbuffer=<n>", requiredInt,
             strprintf(_("Maximum per-connection send buffer, <n>*1000 bytes (default: %u)"), DEFAULT_MAXSENDBUFFER))
-        .addArg("min-xthin-nodes=<n>", requiredInt,
-            strprintf(
-                _("Minimum number of xthin nodes to automatically find and connect (default: %d)"), MIN_XTHIN_NODES))
         .addArg("onion=<ip:port>", requiredStr,
             strprintf(_("Use separate SOCKS5 proxy to reach peers via Tor hidden services (default: %s)"), "-proxy"))
         .addArg("onlynet=<net>", requiredStr, _("Only connect to nodes in network <net> (ipv4, ipv6 or onion)"))
@@ -406,9 +369,6 @@ static void addConnectionOptions(AllowedArgs &allowedArgs)
         .addArg("torcontrol=<ip>:<port>", requiredStr,
             strprintf(_("Tor control port to use if onion listening enabled (default: %s)"), DEFAULT_TOR_CONTROL))
         .addArg("torpassword=<pass>", requiredStr, _("Tor control port password (default: empty)"))
-        .addArg("txretryinterval", requiredInt,
-            strprintf(_("Time to wait before requesting a tx from a different peer, in microseconds (default: %u)"),
-                DEFAULT_MIN_TX_REQUEST_RETRY_INTERVAL))
 #if USE_UPNP
         .addArg("upnp", optionalBool, _("Use UPnP to map the listening port (default: 1 when listening and no -proxy)"),
             upnpParamOptional)
@@ -447,19 +407,6 @@ static void addWalletOptions(AllowedArgs &allowedArgs)
             walletParamOptional)
         .addArg("keypool=<n>", requiredInt,
             strprintf(_("Set key pool size to <n> (default: %u)"), DEFAULT_KEYPOOL_SIZE), walletParamOptional)
-        .addArg("fallbackfee=<amt>", requiredAmount,
-            strprintf(
-                _("A fee rate (in %s/kB) that will be used when fee estimation has insufficient data (default: %s)"),
-                CURRENCY_UNIT, FormatMoney(DEFAULT_FALLBACK_FEE)),
-            walletParamOptional)
-        .addArg("mintxfee=<amt>", requiredAmount,
-            strprintf(
-                _("Fees (in %s/kB) smaller than this are considered zero fee for transaction creation (default: %s)"),
-                CURRENCY_UNIT, FormatMoney(DEFAULT_TRANSACTION_MINFEE)),
-            walletParamOptional)
-        .addArg("paytxfee=<amt>", requiredAmount,
-            strprintf(_("Fee (in %s/kB) to add to transactions you send (default: %s)"), CURRENCY_UNIT,
-                FormatMoney(DEFAULT_TRANSACTION_FEE)))
         .addArg("rescan", optionalBool, _("Rescan the block chain for missing wallet transactions on startup"),
             walletParamOptional)
         .addArg("salvagewallet", optionalBool,
@@ -476,11 +423,6 @@ static void addWalletOptions(AllowedArgs &allowedArgs)
             strprintf(_("If paytxfee is not set, include enough fee so transactions begin confirmation on average "
                         "within n blocks (default: %u)"),
                 DEFAULT_TX_CONFIRM_TARGET),
-            walletParamOptional)
-        .addArg("maxtxfee=<amt>", requiredAmount,
-            strprintf(_("Maximum total fees (in %s) to use in a single wallet transaction; setting this too low may "
-                        "abort large transactions (default: %s)"),
-                CURRENCY_UNIT, FormatMoney(DEFAULT_TRANSACTION_MAXFEE)),
             walletParamOptional)
         .addArg("upgradewallet", optionalInt, _("Upgrade wallet to latest format on startup"), walletParamOptional)
         .addArg("usehd", optionalBool,
@@ -726,13 +668,18 @@ static void addTweaks(AllowedArgs &allowedArgs, CTweakMap *pTweaks)
 {
     CTweakMap::iterator i;
 
-    allowedArgs.addHeader(_(PACKAGE_NAME) + _(" configuration tweaks:"));
+    allowedArgs.addHeader(_("Configuration tweaks which can be modified without restart:"));
 
     for (i = pTweaks->begin(); i != pTweaks->end(); ++i)
     {
         CTweakBase *tweak = i->second;
         std::string optName = tweak->GetName();
 
+        // Do not display the following tweaks
+        if (optName == std::string("consensus.forkMay2021Time"))
+            continue;
+
+        // Display the Tweak
         if (dynamic_cast<CTweak<CAmount> *>(tweak))
             allowedArgs.addArg(optName + "=<amt>", requiredAmount, tweak->GetHelp());
         else if (dynamic_cast<CTweak<double> *>(tweak))

@@ -43,7 +43,7 @@ inline bool MoneyRange(const CAmount &nValue) { return (nValue >= 0 && nValue <=
 class CFeeRate
 {
 private:
-    std::atomic<int64_t> nSatoshisPerK; // unit is satoshis-per-1,000-bytes
+    std::atomic<int64_t> nSatoshisPerK; // unit is satoshis-per-1000-bytes
 public:
     CFeeRate() : nSatoshisPerK(0) {}
     explicit CFeeRate(const CAmount _nSatoshisPerK) : nSatoshisPerK(_nSatoshisPerK) {}

@@ -131,14 +131,14 @@ BOOST_AUTO_TEST_CASE(stringarg)
 BOOST_AUTO_TEST_CASE(intarg)
 {
     ResetArgs("");
-    BOOST_CHECK_EQUAL(GetArg("-maxconnections", 11), 11);
-    BOOST_CHECK_EQUAL(GetArg("-maxconnections", 0), 0);
+    BOOST_CHECK_EQUAL(GetArg("-zapwallettxes", 11), 11);
+    BOOST_CHECK_EQUAL(GetArg("-zapwallettxes", 0), 0);
 
-    ResetArgs("-maxconnections"); // -maxconnections is an optional int argument
-    BOOST_CHECK_EQUAL(GetArg("-maxconnections", 11), 0);
+    ResetArgs("-zapwallettxes"); // is an optional int argument
+    BOOST_CHECK_EQUAL(GetArg("-zapwallettxes", 11), 0);
 
-    ResetArgs("-maxconnections=11 -maxreceivebuffer=12");
-    BOOST_CHECK_EQUAL(GetArg("-maxconnections", 0), 11);
+    ResetArgs("-zapwallettxes=11 -maxreceivebuffer=12");
+    BOOST_CHECK_EQUAL(GetArg("-zapwallettxes", 0), 11);
     BOOST_CHECK_EQUAL(GetArg("-maxreceivebuffer", 11), 12);
 
     ResetArgs("-par=-1");
@@ -154,9 +154,9 @@ BOOST_AUTO_TEST_CASE(doubledash)
     ResetArgs("--listen");
     BOOST_CHECK_EQUAL(GetBoolArg("-listen", false), true);
 
-    ResetArgs("--uacomment=verbose --maxconnections=1");
+    ResetArgs("--uacomment=verbose --zapwallettxes=1");
     BOOST_CHECK_EQUAL(GetArg("-uacomment", ""), "verbose");
-    BOOST_CHECK_EQUAL(GetArg("-maxconnections", 0), 1);
+    BOOST_CHECK_EQUAL(GetArg("-zapwallettxes", 0), 1);
 }
 
 BOOST_AUTO_TEST_CASE(boolargno)

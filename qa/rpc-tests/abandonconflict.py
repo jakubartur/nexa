@@ -65,25 +65,25 @@ class AbandonConflictTest(BitcoinTestFramework):
         signed2 = self.nodes[0].signrawtransaction(self.nodes[0].createrawtransaction(inputs, outputs))
         txABC2 = self.nodes[0].sendrawtransaction(signed2["hex"])
 
-        # In mempool txs from self should increase balance from change
+        # In txpool txs from self should increase balance from change
         newbalance = self.nodes[0].getbalance()
         assert(newbalance == balance - Decimal("3000000") + Decimal("2499960"))
         balance = newbalance
 
-        # Restart the node with a higher min relay fee so the parent tx is no longer in mempool
+        # Restart the node with a higher min relay fee so the parent tx is no longer in txpool
         # TODO: redo with eviction
-        # Note: had to make sure tx was a considered a free transaction to prevent it from getting into the mempool.
+        # Note: had to make sure tx was a considered a free transaction to prevent it from getting into the txpool.
         stop_node(self.nodes[0],0)
         self.nodes[0]=start_node(0, self.options.tmpdir, ["-debug=net,mempool","-logtimemicros","-relay.priority=1", "-relay.minRelayTxFee=10000", "-relay.limitFreeRelay=0"])
 
-       # Verify txs no longer in mempool
-        assert(len(self.nodes[0].getrawmempool()) == 0)
+       # Verify txs no longer in txpool
+        assert(len(self.nodes[0].getrawtxpool()) == 0)
 
-        # Not in mempool txs from self should only reduce balance
+        # Not in txpool txs from self should only reduce balance
         # inputs are still spent, but change not received
         newbalance = self.nodes[0].getbalance()
         assert(newbalance == balance - Decimal("2499960"))
-        # Unconfirmed received funds that are not in mempool, also shouldn't show
+        # Unconfirmed received funds that are not in txpool, also shouldn't show
         # up in unconfirmed balance
         unconfbalance = self.nodes[0].getunconfirmedbalance() + self.nodes[0].getbalance()
         assert(unconfbalance == newbalance)
@@ -100,12 +100,12 @@ class AbandonConflictTest(BitcoinTestFramework):
 
         # Verify that even with a zero min relay fee, the tx is not reaccepted from wallet on startup once abandoned
         stop_node(self.nodes[0],0)
-        self.nodes[0]=start_node(0, self.options.tmpdir, ["-debug=net,mempool","-logtimemicros","-relay.minRelayTxFee=0", "-persistmempool=0"])
-        assert(len(self.nodes[0].getrawmempool()) == 0)
+        self.nodes[0]=start_node(0, self.options.tmpdir, ["-debug=net,mempool","-logtimemicros","-relay.minRelayTxFee=0", "-cache.persistTxPool=0"])
+        assert(len(self.nodes[0].getrawtxpool()) == 0)
         assert(self.nodes[0].getbalance() == balance)
 
         # But if its received again then it is unabandoned
-        # And since now in mempool, the change is available
+        # And since now in txpool, the change is available
         # But its child tx remains abandoned
         self.nodes[0].enqueuerawtransaction(signed["hex"],"flush")
         newbalance = self.nodes[0].getbalance()
@@ -121,7 +121,7 @@ class AbandonConflictTest(BitcoinTestFramework):
         # Remove using high relay fee again
         stop_node(self.nodes[0],0)
         self.nodes[0]=start_node(0, self.options.tmpdir, ["-debug=net,mempool","-logtimemicros","-relay.priority=1","-relay.minRelayTxFee=10000", "-relay.limitFreeRelay=0"])
-        assert(len(self.nodes[0].getrawmempool()) == 0)
+        assert(len(self.nodes[0].getrawtxpool()) == 0)
         newbalance = self.nodes[0].getbalance()
         assert(newbalance == balance - Decimal("2499960"))
         balance = newbalance
@@ -155,7 +155,7 @@ class AbandonConflictTest(BitcoinTestFramework):
         self.nodes[0].invalidateblock(self.nodes[0].getbestblockhash())
         newbalance = self.nodes[0].getbalance()
         #assert(newbalance == balance - Decimal("1.0"))
-        print("If balance has not declined after invalidateblock then out of mempool wallet tx which is no longer")
+        print("If balance has not declined after invalidateblock then out of txpool wallet tx which is no longer")
         print("conflicted has not resumed causing its inputs to be seen as spent.  See Issue #7315")
         print(str(balance) + " -> " + str(newbalance) + " ?")
 

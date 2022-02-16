@@ -83,7 +83,7 @@ void CTxOrphanPool::EraseOrphansByTime()
     if (GetTime() < nLastOrphanCheck + 5 * 60)
         return;
     int64_t nOrphanTxCutoffTime = 0;
-    nOrphanTxCutoffTime = GetTime() - GetArg("-orphanpoolexpiry", DEFAULT_ORPHANPOOL_EXPIRY) * 60 * 60;
+    nOrphanTxCutoffTime = GetTime() - orphanPoolExpiry.Value() * 60 * 60;
     std::map<uint256, COrphanTx>::iterator iter = mapOrphanTransactions.begin();
     while (iter != mapOrphanTransactions.end())
     {
@@ -171,7 +171,7 @@ std::vector<CTxOrphanPool::COrphanTx> CTxOrphanPool::AllTxOrphanPoolInfo() const
 static const uint64_t ORPHANPOOL_DUMP_VERSION = 1;
 bool CTxOrphanPool::LoadOrphanPool()
 {
-    uint64_t nExpiryTimeout = GetArg("-orphanpoolexpiry", DEFAULT_ORPHANPOOL_EXPIRY) * 60 * 60;
+    uint64_t nExpiryTimeout = orphanPoolExpiry.Value() * 60 * 60;
     FILE *fileOrphanpool = fopen((GetDataDir() / "orphanpool.dat").string().c_str(), "rb");
     if (!fileOrphanpool)
     {

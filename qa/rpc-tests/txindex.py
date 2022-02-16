@@ -42,7 +42,7 @@ class TxIndexTest(BitcoinTestFramework):
                 try:
                     self.nodes[0].getrawtransaction(tx)
                 except JSONRPCException as e:
-                    assert("No such mempool transaction. Use -txindex" in e.error['message'])
+                    assert("No such txpool transaction. Use -txindex" in e.error['message'])
 
         # Check node1 can find all blockchain txns in the txindex
         logging.info("Checking txindex on node1...")
@@ -61,14 +61,14 @@ class TxIndexTest(BitcoinTestFramework):
         try:
             self.nodes[0].getrawtransaction(self.nodes[0].getbestblockhash())
         except JSONRPCException as e:
-            assert("No such mempool transaction. Use -txindex" in e.error['message'])
+            assert("No such txpool transaction. Use -txindex" in e.error['message'])
         try:
             self.nodes[1].getrawtransaction(self.nodes[0].getbestblockhash())
         except JSONRPCException as e:
-            assert("No such mempool or blockchain transaction. Use gettransaction" in e.error['message'])
+            assert("No such txpool or blockchain transaction. Use gettransaction" in e.error['message'])
 
-        # add to the mempool, should be able to find it now on either peer
-        logging.info("Checking tx added to mempool...")
+        # add to the txpool, should be able to find it now on either peer
+        logging.info("Checking tx added to txpool...")
         address = self.nodes[0].getnewaddress("test")
         txid = self.nodes[0].sendtoaddress(address, 10, "", "", True)
         self.sync_all()
@@ -146,7 +146,7 @@ class TxIndexTest(BitcoinTestFramework):
                 try:
                     self.nodes[0].getrawtransaction(tx)
                 except JSONRPCException as e:
-                    assert("No such mempool transaction. Use -txindex" in e.error['message'])
+                    assert("No such txpool transaction. Use -txindex" in e.error['message'])
 
         # Check node1 can find all blockchain txns in the txindex
         logging.info("Checking txindex on node1...")

@@ -27,7 +27,7 @@ class BlockchainTest(BitcoinTestFramework):
         - getblock
         - rollbackchain
         - reconsidermostworkchain
-        - getmempoolinfo
+        - gettxpoolinfo
         - getorphanpoolinfo
         - getraworphanpool
 
@@ -398,13 +398,13 @@ class BlockchainTest(BitcoinTestFramework):
         node = self.nodes[0]
 
         # main txn pool
-        res = node.getmempoolinfo()
+        res = node.gettxpoolinfo()
         assert_equal(res['size'], 0)
         assert_equal(res['bytes'], 0)
         assert_equal(res['usage'], 0)
         assert_equal(res['bytes'], 0)
-        assert_equal(res['maxmempool'], 300000000)
-        assert_equal(res['mempoolminfee'], Decimal('0E-8'))
+        assert_equal(res['maxtxpool'], 300000000)
+        assert_equal(res['txpoolminfee'], Decimal('0E-8'))
 
         # orphan pool
         res2 = node.getorphanpoolinfo()

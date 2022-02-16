@@ -18,24 +18,24 @@
 const uint64_t NEXT_FORK_ACTIVATION_TIME = 0;
 /** Default for -minrelaytxfee, minimum relay fee for transactions */
 static const unsigned int DEFAULT_MIN_RELAY_TX_FEE = 1000;
-//! -maxtxfee default
+//! -wallet.maxTxFee default
 static const CAmount DEFAULT_TRANSACTION_MAXFEE = 10000 * COIN;
 //! Discourage users to set fees higher than this amount (in satoshis) per kB
 static const CAmount HIGH_TX_FEE_PER_KB = 1000 * COIN;
-//! -maxtxfee will warn if called with a higher fee than this amount (in satoshis)
+//! -wallet.maxTxFee will warn if called with a higher fee than this amount (in satoshis)
 static const CAmount HIGH_MAX_TX_FEE = 100 * HIGH_TX_FEE_PER_KB;
-/** Default for -maxorphantx, maximum number of orphan transactions kept in memory.
+/** Default for -cache.maxOrphanTx, maximum number of orphan transactions kept in memory.
  *  A high default is chosen which allows for about 1/10 of the default mempool to
  *  be kept as orphans, assuming 250 byte transactions.  We are essentially disabling
  *  the limiting or orphan transactions by number and using orphan pool bytes as
  *  the limiting factor, while at the same time allowing node operators to
- *  limit by number if transactions if they wish by modifying -maxorphantx=<n> if
+ *  limit by number if transactions if they wish by modifying -cache.maxOrphanTx=<n> if
  *  the have a need to.
  */
 static const unsigned int DEFAULT_MAX_ORPHAN_TRANSACTIONS = 1000000;
-/** Default for -mempoolexpiry, expiration time for mempool transactions in hours */
+/** Default for -cache.memoryPoolExpiry, expiration time for mempool transactions in hours */
 static const unsigned int DEFAULT_MEMPOOL_EXPIRY = 72;
-/** Default for -orphanpoolexpiry, expiration time for orphan pool transactions in hours */
+/** Default for -cache.orphanPoolExpiry, expiration time for orphan pool transactions in hours */
 static const unsigned int DEFAULT_ORPHANPOOL_EXPIRY = 4;
 
 

@@ -41,20 +41,20 @@ private:
     /** how much to increment or decrement the cache size at one time */
     const uint64_t nIncrement = 1;
 
-    int64_t nMaxMempool;
+    int64_t nMaxTxpool;
 
 public:
     CBlockCache()
     {
         // set to 1- for until init is called
-        nMaxMempool = -1;
+        nMaxTxpool = -1;
     };
 
     void Init()
     {
-        if (nMaxMempool < 0)
+        if (nMaxTxpool < 0)
         {
-            nMaxMempool = GetArg("-maxmempool", DEFAULT_MAX_MEMPOOL_SIZE) * 1000000;
+            nMaxTxpool = maxTxPool.Value() * ONE_MEGABYTE;
         }
     }
 

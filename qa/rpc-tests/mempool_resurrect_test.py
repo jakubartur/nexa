@@ -33,7 +33,7 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
         # Mine another block.
         # ... make sure all the transactions are confirmed
         # Invalidate both blocks
-        # ... make sure all the transactions are put back in the mempool
+        # ... make sure all the transactions are put back in the txpool
         # Mine a new block
         # ... make sure all the transactions are confirmed again.
 
@@ -49,15 +49,15 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
         spends2_raw = [ spend_coinbase_tx(self.nodes[0], txid, node0_address, COINBASE_REWARD-Decimal("0.01")) for txid in spends1_id ]
         spends2_id = [ self.nodes[0].sendrawtransaction(tx) for tx in spends2_raw ]
 
-        mpi = self.nodes[0].getmempoolinfo()
-        assert mpi['size'] == 3, "Transactions rejected from mempool"
+        mpi = self.nodes[0].gettxpoolinfo()
+        assert mpi['size'] == 3, "Transactions rejected from txpool"
 
         blocks.extend(self.nodes[0].generate(1))
 
-        # mempool should be empty, all txns confirmed
-        mpi = self.nodes[0].getmempoolinfo()
+        # txpool should be empty, all txns confirmed
+        mpi = self.nodes[0].gettxpoolinfo()
         assert mpi['size'] == 0, "Transactions were not committed to a block"
-        assert_equal(set(self.nodes[0].getrawmempool()), set())
+        assert_equal(set(self.nodes[0].getrawtxpool()), set())
         for txid in spends1_id+spends2_id:
             tx = self.nodes[0].gettransaction(txid)
             assert(tx["confirmations"] > 0)
@@ -67,21 +67,21 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
         assert len(ct) == 1
 
         # Use invalidateblock to re-org back; all transactions should
-        # end up unconfirmed and back in the mempool
+        # end up unconfirmed and back in the txpool
         for node in self.nodes:
             node.logline("Invalidating block %s" % blocks[0])
             node.invalidateblock(blocks[0])
 
-        time.sleep(3) # wait for tx processing threads to put them back into the mempool
+        time.sleep(3) # wait for tx processing threads to put them back into the txpool
 
         # Should be a fork
         ct = self.nodes[0].getchaintips()
         assert len(ct) == 2
 
-        # mempool should be empty, all txns confirmed (check 2 different ways)
-        mpi = self.nodes[0].getmempoolinfo()
-        assert mpi['size'] == 6, "Transactions rejected from mempool"
-        assert_equal(set(self.nodes[0].getrawmempool()), set(spends1_id+spends2_id))
+        # txpool should be empty, all txns confirmed (check 2 different ways)
+        mpi = self.nodes[0].gettxpoolinfo()
+        assert mpi['size'] == 6, "Transactions rejected from txpool"
+        assert_equal(set(self.nodes[0].getrawtxpool()), set(spends1_id+spends2_id))
 
         for txid in spends1_id+spends2_id:
             tx = self.nodes[0].gettransaction(txid)
@@ -89,8 +89,8 @@ class MempoolCoinbaseTest(BitcoinTestFramework):
 
         # Generate another block, they should all get mined
         self.nodes[0].generate(1)
-        # mempool should be empty, all txns confirmed
-        assert_equal(set(self.nodes[0].getrawmempool()), set())
+        # txpool should be empty, all txns confirmed
+        assert_equal(set(self.nodes[0].getrawtxpool()), set())
         for txid in spends1_id+spends2_id:
             tx = self.nodes[0].gettransaction(txid)
             assert(tx["confirmations"] > 0)

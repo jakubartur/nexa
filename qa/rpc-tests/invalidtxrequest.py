@@ -52,8 +52,8 @@ class MyTest (BitcoinTestFramework):
         waitFor(10, lambda: len(self.pynodeCnxn.last_reject) > 0)
         rej = self.pynodeCnxn.last_reject.pop()
         assert p2pErr in rej.reason
-        assert txrpcIdem not in node.getrawmempool()
-        assert txrpcIdem not in rnode.getrawmempool()  # Verify that the bad tx did not relay
+        assert txrpcIdem not in node.getrawtxpool()
+        assert txrpcIdem not in rnode.getrawtxpool()  # Verify that the bad tx did not relay
         # Check RPC interface
         expectException(lambda: rnode.sendrawtransaction(tx.toHex()), JSONRPCException, rpcErr)
         ret = rnode.validaterawtransaction(tx.toHex())
@@ -90,7 +90,7 @@ class MyTest (BitcoinTestFramework):
         tx1 = CTransaction(result)
         self.invGetdata(tx1)
         tx1rpcIdem = util.uint256ToRpcHex(tx1.GetIdem())
-        waitFor(10, lambda: tx1rpcIdem in self.node.getrawmempool() )
+        waitFor(10, lambda: tx1rpcIdem in self.node.getrawtxpool() )
 
 
         # Bad TX: A single OP_NOTIF

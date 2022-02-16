@@ -43,14 +43,10 @@ static const uint32_t BEGIN_PRUNING_PEERS = 4;
 // How many blocks forward to download during IBD
 static const uint32_t DEFAULT_BLOCK_DOWNLOAD_WINDOW = 1024;
 
-// When should I request a tx from someone else (in microseconds). cmdline/bitcoin.conf: -txretryinterval
-extern unsigned int txReqRetryInterval;
-extern unsigned int MIN_TX_REQUEST_RETRY_INTERVAL;
+// When should I request a tx from someone else (in microseconds).
 static const unsigned int DEFAULT_MIN_TX_REQUEST_RETRY_INTERVAL = 5 * 1000 * 1000;
 
-// When should I request a block from someone else (in microseconds). cmdline/bitcoin.conf: -blkretryinterval
-extern unsigned int blkReqRetryInterval;
-extern unsigned int MIN_BLK_REQUEST_RETRY_INTERVAL;
+// When should I request a block from someone else (in microseconds).
 static const unsigned int DEFAULT_MIN_BLK_REQUEST_RETRY_INTERVAL = 5 * 1000 * 1000;
 
 // Which peers have mempool synchronization in-flight?

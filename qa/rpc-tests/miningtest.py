@@ -91,31 +91,31 @@ class MiningTest (BitcoinTestFramework):
         assert_equal(101, node.getblockcount())
 
         #### Test that a dynamic relay policy change does not effect the mining
-        #    of txns currently in the mempool.
+        #    of txns currently in the txpool.
         self.nodes[0].generate(5);
         self.sync_all()
 
-        # Add a few txns to the mempool and mine them with the default fee
+        # Add a few txns to the txpool and mine them with the default fee
         self.nodes[0].set("relay.minRelayTxFee=0")
         self.nodes[1].set("relay.minRelayTxFee=0")
         self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100)
         self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100)
         self.sync_all()
         assert_equal(str(self.nodes[0].getnetworkinfo()["relayfee"]), "0.00")
-        assert_equal(self.nodes[0].getmempoolinfo()["size"], 2)
-        assert_equal(self.nodes[0].getmempoolinfo()["mempoolminfee"], 0)
+        assert_equal(self.nodes[0].gettxpoolinfo()["size"], 2)
+        assert_equal(self.nodes[0].gettxpoolinfo()["txpoolminfee"], 0)
         self.nodes[0].generate(1);
         self.sync_all()
-        assert_equal(self.nodes[0].getmempoolinfo()["size"], 0)
-        assert_equal(self.nodes[0].getmempoolinfo()["mempoolminfee"], 0)
+        assert_equal(self.nodes[0].gettxpoolinfo()["size"], 0)
+        assert_equal(self.nodes[0].gettxpoolinfo()["txpoolminfee"], 0)
 
-        # Add a few txns to the mempool, then increase the relayfee beyond what the txns would pay
+        # Add a few txns to the txpool, then increase the relayfee beyond what the txns would pay
         # and mine a block. All txns should be mined and removed from the
         txid1 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100)
         txid2 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100)
         self.sync_all()
-        assert_equal(self.nodes[0].getmempoolinfo()["size"], 2)
-        assert_equal(self.nodes[0].getmempoolinfo()["mempoolminfee"], 0)
+        assert_equal(self.nodes[0].gettxpoolinfo()["size"], 2)
+        assert_equal(self.nodes[0].gettxpoolinfo()["txpoolminfee"], 0)
 
         # Make the minlimitertxfee so high it would be higher than any possible fee.
         # In this case because the -limitfreerelay is set by default in the python scripts
@@ -128,8 +128,8 @@ class MiningTest (BitcoinTestFramework):
         txid4 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100)
         self.sync_all()
 
-        assert_equal(self.nodes[0].getmempoolinfo()["size"], 4)
-        assert_equal(self.nodes[1].getmempoolinfo()["size"], 4)
+        assert_equal(self.nodes[0].gettxpoolinfo()["size"], 4)
+        assert_equal(self.nodes[1].gettxpoolinfo()["size"], 4)
         assert_equal(str(self.nodes[0].getnetworkinfo()["relayfee"]), "10.00")
 
         #only tx1 and tx2 should have been mined since there is not enough space
@@ -140,18 +140,18 @@ class MiningTest (BitcoinTestFramework):
         self.nodes[0].generate(1)
         self.sync_all()
 
-        assert(txid1 not in self.nodes[0].getrawmempool())
-        assert(txid2 not in self.nodes[0].getrawmempool())
-        assert(txid3 in self.nodes[0].getrawmempool())
-        assert(txid4 in self.nodes[0].getrawmempool())
-        assert_equal(self.nodes[0].getmempoolinfo()["size"], 2)
-        assert_equal(self.nodes[1].getmempoolinfo()["size"], 2)
+        assert(txid1 not in self.nodes[0].getrawtxpool())
+        assert(txid2 not in self.nodes[0].getrawtxpool())
+        assert(txid3 in self.nodes[0].getrawtxpool())
+        assert(txid4 in self.nodes[0].getrawtxpool())
+        assert_equal(self.nodes[0].gettxpoolinfo()["size"], 2)
+        assert_equal(self.nodes[1].gettxpoolinfo()["size"], 2)
 
         # now tx3 and tx4 can be mined
         self.nodes[0].generate(1)
         self.sync_all()
-        assert_equal(self.nodes[0].getmempoolinfo()["size"], 0)
-        assert_equal(self.nodes[1].getmempoolinfo()["size"], 0)
+        assert_equal(self.nodes[0].gettxpoolinfo()["size"], 0)
+        assert_equal(self.nodes[1].gettxpoolinfo()["size"], 0)
 
 
 if __name__ == '__main__':

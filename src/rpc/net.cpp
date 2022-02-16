@@ -589,11 +589,10 @@ UniValue getnetworkinfo(const UniValue &params, bool fHelp)
             "    }\n"
             "  ,...\n"
             "  ],\n"
-            "  \"relayfee\": x.xxxxxxxx,              (numeric) minimum relay fee for non-free transactions in " +
-            CURRENCY_UNIT +
-            "/kB\n"
+            "  \"relayfee\": xxxx,              (numeric) minimum relay fee for non-free transactions in "
+            "sat/kB\n"
             "  \"limitfreerelay\": x.xxxx,            (numeric) The maximum number of free transactions (in KB) that "
-            "can enter the mempool per minute\n"
+            "can enter the txpool per minute\n"
             "  \"localaddresses\": [                  (array) list of local addresses\n"
             "    {\n"
             "      \"address\": \"xxxx\",               (string) network address\n"

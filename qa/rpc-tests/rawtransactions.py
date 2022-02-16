@@ -106,14 +106,14 @@ class RawTransactionsTest(BitcoinTestFramework):
         gottx = self.nodes[0].getrawtransaction(tx, True, block1)
         assert_equal(gottx['txidem'], tx)
         assert_equal(gottx['in_active_chain'], True)
-        assert_equal(gottx['in_mempool'], False)
+        assert_equal(gottx['in_txpool'], False)
         assert_equal(gottx['in_orphanpool'], False)
         assert_equal(gottx['blockhash'], block1)
         # We should not have the 'in_active_chain' flag when we don't provide a block
         gottx = self.nodes[0].getrawtransaction(tx, True)
         assert_equal(gottx['txidem'], tx)
         assert 'in_active_chain' not in gottx
-        assert_equal(gottx['in_mempool'], False)
+        assert_equal(gottx['in_txpool'], False)
         assert_equal(gottx['in_orphanpool'], False)
         assert_equal(gottx['blockhash'], block1)
         # We should not get the tx if we provide an unrelated block
@@ -207,7 +207,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         outp = {addr: amt-decimal.Decimal(100)}  # give some fee
         txn = createrawtransaction([utxo], outp, createWastefulOutput)  # create a nonstandard tx
         signedtxn = self.nodes[0].signrawtransaction(txn)
-        mempool = self.nodes[0].getmempoolinfo()
+        txpool = self.nodes[0].gettxpoolinfo()
         try:
             self.nodes[0].sendrawtransaction(signedtxn["hex"], False, "STANDARD")
             assert 0 # should have failed because I'm insisting on a standard tx
@@ -227,12 +227,12 @@ class RawTransactionsTest(BitcoinTestFramework):
         ret2 = self.nodes[0].sendrawtransaction(signedtxn["hex"], False, "default")
         assert ret == ret2  # I'm sending the same tx so it should work with the same result
 
-        mempool2 = self.nodes[0].getmempoolinfo()
-        assert mempool["size"] + 1 == mempool2["size"]  # one tx should have been added to the mempool
+        txpool2 = self.nodes[0].gettxpoolinfo()
+        assert txpool["size"] + 1 == txpool2["size"]  # one tx should have been added to the txpool
 
         self.nodes[0].generate(1)  # clean it up
-        mempool3 = self.nodes[0].getmempoolinfo()
-        assert mempool3["size"] == 0  # Check that the nonstandard tx in the mempool got mined
+        txpool3 = self.nodes[0].gettxpoolinfo()
+        assert txpool3["size"] == 0  # Check that the nonstandard tx in the txpool got mined
 
         # Now try it as if we were on mainnet (rejecting nonstandard transactions)
         stop_nodes(self.nodes)
@@ -249,7 +249,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         outp = {addr: amt-decimal.Decimal(100)}  # give some fee
         txn = createrawtransaction([utxo], outp, createWastefulOutput)  # create a nonstandard tx
         signedtxn = self.nodes[0].signrawtransaction(txn)
-        mempool = self.nodes[0].getmempoolinfo()
+        txpool = self.nodes[0].gettxpoolinfo()
         try:
             self.nodes[0].sendrawtransaction(signedtxn["hex"])
             assert 0 # should have failed because I'm insisting on a standard tx
@@ -272,17 +272,17 @@ class RawTransactionsTest(BitcoinTestFramework):
         except JSONRPCException as e:
             assert e.error["code"] == -8
             assert e.error["message"] == 'Invalid transaction class'
-        mempool4 = self.nodes[0].getmempoolinfo()
-        assert mempool["size"] == mempool4["size"]  # all of these failures should have added nothing to mempool
+        txpool4 = self.nodes[0].gettxpoolinfo()
+        assert txpool["size"] == txpool4["size"]  # all of these failures should have added nothing to txpool
 
         ret = self.nodes[0].sendrawtransaction(signedtxn["hex"], False, "nonstandard")
         assert(len(ret) == 64)  # should succeed and return a txid
-        mempool2 = self.nodes[0].getmempoolinfo()
-        assert mempool["size"] + 1 == mempool2["size"]  # one tx should have been added to the mempool
+        txpool2 = self.nodes[0].gettxpoolinfo()
+        assert txpool["size"] + 1 == txpool2["size"]  # one tx should have been added to the txpool
 
         self.nodes[0].generate(1)  # clean it up
-        mempool3 = self.nodes[0].getmempoolinfo()
-        assert mempool3["size"] == 0  # Check that the nonstandard tx in the mempool got mined
+        txpool3 = self.nodes[0].gettxpoolinfo()
+        assert txpool3["size"] == 0  # Check that the nonstandard tx in the txpool got mined
 
         # finally, let's make sure that a standard tx works with the standard flag set
         utxo = wallet.pop()
@@ -309,7 +309,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         # We only check the "hex" field of the output so we don't need to update this test every time the output format changes.
         txn = self.nodes[0].getrawtransaction(txid, 1)
         assert_equal(txn["hex"], signedtxn['hex'])
-        assert_equal(txn['in_mempool'], True)
+        assert_equal(txn['in_txpool'], True)
         assert_equal(txn['in_orphanpool'], False)
 
         # 4a. valid parameters - supply a txid that is in the orphanpool
@@ -327,7 +327,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         # Have to access via txid to get from the orphan list
         txn_orphan = self.nodes[0].getrawtransaction(orphan_txid, 1)
         assert_equal(txn_orphan["hex"], signedtxn_orphan['hex'])
-        assert_equal(txn_orphan['in_mempool'], False)
+        assert_equal(txn_orphan['in_txpool'], False)
         assert_equal(txn_orphan['in_orphanpool'], True)
 
         # 5. valid parameters - supply txid and True for non-verbose

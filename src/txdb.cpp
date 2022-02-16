@@ -715,8 +715,8 @@ CacheConfig DiscoverCacheConfiguration(bool fDefault)
 #else
     // Get total system memory but only use half.
     // - This half of system memory is only used as a basis for the total cache size
-    // - if and only if the operator has not already set a value for -dbcache. This mitigates a common problem
-    // - where new operators are unaware of the importance of the dbcache setting and therefore do not size their
+    // - if and only if the operator has not already set a value for -cache.dbcache. This mitigates a common problem
+    // - where new operators are unaware of the importance of the cache.dbcache setting and therefore do not size their
     // - dbcache correctly resulting in a very slow initial block sync.
     int64_t nMemAvailable = GetTotalSystemMemory() / 2;
 #endif
@@ -732,15 +732,15 @@ CacheConfig DiscoverCacheConfiguration(bool fDefault)
         // This is useful in that it gives us the lowest possible dbcache configuration.
         nTotalCache = nDefaultDbCache << 20;
     }
-    else if (nDefaultDbCache < nMemAvailable)
+    else if (!dbcacheTweak.Value() && (nDefaultDbCache < nMemAvailable))
     {
         // only use the dynamically calculated nMemAvailable if and only if the node operator has not set
         // a value for dbcache!
-        nTotalCache = (GetArg("-dbcache", nMemAvailable) << 20);
+        nTotalCache = nMemAvailable << 20;
     }
     else
     {
-        nTotalCache = (GetArg("-dbcache", nDefaultDbCache) << 20);
+        nTotalCache = dbcacheTweak.Value() << 20;
     }
 
     // Now that we have the nTotalCache we can calculate all the various cache sizes.
@@ -830,9 +830,9 @@ void AdjustCoinCacheSize()
     // mem available was when we modified the nCoinCacheMaxSize.
     static int64_t nLastMemAvailable = 0;
 
-    // If there is no dbcache setting specified by the node operator then float the dbache setting down or up
+    // If there is no cache.dbcache setting specified by the node operator then float the dbache setting down or up
     // based on current available memory.
-    if (!GetArg("-dbcache", 0) && (nNow - nLastDbAdjustment) > 60000000)
+    if (!dbcacheTweak.Value() && (nNow - nLastDbAdjustment) > 60000000)
     {
         // The amount of system memory currently available
         int64_t nMemAvailable = GetAvailableMemory();

@@ -192,7 +192,7 @@ class ZMQTest (BitcoinTestFramework):
 
             rawtx   = self.nodes[0].createrawtransaction(inputs, outputs)
             rawtx   = self.nodes[0].signrawtransaction(rawtx)
-            mpTx = self.nodes[0].getmempoolinfo()["size"]
+            mpTx = self.nodes[0].gettxpoolinfo()["size"]
             try:
                 hashTxToDoubleSpend   = self.nodes[1].sendrawtransaction(rawtx['hex'])
             except JSONRPCException as e:
@@ -203,7 +203,7 @@ class ZMQTest (BitcoinTestFramework):
             outputs = { self.nodes[1].getnewaddress() : t["amount"] }
             rawtx   = self.nodes[0].createrawtransaction(inputs, outputs)
             rawtx   = self.nodes[0].signrawtransaction(rawtx)
-            waitFor(30, lambda: self.nodes[0].getmempoolinfo()["size"] > mpTx)  # make sure the original tx propagated in time
+            waitFor(30, lambda: self.nodes[0].gettxpoolinfo()["size"] > mpTx)  # make sure the original tx propagated in time
             try:
                 hashtx   = self.nodes[0].sendrawtransaction(rawtx['hex'])
             except JSONRPCException as e:

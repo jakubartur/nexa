@@ -27,12 +27,7 @@ CAmount CFeeRate::GetFee(size_t nSize) const
     return nFee;
 }
 
-std::string CFeeRate::ToString() const
-{
-    return strprintf("%d.%08d %s/kB", nSatoshisPerK / COIN, nSatoshisPerK % COIN, CURRENCY_UNIT);
-}
-
-
+std::string CFeeRate::ToString() const { return strprintf("%d sat/KB", nSatoshisPerK); }
 CAmount CFeeRate::GetDust() const
 {
     CAmount dust = txWalletDust.Value();

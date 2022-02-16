@@ -2183,7 +2183,7 @@ UniValue gettransaction(const UniValue &params, bool fHelp)
             "  \"bip125-replaceable\": \"yes|no|unknown\"  (string) Whether this transaction could be replaced due to "
             "BIP125 (replace-by-fee);\n"
             "                                                   may be unknown for unconfirmed transactions not in the "
-            "mempool\n"
+            "txpool\n"
             "  \"details\" : [\n"
             "    {\n"
             "      \"account\" : \"accountname\",  (string) DEPRECATED. The account name involved in the transaction, "
@@ -2259,7 +2259,7 @@ UniValue abandontransaction(const UniValue &params, bool fHelp)
             "This will mark this transaction and all its in-wallet descendants as abandoned which will allow\n"
             "for their inputs to be respent.  It can be used to replace \"stuck\" or evicted transactions.\n"
             "It only works on transactions which are not included in a block.  It removes transactions currently\n"
-            "in the mempool.  It has no effect on transactions which are already conflicted or abandoned.\n"
+            "in the txpool.  It has no effect on transactions which are already conflicted or abandoned.\n"
             "\nArguments:\n"
             "1. \"txid\"    (string, required) The transaction id\n"
             "\nResult:\n"
@@ -2704,15 +2704,14 @@ UniValue settxfee(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 1 || params.size() > 1)
         throw runtime_error("settxfee amount\n"
-                            "\nSet the transaction fee per kB. Overwrites the paytxfee parameter.\n"
+                            "\nSet the transaction fee in sat/KB. Overwrites the paytxfee parameter.\n"
                             "\nArguments:\n"
-                            "1. amount         (numeric or sting, required) The transaction fee in " +
-                            CURRENCY_UNIT +
-                            "/kB\n"
+                            "1. amount         (numeric or sting, required) The transaction fee in "
+                            "sat/KB\n"
                             "\nResult\n"
                             "true|false        (boolean) Returns true if successful\n"
                             "\nExamples:\n" +
-                            HelpExampleCli("settxfee", "0.00001") + HelpExampleRpc("settxfee", "0.00001"));
+                            HelpExampleCli("settxfee", "1050") + HelpExampleRpc("settxfee", "1050"));
 
     LOCK(pwalletMain->cs_wallet);
 
@@ -2752,9 +2751,8 @@ UniValue getwalletinfo(const UniValue &params, bool fHelp)
             "  \"keypoolsize\": xxxx,        (numeric) how many new keys are pre-generated\n"
             "  \"unlocked_until\": ttt,      (numeric) the timestamp in seconds since epoch (midnight "
             "Jan 1 1970 GMT) that the wallet is unlocked for transfers, or 0 if the wallet is locked\n"
-            "  \"paytxfee\": x.xxxx,         (numeric) the transaction fee configuration, set in " +
-            CURRENCY_UNIT +
-            "/kB\n"
+            "  \"paytxfee\": xxxx,           (numeric) the transaction fee configuration, set in " +
+            "sat/KB\n"
             "  \"hdmasterkeyid\": \"<hash160>\", (hex string) the Hash160 of the hd master pubkey\n"
             "}\n"
             "\nExamples:\n" +
@@ -2775,7 +2773,7 @@ UniValue getwalletinfo(const UniValue &params, bool fHelp)
     obj.pushKV("keypoolsize", (int)pwalletMain->GetKeyPoolSize());
     if (pwalletMain->IsCrypted())
         obj.pushKV("unlocked_until", nWalletUnlockTime);
-    obj.pushKV("paytxfee", ValueFromAmount(payTxFee.GetFeePerK()));
+    obj.pushKV("paytxfee", payTxFee.GetFeePerK());
     CKeyID masterKeyID = pwalletMain->GetHDChain().masterKeyID;
     if (!masterKeyID.IsNull())
         obj.pushKV("hdmasterkeyid", masterKeyID.GetHex());

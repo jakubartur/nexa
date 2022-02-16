@@ -19,7 +19,7 @@ static const char UNUSED *bitcoin_strings[] = {
         "fee estimates are not available."),
     QT_TRANSLATE_NOOP("bitcoin-core",
         ""
-        "-maxtxfee is set very high! Fees this large could be paid on a single "
+        "-wallet.maxTxFee is set very high! Fees this large could be paid on a single "
         "transaction."),
     QT_TRANSLATE_NOOP("bitcoin-core",
         ""
@@ -118,7 +118,7 @@ static const char UNUSED *bitcoin_strings[] = {
         "confirmation on average within n blocks (default: %u)"),
     QT_TRANSLATE_NOOP("bitcoin-core",
         ""
-        "Invalid amount for -maxtxfee=<amount>: '%s' (must be at least the minrelay "
+        "Invalid amount for -wallet.maxTxFee=<amount>: '%s' (must be at least the minrelay "
         "fee of %s to prevent stuck transactions)"),
     QT_TRANSLATE_NOOP("bitcoin-core",
         ""
@@ -270,7 +270,7 @@ static const char UNUSED *bitcoin_strings[] = {
         "mode.  This will redownload the entire blockchain"),
     QT_TRANSLATE_NOOP("bitcoin-core", "(default: %s)"),
     QT_TRANSLATE_NOOP("bitcoin-core", "(default: %u)"),
-    QT_TRANSLATE_NOOP("bitcoin-core", "-maxmempool must be at least %d MB"),
+    QT_TRANSLATE_NOOP("bitcoin-core", "-cache.maxMemPool must be at least %d MB"),
     QT_TRANSLATE_NOOP("bitcoin-core", "<category> can be:"),
     QT_TRANSLATE_NOOP("bitcoin-core", "Accept command line and JSON-RPC commands"),
     QT_TRANSLATE_NOOP("bitcoin-core", "Accept connections from outside (default: 1 if no -proxy or -connect)"),
@@ -327,12 +327,12 @@ static const char UNUSED *bitcoin_strings[] = {
     QT_TRANSLATE_NOOP("bitcoin-core", "Insufficient funds"),
     QT_TRANSLATE_NOOP("bitcoin-core", "Invalid -onion address: '%s'"),
     QT_TRANSLATE_NOOP("bitcoin-core", "Invalid -proxy address: '%s'"),
-    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -fallbackfee=<amount>: '%s'"),
-    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -maxtxfee=<amount>: '%s'"),
-    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -minrelaytxfee=<amount>: '%s'"),
-    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -mintxfee=<amount>: '%s'"),
-    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -paytxfee=<amount>: '%s' (must be at least %s)"),
-    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -paytxfee=<amount>: '%s'"),
+    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -wallet.fallbackFee=<amount>: '%s'"),
+    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -wallet.maxTxFee=<amount>: '%s'"),
+    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -relay.minrelayTxFee=<amount>: '%s'"),
+    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -wallet.minTxFee=<amount>: '%s'"),
+    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -wallet.payTxFee=<amount>: '%s' (must be at least %s)"),
+    QT_TRANSLATE_NOOP("bitcoin-core", "Invalid amount for -wallet.payTxFee=<amount>: '%s'"),
     QT_TRANSLATE_NOOP("bitcoin-core", "Invalid netmask specified in -whitelist: '%s'"),
     QT_TRANSLATE_NOOP("bitcoin-core", "Keep at most <n> unconnectable transactions in memory (default: %u)"),
     QT_TRANSLATE_NOOP("bitcoin-core", "Keep the transaction memory pool below <n> megabytes (default: %u)"),

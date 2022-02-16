@@ -15,6 +15,9 @@
 #include <set>
 #include <stdint.h>
 
+extern CTweak<uint32_t> maxOrphanPool;
+extern CTweak<uint32_t> orphanPoolExpiry;
+
 class CTxOrphanPool
 {
 public:

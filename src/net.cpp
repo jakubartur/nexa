@@ -118,7 +118,6 @@ uint64_t nLocalHostNonce = 0;
 static std::vector<ListenSocket> vhListenSocket;
 extern CAddrMan addrman;
 int nMaxConnections = DEFAULT_MAX_PEER_CONNECTIONS;
-int nMinXthinNodes = MIN_XTHIN_NODES;
 
 bool fAddressesInitialized = false;
 
@@ -2036,8 +2035,6 @@ void static ProcessOneShot()
 
 void ThreadOpenConnections()
 {
-    nMinXthinNodes = GetArg("-min-xthin-nodes", MIN_XTHIN_NODES);
-
     // Connect to all "connect" peers
     if (mapArgs.count("-connect") && mapMultiArgs["-connect"].size() > 0)
     {
@@ -2085,9 +2082,7 @@ void ThreadOpenConnections()
         // if the grants are all taken and we want to disconnect a node in the event that
         // we don't have enough connections to XTHIN capable nodes yet.
         int nOutbound = 0;
-        int nThinBlockCapable = 0;
         set<vector<unsigned char> > setConnected;
-        CNode *pNonXthinNode = nullptr;
         CNode *pNonNodeNetwork = nullptr;
         bool fDisconnected = false;
         {
@@ -2099,11 +2094,6 @@ void ThreadOpenConnections()
                     setConnected.insert(pnode->addr.GetGroup());
                     nOutbound++;
 
-                    if (pnode->ThinBlockCapable())
-                        nThinBlockCapable++;
-                    else
-                        pNonXthinNode = pnode;
-
                     // If sync is not yet complete then disconnect any pruned outbound connections
                     if (IsInitialBlockDownload() && !(pnode->nServices & NODE_NETWORK))
                         pNonNodeNetwork = pnode;
@@ -2113,17 +2103,7 @@ void ThreadOpenConnections()
             // have not yet connected to enough XTHIN nodes.
             if (!fReindex)
             {
-                if (nOutbound >= nMaxOutConnections && nThinBlockCapable <= min(nMinXthinNodes, nMaxOutConnections) &&
-                    nDisconnects < MAX_DISCONNECTS && IsThinBlocksEnabled() && IsChainNearlySyncd())
-                {
-                    if (pNonXthinNode != nullptr)
-                    {
-                        pNonXthinNode->fDisconnect = true;
-                        fDisconnected = true;
-                        nDisconnects++;
-                    }
-                }
-                else if (IsInitialBlockDownload())
+                if (IsInitialBlockDownload())
                 {
                     if (pNonNodeNetwork != nullptr)
                     {
@@ -2150,8 +2130,7 @@ void ThreadOpenConnections()
                 MilliSleep(500);
                 {
                     LOCK(cs_vNodes);
-                    if (find(vNodes.begin(), vNodes.end(), pNonXthinNode) == vNodes.end() ||
-                        find(vNodes.begin(), vNodes.end(), pNonNodeNetwork) == vNodes.end())
+                    if (find(vNodes.begin(), vNodes.end(), pNonNodeNetwork) == vNodes.end())
                     {
                         nOutbound--;
                         break;

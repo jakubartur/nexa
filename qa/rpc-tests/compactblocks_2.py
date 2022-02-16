@@ -121,12 +121,12 @@ class TestNode(SingleNodeConnCB):
        success = False
        while success is False:
            success = True
-           mempool = peer.getrawmempool(False, "id")
+           txpool = peer.getrawtxpool(False, "id")
            orphanpool = peer.getraworphanpool()
 
            for tx in tx_list:
                txid = tx.GetRpcHexId()
-               if txid not in mempool and txid not in orphanpool:
+               if txid not in txpool and txid not in orphanpool:
                     success = False
 
            time.sleep(self.sleep_time)
@@ -141,10 +141,10 @@ class TestNode(SingleNodeConnCB):
        success = False
        while success is False:
            success = True
-           mempool = peer.getrawmempool(False, "id")
+           txpool = peer.getrawtxpool(False, "id")
 
            for tx in tx_list:
-                if tx.GetRpcHexId() not in mempool:
+                if tx.GetRpcHexId() not in txpool:
                     success = False
 
            time.sleep(self.sleep_time)
@@ -170,7 +170,7 @@ class CompactBlocksTest(BitcoinTestFramework):
               "-debug=cmpctblocks",
               "-debug=mempool",
               "-net.msgHandlerThreads=1",
-              "-parallel=0"]])
+              "-test.parallel=0"]])
 
 
     def build_block_on_tip(self):
@@ -497,7 +497,7 @@ class CompactBlocksTest(BitcoinTestFramework):
         self.test_node.check_mempools([block.vtx[1], block.vtx[7]], self.nodes[0], timeout=SYNC_TIMEOUT)
 
         # Prefill 4 out of the 10 transactions, and verify that only the one
-        # that was not in the mempool is requested.
+        # that was not in the txpool is requested.
         comp_block.initialize_from_block(block, prefill_list=[0, 2, 3, 4])
         self.test_node.send_and_ping(msg_cmpctblock(comp_block.to_p2p()))
         with mininode_lock:

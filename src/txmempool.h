@@ -24,6 +24,13 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 
+extern CTweak<uint32_t> txPoolExpiry;
+extern CTweak<uint32_t> maxTxPool;
+extern CTweak<bool> persistTxPool;
+
+/** Default -cache.persistTxPool */
+static const bool DEFAULT_PERSIST_MEMPOOL = true;
+
 class CAutoFile;
 class CBlockIndex;
 class DoubleSpendProofStorage;
