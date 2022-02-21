@@ -56,12 +56,12 @@ def gen_return_txouts():
     # So we have big transactions (and therefore can't fit very many into each block)
     # create one script_pubkey
     script_pubkey = "6a4d0200" #OP_RETURN OP_PUSH2 512 bytes
-    for i in range (512):
+    for i in range(1024):
         script_pubkey = script_pubkey + "01"
     constraint = bytes.fromhex(script_pubkey) #CScript(script_pubkey)
-    # concatenate 128 txouts of above script_pubkey which we'll insert before the txout for change
+    # concatenate 63 txouts of above script_pubkey which we'll insert before the txout for change
     txouts = []
-    for k in range(128):
+    for k in range(63):
         tmp = TxOut(0,0,constraint)
         txouts.append(tmp)
     return txouts

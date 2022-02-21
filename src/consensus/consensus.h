@@ -39,6 +39,8 @@ static const unsigned int MAX_TX_SIGCHECK_COUNT = 3000;
 static const unsigned int DEFAULT_LARGEST_TRANSACTION = ONE_MEGABYTE;
 /** The minimum allowed size for a transaction, in bytes */
 static const unsigned int MIN_TX_SIZE = 65;
+static const unsigned int MAX_TX_NUM_VOUT = 256;
+static const unsigned int MAX_TX_NUM_VIN = 256;
 
 /** This is the default max bloom filter size allowed on the bitcoin network.  In Bitcoin Unlimited we have the ability
  *  to communicate to our peer what max bloom filter size we will accept but still observe this value as a default.
