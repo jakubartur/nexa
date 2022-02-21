@@ -197,6 +197,11 @@ bool CheckTransaction(const CTransactionRef tx, CValidationState &state)
             10, error("%s: contains transactions that are too small", __func__), REJECT_INVALID, "txn-undersize");
     }
 
+    if (tx->vout.size() > MAX_TX_NUM_VOUT)
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-too-many-vout");
+    if (tx->vin.size() > MAX_TX_NUM_VIN)
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-too-many-vin");
+
     // Check for negative or overflow output values
     CAmount nValueOut = 0;
     for (const CTxOut &txout : tx->vout)

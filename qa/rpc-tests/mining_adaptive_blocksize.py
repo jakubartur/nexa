@@ -276,36 +276,17 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         self.sync_all()
         blockcount_start = self.nodes[0].getblockcount();
 
-        # Create the first block.
-        # Result: sigops should be at the max allowed whereas blocksize should be less than the max allowed.
-        utxos_sigops = create_confirmed_utxos(self.relayfee, self.nodes[0], 1200)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, 109)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, 100)
-
-        nextmaxblocksize = self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"]
-        max_block_sigops = int(nextmaxblocksize / BLOCK_SIGCHECKS_RATIO)
-        self.nodes[0].generate(1)
-        self.sync_all()
-        assert_equal(max_block_sigops - coinbase_sigop_padding, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["ins"])
-        assert_greater_than(nextblocksize, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
+        MAX_INPUTS = 256
 
         # create a set of txns with sigops such that when they are mined will not fill the block perfectly and will
         # result in a sigops total that are less than the maximum allowed. This proves that the miner is not able to
         # mine a block which is over the sigop limit.
         # Result:  both block size and sigops should be less than the max allowed.
-        utxos_sigops2 = create_confirmed_utxos(self.relayfee, self.nodes[0], 1200)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops2, self.relayfee, 110)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops2, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops2, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops2, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops2, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops2, self.relayfee, 100)
-        self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops2, self.relayfee, 100)
+        utxos_sigops = create_confirmed_utxos(self.relayfee, self.nodes[0], 1200)
+        useUtxos = 710
+        while useUtxos > 0:
+            self.create_tx_with_many_inputs(self.nodes[0], utxos_sigops, self.relayfee, min(useUtxos, MAX_INPUTS))
+            useUtxos -= min(useUtxos, MAX_INPUTS)
 
         nextmaxblocksize = self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"]
         max_block_sigops = int(nextmaxblocksize / BLOCK_SIGCHECKS_RATIO)
@@ -373,4 +354,5 @@ def Test():
         "debug": ["validation", "rpc", "net", "blk", "thin", "mempool", "req", "bench", "evict"],
     }
     flags = standardFlags()
+    flags[0] = '--tmpdir=/ramdisk/test/t1'
     t.main(flags, bitcoinConf, None)

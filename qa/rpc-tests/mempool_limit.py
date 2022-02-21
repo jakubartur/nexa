@@ -53,8 +53,8 @@ class MempoolLimitTest(BitcoinTestFramework):
             new_txn = create_lots_of_big_transactions(node, self.txouts, utxos[33*i:33*i+33], 1, (i+1)*base_fee/10 + Decimal(0.1*tries))[0] # Adding tries to the fee changes the transaction (we are reusing the prev UTXOs)
             assert(node.gettxpoolinfo()["usage"] < node.gettxpoolinfo()["maxtxpool"])
 
-            # make sure the txpool count did not change
-            waitFor(10, lambda: num_txns_in_txpool == node.gettxpoolinfo()["size"])
+            # make sure the txpool count did not change much (an eviction could put a smaller tx in, which could then allow another in)
+            waitFor(10, lambda: abs(num_txns_in_txpool - node.gettxpoolinfo()["size"]) < 2)
 
             # make sure new tx is in the txpool, but since the txpool has a random eviction policy,
             # this tx could be the one that was evicted.  So retry 10 times to make failures it VERY unlikely

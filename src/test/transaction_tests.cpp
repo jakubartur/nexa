@@ -143,6 +143,73 @@ BOOST_AUTO_TEST_CASE(tx_valid)
 }
 #endif
 
+// Invalid transactions generated dynamically by this test
+BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
+{
+    CMutableTransaction tx;
+    CTransactionRef txref;
+    CScript simpleConstraint = CScript() << OP_1;
+
+    // Check vout rules in a coinbase
+
+    // Fill out the maximum vouts
+    for (unsigned int i = 0; i < MAX_TX_NUM_VOUT; i++)
+    {
+        tx.vout.push_back(CTxOut(CTxOut::LEGACY, 1, simpleConstraint));
+    }
+    // tx should be ok
+    CValidationState state;
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(CheckTransaction(txref, state), "at max vouts");
+    BOOST_CHECK(state.IsValid());
+
+    // Check that 1 more vout causes a tx failure
+    tx.vout.push_back(CTxOut(CTxOut::LEGACY, 1, simpleConstraint));
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "max vouts exceeded");
+    BOOST_CHECK(!state.IsValid());
+    BOOST_CHECK(state.GetRejectReason() == "bad-txns-too-many-vout");
+
+    state = CValidationState();
+
+    // Check vout rules in a normal tx
+
+    // need at least 1 input for the tx to be considered not a coinbase...
+    tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 100));
+
+    tx.vout.resize(MAX_TX_NUM_VOUT);
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(CheckTransaction(txref, state), "at max vouts");
+    BOOST_CHECK(state.IsValid());
+
+    // Check that 1 more vout causes a tx failure
+    tx.vout.push_back(CTxOut(CTxOut::LEGACY, 1, simpleConstraint));
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "max vouts exceeded");
+    BOOST_CHECK(!state.IsValid());
+    BOOST_CHECK(state.GetRejectReason() == "bad-txns-too-many-vout");
+
+    // OK now check input count restrictions
+    state = CValidationState();
+    tx.vout.resize(MAX_TX_NUM_VOUT);
+    // Fill out the maximum vins
+    while (tx.vin.size() < MAX_TX_NUM_VIN)
+    {
+        tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 100));
+    }
+
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(CheckTransaction(txref, state), "at max vins");
+    BOOST_CHECK(state.IsValid());
+
+    // Check that 1 more vout causes a tx failure
+    tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 100));
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "max vins exceeded");
+    BOOST_CHECK(!state.IsValid());
+    BOOST_CHECK(state.GetRejectReason() == "bad-txns-too-many-vin");
+}
+
 #if 0 // TODO: add hard-coded test vectors based on the new transaction format
 BOOST_AUTO_TEST_CASE(tx_invalid)
 {

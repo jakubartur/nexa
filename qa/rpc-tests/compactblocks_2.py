@@ -197,7 +197,7 @@ class CompactBlocksTest(BitcoinTestFramework):
         out_value = decimal.Decimal(total_value) / (COIN*100)
         tx = CTransaction()
         tx.vin.append(block.vtx[0].SpendOutput(0, CScript([OP_TRUE])))
-        for i in range(100):
+        for i in range(64):
             tx.vout.append(TxOut(0,out_value, CScript([OP_TRUE])))
         tx.rehash()
 
