@@ -18,7 +18,7 @@ public:
     void SetCashAddrEncoding(bool b) override { useCashAddr = b; }
     bool UseCashAddrEncoding() const override { return useCashAddr; }
     const CChainParams &GetChainParams() const override {
-        return Params(CBaseChainParams::MAIN);
+        return Params(CBaseChainParams::NEXTCHAIN);
     }
 
 private:
@@ -28,7 +28,7 @@ private:
 } // anon ns
 
 void GUIUtilTests::dummyAddressTest() {
-    CChainParams &params = Params(CBaseChainParams::MAIN);
+    CChainParams &params = Params(CBaseChainParams::NEXTCHAIN);
     UtilCfgDummy cfg;
     std::string dummyaddr;
 
@@ -50,8 +50,8 @@ void GUIUtilTests::toCurrentEncodingTest() {
     QVERIFY(ToCurrentEncoding("garbage", config) == "garbage");
 
     QString cashaddr_pubkey =
-        "bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a";
-    QString base58_pubkey = "1BpEi6DfDAUFd7GtittLSdBeYJvcoaVggu";
+        "nex:qqjk5f068wpfdhmqh5rnrrqkhryl6lacq5rfu5u004";
+    QString base58_pubkey = "B7run8V4hf1NJ46UUB2WkHXC8aW6NVz1iR";
 
     config.SetCashAddrEncoding(true);
     QVERIFY(ToCurrentEncoding(cashaddr_pubkey, config) == cashaddr_pubkey);

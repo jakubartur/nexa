@@ -9,7 +9,7 @@
 #include <QValidator>
 
 void BitcoinAddressValidatorTests::inputTests() {
-    const std::string prefix = Params(CBaseChainParams::MAIN).CashAddrPrefix();
+    const std::string prefix = Params(CBaseChainParams::LEGACY_UNIT_TESTS).CashAddrPrefix();
     BitcoinAddressEntryValidator v(prefix, nullptr);
 
     int unused = 0;

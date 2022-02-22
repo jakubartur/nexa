@@ -13,7 +13,7 @@
 
 #include <boost/test/unit_test.hpp>
 
-BOOST_FIXTURE_TEST_SUITE(Alert_tests, TestingSetup)
+BOOST_FIXTURE_TEST_SUITE(alert_tests, TestingSetup)
 
 
 static bool falseFunc() { return false; }
@@ -21,15 +21,15 @@ BOOST_AUTO_TEST_CASE(PartitionAlert)
 {
     // Test PartitionCheck
     CCriticalSection csDummy;
-    CBlockIndex indexDummy[100];
-    CChainParams &params = Params(CBaseChainParams::MAIN);
+    CBlockIndex indexDummy[500];
+    CChainParams &params = Params(CBaseChainParams::NEXTCHAIN);
     int64_t nPowTargetSpacing = params.GetConsensus().nPowTargetSpacing;
 
     // Generate fake blockchain timestamps relative to
     // an arbitrary time:
     int64_t now = 1427379054;
     SetMockTime(now);
-    for (int i = 0; i < 100; i++)
+    for (int i = 0; i < 500; i++)
     {
         indexDummy[i].phashBlock = nullptr;
         if (i == 0)
@@ -37,7 +37,7 @@ BOOST_AUTO_TEST_CASE(PartitionAlert)
         else
             indexDummy[i].pprev = &indexDummy[i - 1];
         indexDummy[i].header.height = i;
-        indexDummy[i].header.nTime = now - (100 - i) * nPowTargetSpacing;
+        indexDummy[i].header.nTime = now - (500 - i) * nPowTargetSpacing;
         // Other members don't matter, the partition check code doesn't
         // use them
     }
@@ -46,7 +46,7 @@ BOOST_AUTO_TEST_CASE(PartitionAlert)
 
     // Test 1: chain with blocks every nPowTargetSpacing seconds,
     // as normal, no worries:
-    PartitionCheck(falseFunc, csDummy, &indexDummy[99], nPowTargetSpacing);
+    PartitionCheck(falseFunc, csDummy, &indexDummy[499], nPowTargetSpacing);
     BOOST_CHECK_MESSAGE(strMiscWarning.empty(), strMiscWarning);
 
     // Test 2: go 3.5 hours without a block, expect a warning:
@@ -68,8 +68,8 @@ BOOST_AUTO_TEST_CASE(PartitionAlert)
     now += 60 * 60 * 24; // Pretend it is a day later
     SetMockTime(now);
     int64_t quickSpacing = nPowTargetSpacing * 2 / 5;
-    for (int i = 0; i < 100; i++) // Tweak chain timestamps:
-        indexDummy[i].header.nTime = now - (100 - i) * quickSpacing;
+    for (int i = 0; i < 500; i++) // Tweak chain timestamps:
+        indexDummy[i].header.nTime = now - (500 - i) * quickSpacing;
     PartitionCheck(falseFunc, csDummy, &indexDummy[99], nPowTargetSpacing);
     BOOST_CHECK(!strMiscWarning.empty());
     BOOST_TEST_MESSAGE(std::string("Got alert text: ") + strMiscWarning);

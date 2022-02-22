@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
     std::vector<unsigned char> result;
     CBitcoinSecret secret;
     CTxDestination destination;
-    SelectParams(CBaseChainParams::MAIN);
+    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
 
     for (unsigned int idx = 0; idx < tests.size(); idx++)
     {
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
         if (isTestnet)
             SelectParams(CBaseChainParams::TESTNET);
         else
-            SelectParams(CBaseChainParams::MAIN);
+            SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
         if (isPrivkey)
         {
             bool isCompressed = find_value(metadata, "isCompressed").get_bool();
@@ -202,7 +202,7 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_gen)
         if (isTestnet)
             SelectParams(CBaseChainParams::TESTNET);
         else
-            SelectParams(CBaseChainParams::MAIN);
+            SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
         if (isPrivkey)
         {
             bool isCompressed = find_value(metadata, "isCompressed").get_bool();
@@ -238,8 +238,6 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_gen)
             BOOST_CHECK_MESSAGE(address == exp_base58string, "mismatch: " + strTest);
         }
     }
-
-    SelectParams(CBaseChainParams::MAIN);
 }
 
 // Goal: check that base58 parsing code is robust against a variety of corrupted data

@@ -600,11 +600,9 @@ static void addRpcServerOptions(AllowedArgs &allowedArgs)
               "<USERNAME>:<SALT>$<HASH>. A canonical python script is included in share/rpcuser. This option can be "
               "specified multiple times"))
         .addArg("rpcport=<port>", requiredInt,
-            strprintf(_("Listen for JSON-RPC connections on <port> (default: %u, testnet: %u, testnet4: %u, scalenet: "
-                        "%u, nol: %u, regtest: %u)"),
-                BaseParams(CBaseChainParams::MAIN).RPCPort(), BaseParams(CBaseChainParams::TESTNET).RPCPort(),
-                BaseParams(CBaseChainParams::TESTNET4).RPCPort(), BaseParams(CBaseChainParams::SCALENET).RPCPort(),
-                BaseParams(CBaseChainParams::UNL).RPCPort(), BaseParams(CBaseChainParams::REGTEST).RPCPort()))
+            strprintf(_("Listen for JSON-RPC connections on <port> (default: %u, testnet: %u, regtest: %u)"),
+                BaseParams(CBaseChainParams::NEXTCHAIN).RPCPort(), BaseParams(CBaseChainParams::TESTNET).RPCPort(),
+                BaseParams(CBaseChainParams::REGTEST).RPCPort()))
         .addArg("rpcallowip=<ip>", requiredStr,
             _("Allow JSON-RPC connections from specified source. Valid for <ip> are a single IP (e.g. 1.2.3.4), a "
               "network/netmask (e.g. 1.2.3.4/255.255.255.0) or a network/CIDR (e.g. 1.2.3.4/24). This option can be "
@@ -728,11 +726,9 @@ BitcoinCli::BitcoinCli() : AllowedArgs(true)
         .addArg("rpcconnect=<ip>", requiredStr,
             strprintf(_("Send commands to node running on <ip> (default: %s)"), DEFAULT_RPCCONNECT))
         .addArg("rpcport=<port>", requiredInt,
-            strprintf(_("Connect to JSON-RPC on <port> (default: %u, testnet: %u, testnet4: %u, scalenet: %u, nol: %u, "
-                        "regtest: %u)"),
-                BaseParams(CBaseChainParams::MAIN).RPCPort(), BaseParams(CBaseChainParams::TESTNET).RPCPort(),
-                BaseParams(CBaseChainParams::TESTNET4).RPCPort(), BaseParams(CBaseChainParams::SCALENET).RPCPort(),
-                BaseParams(CBaseChainParams::UNL).RPCPort(), BaseParams(CBaseChainParams::REGTEST).RPCPort()))
+            strprintf(_("Connect to JSON-RPC on <port> (default: %u, testnet: %u, regtest: %u)"),
+                BaseParams(CBaseChainParams::NEXTCHAIN).RPCPort(), BaseParams(CBaseChainParams::TESTNET).RPCPort(),
+                BaseParams(CBaseChainParams::REGTEST).RPCPort()))
         .addArg("rpcwait", optionalBool, _("Wait for RPC server to start"))
         .addArg("rpcuser=<user>", requiredStr, _("Username for JSON-RPC connections"))
         .addArg("rpcpassword=<pw>", requiredStr, _("Password for JSON-RPC connections"))

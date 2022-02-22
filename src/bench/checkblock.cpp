@@ -34,7 +34,7 @@ static void DeserializeAndCheckBlockTest(benchmark::State& state)
     char a = '\0';
     stream.write(&a, 1); // Prevent compaction
 
-    SelectParams(CBaseChainParams::MAIN);
+    SelectParams(CBaseChainParams::NEXTCHAIN);
     const Consensus::Params &consensusParams = Params().GetConsensus();
     while (state.KeepRunning()) {
         CBlock block; // Note that CBlock caches its checked state, so we need to recreate it here

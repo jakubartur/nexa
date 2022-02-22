@@ -44,7 +44,7 @@ BOOST_AUTO_TEST_CASE(test_addresses) {
     std::string bitpay_pubkey = "CTH8H8Zj6DSnXFBKQeDG28ogAS92iS16Bp";
     std::string bitpay_script = "HHLN6S9BcP1JLSrMhgD5qe57iVEMFMLCBT";
 
-    const CChainParams &params = Params(CBaseChainParams::MAIN);
+    const CChainParams &params = Params(CBaseChainParams::LEGACY_UNIT_TESTS);
     DstCfgDummy cfg;
 
     // Check encoding

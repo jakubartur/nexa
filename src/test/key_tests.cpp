@@ -112,6 +112,8 @@ BOOST_AUTO_TEST_CASE(internal_test)
 
 BOOST_AUTO_TEST_CASE(key_test1)
 {
+    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
+
     CBitcoinSecret bsecret1, bsecret2, bsecret1C, bsecret2C, baddress1;
     BOOST_CHECK(bsecret1.SetString(strSecret1));
     BOOST_CHECK(bsecret2.SetString(strSecret2));

@@ -82,6 +82,8 @@ TestVector test2 = TestVector("fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab
 
 void RunTest(const TestVector &test)
 {
+    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
+
     std::vector<unsigned char> seed = ParseHex(test.strHexMaster);
     CExtKey key;
     CExtPubKey pubkey;

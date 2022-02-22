@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_CASE(forkscsv_read_and_dumpforks_test)
     BOOST_CHECK(ReadForksCsv("main", is_2, params.GetModifiableConsensus()));
 
     // dump forks testing
-    BOOST_CHECK(NetworkDeploymentInfoCSV(CBaseChainParams::MAIN) == std::string(
+    BOOST_CHECK(NetworkDeploymentInfoCSV(CBaseChainParams::NEXTCHAIN) == std::string(
             "# deployment info for network 'main':\n"
             "main,28,testdummy,1199145601,1230767999,2016,1916,0,0,false\n"));
 
@@ -72,8 +72,7 @@ BOOST_AUTO_TEST_CASE(forkscsv_validation_test)
     BOOST_CHECK(!ValidateBit(-1));
 
     // network name
-    BOOST_CHECK(ValidateNetwork(CBaseChainParams::MAIN));
-    BOOST_CHECK(ValidateNetwork(CBaseChainParams::UNL));
+    BOOST_CHECK(ValidateNetwork(CBaseChainParams::NEXTCHAIN));
     BOOST_CHECK(ValidateNetwork(CBaseChainParams::TESTNET));
     BOOST_CHECK(ValidateNetwork(CBaseChainParams::REGTEST));
     BOOST_CHECK(!ValidateNetwork("nonexistent_net"));

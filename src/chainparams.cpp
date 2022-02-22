@@ -212,10 +212,10 @@ bool MineIt(CBlockHeader &blockHeader, unsigned long int tries, const Consensus:
 }
 // end temporary
 
-class CMainParams : public CChainParams
+class CLegacyParams : public CChainParams
 {
 public:
-    CMainParams()
+    CLegacyParams()
     {
         strNetworkID = "main"; // Do not use the const string because of ctor execution order issues
         consensus.nSubsidyHalvingInterval = 210000;
@@ -319,7 +319,7 @@ public:
     }
 };
 
-static CMainParams mainParams;
+static CLegacyParams legacyParams;
 
 /**
  * Regression test
@@ -598,18 +598,14 @@ const CChainParams &Params()
 
 CChainParams &Params(const std::string &chain)
 {
-    if (chain == CBaseChainParams::MAIN)
-        return mainParams;
+    if (chain == CBaseChainParams::LEGACY_UNIT_TESTS)
+        return legacyParams;
     else if (chain == CBaseChainParams::TESTNET)
         return testNetParams;
-    else if (chain == CBaseChainParams::TESTNET4)
-        assert(0);
     else if (chain == CBaseChainParams::SCALENET)
         assert(0);
     else if (chain == CBaseChainParams::REGTEST)
         return regTestParams;
-    else if (chain == CBaseChainParams::UNL)
-        assert(0);
     else if (chain == CBaseChainParams::NEXTCHAIN)
         return nextChainParams;
     else
