@@ -158,7 +158,7 @@ QString bitcoinURIScheme(const CChainParams &params, bool useCashAddr)
 {
     if (!useCashAddr)
     {
-        return "nexa";
+        return "nex";
     }
     return QString::fromStdString(params.CashAddrPrefix());
 }
@@ -664,7 +664,7 @@ TableViewLastColumnResizingFixer::TableViewLastColumnResizingFixer(QTableView *t
 fs::path static StartupShortcutPath()
 {
     std::string chain = ChainNameFromCommandLine();
-    if (chain == CBaseChainParams::MAIN)
+    if (chain == CBaseChainParams::NEXTCHAIN)
         return GetSpecialFolderPath(CSIDL_STARTUP) / "Bitcoin.lnk";
     if (chain == CBaseChainParams::TESTNET) // Remove this special case when CBaseChainParams::TESTNET = "testnet4"
         return GetSpecialFolderPath(CSIDL_STARTUP) / "Bitcoin (testnet).lnk";
@@ -764,7 +764,7 @@ fs::path static GetAutostartDir()
 fs::path static GetAutostartFilePath()
 {
     std::string chain = ChainNameFromCommandLine();
-    if (chain == CBaseChainParams::MAIN)
+    if (chain == CBaseChainParams::NEXTCHAIN)
         return GetAutostartDir() / "bitcoin.desktop";
     return GetAutostartDir() / strprintf("bitcoin-%s.lnk", chain);
 }
@@ -807,7 +807,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         // Write a bitcoin.desktop file to the autostart directory:
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
-        if (chain == CBaseChainParams::MAIN)
+        if (chain == CBaseChainParams::NEXTCHAIN)
             optionFile << "Name=Bitcoin\n";
         else
             optionFile << strprintf("Name=Bitcoin (%s)\n", chain);

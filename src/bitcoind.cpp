@@ -116,8 +116,6 @@ bool AppInit(int argc, char *argv[])
         std::stringstream ss;
         ss << "# " << strprintf(_("%s Daemon"), _(PACKAGE_NAME)) << " " << _("version") << " " << FormatFullVersion();
         ss << "\n" << FORKS_CSV_FILE_HEADER;
-        ss << NetworkDeploymentInfoCSV(CBaseChainParams::MAIN);
-        ss << NetworkDeploymentInfoCSV(CBaseChainParams::UNL);
         ss << NetworkDeploymentInfoCSV(CBaseChainParams::TESTNET);
         ss << NetworkDeploymentInfoCSV(CBaseChainParams::REGTEST);
         ss << NetworkDeploymentInfoCSV(CBaseChainParams::NEXTCHAIN);

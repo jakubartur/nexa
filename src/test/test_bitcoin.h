@@ -52,7 +52,7 @@ struct BasicTestingSetup
 {
     ECCVerifyHandle globalVerifyHandle;
 
-    BasicTestingSetup(const std::string &chainName = CBaseChainParams::MAIN);
+    BasicTestingSetup(const std::string &chainName = CBaseChainParams::NEXTCHAIN);
     ~BasicTestingSetup();
 };
 
@@ -65,7 +65,7 @@ struct TestingSetup : public BasicTestingSetup
     fs::path pathTemp;
     boost::thread_group threadGroup;
 
-    TestingSetup(const std::string &chainName = CBaseChainParams::MAIN);
+    TestingSetup(const std::string &chainName = CBaseChainParams::NEXTCHAIN);
     ~TestingSetup();
 };
 

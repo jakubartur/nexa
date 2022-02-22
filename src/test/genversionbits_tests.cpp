@@ -30,7 +30,7 @@ int32_t GenVBTestTime(int nHeight) { return 1415926536 + 600 * nHeight; }
 
 #define TEST_BIT 8
 
-#define SELECTED_CHAIN CBaseChainParams::MAIN
+#define SELECTED_CHAIN CBaseChainParams::NEXTCHAIN
 
 
 // a checker which enforced some minlockedblocks

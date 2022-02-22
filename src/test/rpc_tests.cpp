@@ -113,6 +113,8 @@ BOOST_AUTO_TEST_CASE(rpc_rawparams)
 
 BOOST_AUTO_TEST_CASE(rpc_rawsign)
 {
+    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
+
     UniValue r;
     // input is a 1-of-2 multisig (so is output):
     string prevout = "[{\"outpoint\":\"b4cc287e58f87cdae59417329f710f3ecd75a4ee1d2872b7248f50977c8493f3\","

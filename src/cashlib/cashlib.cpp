@@ -86,25 +86,19 @@ struct ForkDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_BITS_
 // Must match the equivalent object in calling language code
 typedef enum
 {
-    AddrBlockchainBCH = 1,
+    AddrBlockchainNextChain = 1,
     AddrBlockchainBCHtestnet = 2,
     AddrBlockchainBCHregtest = 3,
-    AddrBlockchainNol = 4,
-    AddrBlockchainNextChain = 5,
 } ChainSelector;
 
 CChainParams *GetChainParams(ChainSelector chainSelector)
 {
-    if (chainSelector == AddrBlockchainBCH)
-        return &Params(CBaseChainParams::MAIN);
+    if (chainSelector == AddrBlockchainNextChain)
+        return &Params(CBaseChainParams::NEXTCHAIN);
     else if (chainSelector == AddrBlockchainBCHtestnet)
         return &Params(CBaseChainParams::TESTNET);
     else if (chainSelector == AddrBlockchainBCHregtest)
         return &Params(CBaseChainParams::REGTEST);
-    else if (chainSelector == AddrBlockchainNol)
-        return &Params(CBaseChainParams::UNL);
-    else if (chainSelector == AddrBlockchainNextChain)
-        return &Params(CBaseChainParams::NEXTCHAIN);
     else
         return nullptr;
 }
