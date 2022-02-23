@@ -25,7 +25,7 @@ uint256 CBlockHeader::GetMiningHeaderCommitment() const
 
     CSHA256Writer extHeader;
     extHeader << hashAncestor << hashTxFilter << hashMerkleRoot << nTime << ((uint64_t)height) << chainWork << size
-              << txCount << maxSize << feePoolAmt << utxoCommitment << minerData;
+              << txCount << feePoolAmt << utxoCommitment << minerData;
     uint256 extHash = extHeader.GetHash();
 
     CSHA256Writer commitment;
@@ -57,7 +57,7 @@ uint256 CBlockHeader::GetHash() const
     miniHeader << hashPrevBlock << nBits;
     CSHA256Writer extHeader;
     extHeader << hashAncestor << hashTxFilter << hashMerkleRoot << nTime << ((uint64_t)height) << chainWork << size
-              << txCount << maxSize << feePoolAmt << utxoCommitment << minerData << nonce;
+              << txCount << feePoolAmt << utxoCommitment << minerData << nonce;
 
     CSHA256Writer commitment;
     commitment << miniHeader.GetHash() << extHeader.GetHash();
@@ -75,9 +75,9 @@ std::string CBlock::ToString() const
 {
     std::stringstream s;
     s << strprintf("CBlock(hash=%s, height=%d, hashPrevBlock=%s, hashMerkleRoot=%s, nTime=%u, nBits=%08x, txCount=%u "
-                   "size=%d(of %d), feePool=%d, nonce=%s, utxo=%s)\n",
+                   ", feePool=%d, nonce=%s, utxo=%s)\n",
         GetHash().ToString(), height, hashPrevBlock.ToString(), hashMerkleRoot.ToString(), nTime, nBits, vtx.size(),
-        size, maxSize, feePoolAmt, HexStr(nonce), HexStr(utxoCommitment));
+        size, feePoolAmt, HexStr(nonce), HexStr(utxoCommitment));
     for (unsigned int i = 0; i < vtx.size(); i++)
     {
         s << "  " << vtx[i]->ToString() << "\n";

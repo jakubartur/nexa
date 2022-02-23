@@ -29,7 +29,6 @@ extern std::atomic<int64_t> nTotalPackage;
 // Padding for block header VARINT's
 static const uint64_t TXCOUNT_VARINT_PADDING = 5;
 static const uint64_t HEIGHT_VARINT_PADDING = 5;
-static const uint64_t MAXSIZE_VARINT_PADDING = 5;
 static const uint64_t FEEPOOL_VARINT_PADDING = 5;
 
 namespace Consensus

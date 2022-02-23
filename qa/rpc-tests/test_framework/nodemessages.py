@@ -1115,7 +1115,6 @@ class CBlockHeader(object):
         self.chainWork = header.chainWork
         self.size = header.size
         self.txCount = header.txCount
-        self.maxSize = header.maxSize
         self.feePoolAmt = header.feePoolAmt
         self.utxoCommitment = header.utxoCommitment
         self.minerData = header.minerData
@@ -1134,7 +1133,6 @@ class CBlockHeader(object):
         self.chainWork = 0
         self.size = 0
         self.txCount = 0
-        self.maxSize = 0
         self.feePoolAmt = 0
         self.utxoCommitment = b""
         self.minerData = b""
@@ -1153,7 +1151,6 @@ class CBlockHeader(object):
         self.chainWork = deser_uint256(f)
         self.size = struct.unpack("<Q", f.read(8))[0]
         self.txCount = deser_varint(f)
-        self.maxSize = deser_varint(f)
         self.feePoolAmt = deser_varint(f)
         self.utxoCommitment = deser_string(f)
         self.minerData = deser_string(f)
@@ -1173,7 +1170,6 @@ class CBlockHeader(object):
         r += ser_uint256(self.chainWork)
         r += struct.pack("<Q", self.size)
         r += ser_varint(self.txCount)
-        r += ser_varint(self.maxSize)
         r += ser_varint(self.feePoolAmt)
         r += ser_string(self.utxoCommitment)
         r += ser_string(self.minerData)
@@ -1203,7 +1199,6 @@ class CBlockHeader(object):
             eh += ser_uint256(self.chainWork)
             eh += struct.pack("<Q", self.size)
             eh += struct.pack("<Q", self.txCount)
-            eh += struct.pack("<Q", self.maxSize)
             eh += struct.pack("<Q", self.feePoolAmt)
             eh += ser_string(self.utxoCommitment)
             eh += ser_string(self.minerData)
@@ -1231,7 +1226,6 @@ class CBlockHeader(object):
             eh += ser_uint256(self.chainWork)
             eh += struct.pack("<Q", self.size)
             eh += struct.pack("<Q", self.txCount)
-            eh += struct.pack("<Q", self.maxSize)
             eh += struct.pack("<Q", self.feePoolAmt)
             eh += ser_string(self.utxoCommitment)
             eh += ser_string(self.minerData)

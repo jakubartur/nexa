@@ -758,9 +758,6 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
                 (int64_t)(HEIGHT_VARINT_PADDING -
                           (::GetSerializeSize(VARINT(pblocktemplate->block->height), SER_NETWORK, PROTOCOL_VERSION) -
                               1)) -
-                (int64_t)(MAXSIZE_VARINT_PADDING -
-                          (::GetSerializeSize(VARINT(pblocktemplate->block->maxSize), SER_NETWORK, PROTOCOL_VERSION) -
-                              1)) -
                 (int64_t)(FEEPOOL_VARINT_PADDING - (::GetSerializeSize(VARINT(pblocktemplate->block->feePoolAmt),
                                                         SER_NETWORK, PROTOCOL_VERSION) -
                                                        1)));
@@ -802,9 +799,6 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
                               1)) -
                 (int64_t)(HEIGHT_VARINT_PADDING -
                           (::GetSerializeSize(VARINT(pblocktemplate->block->height), SER_NETWORK, PROTOCOL_VERSION) -
-                              1)) -
-                (int64_t)(MAXSIZE_VARINT_PADDING -
-                          (::GetSerializeSize(VARINT(pblocktemplate->block->maxSize), SER_NETWORK, PROTOCOL_VERSION) -
                               1)) -
                 (int64_t)(FEEPOOL_VARINT_PADDING - (::GetSerializeSize(VARINT(pblocktemplate->block->feePoolAmt),
                                                         SER_NETWORK, PROTOCOL_VERSION) -

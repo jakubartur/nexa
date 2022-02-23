@@ -194,10 +194,6 @@ bool ContextualCheckBlockHeader(const CChainParams &chainparams,
     {
         return state.DoS(100, error("%s: premature fee pool use", __func__), REJECT_INVALID, "bad-fee-pool");
     }
-    if (block.maxSize != 0)
-    {
-        return state.DoS(100, error("%s: premature max block size use", __func__), REJECT_INVALID, "bad-max-size");
-    }
     if (block.hashAncestor != uint256())
     {
         return state.DoS(100, error("%s: premature ancestor block use", __func__), REJECT_INVALID, "bad-ancestorblock");
