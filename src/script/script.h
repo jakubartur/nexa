@@ -534,6 +534,13 @@ public:
  */
 typedef prevector<28, uint8_t> CScriptBase;
 
+enum class ScriptType : uint8_t
+{
+    SATOSCRIPT = 0,
+    TEMPLATE = 1,
+    PUSH_ONLY = 2
+};
+
 /** Serialized script, used inside transaction inputs and outputs */
 class CScript : public CScriptBase
 {
@@ -556,7 +563,9 @@ protected:
     }
 
 public:
+    ScriptType type = ScriptType::SATOSCRIPT; // RAM only -- this type field is inferred by the container version.
     CScript() {}
+    CScript(ScriptType typeIn) : type(typeIn) {}
     CScript(const_iterator pbegin, const_iterator pend) : CScriptBase(pbegin, pend) {}
     CScript(std::vector<uint8_t>::const_iterator pbegin, std::vector<uint8_t>::const_iterator pend)
         : CScriptBase(pbegin, pend)
@@ -601,6 +610,12 @@ public:
     {
         *this << b.getvch();
         return *this;
+    }
+
+    void swap(CScript &other)
+    {
+        std::swap(type, other.type);
+        CScriptBase::swap(other);
     }
 
     void serializeVector(const std::vector<uint8_t> &b)
@@ -660,7 +675,8 @@ public:
         return *this;
     }
 
-    CScript &operator<<(const uint256 &data)
+    template <unsigned int BITS>
+    CScript &operator<<(const base_blob<BITS> &data)
     {
         std::vector<unsigned char> v(data.begin(), data.end());
         *this << v;

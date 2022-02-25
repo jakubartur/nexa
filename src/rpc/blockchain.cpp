@@ -1149,6 +1149,7 @@ UniValue verifychain(const UniValue &params, bool fHelp)
     return CVerifyDB().VerifyDB(Params(), pcoinsTip, nCheckLevel, nCheckDepth);
 }
 
+#if 0 // unused
 /** Implementation of IsSuperMajority with better feedback */
 static UniValue SoftForkMajorityDesc(int version, CBlockIndex *pindex, const Consensus::Params &consensusParams)
 {
@@ -1165,6 +1166,7 @@ static UniValue SoftForkMajorityDesc(int version, CBlockIndex *pindex, const Con
     return rv;
 }
 
+
 static UniValue SoftForkDesc(const std::string &name,
     int version,
     CBlockIndex *pindex,
@@ -1176,7 +1178,7 @@ static UniValue SoftForkDesc(const std::string &name,
     rv.pushKV("reject", SoftForkMajorityDesc(version, pindex, consensusParams));
     return rv;
 }
-
+#endif
 
 static void pushBackThresholdStatus(UniValue &rv,
     const Consensus::Params &consensusParams,

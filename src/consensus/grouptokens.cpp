@@ -106,6 +106,8 @@ CGroupTokenInfo::CGroupTokenInfo(const CScript &script)
 CGroupTokenInfo::CGroupTokenInfo(const CTxOut &output)
     : associatedGroup(), controllingGroupFlags(GroupAuthorityFlags::NONE), quantity(0), invalid(false)
 {
+    // Make sure that the script type was set properly based on the utxo type
+    DbgAssert(output.scriptPubKey.type == CTxOut::ScriptTypeOf(output.type), );
     IsScriptGrouped(output.scriptPubKey, nullptr, this);
 }
 
@@ -174,6 +176,8 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
             return state.Invalid(false, REJECT_INVALID, "already-spent");
         }
         const CScript &script = coin->out.scriptPubKey;
+        const ScriptType scriptType = CTxOut::ScriptTypeOf(coin->out.type);
+        DbgAssert(scriptType == script.type, );
         CGroupTokenInfo tokenGrp(script);
         // The prevout should never be invalid because that would mean that this node accepted a block with an
         // invalid OP_GROUP tx in it.
@@ -204,14 +208,21 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
 
         // If the group is covenanted and we haven't found the covenant, get it. (REQ3.2.4.1)
         if (!tokenGrp.isAuthority() && tokenGrp.associatedGroup.hasFlag(GroupTokenIdFlags::COVENANT) &&
-            gBalance[tokenGrp.associatedGroup].covenant == uint256())
+            gBalance[tokenGrp.associatedGroup].covenant.size() == 0)
         {
-            ScriptTemplateError error;
-            uint256 templateId = GetScriptTemplate(script, error);
+            if (scriptType == ScriptType::TEMPLATE)
+            {
+                VchType contractId;
+                ScriptTemplateError error = GetScriptTemplate(script, nullptr, &contractId);
 
-            // The first grouped input is the covenant for this group (if group is covenanted).
-            if (error != ScriptTemplateError::INVALID)
-                gBalance[tokenGrp.associatedGroup].covenant = templateId;
+                // The first grouped input is the covenant for this group (if group is covenanted).
+                if (error == ScriptTemplateError::INVALID)
+                {
+                    return state.Invalid(false, REJECT_INVALID, "bad general txout");
+                }
+                if (error == ScriptTemplateError::OK)
+                    gBalance[tokenGrp.associatedGroup].covenant = contractId;
+            }
         }
 
         if ((tokenGrp.associatedGroup != NoGroup) && !tokenGrp.isAuthority())
@@ -319,8 +330,8 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
         const CScript &script = outp.scriptPubKey;
         CGroupTokenInfo grp(script);
 
-        ScriptTemplateError error;
-        uint256 templateId = GetScriptTemplate(script, error);
+        VchType contractId;
+        ScriptTemplateError error = GetScriptTemplate(script, nullptr, &contractId);
 
         if (error == ScriptTemplateError::INVALID)
         {
@@ -344,7 +355,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
             // If no inputs have the authority to change the covenant, then this output must match the covenant
             if (!hasCapability(grpData.ctrlPerms, GroupAuthorityFlags::RESCRIPT))
             {
-                if (templateId != grpData.covenant)
+                if (contractId != grpData.covenant)
                 {
                     return state.Invalid(false, REJECT_INVALID, "grp-covenant-bad-template",
                         "covenant group has incorrect output template");

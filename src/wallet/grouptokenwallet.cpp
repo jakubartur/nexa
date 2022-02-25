@@ -402,7 +402,7 @@ void ConstructTx(CWalletTx &wtxNew,
         // Add group outputs based on the passed recipient data to the tx.
         for (const CRecipient &recipient : outputs)
         {
-            CTxOut txout(CTxOut::LEGACY, recipient.nAmount, recipient.scriptPubKey);
+            CTxOut txout(CTxOut::SATOSCRIPT, recipient.nAmount, recipient.scriptPubKey);
             tx.vout.push_back(txout);
             approxSize += ::GetSerializeSize(txout, SER_DISK, CLIENT_VERSION);
         }
@@ -425,7 +425,7 @@ void ConstructTx(CWalletTx &wtxNew,
                 throw JSONRPCError(
                     RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
-            CTxOut txout(CTxOut::LEGACY, GROUPED_SATOSHI_AMT,
+            CTxOut txout(CTxOut::SATOSCRIPT, GROUPED_SATOSHI_AMT,
                 GetScriptForDestination(newKey.GetID(), grpID, totalGroupedAvailable - totalGroupedNeeded));
             tx.vout.push_back(txout);
             approxSize += ::GetSerializeSize(txout, SER_DISK, CLIENT_VERSION);
@@ -471,7 +471,8 @@ void ConstructTx(CWalletTx &wtxNew,
                 throw JSONRPCError(
                     RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
-            CTxOut txout(CTxOut::LEGACY, totalAvailable - totalNeeded - fee, GetScriptForDestination(newKey.GetID()));
+            CTxOut txout(
+                CTxOut::SATOSCRIPT, totalAvailable - totalNeeded - fee, GetScriptForDestination(newKey.GetID()));
             // figure out what the additional fee will be for the change output
             approxSize += ::GetSerializeSize(txout, SER_DISK, CLIENT_VERSION);
             fee = wallet->GetRequiredFee(approxSize) + TOKEN_EXTRA_FEE;

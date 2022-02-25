@@ -345,11 +345,13 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
 
     // Test LimitOrphanTxSize() function: limit by orphan pool bytes
     // add 50 orphan transactions:
+    uint64_t txSz = 0;
     for (int i = 0; i < 50; i++)
     {
         CMutableTransaction tx;
         tx.vin.resize(1);
         tx.vin[0].prevout.hash = InsecureRand256();
+        tx.vin[0].amount = 1;
         tx.vin[0].scriptSig << OP_1;
         tx.vout.resize(1);
         tx.vout[0].nValue = 1 * CENT;
@@ -358,15 +360,20 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
         WRITELOCK(orphanpool.cs_orphanpool);
         CTransaction _tx(tx);
         orphanpool.AddOrphanTx(MakeTransactionRef(_tx), i);
+        txSz += RecursiveDynamicUsage(tx) + sizeof(tx); // ::GetSerializeSize(tx, SER_NETWORK, PROTOCOL_VERSION);
     }
+
+    // Sanity check that the in-memory tx size doesn't change much compared to what we have now.
+    BOOST_CHECK(txSz < 15000);
+    int avgTxRamSize = txSz / 50;
 
     {
         WRITELOCK(orphanpool.cs_orphanpool);
-        orphanpool.LimitOrphanTxSize(50, 8900);
+        orphanpool.LimitOrphanTxSize(50, txSz + 1);
         BOOST_CHECK_EQUAL(orphanpool.mapOrphanTransactions.size(), 50UL);
-        orphanpool.LimitOrphanTxSize(50, 6300);
+        orphanpool.LimitOrphanTxSize(50, txSz - (avgTxRamSize * 10));
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() <= 49);
-        orphanpool.LimitOrphanTxSize(50, 1000);
+        orphanpool.LimitOrphanTxSize(50, 7 * avgTxRamSize);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() <= 8);
         orphanpool.LimitOrphanTxSize(50, 0);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.empty());

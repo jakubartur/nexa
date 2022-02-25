@@ -763,13 +763,13 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
             debugger->futureMineable = false;
             // debugger->AddInvalidReason(
             // "tx-mempool-conflict: " + txin.prevout.hash.ToString() + ":" + std::to_string(txin.prevout.n));
-            debugger->AddInvalidReason("txn-mempool-conflict");
+            debugger->AddInvalidReason("txn-txpool-conflict");
         }
         else
         {
             // Tx is a respend, and it's not an interesting one (we don't care to
             // validate it further)
-            return state.Invalid(false, REJECT_CONFLICT, "txn-mempool-conflict");
+            return state.Invalid(false, REJECT_CONFLICT, "txn-txpool-conflict");
         }
     }
     {

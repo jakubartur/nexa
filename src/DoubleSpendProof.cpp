@@ -30,7 +30,7 @@
 
 namespace
 {
-enum ScriptType
+enum Scripts
 {
     P2PKH
 };
@@ -307,7 +307,7 @@ DoubleSpendProof::Validity DoubleSpendProof::validate(const CTxMemPool &pool, co
      * types of scripts because all we need to do is replace the signature from our 'tx'
      * with the one that comes from the DSP.
      */
-    ScriptType scriptType = P2PKH; // FUTURE: look at prevTx to find out script-type
+    Scripts scriptType = P2PKH; // FUTURE: look at prevTx to find out script-type
 
     StackItem pubkeyStk;
     for (size_t i = 0; i < tx.vin.size(); ++i)

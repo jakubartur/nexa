@@ -297,7 +297,7 @@ bool isDust(const QString &address, const CAmount &amount)
 {
     CTxDestination dest = DecodeDestination(address.toStdString());
     CScript script = GetScriptForDestination(dest);
-    CTxOut txOut(CTxOut::LEGACY, amount, script);
+    CTxOut txOut(CTxOut::SATOSCRIPT, amount, script);
     return txOut.IsDust();
 }
 

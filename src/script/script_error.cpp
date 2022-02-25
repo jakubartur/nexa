@@ -114,6 +114,8 @@ const char *ScriptErrorString(const ScriptError serror)
         return "Specified transaction output index is out of range";
     case SCRIPT_ERR_BAD_OPERATION_ON_TYPE:
         return "Bad operation on type";
+    case SCRIPT_ERR_TEMPLATE:
+        return "Bad template operation";
 
     case SCRIPT_ERR_UNKNOWN_ERROR:
     case SCRIPT_ERR_ERROR_COUNT:

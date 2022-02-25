@@ -588,7 +588,16 @@ bool EvalScript(Stack &stack,
     unsigned int maxOps,
     const ScriptImportedState &sis,
     ScriptError *error = nullptr);
+
 bool VerifyScript(const CScript &scriptSig,
+    const CScript &scriptPubKey,
+    unsigned int flags,
+    unsigned int maxOps,
+    const ScriptImportedState &sis,
+    ScriptError *error = nullptr,
+    ScriptMachineResourceTracker *tracker = nullptr);
+
+bool VerifySatoScript(const CScript &scriptSig,
     const CScript &scriptPubKey,
     unsigned int flags,
     unsigned int maxOps,

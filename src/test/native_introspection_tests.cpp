@@ -94,8 +94,8 @@ BOOST_AUTO_TEST_CASE(opcodes_basic)
     const CScript coinScriptPubKey1 = CScript() << 2 << OP_ADD << 0 << OP_GREATERTHAN;
     const CScript coinScriptPubKey2 = CScript() << 3 << OP_ADD << 0 << OP_GREATERTHAN;
 
-    coins.AddCoin(in1, Coin(CTxOut(CTxOut::LEGACY, val1, coinScriptPubKey1), 1, false), false);
-    coins.AddCoin(in2, Coin(CTxOut(CTxOut::LEGACY, val2, coinScriptPubKey2), 1, false), false);
+    coins.AddCoin(in1, Coin(CTxOut(CTxOut::SATOSCRIPT, val1, coinScriptPubKey1), 1, false), false);
+    coins.AddCoin(in2, Coin(CTxOut(CTxOut::SATOSCRIPT, val2, coinScriptPubKey2), 1, false), false);
 
     CMutableTransaction tx;
     tx.vin.resize(2);

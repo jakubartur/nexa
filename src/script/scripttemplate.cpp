@@ -36,6 +36,7 @@ bool VerifyTemplate(const CScript &templat,
 
     if (!satisfier.IsPushOnly())
     {
+        LOG(SCRIPT, "Template script: Satisfier is not push-only");
         return set_error(serror, SCRIPT_ERR_SIG_PUSHONLY);
     }
 
@@ -50,6 +51,7 @@ bool VerifyTemplate(const CScript &templat,
     // However, for now, do not let the constraint script see the satisfier data, and so we can insist on push-only
     if (!constraint.IsPushOnly())
     {
+        LOG(SCRIPT, "Template script: Constraint is not push-only");
         return set_error(serror, SCRIPT_ERR_SIG_PUSHONLY);
     }
 
@@ -66,6 +68,9 @@ bool VerifyTemplate(const CScript &templat,
     // Step 2, evaluate the constraint script
     ScriptMachine sm = ssm;  // Keep the operation counts
     sm.ClearStack();
+    // Allowing the constraint script to look at (but not modify!!) the satisfier stack may have value but its use
+    // is unclear at this time.  So right now the constraint script is limited to push-only opcodes, and therefore
+    // there is no reason to offer the satisfier stack to the constraint.
     //sm.setAltStack(ssm.stack());  // constraint can look at the stack the satisfier will provide
     sm.ClearAltStack();
 
@@ -96,16 +101,10 @@ bool VerifyTemplate(const CScript &templat,
     }
 
     const Stack &smStack = sm.getStack();
-    if (smStack.size() > 1)
+    if (smStack.size() != 0)
+    {
+        LOG(SCRIPT, "Script template: final stack has %d items (must be 0)", smStack.size());
         return set_error(serror, SCRIPT_ERR_CLEANSTACK);
-    if (smStack.size() == 0)
-    {
-        return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
     }
-    if (!((bool)smStack.back()))
-    {
-        return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
-    }
-
     return set_success(serror);
 }

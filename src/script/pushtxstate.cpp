@@ -152,7 +152,7 @@ ScriptError EvalPushTxState(const VchType &specifier, const ScriptImportedState 
             stack.push_back((nogrp ? zero : CScriptNum::fromIntUnchecked(gb->numOutputs)).vchStackItem());
             break;
         case PushTxStateSpecifier::GROUP_COVENANT_HASH:
-            if ((nogrp) || (gb->covenant == uint256()))
+            if ((nogrp) || (gb->covenant.size() == 0))
             {
                 stack.push_back(OP_FALSE);
             }

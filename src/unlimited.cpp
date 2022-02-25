@@ -367,8 +367,8 @@ void UnlimitedSetup(void)
     receiveShaper.set(rb, ra);
     sendShaper.set(sb, sa);
 
-    txAdded.init("memPool/txAdded");
-    poolSize.init("memPool/size", STAT_OP_AVE | STAT_KEEP);
+    txAdded.init("txpool/txAdded");
+    poolSize.init("txpool/size", STAT_OP_AVE | STAT_KEEP);
     recvAmt.init("net/recv/total");
     recvAmt.init("net/send/total");
     std::vector<std::string> msgTypes = getAllNetMessageTypes();

@@ -1,5 +1,6 @@
 #include "consensus/grouptokens.h"
 #include "interpreter.h"
+#include "primitives/transaction.h"
 #include "script.h"
 #include "streams.h"
 #include <vector>
@@ -60,24 +61,53 @@ bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pcin, CGrou
     opcodetype opcode;
     opcodetype opcodeGrp;
     opcodetype opcodeQty;
-
-    // mintMeltGroup = ExtractControllingGroup(script);
-
-    if (!script.GetOp(pc, opcodeGrp, groupId))
+    const ScriptType scriptType = script.type;
+    // This API should never be called for satisfier or args scripts
+    DbgAssert(scriptType != ScriptType::PUSH_ONLY, return false);
+    if (scriptType == ScriptType::SATOSCRIPT)
     {
-        grp->associatedGroup = NoGroup;
-        return false;
+        if (!script.GetOp(pc, opcodeGrp, groupId))
+        {
+            grp->associatedGroup = NoGroup;
+            return false;
+        }
+        if (!script.GetOp(pc, opcodeQty, tokenQty))
+        {
+            grp->associatedGroup = NoGroup;
+            return false;
+        }
+        if (!script.GetOp(pc, opcode, data))
+        {
+            grp->associatedGroup = NoGroup;
+            return false;
+        }
     }
-
-    if (!script.GetOp(pc, opcodeQty, tokenQty))
+    else if (scriptType == ScriptType::TEMPLATE)
     {
-        grp->associatedGroup = NoGroup;
-        return false;
+        if (!script.GetOp(pc, opcodeGrp, groupId))
+        {
+            grp->associatedGroup = NoGroup;
+            return false; // Script is bad
+        }
+        if (opcodeGrp == OP_0)
+        {
+            grp->associatedGroup = NoGroup;
+            grp->quantity = 0;
+            // Since the script matched the opgroup syntax, move the caller's pc foward.
+            if (pcin)
+                *pcin = pc;
+            return true; // Script is "grouped" but the group is the native token
+        }
+        // Ok its a real group, get the quantity
+        if (!script.GetOp(pc, opcodeQty, tokenQty))
+        {
+            grp->associatedGroup = NoGroup;
+            return false;
+        }
+        opcode = OP_GROUP; // Implied by the general format, if the above passed
     }
-
-    if (!script.GetOp(pc, opcode, data))
+    else
     {
-        grp->associatedGroup = NoGroup;
         return false;
     }
 
@@ -111,22 +141,6 @@ bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pcin, CGrou
             grp->invalid = true;
             return false;
         }
-
-        /* Group pops 2 items from the stack
-        for (int i = 0; i < 2; i++) // 2 op_drops
-        {
-            if (!script.GetOp(pc, opcode, data))
-            {
-                grp->invalid = true;
-                return false;
-            }
-            if (opcode != OP_DROP)
-            {
-                grp->invalid = true;
-                return false;
-            }
-        }
-        */
     }
 
     try
@@ -176,13 +190,82 @@ bool MatchGroupedPayToPubkey(const CScript &script, valtype &pubkey, CGroupToken
 }
 */
 
-uint256 GetScriptTemplate(const CScript &script, ScriptTemplateError &error, CScript::const_iterator *pcout)
+
+ScriptTemplateError GetScriptTemplate(const CScript &script,
+    CGroupTokenInfo *groupInfo,
+    std::vector<unsigned char> *templateHash,
+    std::vector<unsigned char> *argsHash,
+    CScript::const_iterator *pcout)
 {
-    error = ScriptTemplateError::NOT_A_TEMPLATE;
-    uint256 nothing = uint256();
+    if (templateHash)
+        templateHash->clear();
+    if (argsHash)
+        argsHash->clear();
+    if (groupInfo)
+        groupInfo->clear();
+    ScriptType scriptType = script.type;
+    // a push only script is not a template, but you should not be calling this API for input or args scripts
+    DbgAssert(scriptType != ScriptType::PUSH_ONLY, return ScriptTemplateError::NOT_A_TEMPLATE);
+    // SATOSCRIPT scripts cannot have script templates
+    if (scriptType == ScriptType::SATOSCRIPT)
+        return ScriptTemplateError::NOT_A_TEMPLATE;
+    // Right now we only support 2 types so any other scriptType is an invalid script
+    if (scriptType != ScriptType::TEMPLATE)
+        return ScriptTemplateError::INVALID;
     opcodetype opcode;
-    opcodetype opcodeTemplateData;
     CScript::const_iterator pc = script.begin();
+
+    // Group ID is first info
+    bool ok = IsScriptGrouped(script, &pc, groupInfo);
+    // In the general format think of it as if every script is "grouped", with the native group indicated by OP_0
+    // This means that a false return can only happen due to badly formatted code.
+    if (!ok)
+    {
+        return ScriptTemplateError::INVALID;
+    }
+
+    // template hash is second
+    std::vector<unsigned char> vchTemplateHash; // If caller doesn't care about this value, give some temp space
+    if (!templateHash)
+        templateHash = &vchTemplateHash;
+
+    if (!script.GetOp(pc, opcode, *templateHash))
+    {
+        return ScriptTemplateError::INVALID;
+    }
+    if (!IsPushOpcode(opcode))
+        return ScriptTemplateError::INVALID;
+    size_t templateHashSize = templateHash->size();
+    if ((templateHashSize != CHash160::OUTPUT_SIZE) && (templateHashSize != CHash256::OUTPUT_SIZE))
+    {
+        return ScriptTemplateError::INVALID;
+    }
+
+    // args hash is third
+    std::vector<unsigned char> vchArgsHash;
+    if (!argsHash)
+        argsHash = &vchArgsHash;
+    if (!script.GetOp(pc, opcode, *argsHash))
+    {
+        return ScriptTemplateError::INVALID;
+    }
+    if (!IsPushOpcode(opcode))
+        return ScriptTemplateError::INVALID;
+    size_t argsHashSize = templateHash->size();
+    // allow 2 different hash types, or no hashed args
+    if ((argsHashSize != CHash160::OUTPUT_SIZE) && (argsHashSize != CHash256::OUTPUT_SIZE) && (argsHashSize != 0))
+    {
+        return ScriptTemplateError::INVALID;
+    }
+
+    // Additional stuff is valid (visible script args)
+    // For example, contract state data
+
+    if (pcout)
+        *pcout = pc;
+    return ScriptTemplateError::OK;
+
+#if 0 // legacy mode template logic
     IsScriptGrouped(script, &pc); // Move past the group
 
     // If its not an OP_TEMPLATE, then return the hash of the script with the OP_GROUP prefix stripped off
@@ -227,6 +310,7 @@ uint256 GetScriptTemplate(const CScript &script, ScriptTemplateError &error, CSc
         *pcout = pc;
     error = ScriptTemplateError::OK;
     return uint256(templateId);
+#endif
 }
 
 bool MatchGroupedPayToPubkeyHash(const CScript &script, std::vector<uint8_t> &pubkeyhash, CGroupTokenInfo &grp)

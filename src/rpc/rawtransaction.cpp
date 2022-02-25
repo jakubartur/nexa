@@ -979,7 +979,7 @@ UniValue createrawtransaction(const UniValue &params, bool fHelp)
         {
             std::vector<unsigned char> data = ParseHexV(sendTo[name_].getValStr(), "Data");
 
-            CTxOut out(CTxOut::LEGACY, 0, CScript() << OP_RETURN << data);
+            CTxOut out(CTxOut::SATOSCRIPT, 0, CScript() << OP_RETURN << data);
             rawTx.vout.push_back(out);
         }
         else
@@ -999,7 +999,7 @@ UniValue createrawtransaction(const UniValue &params, bool fHelp)
             CScript scriptPubKey = GetScriptForDestination(destination);
             CAmount nAmount = AmountFromValue(sendTo[name_]);
 
-            CTxOut out(CTxOut::LEGACY, nAmount, scriptPubKey);
+            CTxOut out(CTxOut::SATOSCRIPT, nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
         }
     }

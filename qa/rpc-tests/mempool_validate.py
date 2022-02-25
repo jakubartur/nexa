@@ -216,7 +216,7 @@ class MyTest (BitcoinTestFramework):
     def commitMempool(self):
         """Commit all the tx in mempools on all nodes into blocks"""
         for n in self.nodes:
-            while n.getmempoolinfo()["size"] != 0:
+            while n.gettxpoolinfo()["size"] != 0:
                 n.generate(1)
                 self.sync_blocks()
 
@@ -235,16 +235,16 @@ class MyTest (BitcoinTestFramework):
         NTX = 51
         (amt, wallet) = self.threadedCreateTx(dests1, None, 0, NTX)
         assert(amt == NTX)
-        waitFor(10, lambda: True if self.nodes[0].getmempoolinfo()["size"] >= NTX else None)
-        mp = waitFor(30, lambda: [x.getmempoolinfo() for x in self.nodes] if amt - self.nodes[1].getmempoolinfo()
-                     ["size"] < 5 else None, lambda: "timeout mempool is: " + str([x.getmempoolinfo() for x in self.nodes]))
+        waitFor(10, lambda: True if self.nodes[0].gettxpoolinfo()["size"] >= NTX else None)
+        mp = waitFor(30, lambda: [x.gettxpoolinfo() for x in self.nodes] if amt - self.nodes[1].gettxpoolinfo()
+                     ["size"] < 5 else None, lambda: "timeout mempool is: " + str([x.gettxpoolinfo() for x in self.nodes]))
         logging.info(mp)
 
         w0 = wallet[0:500]
         wallet = wallet[500:]
         self.commitMempool()
 
-        assert(self.nodes[0].getmempoolinfo()["size"] == 0)  # Expects a clean mempool
+        assert(self.nodes[0].gettxpoolinfo()["size"] == 0)  # Expects a clean mempool
         NTX = 25
         wallet2 = []
         gtx2 = []
@@ -269,20 +269,20 @@ class MyTest (BitcoinTestFramework):
             assert(rawTxValid['isValid'] != raised)
         wallet = wallet[NTX:]
 
-        waitFor(30, lambda: True if self.nodes[0].getmempoolinfo()["size"] >= NTX else None)
-        waitFor(30, lambda: True if self.nodes[1].getmempoolinfo()["size"] >= NTX else None)
+        waitFor(30, lambda: True if self.nodes[0].gettxpoolinfo()["size"] >= NTX else None)
+        waitFor(30, lambda: True if self.nodes[1].gettxpoolinfo()["size"] >= NTX else None)
         time.sleep(2)
 
-        assert(self.nodes[0].getmempoolinfo()["size"] == NTX)
-        assert(self.nodes[1].getmempoolinfo()["size"] == NTX)
+        assert(self.nodes[0].gettxpoolinfo()["size"] == NTX)
+        assert(self.nodes[1].gettxpoolinfo()["size"] == NTX)
 
         self.commitMempool()
 
         # Create 100 transaction and ensure that they get synced
         NTX = 100
         (amt, wallet) = self.threadedCreateTx(dests0, wallet, 1, NTX)
-        mp = waitFor(20, lambda: [x.getmempoolinfo() for x in self.nodes] if amt - self.nodes[1].getmempoolinfo()
-                     ["size"] < 10 else None, lambda: "timeout mempool is: " + str([x.getmempoolinfo() for x in self.nodes]))
+        mp = waitFor(20, lambda: [x.gettxpoolinfo() for x in self.nodes] if amt - self.nodes[1].gettxpoolinfo()
+                     ["size"] < 10 else None, lambda: "timeout mempool is: " + str([x.gettxpoolinfo() for x in self.nodes]))
 
 
 if __name__ == '__main__':
