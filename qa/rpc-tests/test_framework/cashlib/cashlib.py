@@ -2,6 +2,7 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 from ctypes import *
+from test_framework.nodemessages import *
 from binascii import hexlify, unhexlify
 from enum import IntEnum, IntFlag
 import pdb
@@ -16,7 +17,8 @@ SIGHASH_ANYONECANPAY = 0x80
 
 MAX_STACK_ITEM_LENGTH = 520
 
-BCH = 100000000
+# How many sats make a nex
+NEX = 100
 
 cashlib = None
 
@@ -107,7 +109,7 @@ def signTxInputECDSA(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=
     if type(prevoutScript) == str:
         prevoutScript = unhexlify(prevoutScript)
     if type(inputAmount) is decimal.Decimal:
-        inputAmount = int(inputAmount * BCH)
+        inputAmount = int(inputAmount * NEX)
 
     result = create_string_buffer(100)
     siglen = cashlib.SignTxECDSA(tx, len(tx), inputIdx, c_longlong(inputAmount), prevoutScript,
@@ -138,7 +140,7 @@ def signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashTyp
     if type(prevoutScript) == str:
         prevoutScript = unhexlify(prevoutScript)
     if type(inputAmount) is decimal.Decimal:
-        inputAmount = int(inputAmount * BCH)
+        inputAmount = int(inputAmount * NEX)
 
     result = create_string_buffer(100)
     siglen = cashlib.SignTxSchnorr(tx, len(tx), inputIdx, c_longlong(inputAmount), prevoutScript,
@@ -361,8 +363,7 @@ class ScriptMachine:
     STACK = 0
     ALTSTACK = 1
 
-
-    def __init__(self, flags=-1, nocreate=False, tx=None, inputIdx=None, inputAmount=None):
+    def __init__(self, flags=-1, nocreate=False, tx=None, prevouts=None, inputIdx=None):
         self.flags = flags
         if self.flags == -1:
             self.flags = ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS
@@ -380,7 +381,14 @@ class ScriptMachine:
                     txbin = tx.serialize()
                 else:
                     txbin = tx
-                self.smId = cashlib.CreateScriptMachine(self.flags, inputIdx, c_longlong(inputAmount), txbin, len(txbin))
+                if type(prevouts) == str:
+                    prevoutsBin = unhexlify(prevouts)
+                elif type(tx) != bytes:
+                    prevoutsBin = ser_vector(prevouts)
+                else:
+                    prevoutsbin = prevouts
+
+                self.smId = cashlib.CreateScriptMachine(self.flags, inputIdx, txbin, len(txbin), prevoutsBin, len(prevoutsBin))
         self.curPos = 0
         self.script = None
 

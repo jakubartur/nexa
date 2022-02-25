@@ -4,6 +4,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "coins.h"
+#include "consensus/tx_verify.h"
 #include "core_io.h"
 #include "policy/policy.h"
 #include "script/interpreter.h"
@@ -23,22 +24,30 @@ static std::vector<ScriptImportedState> createForAllInputs(CTransactionRef tx,
 {
     std::vector<ScriptImportedState> ret;
     ret.reserve(tx->vin.size());
+
+    // Figure out transaction validation state so we can provide the data to the script machine
+    CValidationState state;
+    {
+        if (!Consensus::CheckTxInputs(tx, state, coinsCache))
+        {
+            assert(0); // If we can't eval the inputs correctly we can't build up the validation state data
+        }
+        if (!CheckGroupTokens(*tx, state, coinsCache))
+        {
+            assert(0); // If we can't eval the inputs correctly we can't build up the validation state data
+        }
+    }
+
+    std::vector<CTxOut> coins;
+    for (const auto &txin : tx->vin)
+    {
+        CoinAccessor coin(coinsCache, txin.prevout);
+        coins.push_back(coin->out); // If already spent coin->out will be -1 value and an empty script
+    }
+
     for (size_t i = 0; i < tx->vin.size(); ++i)
     {
-        CAmount amnt = 0;
-        std::vector<CTxOut> coins;
-        size_t k = 0;
-        for (const auto &txin : tx->vin)
-        {
-            CoinAccessor coin(coinsCache, txin.prevout);
-            coins.push_back(coin->out); // If already spent coin->out will be -1 value and an empty script
-            if (i == k)
-            {
-                amnt = coin->out.nValue;
-            }
-            k = k + 1;
-        }
-        ret.push_back(ScriptImportedState(&bsc, tx, coins, i, amnt)); // private c'tor, must use push_back
+        ret.push_back(ScriptImportedState(&bsc, tx, state, coins, i)); // private c'tor, must use push_back
     }
     return ret;
 }

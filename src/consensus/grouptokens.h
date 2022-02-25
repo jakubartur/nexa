@@ -7,12 +7,11 @@
 
 #include "chainparams.h"
 //#include "coins.h"
-#include "consensus/validation.h"
 #include "pubkey.h"
 #include <unordered_map>
 class CWallet;
 class CCoinsViewCache;
-
+class CValidationState;
 /** Transaction cannot be committed on my fork */
 static const unsigned int REJECT_GROUP_IMBALANCE = 0x104;
 
@@ -164,6 +163,37 @@ public:
 };
 } // namespace std
 
+/** Keeps track of per group statistics for a transaction
+ * the amounts of each group coming into and going out of a transaction
+ * the activated authority flags
+ * the covenant
+ * the number of inputs and outputs
+ */
+class GroupBalance
+{
+public:
+    GroupBalance()
+        : ctrlPerms(GroupAuthorityFlags::NONE), allowedCtrlOutputPerms(GroupAuthorityFlags::NONE),
+          allowedSubgroupCtrlOutputPerms(GroupAuthorityFlags::NONE), ctrlOutputPerms(GroupAuthorityFlags::NONE)
+    {
+    }
+    GroupAuthorityFlags ctrlPerms; // what permissions are provided in inputs
+    GroupAuthorityFlags allowedCtrlOutputPerms; // What permissions are provided in inputs with CHILD set
+    GroupAuthorityFlags allowedSubgroupCtrlOutputPerms; // What permissions are provided in inputs with CHILD set
+    GroupAuthorityFlags ctrlOutputPerms; // What permissions are enabled in outputs
+    CAmount input = 0;
+    CAmount output = 0;
+    uint64_t numOutputs = 0;
+    uint64_t numInputs = 0;
+    // If covenant restricted, the hash of the first grouped & templated input's prevout is this group's covenant.
+    uint256 covenant;
+};
+
+
+typedef std::unordered_map<CGroupTokenID, GroupBalance> GroupBalanceMap;
+typedef std::shared_ptr<GroupBalanceMap> GroupBalanceMapRef;
+static inline GroupBalanceMapRef MakeGroupBalanceMapRef() { return std::make_shared<GroupBalanceMap>(); }
+
 
 inline GroupAuthorityFlags operator|(const GroupAuthorityFlags a, const GroupAuthorityFlags b)
 {
@@ -217,6 +247,9 @@ public:
     }
     // Return the controlling (can mint and burn) and associated (OP_GROUP in script) group of a script
     CGroupTokenInfo(const CScript &script);
+
+    // Return the controlling (can mint and burn) and associated (OP_GROUP in script) group of a script
+    CGroupTokenInfo(const CTxOut &output);
 
     /** Reset the info in this object for subsequent use, equivalent to the default ctor */
     void clear()

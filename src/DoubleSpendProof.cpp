@@ -360,7 +360,7 @@ DoubleSpendProof::Validity DoubleSpendProof::validate(const CTxMemPool &pool, co
     CTransactionRef noTxRef = MakeTransactionRef(noTx);
 
     DSPSignatureChecker checker1(this, m_spender1, amount);
-    ScriptImportedState sis1(&checker1, noTxRef, std::vector<CTxOut>(), -1, amount);
+    ScriptImportedState sis1(&checker1);
     ScriptError_t error;
     if (!VerifyScript(inScript, prevOutScript, checker1.flags(), MAX_OPS_PER_SCRIPT, sis1, &error))
     {
@@ -375,7 +375,7 @@ DoubleSpendProof::Validity DoubleSpendProof::validate(const CTxMemPool &pool, co
         inScript << pubkey;
     }
     DSPSignatureChecker checker2(this, m_spender2, amount);
-    ScriptImportedState sis2(&checker2, noTxRef, std::vector<CTxOut>(), -1, amount);
+    ScriptImportedState sis2(&checker2);
     if (!VerifyScript(inScript, prevOutScript, checker2.flags(), MAX_OPS_PER_SCRIPT, sis2, &error))
     {
         LOG(DSPROOF, "DoubleSpendProof failed validating second tx due to %s\n", ScriptErrorString(error));

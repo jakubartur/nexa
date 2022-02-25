@@ -10,6 +10,7 @@
 #include "bitfield.h"
 #include "bitmanip.h"
 #include "consensus/grouptokens.h"
+#include "consensus/validation.h"
 #include "crypto/ripemd160.h"
 #include "crypto/sha1.h"
 #include "crypto/sha256.h"
@@ -36,6 +37,19 @@ const std::string strMessageMagic = "Bitcoin Signed Message:\n";
 using namespace std;
 
 typedef vector<uint8_t> valtype;
+
+ScriptImportedState::ScriptImportedState(const BaseSignatureChecker *c,
+    CTransactionRef t,
+    const CValidationState &validationData,
+    const std::vector<CTxOut> &coins,
+    unsigned int inputIdx)
+    : checker(c), tx(t), spentCoins(coins), nIn(inputIdx)
+{
+    txInAmount = validationData.inAmount;
+    txOutAmount = validationData.outAmount;
+    fee = validationData.fee;
+    groupState = validationData.groupState;
+}
 
 bool CastToBool(const valtype &vch)
 {
@@ -77,6 +91,7 @@ static inline void popstack(Stack &stack)
     stack.pop_back();
 }
 
+#if 0
 static void CleanupScriptCode(CScript &scriptCode, const std::vector<uint8_t> &vchSig, uint32_t flags)
 {
     // Drop the signature in scripts when SIGHASH_FORKID is not used.
@@ -86,6 +101,7 @@ static void CleanupScriptCode(CScript &scriptCode, const std::vector<uint8_t> &v
         scriptCode.FindAndDelete(CScript(vchSig));
     }
 }
+#endif
 
 bool static IsCompressedOrUncompressedPubKey(const valtype &vchPubKey)
 {

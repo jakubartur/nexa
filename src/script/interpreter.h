@@ -7,6 +7,7 @@
 #ifndef BITCOIN_SCRIPT_INTERPRETER_H
 #define BITCOIN_SCRIPT_INTERPRETER_H
 
+#include "consensus/grouptokens.h"
 #include "primitives/transaction.h"
 #include "script/bignum.h"
 #include "script/stackitem.h"
@@ -260,16 +261,20 @@ public:
     CTransactionRef tx = nullptr;
     std::vector<CTxOut> spentCoins;
     unsigned int nIn = (unsigned int)-1;
+    CAmount txInAmount = -1;
+    CAmount txOutAmount = -1;
+    CAmount fee = -1;
+    GroupBalanceMapRef groupState = nullptr;
 
+    /** Use this constructor to build the full state needed for the script interpreter */
     ScriptImportedState(const BaseSignatureChecker *c,
         CTransactionRef t,
+        const CValidationState &validationData,
         const std::vector<CTxOut> &coins,
-        unsigned int inputIdx,
-        CAmount amountObsolete)
-        : checker(c), tx(t), spentCoins(coins), nIn(inputIdx)
-    {
-    }
+        unsigned int inputIdx);
+
     ScriptImportedState() {}
+    ScriptImportedState(const BaseSignatureChecker *c) : checker(c) {}
 };
 
 class ScriptImportedStateSig : public ScriptImportedState

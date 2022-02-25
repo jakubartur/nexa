@@ -304,7 +304,6 @@ bool Consensus::CheckTxInputs(const CTransactionRef tx, CValidationState &state,
         return state.Invalid(false, 0, "", "Inputs unavailable");
 
     CAmount nValueIn = 0;
-    CAmount nFees = 0;
     int nSpendHeight = -1;
     {
         for (unsigned int i = 0; i < tx->vin.size(); i++)
@@ -348,17 +347,18 @@ bool Consensus::CheckTxInputs(const CTransactionRef tx, CValidationState &state,
         }
     }
 
-    if (nValueIn < tx->GetValueOut())
+    CAmount outAmount = tx->GetValueOut();
+    if (nValueIn < outAmount)
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-in-belowout", false,
             strprintf("value in (%s) < value out (%s)", FormatMoney(nValueIn), FormatMoney(tx->GetValueOut())));
 
     // Tally transaction fees
-    CAmount nTxFee = nValueIn - tx->GetValueOut();
+    CAmount nTxFee = nValueIn - outAmount;
     if (nTxFee < 0)
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-fee-negative");
-    nFees += nTxFee;
-    if (!MoneyRange(nFees))
+    if (!MoneyRange(nTxFee))
         return state.DoS(100, false, REJECT_INVALID, "bad-txns-fee-outofrange");
+    state.SetAmounts(nValueIn, outAmount, nTxFee);
     return true;
 }
 

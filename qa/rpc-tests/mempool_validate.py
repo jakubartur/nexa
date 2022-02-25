@@ -313,7 +313,7 @@ def Test():
     t.drop_to_pdb = True
     bitcoinConf = {
         "debug": ["blk", "mempool", "net", "req"],
-        "blockprioritysize": 2000000,  # we don't want any transactions rejected due to insufficient fees...
+        "mining.prioritySize": 2000000,  # we don't want any transactions rejected due to insufficient fees...
         "net.ignoreTimeouts": 1,
         "logtimemicros": 1
     }

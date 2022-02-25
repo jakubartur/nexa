@@ -103,32 +103,17 @@ CGroupTokenInfo::CGroupTokenInfo(const CScript &script)
     IsScriptGrouped(script, nullptr, this);
 }
 
-
-// local class that just keeps track of the amounts of each group coming into and going out of a transaction
-class CBalance
+CGroupTokenInfo::CGroupTokenInfo(const CTxOut &output)
+    : associatedGroup(), controllingGroupFlags(GroupAuthorityFlags::NONE), quantity(0), invalid(false)
 {
-public:
-    CBalance()
-        : ctrlPerms(GroupAuthorityFlags::NONE), allowedCtrlOutputPerms(GroupAuthorityFlags::NONE),
-          allowedSubgroupCtrlOutputPerms(GroupAuthorityFlags::NONE), ctrlOutputPerms(GroupAuthorityFlags::NONE),
-          input(0), output(0), numOutputs(0)
-    {
-    }
-    GroupAuthorityFlags ctrlPerms; // what permissions are provided in inputs
-    GroupAuthorityFlags allowedCtrlOutputPerms; // What permissions are provided in inputs with CHILD set
-    GroupAuthorityFlags allowedSubgroupCtrlOutputPerms; // What permissions are provided in inputs with CHILD set
-    GroupAuthorityFlags ctrlOutputPerms; // What permissions are enabled in outputs
-    CAmount input;
-    CAmount output;
-    uint64_t numOutputs;
-    // If covenant restricted, the hash of the first grouped & templated input's prevout is this group's covenant.
-    uint256 covenant;
-};
-
+    IsScriptGrouped(output.scriptPubKey, nullptr, this);
+}
 
 bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCoinsViewCache &view)
 {
-    std::unordered_map<CGroupTokenID, CBalance> gBalance;
+    GroupBalanceMapRef gBalanceState = MakeGroupBalanceMapRef();
+    // For simple syntax grab a c++ style reference to the shared entity
+    GroupBalanceMap &gBalance = *gBalanceState.get();
     CScript firstOpReturn;
 
     // Iterate through all the outputs constructing the final balances of every group.
@@ -149,7 +134,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
             {
                 // If a group holds BCH, its quantity MUST be 0 (or be an authority so < 0)
                 if (tokenGrp.quantity > 0)
-                    return false;
+                    return state.Invalid(false, REJECT_INVALID, "fenced groups must hold 0 tokens");
                 // Set the BCH group quantity to the BCH amount so subsequent logic uses BCH.
                 tokenGrp.quantity = outp.nValue;
             }
@@ -235,20 +220,21 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
                 return state.Invalid(false, REJECT_INVALID, "token overflow");
             gBalance[tokenGrp.associatedGroup].input += amount;
         }
+        gBalance[tokenGrp.associatedGroup].numInputs += 1;
     }
 
     // Now pass thru the outputs applying parent group capabilities to any subgroups
     for (auto &grp : gBalance)
     {
         CGroupTokenID group = grp.first;
-        CBalance &bal = grp.second;
+        GroupBalance &bal = grp.second;
         if (group.isSubgroup())
         {
             CGroupTokenID parentgrp = group.parentGroup();
             auto parentSearch = gBalance.find(parentgrp);
             if (parentSearch != gBalance.end()) // The parent group is part of the inputs
             {
-                CBalance &parentData = parentSearch->second;
+                GroupBalance &parentData = parentSearch->second;
                 if (hasCapability(parentData.ctrlPerms, GroupAuthorityFlags::SUBGROUP))
                 {
                     // Give the subgroup has all the capabilities the parent group had,
@@ -266,7 +252,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
     // Now pass thru the outputs ensuring balance or mint/melt permission
     for (auto &grp : gBalance)
     {
-        CBalance &bal = grp.second;
+        GroupBalance &bal = grp.second;
         // If it has an authority, with no input authority, check mint
         if (hasCapability(bal.ctrlOutputPerms, GroupAuthorityFlags::AUTHORITY) &&
             (bal.ctrlPerms == GroupAuthorityFlags::NONE))
@@ -344,7 +330,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
         // If this output's group is covenanted, enforce it. (REQ3.2.4.1)
         if (grp.associatedGroup.hasFlag(GroupTokenIdFlags::COVENANT))
         {
-            CBalance &grpData = gBalance[grp.associatedGroup];
+            GroupBalance &grpData = gBalance[grp.associatedGroup];
 
             // Changed to accept both templates and arbitrary scripts with the GROUP prefix chopped off
 
@@ -366,6 +352,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
             }
         }
     }
+    state.groupState = gBalanceState;
     return true;
 }
 

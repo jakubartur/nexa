@@ -12,6 +12,7 @@
 #include "clientversion.h"
 #include "coins.h"
 #include "consensus/consensus.h"
+#include "consensus/validation.h"
 #include "core_io.h"
 #include "dstencode.h"
 #include "keystore.h"
@@ -542,7 +543,10 @@ static void MutateTxSign(CMutableTransaction &tx, const string &flagStr)
         }
 
         MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, flags);
-        ScriptImportedState sis(&tsc, MakeTransactionRef(mergedTx), spendingCoins, i, amount);
+        // Since we are not capable of signing complex introspection scripts, we just pass empty validation state into
+        // the script machine.  But actually since we've already constructed the coin cache view, it would be
+        // relatively easy to gather this data (see cashlib)
+        ScriptImportedState sis(&tsc, MakeTransactionRef(mergedTx), CValidationState(), spendingCoins, i);
 
         // Nothing we are capable of signing can be more than the original 201 ops so using it is fine.
         if (!VerifyScript(txin.scriptSig, prevPubKey, flags, MAX_OPS_PER_SCRIPT, sis))

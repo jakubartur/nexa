@@ -11,26 +11,18 @@
 
 enum PushTxStateSpecifier
 {
-    TX_VERSION = 0x1,
     TX_ID = 0x2,
     TX_IDEM = 0x3,
-    TX_SIGHASH = 0x4,
-    GROUP_TOKEN_SUPPLY = 0x5,
-    GROUP_BCH_SUPPLY = 0x6,
-};
-
-enum SigHashFlavors
-{
-    VERSION = 1 << 0,
-    PREVOUTS_HASH = 1 << 1,
-    PREVOUTS_SEQUENCE_HASH = 1 << 2,
-    OUTPOINT = 1 << 3,
-    SCRIPT_CODE = 1 << 4,
-    PREVOUT_VALUE = 1 << 5,
-    SEQUENCE = 1 << 6,
-    OUTPUTS_HASH = 1 << 7,
-    NTH_OUTPUT_HASH = 1 << 8,
-    LOCK_TIME = 1 << 9
+    TX_INCOMING_AMOUNT = 0x5,
+    TX_OUTGOING_AMOUNT = 0x6,
+    GROUP_INCOMING_AMOUNT = 0x7, // This is either the token quantity for a particular group or the fenced BCH quantity
+    GROUP_OUTGOING_AMOUNT = 0x8,
+    GROUP_INCOMING_COUNT = 0x9, // COUNT is the number of inputs or outputs
+    GROUP_OUTGOING_COUNT = 0xA,
+    GROUP_NTH_INPUT = 0xB, // Returns the index of the Nth grouped (of the passed group) input
+    GROUP_NTH_OUTPUT = 0xC, // Returns the index of the Nth grouped (of the passed group) output
+    GROUP_COVENANT_HASH = 0xD,
+    GROUP_AUTHORITY_FLAGS = 0xE,
 };
 
 class ScriptImportedState;

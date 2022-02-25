@@ -281,7 +281,7 @@ void DoTest(const CScript &scriptPubKey,
     CMutableTransaction tx = BuildSpendingTransaction(scriptSig, txCredit);
     CMutableTransaction tx2 = tx;
     MutableTransactionSignatureChecker tsc(&tx, 0, txCredit.vout[0].nValue, flags);
-    ScriptImportedState sis(&tsc, MakeTransactionRef(tx), {txCredit.vout[0]}, 0, txCredit.vout[0].nValue);
+    ScriptImportedState sis(&tsc, MakeTransactionRef(tx), CValidationState(), {txCredit.vout[0]}, 0);
     bool result = VerifyScript(scriptSig, scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
     BOOST_CHECK_MESSAGE(result == expect, message);
     BOOST_CHECK_MESSAGE(err == scriptError, std::string(FormatScriptError(err)) + " where " +
