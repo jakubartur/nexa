@@ -44,7 +44,8 @@ static bool Verify(const CScript &scriptSig, const CScript &scriptPubKey, bool f
 
     unsigned int flags = fStrict ? SCRIPT_VERIFY_P2SH : SCRIPT_VERIFY_NONE;
     MutableTransactionSignatureChecker tsc(&txTo, 0, txFrom.vout[0].nValue, flags);
-    ScriptImportedState sis(&tsc, MakeTransactionRef(txTo), std::vector<CTxOut>(), 0, txFrom.vout[0].nValue);
+    // None of these tests rely on introspection of the validation data so its ok to pass bad data.
+    ScriptImportedState sis(&tsc, MakeTransactionRef(txTo), CValidationState(), std::vector<CTxOut>(), 0);
 
     return VerifyScript(scriptSig, scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
 }

@@ -11,6 +11,7 @@
 #include <string>
 #include <vector>
 
+#include "grouptokens.h"
 #include "util.h"
 
 /** "reject" message codes */
@@ -43,6 +44,11 @@ private:
     std::string strDebugMessage;
 
 public:
+    CAmount inAmount = -1;
+    CAmount outAmount = -1;
+    CAmount fee = -1;
+    GroupBalanceMapRef groupState = nullptr;
+
     CValidationState() : mode(MODE_VALID), nDoS(0), chRejectCode(0), corruptionPossible(false) {}
     bool DoS(int level,
         bool ret = false,
@@ -96,6 +102,15 @@ public:
     std::string GetRejectReason() const { return strRejectReason; }
     std::string GetDebugMessage() const { return strDebugMessage; }
     void SetDebugMessage(const std::string &s) { strDebugMessage = s; }
+
+    /** Set the quantity of satoshis used by this transaction */
+    void SetAmounts(CAmount _inAmount, CAmount _outAmount, CAmount _fee)
+    {
+        assert(_fee + _outAmount == _inAmount);
+        inAmount = _inAmount;
+        outAmount = _outAmount;
+        fee = _fee;
+    }
 };
 
 #endif // BITCOIN_CONSENSUS_VALIDATION_H

@@ -54,7 +54,7 @@ public:
     virtual ~AlwaysGoodSignatureChecker() {}
 };
 
-uint256 hash256(const CScript& script)
+static uint256 hash256(const CScript& script)
 {
     return Hash(script.begin(), script.end());
 }
@@ -69,7 +69,7 @@ BOOST_AUTO_TEST_CASE(verifytemplate)
 {
     auto flags = MANDATORY_SCRIPT_VERIFY_FLAGS;
     AlwaysGoodSignatureChecker ck(flags);
-    ScriptImportedState sis(&ck, MakeTransactionRef(), std::vector<CTxOut>(), (unsigned int)-1, 0);
+    ScriptImportedState sis(&ck);
     ScriptError error;
     ScriptMachineResourceTracker tracker;
     CScript templat = CScript() << OP_FROMALTSTACK << OP_SUB;
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(opexec)
 {
     auto flags = MANDATORY_SCRIPT_VERIFY_FLAGS;
     AlwaysGoodSignatureChecker ck(flags);
-    ScriptImportedState sis(&ck, MakeTransactionRef(), std::vector<CTxOut>(), (unsigned int)-1,0);
+    ScriptImportedState sis(&ck);
     ScriptError error;
     ScriptMachineResourceTracker tracker;
     bool ret;

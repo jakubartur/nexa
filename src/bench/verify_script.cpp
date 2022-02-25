@@ -8,6 +8,7 @@
 #if defined(HAVE_CONSENSUS_LIB)
 #include "script/bitcoinconsensus.h"
 #endif
+#include "consensus/validation.h"
 #include "script/script.h"
 #include "script/sign.h"
 #include "streams.h"
@@ -88,7 +89,7 @@ static void VerifyScriptBench(benchmark::State &state)
 
     // Benchmark.
     MutableTransactionSignatureChecker tsc(&txSpend, 0, txCredit.vout[0].nValue);
-    ScriptImportedState sis(&tsc, MakeTransactionRef(txSpend), {txCredit.vout[0]}, 0, txCredit.vout[0].nValue);
+    ScriptImportedState sis(&tsc, MakeTransactionRef(txSpend), CValidationState(), {txCredit.vout[0]}, 0);
     while (state.KeepRunning())
     {
         ScriptError err;

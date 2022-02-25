@@ -10,6 +10,7 @@
 #include "main.h"
 #include "primitives/block.h"
 #include "protocol.h"
+#include "script/sigcache.h"
 #include "serialize.h"
 #include "stat.h"
 #include "uint256.h"
@@ -90,36 +91,48 @@ class CScriptCheck
 protected:
     ValidationResourceTracker *resourceTracker;
     CScript scriptPubKey;
-    CAmount amount;
-    const CTransaction *ptxTo;
-    std::vector<CTxOut> spentCoins; // Must take a copy because this could be a stack item
-    unsigned int nIn;
-    unsigned int nFlags;
     unsigned int maxOps;
     bool cacheStore;
     ScriptError error;
+    CachingTransactionSignatureChecker checker;
+    ScriptImportedState sis;
 
 public:
-    unsigned char sighashType;
-    CScriptCheck()
-        : resourceTracker(nullptr), amount(0), ptxTo(0), nIn(0), nFlags(0), maxOps(0xffffffff), cacheStore(false),
-          error(SCRIPT_ERR_UNKNOWN_ERROR), sighashType(0)
+    CScriptCheck() : resourceTracker(nullptr), maxOps(0xffffffff), cacheStore(false), error(SCRIPT_ERR_UNKNOWN_ERROR) {}
+
+    // This constructor is for tests that do not use any introspection opcodes.
+    CScriptCheck(ValidationResourceTracker *resourceTrackerIn,
+        const CScript &scriptPubKeyIn,
+        const CAmount amountInObsolete,
+        const CTransaction &txIn,
+        const std::vector<CTxOut> &coins,
+        unsigned int inputIdx,
+        unsigned int nFlagsIn,
+        unsigned int maxOpsIn,
+        bool cacheIn)
+        : resourceTracker(resourceTrackerIn), scriptPubKey(scriptPubKeyIn), maxOps(maxOpsIn), cacheStore(cacheIn),
+          error(SCRIPT_ERR_UNKNOWN_ERROR), checker(&txIn, inputIdx, txIn.vin[inputIdx].amount, nFlagsIn, cacheStore),
+          sis(&checker, MakeTransactionRef(txIn), CValidationState(), coins, inputIdx)
     {
+        assert(inputIdx < txIn.vin.size());
     }
 
     CScriptCheck(ValidationResourceTracker *resourceTrackerIn,
         const CScript &scriptPubKeyIn,
         const CAmount amountIn,
-        const CTransaction &txToIn,
+        const CTransactionRef &txIn,
         const std::vector<CTxOut> &coins,
-        unsigned int nInIn,
+        const CValidationState &validationData,
+        unsigned int inputIdx,
         unsigned int nFlagsIn,
         unsigned int maxOpsIn,
         bool cacheIn)
-        : resourceTracker(resourceTrackerIn), scriptPubKey(scriptPubKeyIn), amount(amountIn), ptxTo(&txToIn),
-          spentCoins(coins), nIn(nInIn), nFlags(nFlagsIn), maxOps(maxOpsIn), cacheStore(cacheIn),
-          error(SCRIPT_ERR_UNKNOWN_ERROR), sighashType(0)
+        : resourceTracker(resourceTrackerIn), scriptPubKey(scriptPubKeyIn), maxOps(maxOpsIn), cacheStore(cacheIn),
+          error(SCRIPT_ERR_UNKNOWN_ERROR),
+          checker(&(*txIn), inputIdx, txIn->vin[inputIdx].amount, nFlagsIn, cacheStore),
+          sis(&checker, txIn, validationData, coins, inputIdx)
     {
+        assert(inputIdx < txIn->vin.size());
     }
 
     bool operator()();
@@ -128,15 +141,14 @@ public:
     {
         std::swap(resourceTracker, check.resourceTracker);
         scriptPubKey.swap(check.scriptPubKey);
-        std::swap(amount, check.amount);
-        std::swap(ptxTo, check.ptxTo);
-        std::swap(spentCoins, check.spentCoins);
-        std::swap(nIn, check.nIn);
-        std::swap(nFlags, check.nFlags);
         std::swap(maxOps, check.maxOps);
         std::swap(cacheStore, check.cacheStore);
         std::swap(error, check.error);
-        std::swap(sighashType, check.sighashType);
+        std::swap(checker, check.checker);
+        std::swap(sis, check.sis);
+        // local script state should always point to its own checker so undo the swap of these pointers
+        sis.checker = &checker;
+        check.sis.checker = &check.checker;
     }
 
     ScriptError GetScriptError() const { return error; }

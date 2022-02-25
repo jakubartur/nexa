@@ -171,7 +171,7 @@ class MyTest (BitcoinTestFramework):
 
         output = CScript([OP_DUP, OP_HASH160, destHash, OP_EQUALVERIFY, OP_CHECKSIG])
 
-        amt = int(sum([x["amount"] for x in inputs]) * cashlib.BCH)
+        amt = int(sum([x["amount"] for x in inputs]) * cashlib.NEX)
         tx.vout.append(CTxOut(amt, output))
 
         sighashtype = 0x41
@@ -201,7 +201,7 @@ class MyTest (BitcoinTestFramework):
         txbad.vin[0].scriptSig = cashlib.spendscript(bytes(badsig), destPubKey)
 
         # try a bad script (sig check should fail)
-        sm = cashlib.ScriptMachine(tx=tx2, inputIdx=0, inputAmount=tx.vout[0].nValue)
+        sm = cashlib.ScriptMachine(tx=tx2, prevouts=[tx.vout[0]], inputIdx=0)
         ret = sm.eval(txbad.vin[0].scriptSig)
         assert(ret)
         ret = sm.eval(tx.vout[0].scriptPubKey)

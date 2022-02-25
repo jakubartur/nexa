@@ -1092,11 +1092,12 @@ bool CheckInputs(const CTransactionRef &tx,
                 return false;
             }
         }
-
+        // Its ok to only check Group semantics if this is not a coinbase transaction because coinbase transactions
+        // MUST NOT have any grouped outputs (see CheckTransaction(...)).
         if (!CheckGroupTokens(*tx, state, inputs))
         {
-            return state.DoS(0, false, REJECT_MALFORMED, "token-group-imbalance", false,
-                strprintf("Token group inputs and outputs do not balance"));
+            return state.DoS(0, false, REJECT_MALFORMED, "group-token-imbalance", false,
+                strprintf("Group token inputs and outputs do not balance"));
         }
 
         if (pvChecks)
@@ -1179,12 +1180,12 @@ bool CheckInputs(const CTransactionRef &tx,
                 if (pvChecks)
                 {
                     pvChecks->push_back(CScriptCheck(
-                        resourceTracker, scriptPubKey, amount, *tx, spendingCoins, i, flags, maxOps, cacheStore));
+                        resourceTracker, scriptPubKey, amount, tx, spendingCoins, state, i, flags, maxOps, cacheStore));
                 }
                 else
                 {
                     CScriptCheck check(
-                        resourceTracker, scriptPubKey, amount, *tx, spendingCoins, i, flags, maxOps, cacheStore);
+                        resourceTracker, scriptPubKey, amount, tx, spendingCoins, state, i, flags, maxOps, cacheStore);
                     if (!check())
                     {
                         ScriptError scriptError = check.GetScriptError();
@@ -1202,8 +1203,8 @@ bool CheckInputs(const CTransactionRef &tx,
                             // arguments; if so, don't trigger DoS protection to
                             // avoid splitting the network between upgraded and
                             // non-upgraded nodes.
-                            CScriptCheck check2(nullptr, scriptPubKey, amount, *tx, spendingCoins, i, mandatoryFlags,
-                                maxOps, cacheStore);
+                            CScriptCheck check2(nullptr, scriptPubKey, amount, tx, spendingCoins, state, i,
+                                mandatoryFlags, maxOps, cacheStore);
                             if (check2())
                             {
                                 if (debugger)
@@ -1230,7 +1231,7 @@ bool CheckInputs(const CTransactionRef &tx,
                         // Note that this will create strange error messages like
                         // "upgrade-conditional-script-failure (Opcode missing or not
                         // understood)".
-                        CScriptCheck check3(nullptr, scriptPubKey, amount, *tx, spendingCoins, i,
+                        CScriptCheck check3(nullptr, scriptPubKey, amount, tx, spendingCoins, state, i,
                             mandatoryFlags ^ SCRIPT_ENABLE_OP_REVERSEBYTES, maxOps, cacheStore);
                         if (check3())
                         {
@@ -1269,8 +1270,6 @@ bool CheckInputs(const CTransactionRef &tx,
                                 strprintf("mandatory-script-verify-flag-failed (%s)", ScriptErrorString(scriptError)));
                         }
                     }
-                    if (sighashType)
-                        *sighashType = check.sighashType;
                 }
                 if (debugger)
                 {

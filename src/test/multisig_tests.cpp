@@ -78,7 +78,7 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
     amount = txTo[0].vin[0].amount;
     MutableTransactionSignatureChecker tsc(&txTo[0], 0, amount, flags);
     // test isn't going to use any prevout introspection so just pass no coins there
-    ScriptImportedState sis(&tsc, MakeTransactionRef(txTo[0]), std::vector<CTxOut>(), 0, amount);
+    ScriptImportedState sis(&tsc);
     BOOST_CHECK(VerifyScript(s, a_and_b, flags, MAX_OPS_PER_SCRIPT, sis, &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
 
@@ -106,7 +106,7 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
 
     amount = txTo[1].vin[0].amount;
     MutableTransactionSignatureChecker tsc1(&txTo[1], 0, amount, flags);
-    ScriptImportedState sis1(&tsc1, MakeTransactionRef(txTo[1]), std::vector<CTxOut>(), 0, amount);
+    ScriptImportedState sis1(&tsc1);
     // Test a OR b:
     for (int i = 0; i < 4; i++)
     {
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
 
     amount = txTo[2].vin[0].amount;
     MutableTransactionSignatureChecker tsc2(&txTo[2], 0, amount, flags);
-    ScriptImportedState sis2(&tsc2, MakeTransactionRef(txTo[2]), std::vector<CTxOut>(), 0, amount);
+    ScriptImportedState sis2(&tsc2);
 
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)

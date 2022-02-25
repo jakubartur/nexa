@@ -1404,6 +1404,10 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
             SignSignature(keystore, prevPubKey, mergedTx, i, amount, sigHashType, sigType);
         }
         // ... and merge in other signatures:
+
+        // We can't sign any sophisticated introspection contracts anyway so we'll never verify a script that requires
+        // transaction validation state.  Make an empty one.
+        CValidationState unnecessaryState;
         if (fForkId)
         {
             for (const CMutableTransaction &txv : txVariants)
@@ -1415,7 +1419,7 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
             ScriptError serror = SCRIPT_ERR_OK;
             auto flags = STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID;
             MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, flags);
-            ScriptImportedState sis(&tsc, txref, spentCoins, i, amount);
+            ScriptImportedState sis(&tsc, txref, unnecessaryState, spentCoins, i);
             if (!VerifyScript(txin.scriptSig, prevPubKey, flags, maxScriptOps.Value(), sis, &serror))
             {
                 TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
@@ -1432,7 +1436,7 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
             }
             ScriptError serror = SCRIPT_ERR_OK;
             MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, STANDARD_SCRIPT_VERIFY_FLAGS);
-            ScriptImportedState sis(&tsc, txref, spentCoins, i, amount);
+            ScriptImportedState sis(&tsc, txref, unnecessaryState, spentCoins, i);
             if (!VerifyScript(
                     txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, maxScriptOps.Value(), sis, &serror))
             {

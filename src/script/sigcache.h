@@ -45,6 +45,7 @@ private:
     bool store;
 
 public:
+    CachingTransactionSignatureChecker() { store = true; }
     CachingTransactionSignatureChecker(const CTransaction *txToIn,
         unsigned int nInIn,
         const CAmount &amountIn,

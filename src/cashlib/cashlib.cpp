@@ -15,6 +15,8 @@
 #include "bloom.h"
 #include "cashaddrenc.h"
 #include "chainparams.h"
+#include "coins.h"
+#include "consensus/validation.h"
 #include "merkleblock.h"
 #include "random.h"
 #include "script/sign.h"
@@ -24,6 +26,42 @@
 #include "util.h"
 #include "utilstrencodings.h"
 #define MAX_SIG_LEN 100 // DER-encoded ECDSA is more like 72 but better to be safe
+
+#ifdef DEBUG_LOCKORDER // Not debugging the lockorder in cashlib even if its defined
+void AssertLockHeldInternal(const char *pszName, const char *pszFile, unsigned int nLine, void *cs) {}
+void AssertLockNotHeldInternal(const char *pszName, const char *pszFile, unsigned int nLine, void *cs) {}
+void EnterCritical(const char *pszName,
+    const char *pszFile,
+    unsigned int nLine,
+    void *cs,
+    LockType locktype,
+    OwnershipType ownership,
+    bool fTry)
+{
+}
+void LeaveCritical(void *cs) {}
+void AssertWriteLockHeldInternal(const char *pszName,
+    const char *pszFile,
+    unsigned int nLine,
+    CSharedCriticalSection *cs)
+{
+}
+void AssertRecursiveWriteLockHeldInternal(const char *pszName,
+    const char *pszFile,
+    unsigned int nLine,
+    CRecursiveSharedCriticalSection *cs)
+{
+}
+CCriticalSection::CCriticalSection() : name(nullptr) {}
+CCriticalSection::CCriticalSection(const char *n) : name(n) {}
+CCriticalSection::~CCriticalSection() {}
+CSharedCriticalSection::CSharedCriticalSection() : name(nullptr) {}
+CSharedCriticalSection::CSharedCriticalSection(const char *n) : name(n) {}
+CSharedCriticalSection::~CSharedCriticalSection() {}
+CRecursiveSharedCriticalSection::CRecursiveSharedCriticalSection() : name(nullptr) {}
+CRecursiveSharedCriticalSection::CRecursiveSharedCriticalSection(const char *n) : name(n) {}
+CRecursiveSharedCriticalSection::~CRecursiveSharedCriticalSection() {}
+#endif
 
 #ifndef ANDROID
 #include <openssl/rand.h>
@@ -61,6 +99,8 @@ extern "C" void DbgResume() { dbgPauseCond.notify_all(); }
 #define p(...)
 // tinyformat::format(std::cout, __VA_ARGS__)
 #endif
+
+const int CLIENT_VERSION = 0; // 0 because app should report its version, not this lib
 
 // stop the logging
 int LogPrintStr(const std::string &str) { return str.size(); }
@@ -405,7 +445,7 @@ public:
 SLAPI void *CreateNoContextScriptMachine(unsigned int flags)
 {
     ScriptMachineData *smd = new ScriptMachineData();
-    smd->sis = std::make_shared<ScriptImportedState>(nullptr, smd->tx, std::vector<CTxOut>(), -1, 0);
+    smd->sis = std::make_shared<ScriptImportedState>();
     smd->sm = new ScriptMachine(flags, *smd->sis, 0xffffffff, 0xffffffff);
     return (void *)smd;
 }
@@ -415,7 +455,6 @@ SLAPI void *CreateNoContextScriptMachine(unsigned int flags)
 // the signature validates.
 SLAPI void *CreateScriptMachine(unsigned int flags,
     unsigned int inputIdx,
-    int64_t inputAmount,
     unsigned char *txData,
     int txbuflen,
     unsigned char *coinData,
@@ -453,10 +492,63 @@ SLAPI void *CreateScriptMachine(unsigned int flags,
         }
     }
 
+    // The passed coins vector needs to be the txout for each vin, so the sizes must be the same
+    if (coins.size() != txref->vin.size())
+    {
+        delete smd;
+        return 0;
+    }
+
+    CValidationState state;
+    {
+        // Construct a view of all the supplied coins
+        CCoinsView coinsDummy;
+        CCoinsViewCache prevouts(&coinsDummy);
+        for (size_t i = 0; i < coins.size(); i++)
+        {
+            // We assume that the passed coins are in the proper order so their outpoint is what is specified
+            // in the tx.  We further assume height 1 and not coinbase.  These fields are not accessible from scripts
+            // so should not affect execution.
+            prevouts.AddCoin(txref->vin[i].prevout, Coin(coins[i], 1, false), false);
+        }
+
+        // Fill the validation state with derived data about this transaction
+        /* This pulls in too much stuff (in particular it needs to determine input coin height,
+           to check coinbase spendability, which requires knowing the tip height).
+           Think about refactoring CheckTxInputs to take the tip height as a parameter for functional isolation
+           For now, calculate the needed data directly.
+           Leaving this "canonical" code in for reference purposes
+        if (!Consensus::CheckTxInputs(txref, state, prevouts))
+        {
+            delete smd;
+            return 0;
+        }
+        */
+        CAmount amountIn = 0;
+        for (size_t i = 0; i < txref->vin.size(); i++)
+        {
+            amountIn += txref->vin[i].amount;
+        }
+        CAmount amountOut = 0;
+        for (size_t i = 0; i < txref->vout.size(); i++)
+        {
+            amountOut += txref->vout[i].nValue;
+        }
+        state.inAmount = amountIn;
+        state.outAmount = amountOut;
+        state.fee = amountIn - amountOut;
+        if (!CheckGroupTokens(*txref, state, prevouts))
+        {
+            delete smd;
+            return 0;
+        }
+    }
+
     smd->tx = txref;
     // Its ok to get the bare tx pointer: the life of the CTransaction is the same as TransactionSignatureChecker
-    smd->checker = std::make_shared<TransactionSignatureChecker>(smd->tx.get(), inputIdx, inputAmount, flags);
-    smd->sis = std::make_shared<ScriptImportedState>(&(*smd->checker), smd->tx, coins, inputIdx, inputAmount);
+    // -1 is the inputAmount -- no longer used
+    smd->checker = std::make_shared<TransactionSignatureChecker>(smd->tx.get(), inputIdx, -1, flags);
+    smd->sis = std::make_shared<ScriptImportedState>(&(*smd->checker), smd->tx, state, coins, inputIdx);
     // max ops and max sigchecks are set to the maximum value with the intention that the caller will check these if
     // needed because many uses of the script machine are for debugging and experimental scripts.
     smd->sm = new ScriptMachine(flags, *smd->sis, 0xffffffff, 0xffffffff);

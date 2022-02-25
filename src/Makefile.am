@@ -402,6 +402,10 @@ libbitcoincash_a_SOURCES = \
   hashwrapper.h \
   key.cpp \
   key.h \
+  keystore.cpp \
+  keystore.h \
+  coins.h \
+  coins.cpp \
   primitives/block.cpp \
   primitives/block.h \
   primitives/transaction.cpp \
@@ -424,10 +428,14 @@ libbitcoincash_a_SOURCES = \
   script/stackitem.h \
   script/script.cpp \
   script/script.h \
+  script/script_error.h \
+  script/script_error.cpp \
   script/scriptattributes.cpp \
   script/scripttemplate.cpp \
   script/sign.cpp \
   script/sign.h \
+  consensus/grouptokens.cpp \
+  consensus/grouptokens.h \
   support/pagelocker.cpp \
   support/pagelocker.h \
   support/cleanse.cpp \
@@ -506,6 +514,8 @@ libbitcoin_consensus_a_SOURCES = \
   consensus/merkle.h \
   consensus/params.h \
   consensus/validation.h \
+  consensus/grouptokens.cpp \
+  consensus/grouptokens.h \
   hashwrapper.cpp \
   hashwrapper.h \
   prevector.h \

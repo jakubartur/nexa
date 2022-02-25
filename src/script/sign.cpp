@@ -214,11 +214,10 @@ bool ProduceSignature(const BaseSignatureCreator &creator, const CScript &fromPu
     // value.  There is no reason to break layering by using the tweak only to take that out later.
 
     // We don't have the capability of signing with tx context dependent instructions so ScriptImportedState can be
-    // degenrate.
+    // degenerate.
     if (verify)
     {
-        ScriptImportedState sis(
-            &creator.Checker(), CTransactionRef(nullptr), std::vector<CTxOut>(), (unsigned int)-1, 0);
+        ScriptImportedState sis(&creator.Checker());
         ScriptError serror;
         bool ret = VerifyScript(scriptSig, fromPubKey, sis.checker->flags(), MAX_OPS_PER_SCRIPT, sis, &serror);
         if (!ret)
