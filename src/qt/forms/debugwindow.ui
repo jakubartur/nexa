@@ -103,7 +103,7 @@
        <item row="15" column="0">
         <widget class="QLabel" name="labelNumberOfTransactions">
          <property name="text">
-          <string>Transactions in Memory pool</string>
+          <string>Transactions in Tx pool</string>
          </property>
         </widget>
        </item>
@@ -117,14 +117,14 @@
        <item row="17" column="0">
         <widget class="QLabel" name="labelMemoryUsage">
          <property name="text">
-          <string>Memory pool usage</string>
+          <string>Tx pool - usage</string>
          </property>
         </widget>
        </item>
        <item row="18" column="0">
         <widget class="QLabel" name="labelTransactionsPerSecond">
          <property name="text">
-          <string>Transactions per second</string>
+          <string>Tx Pool - txns per second</string>
          </property>
         </widget>
        </item>
