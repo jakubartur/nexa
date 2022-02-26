@@ -110,8 +110,7 @@ uint64_t BlockAssembler::reserveBlockSize(const CScript &scriptPubKeyIn, int64_t
     nHeaderSize += TXCOUNT_VARINT_PADDING;
     // height varint - 5 bytes is enough for 4 billion blocks
     nHeaderSize += HEIGHT_VARINT_PADDING;
-    // maxSize and feePoolAmt varints
-    nHeaderSize += MAXSIZE_VARINT_PADDING;
+    // feePoolAmt varints
     nHeaderSize += FEEPOOL_VARINT_PADDING;
 
 
@@ -264,7 +263,6 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript &sc
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock.get(), chainparams.GetConsensus());
         pblock->chainWork = ArithToUint256(pindexPrev->chainWork() + GetWorkForDifficultyBits(pblock->nBits));
         pblock->feePoolAmt = 0; // to be used later
-        pblock->maxSize = 0; // to be used later
         pblock->hashAncestor.SetNull(); // to be used later
 
         pblocktemplate->vTxSigOps[0] = 0;

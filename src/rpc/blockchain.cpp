@@ -93,7 +93,6 @@ UniValue blockheaderToJSON(const CBlockIndex *blockindex, UniValue &result)
     result.pushKV("confirmations", confirmations);
     result.pushKV("height", (uint64_t)blockindex->height());
     result.pushKV("size", blockindex->header.size);
-    result.pushKV("maxSize", blockindex->header.maxSize);
     result.pushKV("feePoolAmt", blockindex->header.feePoolAmt);
     result.pushKV("merkleroot", blockindex->hashMerkleRoot().GetHex());
     result.pushKV("time", (int64_t)blockindex->time());

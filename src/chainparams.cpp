@@ -428,7 +428,7 @@ public:
 
         std::vector<unsigned char> nonce;
         std::vector<unsigned char> hardCodedNonce;
-        nonce = hardCodedNonce = ParseHex("2a000000");
+        nonce = hardCodedNonce = ParseHex("2b000000");
         genesis = CreateGenesisBlock("this is testnet", CScript() << OP_1, 1630437560, nonce, tgtBits, 0 * COIN);
         ECC_Start();
         bool worked = MineIt(genesis, 1000000, consensus);
@@ -521,7 +521,7 @@ public:
 
         std::vector<unsigned char> nonce; // TODO make this difficulty higher and hard code solution
         std::vector<unsigned char> hardCodedNonce;
-        nonce = hardCodedNonce = ParseHex("644c6200");
+        nonce = hardCodedNonce = ParseHex("f5336f00");
         genesis = CreateGenesisBlock(
             "Innovations enabling viral uses create a virtuous adoption cycle that overwhelms legacy systems",
             CScript() << OP_1, 1630437560, nonce, tgtBits, 0 * COIN);

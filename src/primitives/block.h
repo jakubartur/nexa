@@ -67,9 +67,6 @@ public:
     mutable uint64_t size;
     /** Number of transactions in the block */
     uint64_t txCount;
-    /** maximum allowed block size in bytes of a block at this height (algorithmically determined, but part of hash
-     commitment) */
-    uint64_t maxSize;
     /** quantity of satoshis in fee pool AFTER transaction evaluation (algorithmically determined, but part of hash
         commitment). */
     uint64_t feePoolAmt;
@@ -102,7 +99,6 @@ public:
         READWRITE(chainWork);
         READWRITE(size); // Can't be a varint or it relies on itself.  Does not include the nonce size
         READWRITE(VARINT(txCount));
-        READWRITE(VARINT(maxSize));
         READWRITE(VARINT(feePoolAmt));
         READWRITE(utxoCommitment);
         READWRITE(minerData);
@@ -114,7 +110,7 @@ public:
         return (hashPrevBlock == b.hashPrevBlock && hashAncestor == b.hashAncestor &&
                 hashMerkleRoot == b.hashMerkleRoot && hashTxFilter == b.hashTxFilter && nTime == b.nTime &&
                 nBits == b.nBits && height == b.height && chainWork == b.chainWork && size == b.size &&
-                txCount == b.txCount && maxSize == b.maxSize && feePoolAmt == b.feePoolAmt && nonce == b.nonce &&
+                txCount == b.txCount && feePoolAmt == b.feePoolAmt && nonce == b.nonce &&
                 utxoCommitment == b.utxoCommitment && minerData == b.minerData);
     }
 
@@ -130,7 +126,6 @@ public:
         chainWork.SetNull();
         size = 0;
         txCount = 0;
-        maxSize = 0;
         feePoolAmt = 0;
         nonce.clear();
         utxoCommitment.clear();

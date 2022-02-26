@@ -210,7 +210,6 @@ class BlockchainTest(BitcoinTestFramework):
         assert isinstance(header['time'], int)
         assert isinstance(header['mediantime'], int)
         assert isinstance(header['size'], int)
-        assert isinstance(header['maxSize'], int)
         assert isinstance(header['feePoolAmt'], int)
         assert isinstance(header['nonce'], str)
         assert isinstance(header['difficulty'], Decimal)
