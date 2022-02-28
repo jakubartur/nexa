@@ -40,7 +40,7 @@ QString BitcoinUnits::name(int unit)
     case KEX:
         return QString("KEX");
     case MEX:
-        return QString("KEX");
+        return QString("MEX");
     default:
         return QString("???");
     }
