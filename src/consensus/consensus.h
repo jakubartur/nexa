@@ -25,6 +25,8 @@ static const uint64_t SHORT_BLOCK_WINDOW = 12960 * 5; // 90 days of blocks with 
 static const uint64_t LONG_BLOCK_WINDOW = 52550 * 5; // 365 days of blocks with 2 minute block intervals
 static const uint64_t SHORT_BLOCK_WINDOW_REGTEST = 150; // used for testing only!
 static const uint64_t LONG_BLOCK_WINDOW_REGTEST = 300; // used for testing only!
+static const uint64_t SHORT_BLOCK_WINDOW_TESTNET = 144 * 5 * 7; // 7 days of blocks - used for testing only!
+static const uint64_t LONG_BLOCK_WINDOW_TESTNET = 144 * 5 * 14; // 14 days of blocks - used for testing only!
 static const uint64_t BLOCK_SIZE_MULTIPLIER = 10;
 
 /** Largest block possible */

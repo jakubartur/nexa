@@ -462,8 +462,8 @@ public:
         nDefaultPort = 7230;
         nPruneAfterHeight = 100000;
 
-        consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
-        consensus.nLongBlockWindow = LONG_BLOCK_WINDOW;
+        consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW_TESTNET;
+        consensus.nLongBlockWindow = LONG_BLOCK_WINDOW_TESTNET;
         consensus.nBlockSizeMultiplier = BLOCK_SIZE_MULTIPLIER;
 
         vFixedSeeds.clear();
