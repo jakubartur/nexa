@@ -148,7 +148,6 @@ build-debian:
     extends: .cache-debian
     needs: [build-debian-deps]
     script:
-        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --enable-shared --enable-debug --enable-zmq --enable-glibc-back-compat --enable-reduce-exports --cache-file=config.cache --prefix=$PWD/../depends/x86_64-unknown-linux-gnu CPPFLAGS=-DDEBUG_LOCKORDER
@@ -187,7 +186,6 @@ build-debian-electrscash:
       - mkdir -p build
 
     script:
-        - apt-get install -y libgmp-dev
         # add cargo to PATH
         - export PATH=$PATH:`pwd`/depends/x86_64-unknown-linux-gnu/native/bin
 
