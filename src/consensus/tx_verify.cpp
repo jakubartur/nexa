@@ -57,18 +57,6 @@ std::pair<int, int64_t> CalculateSequenceLocks(const CTransactionRef tx,
     int nMinHeight = -1;
     int64_t nMinTime = -1;
 
-    // tx->nVersion is signed integer so requires cast to unsigned otherwise
-    // we would be doing a signed comparison and half the range of nVersion
-    // wouldn't support BIP 68.
-    bool fEnforceBIP68 = static_cast<uint32_t>(tx->nVersion) >= 2 && flags & LOCKTIME_VERIFY_SEQUENCE;
-
-    // Do not enforce sequence numbers as a relative lock time
-    // unless we have been instructed to
-    if (!fEnforceBIP68)
-    {
-        return std::make_pair(nMinHeight, nMinTime);
-    }
-
     for (size_t txinIndex = 0; txinIndex < tx->vin.size(); txinIndex++)
     {
         const CTxIn &txin = tx->vin[txinIndex];
@@ -180,6 +168,11 @@ bool ContextualCheckTransaction(const CTransactionRef tx,
 
 bool CheckTransaction(const CTransactionRef tx, CValidationState &state)
 {
+    // nVersion is uint8_t and cannot be negative
+    if (tx->nVersion > CTransaction::CURRENT_VERSION)
+    {
+        return state.DoS(100, false, REJECT_INVALID, "bad-txns-version");
+    }
     // Basic checks that don't depend on any context
     if (tx->vout.empty())
         return state.DoS(10, false, REJECT_INVALID, "bad-txns-vout-empty");

@@ -47,14 +47,15 @@ class BIP68Test(BitcoinTestFramework):
         #print("Running test sequence-lock-unconfirmed-inputs")
         #self.test_sequence_lock_unconfirmed_inputs()
 
-        print("Verifying nVersion=2 transactions aren't standard")
-        self.test_version2_relay(before_activation=True)
+        # NEXA: bip68 is always activated, skip these tests
+        # print("Verifying nVersion=2 transactions aren't standard")
+        # self.test_version2_relay(before_activation=True)
 
-        print("Activating BIP68 (and 112/113)")
-        self.activateCSV()
+        # print("Activating BIP68 (and 112/113)")
+        # self.activateCSV()
 
-        print("Verifying nVersion=2 transactions are now standard")
-        self.test_version2_relay(before_activation=False)
+        # print("Verifying nVersion=2 transactions are now standard")
+        # self.test_version2_relay(before_activation=False)
 
         print("Passed\n")
 
@@ -77,7 +78,7 @@ class BIP68Test(BitcoinTestFramework):
         # If sequence locks were used, this would require 1 block for the
         # input to mature.
         sequence_value = SEQUENCE_LOCKTIME_DISABLE_FLAG | 1
-        tx1.vin = [CTxIn(COutPoint(int(utxo["txid"], 16), utxo["vout"]), nSequence=sequence_value)] 
+        tx1.vin = [CTxIn(COutPoint(int(utxo["txid"], 16), utxo["vout"]), nSequence=sequence_value)]
         tx1.vout = [CTxOut(value, CScript([b'a']))]
 
         tx1_signed = self.nodes[0].signrawtransaction(ToHex(tx1))["hex"]
@@ -145,7 +146,7 @@ class BIP68Test(BitcoinTestFramework):
 
             # Track whether any sequence locks used should fail
             should_pass = True
-            
+
             # Track whether this transaction was built with sequence locks
             using_sequence_locks = False
 

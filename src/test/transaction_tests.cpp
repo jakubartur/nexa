@@ -163,6 +163,15 @@ BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
     BOOST_CHECK_MESSAGE(CheckTransaction(txref, state), "at max vouts");
     BOOST_CHECK(state.IsValid());
 
+    // check that version greater than current version fails
+    tx.nVersion = CTransaction::CURRENT_VERSION + 1;
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "tx version too high");
+    BOOST_CHECK(!state.IsValid());
+    BOOST_CHECK(state.GetRejectReason() == "bad-txns-version");
+    tx.nVersion = CTransaction::CURRENT_VERSION;
+    state = CValidationState();
+
     // Check that 1 more vout causes a tx failure
     tx.vout.push_back(CTxOut(CTxOut::LEGACY, 1, simpleConstraint));
     txref = MakeTransactionRef(tx);
