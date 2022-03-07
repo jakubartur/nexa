@@ -34,7 +34,7 @@ SatoshiBlock CreateGenesisBlock(CScript prefix,
     std::vector<unsigned char> vComment(pComment, pComment + comment.length());
 
     CMutableTransaction txNew;
-    txNew.nVersion = 1;
+    txNew.nVersion = 0;
     txNew.vin.resize(1);
     txNew.vout.resize(1);
     txNew.vin[0].scriptSig = prefix << vComment;
@@ -60,7 +60,7 @@ CBlock CreateGenesisBlock(const char *genesisText,
     const CAmount &genesisReward)
 {
     CMutableTransaction txNew;
-    txNew.nVersion = 1;
+    txNew.nVersion = 0;
     txNew.vin.resize(0);
     txNew.vout.resize(2);
     txNew.vout[0].nValue = genesisReward;
@@ -366,7 +366,7 @@ public:
 
         std::vector<unsigned char> nonce;
         nonce.resize(1);
-        nonce[0] = 3;
+        nonce[0] = 5;
         genesis = CreateGenesisBlock("This is regtest", CScript() << OP_1, 1626275623, nonce, 0x207fffff, 0 * COIN);
         ECC_Start();
         bool worked = MineIt(genesis, 255, consensus);
@@ -428,7 +428,7 @@ public:
 
         std::vector<unsigned char> nonce;
         std::vector<unsigned char> hardCodedNonce;
-        nonce = hardCodedNonce = ParseHex("2b000000");
+        nonce = hardCodedNonce = ParseHex("30000000");
         genesis = CreateGenesisBlock("this is testnet", CScript() << OP_1, 1630437560, nonce, tgtBits, 0 * COIN);
         ECC_Start();
         bool worked = MineIt(genesis, 1000000, consensus);
@@ -521,7 +521,7 @@ public:
 
         std::vector<unsigned char> nonce; // TODO make this difficulty higher and hard code solution
         std::vector<unsigned char> hardCodedNonce;
-        nonce = hardCodedNonce = ParseHex("f5336f00");
+        nonce = hardCodedNonce = ParseHex("4f1c7c00");
         genesis = CreateGenesisBlock(
             "Innovations enabling viral uses create a virtuous adoption cycle that overwhelms legacy systems",
             CScript() << OP_1, 1630437560, nonce, tgtBits, 0 * COIN);

@@ -616,7 +616,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
         pblock->nTime = tip->GetMedianTimePast() + 1000;
         pblock->hashPrevBlock = tip->GetBlockHash();
         CMutableTransaction txCoinbase(*pblock->vtx[0]); // Grab a prior coinbase to get it mostly right
-        txCoinbase.nVersion = 2;
+        txCoinbase.nVersion = 0;
         txCoinbase.vout[1].scriptPubKey = CScript() << OP_RETURN << (tip->height() + 1) << OP_0;
         txCoinbase.vout[0].scriptPubKey = CScript();
         pblock->vtx[0] = MakeTransactionRef(std::move(txCoinbase));
@@ -958,7 +958,7 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
     std::vector<int> prevheights;
 
     // relative height locked
-    tx.nVersion = 2;
+    tx.nVersion = 0;
     tx.vin.resize(1);
     prevheights.resize(1);
     tx.vin[0] = txFirst[0]->SpendOutput(0); // only 1 transaction
