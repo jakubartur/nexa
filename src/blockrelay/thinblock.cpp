@@ -4,6 +4,7 @@
 
 #include <iomanip>
 #include <map>
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -1439,7 +1440,7 @@ void BuildSeededBloomFilter(CBloomFilter &filterMemPool,
 
     // Also add all the transaction hashes currently in the txCommitQ
     {
-        boost::unique_lock<boost::mutex> lock(csCommitQ);
+        std::unique_lock<std::mutex> lock(csCommitQ);
         for (auto &it : *txCommitQ)
         {
             setHighScoreMemPoolHashes.insert(it.first);
