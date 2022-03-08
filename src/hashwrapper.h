@@ -135,6 +135,18 @@ inline uint160 Hash160(const T1 pbegin, const T1 pend)
     return result;
 }
 
+/** Compute the 160-bit hash an object. */
+template <typename T1>
+inline std::vector<unsigned char> VchHash160(const T1 pbegin, const T1 pend)
+{
+    static unsigned char pblank[1] = {};
+    std::vector<unsigned char> result(20);
+    CHash160()
+        .Write(pbegin == pend ? pblank : (const unsigned char *)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
+        .Finalize(&result[0]);
+    return result;
+}
+
 /** Compute the 160-bit hash of a vector. */
 inline uint160 Hash160(const std::vector<unsigned char> &vch) { return Hash160(vch.begin(), vch.end()); }
 /** Compute the 160-bit hash of a vector. */

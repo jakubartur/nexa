@@ -11,13 +11,19 @@
 #include "crypto/ripemd160.h"
 #include "crypto/sha1.h"
 #include "crypto/sha256.h"
+#include "hashwrapper.h"
 #include "primitives/transaction.h"
 #include "pubkey.h"
 #include "interpreter.h"
 #include "script/script.h"
 #include "script/script_error.h"
+#include "script/scripttemplate.h"
 #include "uint256.h"
 #include "util.h"
+
+const CScript p2pkt(CScript() << OP_FROMALTSTACK << OP_CHECKSIGVERIFY);
+const std::vector<unsigned char> p2pktId = { 1 };
+const std::vector<unsigned char> p2pktHash = VchHash160(p2pkt.begin(), p2pkt.end());
 
 typedef std::vector<unsigned char> valtype;
 extern bool CastToBool(const StackItem &vch);
@@ -108,4 +114,92 @@ bool VerifyTemplate(const CScript &templat,
         return set_error(serror, SCRIPT_ERR_CLEANSTACK);
     }
     return set_success(serror);
+}
+
+// TODO: this must exist somewhere else
+void NumericOpcodeToVector(opcodetype opcode, VchType &templateHash)
+{
+    if (opcode == OP_1)
+    {
+        VchType one = {1};
+        templateHash = one;
+    }
+}
+
+ScriptError ConvertWellKnownTemplateHash(VchType &templateHash, CScript &templateScript)
+{
+    // You shouldn't be calling this function for out-of-size values.
+    // But in release mode the best we can do is report no known conversion.
+    DbgAssert(templateHash.size() <= 2, return SCRIPT_ERR_TEMPLATE);
+
+    if (templateHash == p2pktId)
+    {
+        templateHash = p2pktHash;
+        templateScript = p2pkt;
+        return SCRIPT_ERR_OK;
+    }
+    return SCRIPT_ERR_TEMPLATE; // All unknown values are illegal.
+}
+
+// This function looks at the input script and templateHash, extracts the template script, and verifies it.
+// Satisfier is input-only,
+// satisfierIter, and templateHash are input-output.  The satisfierIter is advanced if needed, the templateHash is
+// updated to an actual hash if it encodes a well-known shorthand.
+// templateScript is output-only.
+//
+ScriptError LoadCheckTemplateHash(const CScript &satisfier,
+    CScript::const_iterator &satisfierIter,
+    VchType &templateHash,
+    CScript &templateScript)
+{
+    // Handle well-known template identifiers
+    // Note that if the template is well-known there is NO value (not even OP_0) within the satisfier script.
+    // This is why well known templates are checked here, before the satisfier script is used.
+    size_t templateHashSize = templateHash.size();
+    if (templateHashSize>0 && templateHashSize<=2)
+    {
+        return ConvertWellKnownTemplateHash(templateHash, templateScript);
+    }
+
+    std::vector<unsigned char> templateScriptBytes;
+    opcodetype templateDataOpcode;
+    if (!satisfier.GetOp(satisfierIter, templateDataOpcode, templateScriptBytes))
+    {
+        LOG(SCRIPT, "Script template: satisfier has bad opcode");
+        return SCRIPT_ERR_TEMPLATE;
+    }
+    templateScript = CScript(templateScriptBytes.begin(), templateScriptBytes.end());
+
+    if (templateHashSize == CHash160::OUTPUT_SIZE)
+    {
+        // Make sure that the passed template matches the template hash
+        VchType actualTemplateHash(CHash160::OUTPUT_SIZE);
+        CHash160()
+            .Write(begin_ptr(templateScriptBytes), templateScriptBytes.size())
+            .Finalize(&actualTemplateHash.front());
+        if (actualTemplateHash != templateHash)
+        {
+            LOG(SCRIPT, "Script template: template is incorrect preimage");
+            return SCRIPT_ERR_TEMPLATE;
+        }
+    }
+    else if (templateHashSize == CHash256::OUTPUT_SIZE)
+    {
+        // Make sure that the passed template matches the template hash
+        VchType actualTemplateHash(CHash256::OUTPUT_SIZE);
+        CHash256()
+            .Write(begin_ptr(templateScriptBytes), templateScriptBytes.size())
+            .Finalize(&actualTemplateHash.front());
+        if (actualTemplateHash != templateHash)
+        {
+            LOG(SCRIPT, "Script template: template is incorrect preimage");
+            return SCRIPT_ERR_TEMPLATE;
+        }
+    }
+    else
+    {
+        LOG(SCRIPT, "Script template: template hash is incorrect size");
+        return SCRIPT_ERR_TEMPLATE;
+    }
+    return SCRIPT_ERR_OK;
 }

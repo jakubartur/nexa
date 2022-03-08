@@ -14,6 +14,7 @@
 #include "rpc/protocol.h"
 #include "rpc/server.h"
 #include "script/script.h"
+#include "script/scripttemplate.h"
 #include "script/standard.h"
 #include "streams.h"
 #include "unlimited.h"

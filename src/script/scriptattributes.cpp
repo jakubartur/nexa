@@ -1,7 +1,8 @@
 #include "consensus/grouptokens.h"
 #include "interpreter.h"
 #include "primitives/transaction.h"
-#include "script.h"
+#include "script/script.h"
+#include "script/scripttemplate.h"
 #include "streams.h"
 #include <vector>
 
@@ -235,10 +236,21 @@ ScriptTemplateError GetScriptTemplate(const CScript &script,
     }
     if (!IsPushOpcode(opcode))
         return ScriptTemplateError::INVALID;
+    NumericOpcodeToVector(opcode, *templateHash);
     size_t templateHashSize = templateHash->size();
     if ((templateHashSize != CHash160::OUTPUT_SIZE) && (templateHashSize != CHash256::OUTPUT_SIZE))
     {
-        return ScriptTemplateError::INVALID;
+        if (templateHashSize > 0 && templateHashSize < 2) // check for valid well known script template
+        {
+            VchType tmp = *templateHash;
+            CScript unused;
+            if (ConvertWellKnownTemplateHash(tmp, unused) != SCRIPT_ERR_OK)
+            {
+                return ScriptTemplateError::INVALID;
+            }
+        }
+        else
+            return ScriptTemplateError::INVALID;
     }
 
     // args hash is third
@@ -252,10 +264,23 @@ ScriptTemplateError GetScriptTemplate(const CScript &script,
     if (!IsPushOpcode(opcode))
         return ScriptTemplateError::INVALID;
     size_t argsHashSize = templateHash->size();
-    // allow 2 different hash types, or no hashed args
-    if ((argsHashSize != CHash160::OUTPUT_SIZE) && (argsHashSize != CHash256::OUTPUT_SIZE) && (argsHashSize != 0))
+    if (templateHash->size() > 0 && templateHash->size() <= 2) // This may be a "well-known" template
     {
-        return ScriptTemplateError::INVALID;
+        // Check all possible well known templates here
+        if (*templateHash == p2pktId)
+        {
+        }
+        else
+        {
+            return ScriptTemplateError::INVALID;
+        }
+    }
+    else // allow 2 different hash types, or no hashed args
+    {
+        if ((argsHashSize != CHash160::OUTPUT_SIZE) && (argsHashSize != CHash256::OUTPUT_SIZE) && (argsHashSize != 0))
+        {
+            return ScriptTemplateError::INVALID;
+        }
     }
 
     // Additional stuff is valid (visible script args)

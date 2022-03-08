@@ -357,21 +357,6 @@ CAmount DeserializeAmount(opcodetype opcodeQty, std::vector<unsigned char> &vec)
 */
 bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pc = nullptr, CGroupTokenInfo *grp = nullptr);
 
-/** Get the script's template hash if this script is a template
-    @param[in] scriptType The script's type.  This is the TxOut "version" field.
-    @param[in] script The script
-    @param[out] groupInfo
-    @param[out] contractHash
-    @param[out] argsHash
-
-    @return error Whether the script is a template, is not a template, or is an invalid template.
- */
-ScriptTemplateError GetScriptTemplate(const CScript &script,
-    CGroupTokenInfo *groupInfo,
-    std::vector<unsigned char> *contractHash,
-    std::vector<unsigned char> *argsHash = nullptr,
-    CScript::const_iterator *pcout = nullptr);
-
 // Convenience function to just extract the group from a script
 inline CGroupTokenID GetGroupToken(const CScript &script) { return CGroupTokenInfo(script).associatedGroup; }
 extern CGroupTokenID NoGroup;

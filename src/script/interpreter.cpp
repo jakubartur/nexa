@@ -18,6 +18,7 @@
 #include "pubkey.h"
 #include "script/script.h"
 #include "script/script_error.h"
+#include "script/scripttemplate.h"
 #include "sighashtype.h"
 #include "uint256.h"
 #include "util.h"
@@ -2408,63 +2409,6 @@ bool VerifySatoScript(const CScript &scriptSig,
     return set_success(serror);
 }
 
-
-// This function looks at the input script and templateHash, extracts the template script, and verifies it.
-// Satisfier is input-only,
-// satisfierIter, and templateHash are input-output.  The satisfierIter is advanced if needed, the templateHash is
-// updated to an actual hash if it encodes a well-known shorthand.
-// templateScript is output-only.
-//
-static ScriptError LoadCheckTemplateHash(const CScript &satisfier,
-    CScript::const_iterator &satisfierIter,
-    VchType &templateHash,
-    CScript &templateScript)
-{
-    // TODO: handle well-known template identifiers
-
-    std::vector<unsigned char> templateScriptBytes;
-    opcodetype templateDataOpcode;
-    if (!satisfier.GetOp(satisfierIter, templateDataOpcode, templateScriptBytes))
-    {
-        LOG(SCRIPT, "Script template: satisfier has bad opcode");
-        return SCRIPT_ERR_TEMPLATE;
-    }
-    templateScript = CScript(templateScriptBytes.begin(), templateScriptBytes.end());
-
-    size_t templateHashSize = templateHash.size();
-    if (templateHashSize == CHash160::OUTPUT_SIZE)
-    {
-        // Make sure that the passed template matches the template hash
-        VchType actualTemplateHash(CHash160::OUTPUT_SIZE);
-        CHash160()
-            .Write(begin_ptr(templateScriptBytes), templateScriptBytes.size())
-            .Finalize(&actualTemplateHash.front());
-        if (actualTemplateHash != templateHash)
-        {
-            LOG(SCRIPT, "Script template: template is incorrect preimage");
-            return SCRIPT_ERR_TEMPLATE;
-        }
-    }
-    else if (templateHashSize == CHash256::OUTPUT_SIZE)
-    {
-        // Make sure that the passed template matches the template hash
-        VchType actualTemplateHash(CHash256::OUTPUT_SIZE);
-        CHash256()
-            .Write(begin_ptr(templateScriptBytes), templateScriptBytes.size())
-            .Finalize(&actualTemplateHash.front());
-        if (actualTemplateHash != templateHash)
-        {
-            LOG(SCRIPT, "Script template: template is incorrect preimage");
-            return SCRIPT_ERR_TEMPLATE;
-        }
-    }
-    else
-    {
-        LOG(SCRIPT, "Script template: template hash is incorrect size");
-        return SCRIPT_ERR_TEMPLATE;
-    }
-    return SCRIPT_ERR_OK;
-}
 
 bool VerifyScript(const CScript &scriptSig,
     const CScript &scriptPubKey,

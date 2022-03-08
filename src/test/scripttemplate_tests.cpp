@@ -4,6 +4,7 @@
 #include "rpc/server.h"
 #include "script/script.h"
 #include "script/script_error.h"
+#include "script/scripttemplate.h"
 #include "script/sighashtype.h"
 #include "script/sign.h"
 #include "test/scriptflags.h"
@@ -21,9 +22,55 @@
 
 BOOST_FIXTURE_TEST_SUITE(scripttemplate_tests, BasicTestingSetup)
 
+class QuickAddress
+{
+public:
+    QuickAddress()
+    {
+        secret.MakeNewKey(true);
+        pubkey = secret.GetPubKey();
+        addr = pubkey.GetID();
+        eAddr = pubkey.GetHash();
+        grp = CGroupTokenID(addr);
+    }
+    QuickAddress(const CKey &k)
+    {
+        secret = k;
+        pubkey = secret.GetPubKey();
+        addr = pubkey.GetID();
+        eAddr = pubkey.GetHash();
+        grp = CGroupTokenID(addr);
+    }
+    QuickAddress(unsigned char key) // make a very simple key for testing only
+    {
+        secret.MakeNewKey(true);
+        unsigned char *c = (unsigned char *)secret.begin();
+        *c = key;
+        c++;
+        for (int i = 1; i < 32; i++, c++)
+        {
+            *c = 0;
+        }
+        pubkey = secret.GetPubKey();
+        addr = pubkey.GetID();
+        eAddr = pubkey.GetHash();
+        grp = CGroupTokenID(addr);
+    }
+
+    CKey secret;
+    CPubKey pubkey;
+    CKeyID addr; // 160 bit normal address
+    uint256 eAddr; // 256 bit extended address
+    CGroupTokenID grp;
+};
+
 class AlwaysGoodSignatureChecker : public BaseSignatureChecker
 {
 public:
+    mutable int numVerifyCalls = 0;
+    mutable int numCheckSigCalls = 0;
+    mutable std::vector<unsigned char> lastPubKey;
+    mutable std::vector<unsigned char> lastSig;
     AlwaysGoodSignatureChecker(unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID) { nFlags = flags; }
 
     //! Verifies a signature given the pubkey, signature and sighash
@@ -31,6 +78,7 @@ public:
         const CPubKey &vchPubKey,
         const uint256 &sighash) const
     {
+        numVerifyCalls++;
         if (vchSig.size() > 0)
             return true;
         return false;
@@ -41,6 +89,9 @@ public:
         const std::vector<unsigned char> &vchPubKey,
         const CScript &scriptCode) const
     {
+        numCheckSigCalls++;
+        lastPubKey = vchPubKey;
+        lastSig = scriptSig;
         if (scriptSig.size() > 0)
             return true;
         return false;
@@ -55,6 +106,44 @@ static uint256 hash256(const CScript &script) { return Hash(script.begin(), scri
 
 std::vector<unsigned char> vch(const CScript &script) { return ToByteVector(script); }
 
+BOOST_AUTO_TEST_CASE(verifywellknown)
+{
+    auto flags = MANDATORY_SCRIPT_VERIFY_FLAGS;
+    ScriptError error;
+    auto nogroup = OP_0;
+    bool ret;
+
+    // Try p2pkt
+    {
+        AlwaysGoodSignatureChecker ck(flags);
+        ScriptImportedState sis(&ck);
+        ScriptMachineResourceTracker tracker;
+
+        // we are using AlwaysGoodSignatureChecker so this sig doesnt have to be right, but must pass basic size check
+        VchType fakeSig(64);
+        defaultSigHashType.appendToSig(fakeSig);
+        QuickAddress fakeAddr;
+        CScript hashedArgs = CScript() << ToByteVector(fakeAddr.pubkey);
+        CScript satisfier = CScript() << fakeSig;
+
+        CScript txin = (CScript() << vch(hashedArgs)) + satisfier;
+        CScript txout = (CScript(ScriptType::TEMPLATE) << nogroup << p2pktId << hash256(hashedArgs));
+        ret = VerifyScript(txin, txout, flags, 100, sis, &error, &tracker);
+        BOOST_CHECK(ret);
+        // make sure that the expect script ran by checking the number of sigchecks it should have done,
+        // and that the sig and pubkey are correct.
+        BOOST_CHECK(ck.numCheckSigCalls == 1);
+        BOOST_CHECK(ck.lastSig == fakeSig);
+        BOOST_CHECK(ck.lastPubKey == fakeAddr.pubkey);
+
+        // Incorrect txin script (contains preimage, even though well-known)
+        // Since the preimage is well-known the param is ignored, throwing off all the params (so vch(p2pkt) will
+        // be seen as the hash of the args causing a failure
+        CScript txin2 = (CScript() << vch(p2pkt) << vch(hashedArgs)) + satisfier;
+        ret = VerifyScript(txin2, txout, flags, 100, sis, &error, &tracker);
+        BOOST_CHECK(!ret);
+    }
+}
 
 BOOST_AUTO_TEST_CASE(verifytemplate)
 {
@@ -136,7 +225,6 @@ BOOST_AUTO_TEST_CASE(largetemplate)
     ScriptError error;
     ScriptMachineResourceTracker tracker;
 
-    auto nogroup = OP_0;
     bool ret;
 
     // This script is bigger than allowed without script templates
