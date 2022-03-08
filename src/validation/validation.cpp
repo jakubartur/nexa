@@ -2143,25 +2143,6 @@ bool ConnectBlockPrevalidations(ConstCBlockRef pblock,
     nTimeCheck += nTime1 - nTimeStart;
     LOG(BENCH, "    - Sanity checks: %.2fms [%.2fs]\n", 0.001 * (nTime1 - nTimeStart), nTimeCheck * 0.000001);
 
-    // Do not allow blocks that contain transactions which 'overwrite' older transactions,
-    // unless those are already completely spent.
-
-    for (const auto &tx : pblock->vtx)
-    {
-        for (size_t o = 0; o < tx->vout.size(); o++)
-        {
-            if (view.HaveCoin(COutPoint(tx->GetIdem(), o)))
-            {
-                return state.DoS(100, error("ConnectBlock(): tried to overwrite transaction"), REJECT_INVALID,
-                    "bad-txns-outpoint-dup");
-            }
-        }
-    }
-
-    int64_t nTime2 = GetStopwatchMicros();
-    nTimeForks += nTime2 - nTime1;
-    LOG(BENCH, "    - Fork checks: %.2fms [%.2fs]\n", 0.001 * (nTime2 - nTime1), nTimeForks * 0.000001);
-
     return true;
 }
 
