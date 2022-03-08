@@ -79,28 +79,28 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
     MutableTransactionSignatureChecker tsc(&txTo[0], 0, amount, flags);
     // test isn't going to use any prevout introspection so just pass no coins there
     ScriptImportedState sis(&tsc);
-    BOOST_CHECK(VerifyScript(s, a_and_b, flags, MAX_OPS_PER_SCRIPT, sis, &err));
+    BOOST_CHECK(VerifyScript(s, a_and_b, flags, sis, &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
 
     for (int i = 0; i < 4; i++)
     {
         keys.assign(1, key[i]);
         s = sign_multisig(a_and_b, keys, txTo[0], 0, 3);
-        BOOST_CHECK_MESSAGE(!VerifyScript(s, a_and_b, flags, MAX_OPS_PER_SCRIPT, sis, &err), strprintf("a&b 1: %d", i));
+        BOOST_CHECK_MESSAGE(!VerifyScript(s, a_and_b, flags, sis, &err), strprintf("a&b 1: %d", i));
         BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_INVALID_STACK_OPERATION, ScriptErrorString(err));
 
         // Check that the multisig doesn't work (because the pubkey is wrong)
         keys.assign(1, key[1]);
         keys.push_back(key[i]);
         s = sign_multisig(a_and_b, keys, txTo[0], 0, 3);
-        BOOST_CHECK_MESSAGE(!VerifyScript(s, a_and_b, flags, MAX_OPS_PER_SCRIPT, sis, &err), strprintf("a&b 2: %d", i));
+        BOOST_CHECK_MESSAGE(!VerifyScript(s, a_and_b, flags, sis, &err), strprintf("a&b 2: %d", i));
         BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 
         // check soft failure
         keys.assign(1, key[1]);
         keys.push_back(key[i]);
         s = sign_multisig(a_and_b, keys, txTo[0], 0, 0);
-        BOOST_CHECK_MESSAGE(!VerifyScript(s, a_and_b, flags, MAX_OPS_PER_SCRIPT, sis, &err), strprintf("a&b 2: %d", i));
+        BOOST_CHECK_MESSAGE(!VerifyScript(s, a_and_b, flags, sis, &err), strprintf("a&b 2: %d", i));
         BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_EVAL_FALSE, ScriptErrorString(err));
     }
 
@@ -116,20 +116,17 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
         s = sign_multisig(a_or_b, keys, txTo[1], 0, (1 << i) & 3);
         if (i == 0 || i == 1)
         {
-            BOOST_CHECK_MESSAGE(
-                VerifyScript(s, a_or_b, flags, MAX_OPS_PER_SCRIPT, sis1, &err), strprintf("a|b: %d", i));
+            BOOST_CHECK_MESSAGE(VerifyScript(s, a_or_b, flags, sis1, &err), strprintf("a|b: %d", i));
             BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
         }
         else
         {
-            BOOST_CHECK_MESSAGE(
-                !VerifyScript(s, a_or_b, flags, MAX_OPS_PER_SCRIPT, sis1, &err), strprintf("a|b: %d", i));
+            BOOST_CHECK_MESSAGE(!VerifyScript(s, a_or_b, flags, sis1, &err), strprintf("a|b: %d", i));
             BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_EVAL_FALSE, ScriptErrorString(err));
 
             // Try real multisig failure, by setting the check bits to nonzero
             s = sign_multisig(a_or_b, keys, txTo[1], 0, (1 << (i - 2)) & 3);
-            BOOST_CHECK_MESSAGE(
-                !VerifyScript(s, a_or_b, flags, MAX_OPS_PER_SCRIPT, sis1, &err), strprintf("a|b: %d", i));
+            BOOST_CHECK_MESSAGE(!VerifyScript(s, a_or_b, flags, sis1, &err), strprintf("a|b: %d", i));
             BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
         }
     }
@@ -142,7 +139,7 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
     vchSig.resize(vchSig.size() - 2); // chop off last 2 bytes
     s.clear();
     s << OP_1 << vchSig;
-    BOOST_CHECK(!VerifyScript(s, a_or_b, flags, MAX_OPS_PER_SCRIPT, sis1, &err));
+    BOOST_CHECK(!VerifyScript(s, a_or_b, flags, sis1, &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_SIG_NONSCHNORR, ScriptErrorString(err));
 
     BOOST_CHECK(key[0].SignSchnorr(blankHash, vchSig));
@@ -150,7 +147,7 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
     vchSig.push_back(0); // add an extra byte
     s.clear();
     s << OP_1 << vchSig;
-    BOOST_CHECK(!VerifyScript(s, a_or_b, flags, MAX_OPS_PER_SCRIPT, sis1, &err));
+    BOOST_CHECK(!VerifyScript(s, a_or_b, flags, sis1, &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_SIG_NONSCHNORR, ScriptErrorString(err));
 
 
@@ -166,8 +163,7 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
             s = sign_multisig(escrow, keys, txTo[2], 0, ((1 << i) & 15) | ((1 << j) & 15));
             if (i < j && i < 3 && j < 3)
             {
-                BOOST_CHECK_MESSAGE(
-                    VerifyScript(s, escrow, flags, MAX_OPS_PER_SCRIPT, sis2, &err), strprintf("escrow 1: %d %d", i, j));
+                BOOST_CHECK_MESSAGE(VerifyScript(s, escrow, flags, sis2, &err), strprintf("escrow 1: %d %d", i, j));
                 BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
             }
             else
@@ -175,8 +171,7 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
                 // If i==j you will get bad bit counts because they land on eachother.
                 // If anything is 3, you will get a bad bit range because this is 2 of 3 and that's the 4th
                 // if j < i the order will be wrong so you'll get a sig error
-                BOOST_CHECK_MESSAGE(!VerifyScript(s, escrow, flags, MAX_OPS_PER_SCRIPT, sis2, &err),
-                    strprintf("escrow 2: %d %d", i, j));
+                BOOST_CHECK_MESSAGE(!VerifyScript(s, escrow, flags, sis2, &err), strprintf("escrow 2: %d %d", i, j));
                 BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_INVALID_BIT_RANGE || err == SCRIPT_ERR_INVALID_BIT_COUNT ||
                                         err == SCRIPT_ERR_CHECKMULTISIGVERIFY,
                     ScriptErrorString(err));

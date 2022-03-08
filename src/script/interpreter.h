@@ -452,6 +452,9 @@ public:
     /** All the external information that this virtual machine is allowed to access */
     const ScriptImportedState &sis;
 
+    /** The maximum script size executable in the virtual machine */
+    uint64_t maxScriptSize = MAX_SCRIPT_SIZE;
+
     ScriptMachine(const ScriptMachine &from)
         : pc(from.pc), pbegin(from.pbegin), pend(from.pend), pbegincodehash(from.pbegincodehash), sis(from.sis)
     {
@@ -592,7 +595,6 @@ bool EvalScript(Stack &stack,
 bool VerifyScript(const CScript &scriptSig,
     const CScript &scriptPubKey,
     unsigned int flags,
-    unsigned int maxOps,
     const ScriptImportedState &sis,
     ScriptError *error = nullptr,
     ScriptMachineResourceTracker *tracker = nullptr);
@@ -623,5 +625,8 @@ bool CheckPubKeyEncoding(const std::vector<uint8_t> &vchSig, unsigned int flags,
 
 // Applies the specifier to the data in sis to generate items that are pushed onto the passed stack.
 ScriptError EvalPushTxState(const VchType &specifier, const ScriptImportedState &sis, Stack &stack);
+
+extern uint64_t maxSatoScriptOps;
+extern uint64_t maxScriptTemplateOps;
 
 #endif // BITCOIN_SCRIPT_INTERPRETER_H

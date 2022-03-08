@@ -104,8 +104,7 @@ ScriptError VerifyWithFlag(const CTransaction &output, const CMutableTransaction
     CTransaction inputi(input);
     TransactionSignatureChecker tsc(&inputi, 0, input.vout[0].nValue, flags);
     ScriptImportedState sis(&tsc);
-    bool ret =
-        VerifyScript(inputi.vin[0].scriptSig, output.vout[0].scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &error);
+    bool ret = VerifyScript(inputi.vin[0].scriptSig, output.vout[0].scriptPubKey, flags, sis, &error);
     BOOST_CHECK_EQUAL((ret == true), (error == SCRIPT_ERR_OK));
 
     return error;
@@ -282,7 +281,7 @@ unsigned int evalForSigChecks(const CScript &scriptSig,
     ScriptMachineResourceTracker tracker;
     ScriptImportedState sis(checker ? checker : &sigChecker);
 
-    bool worked = VerifyScript(scriptSig, scriptPubKey, flags, 0xffffffff, sis, &serror, &tracker);
+    bool worked = VerifyScript(scriptSig, scriptPubKey, flags, sis, &serror, &tracker);
     if (!worked)
     {
         printf("unexpected verify failure: %d: %s\n", (int)serror, ScriptErrorString(serror));

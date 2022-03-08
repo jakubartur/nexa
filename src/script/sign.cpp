@@ -219,7 +219,7 @@ bool ProduceSignature(const BaseSignatureCreator &creator, const CScript &fromPu
     {
         ScriptImportedState sis(&creator.Checker());
         ScriptError serror;
-        bool ret = VerifyScript(scriptSig, fromPubKey, sis.checker->flags(), MAX_OPS_PER_SCRIPT, sis, &serror);
+        bool ret = VerifyScript(scriptSig, fromPubKey, sis.checker->flags(), sis, &serror);
         if (!ret)
         {
             LOGA("Internal sign verification failed with error %s\n", ScriptErrorString(serror));

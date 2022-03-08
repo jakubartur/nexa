@@ -51,7 +51,7 @@ bool CScriptCheck::operator()()
     const CScript &scriptSig = sis.tx->vin[sis.nIn].scriptSig;
     ScriptMachineResourceTracker smRes;
     unsigned int nFlags = checker.flags();
-    if (!VerifyScript(scriptSig, scriptPubKey, nFlags, maxOps, sis, &error, &smRes))
+    if (!VerifyScript(scriptSig, scriptPubKey, nFlags, sis, &error, &smRes))
     {
         LOGA("Script Error: %s\n", ScriptErrorString(error));
         return false;

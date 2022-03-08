@@ -330,11 +330,24 @@ CTweakRef<uint64_t> miningForkTime("consensus.forkMay2021Time",
     &nMiningForkTime,
     &ForkTimeValidator); // Saturday May 15 12:00:00 UTC 2022
 
-CTweak<uint64_t> maxScriptOps("test.maxScriptOps",
-    strprintf("Maximum number of script operations allowed.  Stack pushes are excepted.  Use for testing only! "
+// needs to be declared independently with CTweakRef so libraries can use without tweaks.
+extern uint64_t maxSatoScriptOps;
+extern uint64_t maxScriptTemplateOps;
+
+CTweakRef<uint64_t> maxSatoScriptOpsTweak("test.maxSatoScriptOps",
+    strprintf("Maximum number of script operations allowed.  Stack pushes are excepted.  Change for testing only! "
               "(default: %ld)",
         MAX_OPS_PER_SCRIPT),
-    MAX_OPS_PER_SCRIPT);
+    &maxSatoScriptOps,
+    nullptr);
+
+CTweakRef<uint64_t> maxScriptTemplateOpsTweak("test.maxScriptTemplateOps",
+    strprintf(
+        "Maximum number of script template operations allowed.  Stack pushes are excepted.  Change for testing only! "
+        "(default: %ld)",
+        MAX_OPS_PER_SCRIPT_TEMPLATE),
+    &maxScriptTemplateOps,
+    nullptr);
 
 CTweak<uint64_t> maxSigChecks("test.maxBlockSigChecks",
     strprintf(

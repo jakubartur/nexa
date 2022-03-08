@@ -1066,7 +1066,6 @@ bool CheckInputs(const CTransactionRef &tx,
     const CCoinsViewCache &inputs,
     bool fScriptChecks,
     unsigned int flags,
-    unsigned int maxOps,
     bool cacheStore,
     ValidationResourceTracker *resourceTracker,
     std::vector<CScriptCheck> *pvChecks,
@@ -1178,12 +1177,12 @@ bool CheckInputs(const CTransactionRef &tx,
                 if (pvChecks)
                 {
                     pvChecks->push_back(CScriptCheck(
-                        resourceTracker, scriptPubKey, amount, tx, spendingCoins, state, i, flags, maxOps, cacheStore));
+                        resourceTracker, scriptPubKey, amount, tx, spendingCoins, state, i, flags, cacheStore));
                 }
                 else
                 {
                     CScriptCheck check(
-                        resourceTracker, scriptPubKey, amount, tx, spendingCoins, state, i, flags, maxOps, cacheStore);
+                        resourceTracker, scriptPubKey, amount, tx, spendingCoins, state, i, flags, cacheStore);
                     if (!check())
                     {
                         ScriptError scriptError = check.GetScriptError();
@@ -1201,8 +1200,8 @@ bool CheckInputs(const CTransactionRef &tx,
                             // arguments; if so, don't trigger DoS protection to
                             // avoid splitting the network between upgraded and
                             // non-upgraded nodes.
-                            CScriptCheck check2(nullptr, scriptPubKey, amount, tx, spendingCoins, state, i,
-                                mandatoryFlags, maxOps, cacheStore);
+                            CScriptCheck check2(
+                                nullptr, scriptPubKey, amount, tx, spendingCoins, state, i, mandatoryFlags, cacheStore);
                             if (check2())
                             {
                                 if (debugger)
@@ -1230,7 +1229,7 @@ bool CheckInputs(const CTransactionRef &tx,
                         // "upgrade-conditional-script-failure (Opcode missing or not
                         // understood)".
                         CScriptCheck check3(nullptr, scriptPubKey, amount, tx, spendingCoins, state, i,
-                            mandatoryFlags ^ SCRIPT_ENABLE_OP_REVERSEBYTES, maxOps, cacheStore);
+                            mandatoryFlags ^ SCRIPT_ENABLE_OP_REVERSEBYTES, cacheStore);
                         if (check3())
                         {
                             if (debugger)
@@ -2356,8 +2355,8 @@ bool ConnectBlockCanonicalOrdering(ConstCBlockRef pblock,
                         std::vector<CScriptCheck> vChecks;
                         bool fCacheResults = fJustCheck; /* Don't cache results if we're actually connecting blocks
                                                             (still consult the cache, though) */
-                        if (!CheckInputs(txref, state, view, fScriptChecks, flags, maxScriptOps.Value(), fCacheResults,
-                                &txResourceTracker[i], PV->ThreadCount() ? &vChecks : nullptr))
+                        if (!CheckInputs(txref, state, view, fScriptChecks, flags, fCacheResults, &txResourceTracker[i],
+                                PV->ThreadCount() ? &vChecks : nullptr))
                         {
                             return error("%s: block %s CheckInputs on %s failed with %s", __func__,
                                 pblock->GetHash().ToString(), tx.GetId().ToString(), FormatStateMessage(state));

@@ -89,7 +89,10 @@ extern CTweak<bool> unsafeGetBlockTemplate;
 extern CTweak<uint32_t> netMagic;
 
 // The maximum number of allowed script operations (consensus param)
-extern CTweak<uint64_t> maxScriptOps;
+extern CTweakRef<uint64_t> maxSatoScriptOpsTweak;
+
+// The maximum number of allowed script operations (consensus param)
+extern CTweakRef<uint64_t> maxScriptTemplateOpsTweak;
 
 // The maximum number of allowed sigcheck operations (consensus param)
 extern CTweak<uint64_t> maxSigChecks;

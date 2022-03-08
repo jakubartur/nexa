@@ -1420,7 +1420,7 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
             auto flags = STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID;
             MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, flags);
             ScriptImportedState sis(&tsc, txref, unnecessaryState, spentCoins, i);
-            if (!VerifyScript(txin.scriptSig, prevPubKey, flags, maxScriptOps.Value(), sis, &serror))
+            if (!VerifyScript(txin.scriptSig, prevPubKey, flags, sis, &serror))
             {
                 TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
             }
@@ -1437,8 +1437,7 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
             ScriptError serror = SCRIPT_ERR_OK;
             MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, STANDARD_SCRIPT_VERIFY_FLAGS);
             ScriptImportedState sis(&tsc, txref, unnecessaryState, spentCoins, i);
-            if (!VerifyScript(
-                    txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, maxScriptOps.Value(), sis, &serror))
+            if (!VerifyScript(txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, sis, &serror))
             {
                 TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
             }

@@ -67,6 +67,7 @@ bool VerifyTemplate(const CScript &templat,
 
     // Step 2, evaluate the constraint script
     ScriptMachine sm = ssm;  // Keep the operation counts
+    sm.maxScriptSize = MAX_SCRIPT_TEMPLATE_SIZE;
     sm.ClearStack();
     // Allowing the constraint script to look at (but not modify!!) the satisfier stack may have value but its use
     // is unclear at this time.  So right now the constraint script is limited to push-only opcodes, and therefore

@@ -91,14 +91,13 @@ class CScriptCheck
 protected:
     ValidationResourceTracker *resourceTracker;
     CScript scriptPubKey;
-    unsigned int maxOps;
     bool cacheStore;
     ScriptError error;
     CachingTransactionSignatureChecker checker;
     ScriptImportedState sis;
 
 public:
-    CScriptCheck() : resourceTracker(nullptr), maxOps(0xffffffff), cacheStore(false), error(SCRIPT_ERR_UNKNOWN_ERROR) {}
+    CScriptCheck() : resourceTracker(nullptr), cacheStore(false), error(SCRIPT_ERR_UNKNOWN_ERROR) {}
 
     // This constructor is for tests that do not use any introspection opcodes.
     CScriptCheck(ValidationResourceTracker *resourceTrackerIn,
@@ -108,9 +107,8 @@ public:
         const std::vector<CTxOut> &coins,
         unsigned int inputIdx,
         unsigned int nFlagsIn,
-        unsigned int maxOpsIn,
         bool cacheIn)
-        : resourceTracker(resourceTrackerIn), scriptPubKey(scriptPubKeyIn), maxOps(maxOpsIn), cacheStore(cacheIn),
+        : resourceTracker(resourceTrackerIn), scriptPubKey(scriptPubKeyIn), cacheStore(cacheIn),
           error(SCRIPT_ERR_UNKNOWN_ERROR), checker(&txIn, inputIdx, txIn.vin[inputIdx].amount, nFlagsIn, cacheStore),
           sis(&checker, MakeTransactionRef(txIn), CValidationState(), coins, inputIdx)
     {
@@ -125,9 +123,8 @@ public:
         const CValidationState &validationData,
         unsigned int inputIdx,
         unsigned int nFlagsIn,
-        unsigned int maxOpsIn,
         bool cacheIn)
-        : resourceTracker(resourceTrackerIn), scriptPubKey(scriptPubKeyIn), maxOps(maxOpsIn), cacheStore(cacheIn),
+        : resourceTracker(resourceTrackerIn), scriptPubKey(scriptPubKeyIn), cacheStore(cacheIn),
           error(SCRIPT_ERR_UNKNOWN_ERROR),
           checker(&(*txIn), inputIdx, txIn->vin[inputIdx].amount, nFlagsIn, cacheStore),
           sis(&checker, txIn, validationData, coins, inputIdx)
@@ -141,7 +138,6 @@ public:
     {
         std::swap(resourceTracker, check.resourceTracker);
         scriptPubKey.swap(check.scriptPubKey);
-        std::swap(maxOps, check.maxOps);
         std::swap(cacheStore, check.cacheStore);
         std::swap(error, check.error);
         std::swap(checker, check.checker);

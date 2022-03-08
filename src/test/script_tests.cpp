@@ -282,18 +282,18 @@ void DoTest(const CScript &scriptPubKey,
     CMutableTransaction tx2 = tx;
     MutableTransactionSignatureChecker tsc(&tx, 0, txCredit.vout[0].nValue, flags);
     ScriptImportedState sis(&tsc, MakeTransactionRef(tx), CValidationState(), {txCredit.vout[0]}, 0);
-    bool result = VerifyScript(scriptSig, scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
+    bool result = VerifyScript(scriptSig, scriptPubKey, flags, sis, &err);
     BOOST_CHECK_MESSAGE(result == expect, message);
     BOOST_CHECK_MESSAGE(err == scriptError, std::string(FormatScriptError(err)) + " where " +
                                                 std::string(FormatScriptError((ScriptError_t)scriptError)) +
                                                 " expected: " + message);
     if (result != expect)
     {
-        result = VerifyScript(scriptSig, scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
+        result = VerifyScript(scriptSig, scriptPubKey, flags, sis, &err);
     }
     if (err != scriptError)
     {
-        result = VerifyScript(scriptSig, scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
+        result = VerifyScript(scriptSig, scriptPubKey, flags, sis, &err);
     }
 
     // Verify that removing flags from a passing test or adding flags to a
@@ -312,7 +312,7 @@ void DoTest(const CScript &scriptPubKey,
             combined_flags |= SCRIPT_VERIFY_P2SH;
         }
 
-        result = VerifyScript(scriptSig, scriptPubKey, combined_flags, MAX_OPS_PER_SCRIPT,
+        result = VerifyScript(scriptSig, scriptPubKey, combined_flags,
             ScriptImportedStateSig(&tx, 0, txCredit.vout[0].nValue, combined_flags), &err);
         BOOST_CHECK_MESSAGE(
             result == expect, message + strprintf(" (with %s flags %08x) error %s", expect ? "removed" : "added",
@@ -324,9 +324,8 @@ void DoTest(const CScript &scriptPubKey,
     stream << tx2;
     if (nValue == 0)
     {
-        BOOST_CHECK_MESSAGE(
-            bitcoinconsensus_verify_script(begin_ptr(scriptPubKey), scriptPubKey.size(),
-                (const unsigned char *)&stream[0], stream.size(), 0, flags, MAX_OPS_PER_SCRIPT, nullptr) == expect,
+        BOOST_CHECK_MESSAGE(bitcoinconsensus_verify_script(begin_ptr(scriptPubKey), scriptPubKey.size(),
+                                (const unsigned char *)&stream[0], stream.size(), 0, flags, nullptr) == expect,
             message);
     }
 #endif
@@ -1754,22 +1753,22 @@ BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG12)
     CMutableTransaction txTo12 = BuildSpendingTransaction(CScript(), txFrom12);
 
     CScript goodsig1 = sign_multisig(scriptPubKey12, key1, CTransaction(txTo12), 1);
-    BOOST_CHECK(VerifyScript(goodsig1, scriptPubKey12, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
+    BOOST_CHECK(VerifyScript(
+        goodsig1, scriptPubKey12, flags, ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
     txTo12.vout[0].nValue = 2;
-    BOOST_CHECK(!VerifyScript(goodsig1, scriptPubKey12, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        goodsig1, scriptPubKey12, flags, ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 
     CScript goodsig2 = sign_multisig(scriptPubKey12, key2, txTo12, 2);
-    BOOST_CHECK(VerifyScript(goodsig2, scriptPubKey12, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
+    BOOST_CHECK(VerifyScript(
+        goodsig2, scriptPubKey12, flags, ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
 
     CScript badsig1 = sign_multisig(scriptPubKey12, key3, txTo12, 1);
-    BOOST_CHECK(!VerifyScript(badsig1, scriptPubKey12, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig1, scriptPubKey12, flags, ScriptImportedStateSig(&txTo12, 0, txFrom12.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 }
 
@@ -1793,76 +1792,76 @@ BOOST_AUTO_TEST_CASE(script_CHECKMULTISIG23)
     keys.push_back(key1);
     keys.push_back(key2);
     CScript goodsig1 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b011);
-    BOOST_CHECK(VerifyScript(goodsig1, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(VerifyScript(
+        goodsig1, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
 
     keys.clear();
     keys.push_back(key1);
     keys.push_back(key3);
     CScript goodsig2 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b101);
-    BOOST_CHECK(VerifyScript(goodsig2, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(VerifyScript(
+        goodsig2, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
 
     keys.clear();
     keys.push_back(key2);
     keys.push_back(key3);
     CScript goodsig3 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b110);
-    BOOST_CHECK(VerifyScript(goodsig3, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(VerifyScript(
+        goodsig3, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
 
     keys.clear();
     keys.push_back(key2);
     keys.push_back(key2); // Can't re-use sig
     CScript badsig1 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b011);
-    BOOST_CHECK(!VerifyScript(badsig1, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig1, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 
     keys.clear();
     keys.push_back(key2);
     keys.push_back(key1); // sigs must be in correct order
     CScript badsig2 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b011);
-    BOOST_CHECK(!VerifyScript(badsig2, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig2, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 
     keys.clear();
     keys.push_back(key3);
     keys.push_back(key2); // sigs must be in correct order
     CScript badsig3 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b110);
-    BOOST_CHECK(!VerifyScript(badsig3, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig3, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 
     keys.clear();
     keys.push_back(key4);
     keys.push_back(key2); // sigs must match pubkeys
     CScript badsig4 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b110);
-    BOOST_CHECK(!VerifyScript(badsig4, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig4, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 
     keys.clear();
     keys.push_back(key1);
     keys.push_back(key4); // sigs must match pubkeys
     CScript badsig5 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b101);
-    BOOST_CHECK(!VerifyScript(badsig5, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig5, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_CHECKMULTISIGVERIFY, ScriptErrorString(err));
 
     // Soft fail
     CScript badsig6 = CScript() << OP_0 << OP_0 << OP_0;
-    BOOST_CHECK(!VerifyScript(badsig6, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig6, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_EVAL_FALSE, ScriptErrorString(err));
 
     keys.clear(); // Must have signatures
     CScript badsig7 = sign_multisig(scriptPubKey23, keys, txTo23, 0, 0b110);
-    BOOST_CHECK(!VerifyScript(badsig7, scriptPubKey23, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
+    BOOST_CHECK(!VerifyScript(
+        badsig7, scriptPubKey23, flags, ScriptImportedStateSig(&txTo23, 0, txFrom23.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_INVALID_STACK_OPERATION, ScriptErrorString(err));
 }
 
@@ -1979,8 +1978,8 @@ BOOST_AUTO_TEST_CASE(script_combineSigs)
     BOOST_CHECK(combined == partial1a);
     combined =
         CombineSignatures(scriptPubKey, MutableTransactionSignatureChecker(&txTo, 0, amount), partial1a, partial2a);
-    BOOST_CHECK(VerifyScript(complete12, scriptPubKey, flags, MAX_OPS_PER_SCRIPT,
-        ScriptImportedStateSig(&txTo, 0, txFrom.vout[0].nValue, flags), &err));
+    BOOST_CHECK(VerifyScript(
+        complete12, scriptPubKey, flags, ScriptImportedStateSig(&txTo, 0, txFrom.vout[0].nValue, flags), &err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
     BOOST_CHECK(combined == complete12);
     combined =
@@ -2012,8 +2011,7 @@ BOOST_AUTO_TEST_CASE(script_standard_push)
         CScript script;
         script << i;
         BOOST_CHECK_MESSAGE(script.IsPushOnly(), "Number " << i << " is not pure push.");
-        BOOST_CHECK_MESSAGE(
-            VerifyScript(script, CScript() << OP_1, SCRIPT_VERIFY_MINIMALDATA, MAX_OPS_PER_SCRIPT, sis, &err),
+        BOOST_CHECK_MESSAGE(VerifyScript(script, CScript() << OP_1, SCRIPT_VERIFY_MINIMALDATA, sis, &err),
             "Number " << i << " push is not minimal data.");
         BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
     }
@@ -2024,8 +2022,7 @@ BOOST_AUTO_TEST_CASE(script_standard_push)
         CScript script;
         script << data;
         BOOST_CHECK_MESSAGE(script.IsPushOnly(), "Length " << i << " is not pure push.");
-        BOOST_CHECK_MESSAGE(
-            VerifyScript(script, CScript() << OP_1, SCRIPT_VERIFY_MINIMALDATA, MAX_OPS_PER_SCRIPT, sis, &err),
+        BOOST_CHECK_MESSAGE(VerifyScript(script, CScript() << OP_1, SCRIPT_VERIFY_MINIMALDATA, sis, &err),
             "Length " << i << " push is not minimal data.");
         BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
     }
