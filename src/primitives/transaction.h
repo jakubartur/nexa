@@ -117,7 +117,13 @@ public:
     {
         READWRITE(prevout);
         if (!(s.GetType() & SER_GETIDEM))
+        {
             READWRITE(*(CScriptBase *)(&scriptSig));
+            if (ser_action.ForRead())
+            {
+                scriptSig.type = ScriptType::PUSH_ONLY;
+            }
+        }
         READWRITE(nSequence);
         READWRITE(amount);
     }
@@ -143,14 +149,15 @@ public:
     uint8_t type; // Can also be used as versioning
     enum
     {
-        LEGACY = 0,
-        GENERAL = 1,
-
-        HASH_UNIQUE = 0, // UTXO index is H(Hidem(tx), idx)
-        HASH_ACCOUNT = 1 << 5,
+        SATOSCRIPT = 0,
+        TEMPLATE = 1,
     };
+
+    static ScriptType ScriptTypeOf(uint8_t ctxoutType) { return ScriptType(ctxoutType & 1); }
+
     // version 0 is legacy mode: behave like BCH
-    // version 1 is a general form: CScript is type/value data: Group, constraintScriptHash, argsHash, indexed data...
+    // version 1 is a general form: CScript is type/value data: Group, [group amount if Group size > 0],
+    // constraintScriptHash, argsHash, indexed data... push OP_0 for empty field (for example no group or no args).
     CAmount nValue;
     CScript scriptPubKey;
 
@@ -165,6 +172,10 @@ public:
         READWRITE(type);
         READWRITE(nValue);
         READWRITE(*(CScriptBase *)(&scriptPubKey));
+        if (ser_action.ForRead())
+        {
+            scriptPubKey.type = ScriptTypeOf(type);
+        }
     }
 
     void SetNull()
@@ -172,6 +183,15 @@ public:
         type = 0;
         nValue = -1;
         scriptPubKey.clear();
+    }
+
+    void SetScript(const CScript &script)
+    {
+        scriptPubKey = script;
+        if (script.type == ScriptType::TEMPLATE)
+            type = CTxOut::TEMPLATE;
+        if (script.type == ScriptType::SATOSCRIPT)
+            type = CTxOut::SATOSCRIPT;
     }
 
     bool IsNull() const { return (nValue == -1); }

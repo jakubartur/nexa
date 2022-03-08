@@ -1151,6 +1151,7 @@ bool CheckInputs(const CTransactionRef &tx,
                 if (debugger)
                 {
                     debugger->AddInputCheckMetadata("outpoint", prevout.ToString());
+                    debugger->AddInputCheckMetadata("constraintType", std::to_string((uint8_t)scriptPubKey.type));
                     debugger->AddInputCheckMetadata("constraint", HexStr(scriptPubKey.begin(), scriptPubKey.end()));
                     debugger->AddInputCheckMetadata("satisfier", HexStr(scriptSig.begin(), scriptSig.end()));
                     debugger->AddInputCheckMetadata("amount", std::to_string(amount));

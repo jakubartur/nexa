@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
     // Fill out the maximum vouts
     for (unsigned int i = 0; i < MAX_TX_NUM_VOUT; i++)
     {
-        tx.vout.push_back(CTxOut(CTxOut::LEGACY, 1, simpleConstraint));
+        tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, simpleConstraint));
     }
     // tx should be ok
     CValidationState state;
@@ -173,7 +173,7 @@ BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
     state = CValidationState();
 
     // Check that 1 more vout causes a tx failure
-    tx.vout.push_back(CTxOut(CTxOut::LEGACY, 1, simpleConstraint));
+    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, simpleConstraint));
     txref = MakeTransactionRef(tx);
     BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "max vouts exceeded");
     BOOST_CHECK(!state.IsValid());
@@ -192,7 +192,7 @@ BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
     BOOST_CHECK(state.IsValid());
 
     // Check that 1 more vout causes a tx failure
-    tx.vout.push_back(CTxOut(CTxOut::LEGACY, 1, simpleConstraint));
+    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, simpleConstraint));
     txref = MakeTransactionRef(tx);
     BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "max vouts exceeded");
     BOOST_CHECK(!state.IsValid());

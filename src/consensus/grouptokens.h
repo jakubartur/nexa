@@ -186,7 +186,7 @@ public:
     uint64_t numOutputs = 0;
     uint64_t numInputs = 0;
     // If covenant restricted, the hash of the first grouped & templated input's prevout is this group's covenant.
-    uint256 covenant;
+    VchType covenant;
 };
 
 
@@ -358,12 +358,19 @@ CAmount DeserializeAmount(opcodetype opcodeQty, std::vector<unsigned char> &vec)
 bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pc = nullptr, CGroupTokenInfo *grp = nullptr);
 
 /** Get the script's template hash if this script is a template
+    @param[in] scriptType The script's type.  This is the TxOut "version" field.
     @param[in] script The script
-    @param[out] error Whether the script is a template, is not a template, or is an invalid template.
-    @param[out] pcout Points to the script location after the script template.
-    @return The script template's hash only if error is ScriptTemplateError::OK
+    @param[out] groupInfo
+    @param[out] contractHash
+    @param[out] argsHash
+
+    @return error Whether the script is a template, is not a template, or is an invalid template.
  */
-uint256 GetScriptTemplate(const CScript &script, ScriptTemplateError &error, CScript::const_iterator *pcout = nullptr);
+ScriptTemplateError GetScriptTemplate(const CScript &script,
+    CGroupTokenInfo *groupInfo,
+    std::vector<unsigned char> *contractHash,
+    std::vector<unsigned char> *argsHash = nullptr,
+    CScript::const_iterator *pcout = nullptr);
 
 // Convenience function to just extract the group from a script
 inline CGroupTokenID GetGroupToken(const CScript &script) { return CGroupTokenInfo(script).associatedGroup; }

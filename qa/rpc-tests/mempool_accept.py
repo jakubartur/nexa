@@ -3,7 +3,7 @@
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 import test_framework.loginit
-# This test exercises the mempool acceptance data path.
+# This test exercises the txpool acceptance data path.
 
 from threading import Thread
 import time
@@ -214,11 +214,11 @@ class MyTest (BitcoinTestFramework):
         return (total, outputs)
 
     def conflictTest(self, dests0, dests1, wallet, numNodes=2):
-        """Tests issuing a bunch of conflicting transactions.  Expects that you give it a wallet with lots of free UTXO, and nothing in the mempool
+        """Tests issuing a bunch of conflicting transactions.  Expects that you give it a wallet with lots of free UTXO, and nothing in the txpool
         """
         logging.info("conflict test")
         self.nodes[0].log("mempool", "on")
-        assert self.nodes[0].getmempoolinfo()["size"] == 0  # Expects a clean mempool
+        assert self.nodes[0].gettxpoolinfo()["size"] == 0  # Expects a clean txpool
         if 1:  # test many conflicts
             NTX = 50
             i = 0
@@ -234,13 +234,13 @@ class MyTest (BitcoinTestFramework):
                     i += 1
 
             for n in self.nodes:
-                waitFor(30, lambda: True if n.getmempoolinfo()["size"] >= NTX - 5 else None)
+                waitFor(30, lambda: True if n.gettxpoolinfo()["size"] >= NTX - 5 else None)
             # we have to allow < because bloom filter false positives in the node's
             # sending logic may cause it to not get an INV
             time.sleep(1)
             for n in self.nodes:
-                assert(n.getmempoolinfo()["size"] <= NTX)  # if its > then a doublespend got through
-            self.commitMempool()  # clear out this test
+                assert(n.gettxpoolinfo()["size"] <= NTX)  # if its > then a doublespend got through
+            self.commitTxpool()  # clear out this test
 
         if 1:  # test 2 conflicting transactions
             NTX = 25
@@ -253,7 +253,7 @@ class MyTest (BitcoinTestFramework):
             amt = createTx(dests0, wallet[0:NTX], 1, NTX, 2, wallet3, gtx3)
 
             # Send two double spending trnasactions using a subprocess. This checks that sendrawtransaction
-            # does not allow double spends into the mempool when multiple threads are sending transactions.
+            # does not allow double spends into the txpool when multiple threads are sending transactions.
             conflict_count = 0;
             rpc_u, rpc_p = rpc_auth_pair(0)
             gtx = zip(gtx2, gtx3)
@@ -275,10 +275,10 @@ class MyTest (BitcoinTestFramework):
                     conflict_count += 1;
                 if (stderr_data2.find("txn-mempool-conflict") >= 0):
                     conflict_count += 1;
-            waitFor(1, lambda: True if conflict_count == NTX else logging.info("num conflicts found:" + str(conflict_count) + ", node0 mempool size:" + str(self.nodes[0].getmempoolinfo()["size"]) + ", node1 mempool size:" + str(self.nodes[1].getmempoolinfo()["size"])))
+            waitFor(1, lambda: True if conflict_count == NTX else logging.info("num conflicts found:" + str(conflict_count) + ", node0 txpool size:" + str(self.nodes[0].gettxpoolinfo()["size"]) + ", node1 txpool size:" + str(self.nodes[1].gettxpoolinfo()["size"])))
 
-            waitFor(30, lambda: True if self.nodes[0].getmempoolinfo()["size"] == NTX else None)
-            waitFor(30, lambda: True if self.nodes[1].getmempoolinfo()["size"] == NTX else None)
+            waitFor(30, lambda: True if self.nodes[0].gettxpoolinfo()["size"] == NTX else None)
+            waitFor(30, lambda: True if self.nodes[1].gettxpoolinfo()["size"] == NTX else None)
 
             # forget about the tx I used above
             wallet = wallet[NTX:]
@@ -298,7 +298,7 @@ class MyTest (BitcoinTestFramework):
             gtx = zip(gtx2, gtx3)
 
             count = 0
-            mempools = [x.getmempoolinfo() for x in self.nodes]
+            mempools = [x.gettxpoolinfo() for x in self.nodes]
             for g in gtx:
                 count += 1
                 self.nodes[count % numNodes].enqueuerawtransaction(g[0].toHex())
@@ -312,17 +312,17 @@ class MyTest (BitcoinTestFramework):
             # completed because out of testing the process of accepting tx is never
             # complete so sleep a little while first before checking.
             time.sleep(2) #wait for all txns to propagate
-            waitFor(30, lambda: True if self.nodes[0].getmempoolinfo()["size"] == NTX + NTX1 else None)
-            waitFor(30, lambda: True if self.nodes[1].getmempoolinfo()["size"] == NTX + NTX1 else None)
+            waitFor(30, lambda: True if self.nodes[0].gettxpoolinfo()["size"] == NTX + NTX1 else None)
+            waitFor(30, lambda: True if self.nodes[1].gettxpoolinfo()["size"] == NTX + NTX1 else None)
 
             # forget about the tx I used
             wallet = wallet[NTX:]
             logging.info("conflict test done")
 
-    def commitMempool(self):
-        """Commit all the tx in mempools on all nodes into blocks"""
+    def commitTxpool(self):
+        """Commit all the tx in txpools on all nodes into blocks"""
         for n in self.nodes:
-            while n.getmempoolinfo()["size"] != 0:
+            while n.gettxpoolinfo()["size"] != 0:
                 blkhash = n.generate(1)[0]
                 blk = n.getblock(blkhash)
                 blk['tx'] = len(blk['txid'])
@@ -333,7 +333,7 @@ class MyTest (BitcoinTestFramework):
 
     def removeTxPersistFiles(self):
         for d in ["node%d" % x for x in range(1,5)]:
-            fname = self.options.tmpdir + os.sep + d + os.sep + "regtest" + os.sep + "mempool.dat"
+            fname = self.options.tmpdir + os.sep + d + os.sep + "regtest" + os.sep + "txpool.dat"
             if os.path.exists(fname):
                 os.remove(fname)
             fname = self.options.tmpdir + os.sep + d + os.sep + "regtest" + os.sep + "orphanpool.dat"
@@ -355,16 +355,16 @@ class MyTest (BitcoinTestFramework):
         NTX = 51
         (amt, wallet) = self.threadedCreateTx(dests1, None, 0, NTX)
         assert(amt == NTX)
-        waitFor(10, lambda: True if self.nodes[0].getmempoolinfo()["size"] >= NTX else None)
-        mp = waitFor(30, lambda: [x.getmempoolinfo() for x in self.nodes] if amt - self.nodes[1].getmempoolinfo()
-                     ["size"] < 5 else None, lambda: "timeout mempool is: " + str([x.getmempoolinfo() for x in self.nodes]))
+        waitFor(10, lambda: True if self.nodes[0].gettxpoolinfo()["size"] >= NTX else None)
+        mp = waitFor(30, lambda: [x.gettxpoolinfo() for x in self.nodes] if amt - self.nodes[1].gettxpoolinfo()
+                     ["size"] < 5 else None, lambda: "timeout txpool is: " + str([x.gettxpoolinfo() for x in self.nodes]))
         logging.info(mp)
 
         w0 = wallet[0:500]
         wallet = wallet[500:]
-        self.commitMempool()
+        self.commitTxpool()
         self.conflictTest(dests0, dests1, w0)
-        self.commitMempool()
+        self.commitTxpool()
 
         # Create 500 transaction and ensure that they get synced
         NTX = 500 if self.bigTest else 100
@@ -373,25 +373,25 @@ class MyTest (BitcoinTestFramework):
         end = time.monotonic()
         logging.info("created %d tx in %s seconds. On node 0.  Speed %f tx/sec" %
                      (amt, end - start, float(amt) / (end - start)))
-        mp = waitFor(20, lambda: [x.getmempoolinfo() for x in self.nodes] if amt - self.nodes[1].getmempoolinfo()
-                     ["size"] < 10 else None, lambda: "timeout mempool is: " + str([x.getmempoolinfo() for x in self.nodes]))
+        mp = waitFor(20, lambda: [x.gettxpoolinfo() for x in self.nodes] if amt - self.nodes[1].gettxpoolinfo()
+                     ["size"] < 10 else None, lambda: "timeout txpool is: " + str([x.gettxpoolinfo() for x in self.nodes]))
         logging.info(mp)
 
         # Create 5000 transactions and ensure that they get synced
         if self.bigTest:
-            self.commitMempool()
+            self.commitTxpool()
             NTX = 5000
             start = time.monotonic()
             (amt, wallet) = self.threadedCreateTx(dests1, wallet, 0, NTX)
             end = time.monotonic()
             logging.info("created %d tx in %s seconds. On node 0.  Speed %f tx/sec" %
                      (amt, end - start, float(amt) / (end - start)))
-            mp = waitFor(300, lambda: [x.getmempoolinfo() for x in self.nodes] if amt - self.nodes[1].getmempoolinfo()
-                     ["size"] < 20 else None, lambda: "timeout mempool is: " + str([x.getmempoolinfo() for x in self.nodes]))
+            mp = waitFor(300, lambda: [x.gettxpoolinfo() for x in self.nodes] if amt - self.nodes[1].gettxpoolinfo()
+                     ["size"] < 20 else None, lambda: "timeout txpool is: " + str([x.gettxpoolinfo() for x in self.nodes]))
             logging.info(mp)
 
         if self.bigTest:
-            self.commitMempool()
+            self.commitTxpool()
             NTX = 10000
             start = time.monotonic()
             (amt, wallet) = self.threadedCreateTx(dests0, wallet, 1, NTX)
@@ -399,15 +399,15 @@ class MyTest (BitcoinTestFramework):
             logging.info("created %d tx in %s seconds. On node 0.  Speed %f tx/sec" %
                          (amt, end - start, float(amt) / (end - start)))
             start = time.monotonic()
-            mp = waitFor(300, lambda: [x.getmempoolinfo() for x in self.nodes] if amt - self.nodes[0].getmempoolinfo()[
-                         "size"] < 50 else None, lambda: "timeout mempool is: " + str([x.getmempoolinfo() for x in self.nodes]))
+            mp = waitFor(300, lambda: [x.gettxpoolinfo() for x in self.nodes] if amt - self.nodes[0].gettxpoolinfo()[
+                         "size"] < 50 else None, lambda: "timeout txpool is: " + str([x.gettxpoolinfo() for x in self.nodes]))
             end = time.monotonic()
             logging.info("synced %d tx in %s seconds.  Speed %f tx/sec" %
                          (amt, end - start, float(amt) / (end - start)))
             logging.info(mp)
 
-        # Now test pushing all of the mempool tx to other nodes
-        NTX = self.nodes[0].getmempoolinfo()["size"]  # find how many I am pushing
+        # Now test pushing all of the txpool tx to other nodes
+        NTX = self.nodes[0].gettxpoolinfo()["size"]  # find how many I am pushing
 
         # Start up node 3
         self.nodes.append(start_node(2, self.options.tmpdir))
@@ -418,8 +418,8 @@ class MyTest (BitcoinTestFramework):
         destName = "127.0.0.1:" + str(p2p_port(2))
         start = time.monotonic()
         self.nodes[0].pushtx(destName)
-        mp = waitFor(120, lambda: [x.getmempoolinfo() for x in self.nodes]
-                     if NTX - self.nodes[2].getmempoolinfo()["size"] < 30 else None)
+        mp = waitFor(120, lambda: [x.gettxpoolinfo() for x in self.nodes]
+                     if NTX - self.nodes[2].gettxpoolinfo()["size"] < 30 else None)
         end = time.monotonic()
         logging.info("synced %d tx in %s seconds.  Speed %f tx/sec" % (NTX, end - start, float(NTX) / (end - start)))
 
@@ -428,9 +428,9 @@ class MyTest (BitcoinTestFramework):
         for n in self.nodes:
             result = n.getstatlist()
             # logging.info(result)
-            result = n.getstat("memPool/txAdded", "sec10", 100)
+            result = n.getstat("txpool/txAdded", "sec10", 100)
             logging.info(result)
-            result = n.getstat("memPool/size", "min5")
+            result = n.getstat("txpool/size", "min5")
             logging.info(result)
             result = n.getstat("net/recv/msg/inv", "sec10", 20)
             logging.info(result)
@@ -455,9 +455,9 @@ class MyTest (BitcoinTestFramework):
             self.nodes[0].pushtx(destName)
             self.nodes[1].pushtx(destName)
             self.nodes[2].pushtx(destName)
-            # Large mempool sync if running in debug mode (with periodic mempool checking) will be very slow
-            mp = waitFor(300, lambda: [x.getmempoolinfo() for x in self.nodes]
-                         if NTX - self.nodes[3].getmempoolinfo()["size"] < 30 else logging.info("Mempool sizes: " + str([x.getmempoolinfo()["size"] for x in self.nodes])))
+            # Large txpool sync if running in debug mode (with periodic txpool checking) will be very slow
+            mp = waitFor(300, lambda: [x.gettxpoolinfo() for x in self.nodes]
+                         if NTX - self.nodes[3].gettxpoolinfo()["size"] < 30 else logging.info("Txpool sizes: " + str([x.gettxpoolinfo()["size"] for x in self.nodes])))
             end = time.monotonic()
             logging.info("synced %d tx in %s seconds.  Speed %f tx/sec" % (NTX, end - start, float(NTX) / (end - start)))
 
@@ -465,7 +465,7 @@ class MyTest (BitcoinTestFramework):
         # fees and see if they propagated correctly.
         self.nodes[0].generate(1) # clean up
         self.sync_blocks()
-        logging.info("starting mempool limiting tests")
+        logging.info("starting txpool limiting tests")
         stop_nodes(self.nodes)
         wait_bitcoinds()
         self.removeTxPersistFiles()
@@ -476,75 +476,75 @@ class MyTest (BitcoinTestFramework):
         self.sync_blocks()
 
         txId  = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), "100")
-        waitFor(20, lambda: txId in self.nodes[0].getrawmempool())
-        waitFor(20, lambda: txId in self.nodes[3].getrawmempool())
+        waitFor(20, lambda: txId in self.nodes[0].getrawtxpool())
+        waitFor(20, lambda: txId in self.nodes[3].getrawtxpool())
 
         try:
-            txObj1 = self.nodes[0].getmempoolentry(txId)
+            txObj1 = self.nodes[0].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
         try:
-            txObj2 = self.nodes[1].getmempoolentry(txId)
+            txObj2 = self.nodes[1].gettxpoolentry(txId)
             assert 0 # should have failed
         except JSONRPCException as e:
-            assert e.error["message"] == 'Transaction not in mempool'
+            assert e.error["message"] == 'Transaction not in txpool'
         try:
-            txObj3 = self.nodes[2].getmempoolentry(txId)
+            txObj3 = self.nodes[2].gettxpoolentry(txId)
             assert 0 # should have failed
         except JSONRPCException as e:
-            assert e.error["message"] == 'Transaction not in mempool'
+            assert e.error["message"] == 'Transaction not in txpool'
         try:
-            txObj4 = self.nodes[3].getmempoolentry(txId)
+            txObj4 = self.nodes[3].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
 
 
         txId  = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(), "100")
-        waitFor(20, lambda: txId in self.nodes[0].getrawmempool())
-        waitFor(20, lambda: txId in self.nodes[1].getrawmempool())
-        waitFor(20, lambda: txId in self.nodes[3].getrawmempool())
+        waitFor(20, lambda: txId in self.nodes[0].getrawtxpool())
+        waitFor(20, lambda: txId in self.nodes[1].getrawtxpool())
+        waitFor(20, lambda: txId in self.nodes[3].getrawtxpool())
 
         try:
-            txObj1 = self.nodes[0].getmempoolentry(txId)
+            txObj1 = self.nodes[0].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
         try:
-            txObj2 = self.nodes[1].getmempoolentry(txId)
+            txObj2 = self.nodes[1].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
         try:
-            txObj3 = self.nodes[2].getmempoolentry(txId)
+            txObj3 = self.nodes[2].gettxpoolentry(txId)
             assert 0 # should have failed
         except JSONRPCException as e:
-            assert e.error["message"] == 'Transaction not in mempool'
+            assert e.error["message"] == 'Transaction not in txpool'
         try:
-            txObj4 = self.nodes[3].getmempoolentry(txId)
+            txObj4 = self.nodes[3].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
 
         self.nodes[3].set("relay.minRelayTxFee=5000")
         txId  = self.nodes[2].sendtoaddress(self.nodes[0].getnewaddress(), "100")
-        waitFor(20, lambda: txId in self.nodes[0].getrawmempool())
-        waitFor(20, lambda: txId in self.nodes[1].getrawmempool())
-        waitFor(20, lambda: txId in self.nodes[2].getrawmempool())
+        waitFor(20, lambda: txId in self.nodes[0].getrawtxpool())
+        waitFor(20, lambda: txId in self.nodes[1].getrawtxpool())
+        waitFor(20, lambda: txId in self.nodes[2].getrawtxpool())
 
         try:
-            txObj1 = self.nodes[0].getmempoolentry(txId)
+            txObj1 = self.nodes[0].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
         try:
-            txObj2 = self.nodes[1].getmempoolentry(txId)
+            txObj2 = self.nodes[1].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
         try:
-            txObj3 = self.nodes[2].getmempoolentry(txId)
+            txObj3 = self.nodes[2].gettxpoolentry(txId)
         except JSONRPCException as e:
-            assert("txn failed to enter mempool: " + str(e.error["message"]))
+            assert("txn failed to enter txpool: " + str(e.error["message"]))
         try:
-            txObj4 = self.nodes[3].getmempoolentry(txId)
+            txObj4 = self.nodes[3].gettxpoolentry(txId)
             assert 0 # should have failed
         except JSONRPCException as e:
-            assert e.error["message"] == 'Transaction not in mempool'
+            assert e.error["message"] == 'Transaction not in txpool'
 
 
         # Stop and start 4 nodes with different relay.limitFreeRelay's.  Then send transactions with varying
@@ -555,43 +555,43 @@ class MyTest (BitcoinTestFramework):
 
         self.nodes = start_nodes(4, self.options.tmpdir, [["-relay.minRelayTxFee=0", "-relay.limitFreeRelay=0"], ["-relay.minRelayTxFee=1000", "-relay.limitFreeRelay=1"], ["-relay.minRelayTxFee=2000", "-relay.limitFreeRelay=1"], ["-relay.minRelayTxFee=3000", "-relay.limitFreeRelay=2"]])
 
-        # clear all mempools by mining a block
+        # clear all txpools by mining a block
         interconnect_nodes(self.nodes)
-        self.commitMempool()
+        self.commitTxpool()
         self.sync_blocks()
 
         addr = self.nodes[0].getnewaddress()
         for i in range(100):
             self.nodes[0].sendtoaddress(addr, "100")
 
-        # check all mempools. Nodes 2 and 3 will have had free transactions rate limited with node 2 having
+        # check all txpools. Nodes 2 and 3 will have had free transactions rate limited with node 2 having
         # only a max of 10K bytes in the pool and node3 up to 20K bytes in the pool, where as, Nodes 1 and 2 will
-        # have allowed all transactions into their mempools.
-        waitFor(30, lambda: self.nodes[0].getmempoolinfo()["size"] == 100)
-        waitFor(30, lambda: self.nodes[0].getmempoolinfo()["bytes"] > 20000)
-        waitFor(30, lambda: self.nodes[1].getmempoolinfo()["size"] == 100)
-        waitFor(30, lambda: self.nodes[1].getmempoolinfo()["bytes"] > 20000)
-        waitFor(60, lambda: [logging.info("Node 2 mempool, expecting 10k: %s" % str(self.nodes[2].getmempoolinfo())), (self.nodes[2].getmempoolinfo()["bytes"] >= 9000) and (self.nodes[2].getmempoolinfo()["bytes"] <= 11000)][-1])
-        waitFor(30, lambda: [logging.info("Node 3 mempool, expecting 20k: %s" % str(self.nodes[3].getmempoolinfo())), (self.nodes[3].getmempoolinfo()["bytes"] >= 19000) and (self.nodes[3].getmempoolinfo()["bytes"] <= 21000)][-1])
+        # have allowed all transactions into their txpools.
+        waitFor(30, lambda: self.nodes[0].gettxpoolinfo()["size"] == 100)
+        waitFor(30, lambda: self.nodes[0].gettxpoolinfo()["bytes"] > 20000)
+        waitFor(30, lambda: self.nodes[1].gettxpoolinfo()["size"] == 100)
+        waitFor(30, lambda: self.nodes[1].gettxpoolinfo()["bytes"] > 20000)
+        waitFor(60, lambda: [logging.info("Node 2 txpool, expecting 10k: %s" % str(self.nodes[2].gettxpoolinfo())), (self.nodes[2].gettxpoolinfo()["bytes"] >= 9000) and (self.nodes[2].gettxpoolinfo()["bytes"] <= 11000)][-1])
+        waitFor(30, lambda: [logging.info("Node 3 txpool, expecting 20k: %s" % str(self.nodes[3].gettxpoolinfo())), (self.nodes[3].gettxpoolinfo()["bytes"] >= 19000) and (self.nodes[3].gettxpoolinfo()["bytes"] <= 21000)][-1])
 
-        if False: # TODO: test removed until wallet/mempool fee policy is worked out
-            # stop and start all nodes with mempool persist off and relay.limitFreeRelay off but increase the relay.minRelayTxFee to a high
+        if False: # TODO: test removed until wallet/txpool fee policy is worked out
+            # stop and start all nodes with txpool persist off and relay.limitFreeRelay off but increase the relay.minRelayTxFee to a high
             # value. This will test the forced reaccepting of wallet transactions even though free transactions are not accepted.
             # Only the node which had txns sent to its wallet should have its txns reaccepted.
             stop_nodes(self.nodes)
             wait_bitcoinds()
             self.nodes = start_nodes(4, self.options.tmpdir, [["-relay.minRelayTxFee=10000", "-relay.limitFreeRelay=0", "-cache.persistTxPool=0"], ["-relay.minRelayTxFee=1000", "-relay.limitFreeRelay=0", "-cache.persistTxPool=0"], ["-relay.minRelayTxFee=2000", "-relay.limitFreeRelay=0", "-cache.persistTxPool=0"], ["-relay.minRelayTxFee=3000", "-relay.limitFreeRelay=0", "-cache.persistTxPool=0"]])
             interconnect_nodes(self.nodes)
-            waitFor(30, lambda: self.nodes[0].getmempoolinfo()["size"] == 100)
-            waitFor(30, lambda: self.nodes[0].getmempoolinfo()["bytes"] > 20000)
-            waitFor(30, lambda: self.nodes[1].getmempoolinfo()["size"] == 0)
-            waitFor(30, lambda: self.nodes[1].getmempoolinfo()["bytes"] == 0)
-            waitFor(30, lambda: self.nodes[2].getmempoolinfo()["size"] == 0)
-            waitFor(30, lambda: self.nodes[2].getmempoolinfo()["bytes"] == 0)
-            waitFor(30, lambda: self.nodes[2].getmempoolinfo()["bytes"] == 0)
-            waitFor(30, lambda: self.nodes[3].getmempoolinfo()["size"] == 0)
-            waitFor(30, lambda: self.nodes[3].getmempoolinfo()["bytes"] == 0)
-            waitFor(30, lambda: self.nodes[3].getmempoolinfo()["bytes"] == 0)
+            waitFor(30, lambda: self.nodes[0].gettxpoolinfo()["size"] == 100)
+            waitFor(30, lambda: self.nodes[0].gettxpoolinfo()["bytes"] > 20000)
+            waitFor(30, lambda: self.nodes[1].gettxpoolinfo()["size"] == 0)
+            waitFor(30, lambda: self.nodes[1].gettxpoolinfo()["bytes"] == 0)
+            waitFor(30, lambda: self.nodes[2].gettxpoolinfo()["size"] == 0)
+            waitFor(30, lambda: self.nodes[2].gettxpoolinfo()["bytes"] == 0)
+            waitFor(30, lambda: self.nodes[2].gettxpoolinfo()["bytes"] == 0)
+            waitFor(30, lambda: self.nodes[3].gettxpoolinfo()["size"] == 0)
+            waitFor(30, lambda: self.nodes[3].gettxpoolinfo()["bytes"] == 0)
+            waitFor(30, lambda: self.nodes[3].gettxpoolinfo()["bytes"] == 0)
 
 
 
@@ -644,6 +644,7 @@ def Test():
     # Out-of-source builds are awkward to start because they need an additional flag
     # automatically add this flag during testing for common out-of-source locations
     binpath = findBitcoind()
+    binpath = "/fast/bitcoin/nextchain/release/src"
     flags.append("--srcdir=%s" % binpath)
 
     # load the cashlib.so from our build directory

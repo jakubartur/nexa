@@ -29,7 +29,7 @@ CMutableTransaction CreateRandomTx()
     tx.vin[0].scriptSig << OP_1;
     tx.vout.resize(1);
     tx.vout[0].nValue = 1 * CENT;
-    tx.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
+    tx.vout[0].SetScript(GetScriptForDestination(key.GetPubKey().GetID()));
     return tx;
 }
 
@@ -58,7 +58,7 @@ CTransaction tx1x1(const COutPoint &utxo, const CScript &txo, CAmount amt)
     tx.vin[0].prevout = utxo;
     tx.vin[0].amount = amt;
     tx.vout.resize(1);
-    tx.vout[0].scriptPubKey = txo;
+    tx.vout[0].SetScript(txo);
     tx.vout[0].nValue = amt;
     tx.vin[0].scriptSig = CScript(); // you must sign if you want it signed
     tx.nLockTime = 0;
@@ -73,9 +73,9 @@ CTransaction tx1x2(const COutPoint &utxo, const CScript &txo, CAmount amt, const
     tx.vin[0].amount = amt + amt2;
     tx.vin[0].scriptSig = CScript(); // you must sign if you want it signed
     tx.vout.resize(2);
-    tx.vout[0].scriptPubKey = txo;
+    tx.vout[0].SetScript(txo);
     tx.vout[0].nValue = amt;
-    tx.vout[1].scriptPubKey = txo2;
+    tx.vout[1].SetScript(txo2);
     tx.vout[1].nValue = amt2;
     tx.nLockTime = 0;
 
@@ -95,11 +95,11 @@ CTransaction tx1x3(const COutPoint &utxo,
     tx.vin[0].scriptSig = CScript(); // you must sign if you want it signed
     tx.vin[0].amount = amt + amt2 + amt3;
     tx.vout.resize(3);
-    tx.vout[0].scriptPubKey = txo;
+    tx.vout[0].SetScript(txo);
     tx.vout[0].nValue = amt;
-    tx.vout[1].scriptPubKey = txo2;
+    tx.vout[1].SetScript(txo2);
     tx.vout[1].nValue = amt2;
-    tx.vout[2].scriptPubKey = txo3;
+    tx.vout[2].SetScript(txo3);
     tx.vout[2].nValue = amt3;
     tx.nLockTime = 0;
     return tx;
@@ -118,7 +118,7 @@ CTransaction tx1x1(const COutPoint &utxo,
     tx.vin[0].prevout = utxo;
     tx.vin[0].amount = amt;
     tx.vout.resize(1);
-    tx.vout[0].scriptPubKey = txo;
+    tx.vout[0].SetScript(txo);
     tx.vout[0].nValue = amt;
     tx.vin[0].scriptSig = CScript();
     tx.nLockTime = 0;
@@ -151,7 +151,7 @@ CTransaction tx1x1(const CTransaction &prevtx,
     tx.vin[0].prevout = COutPoint(prevtx.GetIdem(), prevout);
     tx.vin[0].amount = amt;
     tx.vout.resize(1);
-    tx.vout[0].scriptPubKey = txo;
+    tx.vout[0].SetScript(txo);
     tx.vout[0].nValue = amt;
     tx.vin[0].scriptSig = CScript();
     tx.nLockTime = 0;
@@ -185,7 +185,7 @@ CTransaction tx1x1_p2sh_of_p2pkh(const CTransaction &prevtx,
     tx.vin[0].prevout = COutPoint(prevtx.GetIdem(), prevout);
     tx.vin[0].amount = amt;
     tx.vout.resize(1);
-    tx.vout[0].scriptPubKey = txo;
+    tx.vout[0].SetScript(txo);
     tx.vout[0].nValue = amt;
     tx.vin[0].scriptSig = CScript();
     tx.nLockTime = 0;
@@ -220,9 +220,9 @@ CTransaction tx1x2(const CTransaction &prevtx,
     tx.vin[0].scriptSig = CScript();
     tx.vin[0].amount = amt0 + amt1;
     tx.vout.resize(2);
-    tx.vout[0].scriptPubKey = txo0;
+    tx.vout[0].SetScript(txo0);
     tx.vout[0].nValue = amt0;
-    tx.vout[1].scriptPubKey = txo1;
+    tx.vout[1].SetScript(txo1);
     tx.vout[1].nValue = amt1;
 
     tx.nLockTime = 0;

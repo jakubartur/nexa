@@ -25,8 +25,7 @@ void GetAllGroupBalances(const CWallet *wallet, std::unordered_map<CGroupTokenID
 CGroupTokenID GetGroupToken(const CTxDestination &id);
 //* Initialize a group ID from a string representation
 CGroupTokenID GetGroupToken(const std::string &cashAddrGrpId, const CChainParams &params = Params());
-// Return the associated group (OP_GROUP) of a script
-CGroupTokenID GetGroupToken(const CScript &script);
+
 CTxDestination ControllingAddress(const CGroupTokenID &grp, txnouttype addrType);
 std::string EncodeGroupToken(const CGroupTokenID &grp, const CChainParams &params = Params());
 

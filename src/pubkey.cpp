@@ -5,6 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "pubkey.h"
+#include "utilstrencodings.h"
 
 #include <secp256k1.h>
 #include <secp256k1_recovery.h>
@@ -214,6 +215,9 @@ static int ecdsa_signature_parse_der_lax(const secp256k1_context *ctx,
     }
     return 1;
 }
+
+
+std::string CPubKey::GetHex() const { return ::GetHex(begin(), size()); }
 
 bool CPubKey::VerifyECDSA(const uint256 &hash, const std::vector<uint8_t> &vchSig) const
 {

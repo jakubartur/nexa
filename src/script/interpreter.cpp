@@ -2274,7 +2274,7 @@ bool TransactionSignatureChecker::CheckSequence(const CScriptNum &nSequence) con
     return true;
 }
 
-bool VerifyTraditionalScript(const CScript &scriptSig,
+bool VerifySatoScript(const CScript &scriptSig,
     const CScript &scriptPubKey,
     unsigned int flags,
     unsigned int maxOps,
@@ -2286,6 +2286,7 @@ bool VerifyTraditionalScript(const CScript &scriptSig,
 
     if ((flags & SCRIPT_VERIFY_SIGPUSHONLY) != 0 && !scriptSig.IsPushOnly())
     {
+        LOG(SCRIPT, "Script: Scriptsig is not push-only");
         return set_error(serror, SCRIPT_ERR_SIG_PUSHONLY);
     }
 
@@ -2317,10 +2318,12 @@ bool VerifyTraditionalScript(const CScript &scriptSig,
         const Stack &smStack = sm.getStack();
         if (smStack.empty())
         {
+            LOG(SCRIPT, "Script: Stack size is empty");
             return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
         }
         if (((bool)smStack.back()) == false)
         {
+            LOG(SCRIPT, "Script: Top of stack evaluates to false");
             return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
         }
     }
@@ -2366,10 +2369,12 @@ bool VerifyTraditionalScript(const CScript &scriptSig,
             const Stack &smStack = sm.getStack();
             if (smStack.empty())
             {
+                LOG(SCRIPT, "Script: Stack size is empty");
                 return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
             }
             if (!((bool)smStack.back()))
             {
+                LOG(SCRIPT, "Script: Top of stack evaluates to false");
                 return set_error(serror, SCRIPT_ERR_EVAL_FALSE);
             }
         }
@@ -2391,6 +2396,7 @@ bool VerifyTraditionalScript(const CScript &scriptSig,
         assert((flags & SCRIPT_VERIFY_P2SH) != 0);
         if (sm.getStack().size() != 1)
         {
+            LOG(SCRIPT, "Script: Stack size is %d", sm.getStack().size());
             return set_error(serror, SCRIPT_ERR_CLEANSTACK);
         }
     }
@@ -2398,6 +2404,63 @@ bool VerifyTraditionalScript(const CScript &scriptSig,
     return set_success(serror);
 }
 
+
+// This function looks at the input script and templateHash, extracts the template script, and verifies it.
+// Satisfier is input-only,
+// satisfierIter, and templateHash are input-output.  The satisfierIter is advanced if needed, the templateHash is
+// updated to an actual hash if it encodes a well-known shorthand.
+// templateScript is output-only.
+//
+static ScriptError LoadCheckTemplateHash(const CScript &satisfier,
+    CScript::const_iterator &satisfierIter,
+    VchType &templateHash,
+    CScript &templateScript)
+{
+    // TODO: handle well-known template identifiers
+
+    std::vector<unsigned char> templateScriptBytes;
+    opcodetype templateDataOpcode;
+    if (!satisfier.GetOp(satisfierIter, templateDataOpcode, templateScriptBytes))
+    {
+        LOG(SCRIPT, "Script template: satisfier has bad opcode");
+        return SCRIPT_ERR_TEMPLATE;
+    }
+    templateScript = CScript(templateScriptBytes.begin(), templateScriptBytes.end());
+
+    size_t templateHashSize = templateHash.size();
+    if (templateHashSize == CHash160::OUTPUT_SIZE)
+    {
+        // Make sure that the passed template matches the template hash
+        VchType actualTemplateHash(CHash160::OUTPUT_SIZE);
+        CHash160()
+            .Write(begin_ptr(templateScriptBytes), templateScriptBytes.size())
+            .Finalize(&actualTemplateHash.front());
+        if (actualTemplateHash != templateHash)
+        {
+            LOG(SCRIPT, "Script template: template is incorrect preimage");
+            return SCRIPT_ERR_TEMPLATE;
+        }
+    }
+    else if (templateHashSize == CHash256::OUTPUT_SIZE)
+    {
+        // Make sure that the passed template matches the template hash
+        VchType actualTemplateHash(CHash256::OUTPUT_SIZE);
+        CHash256()
+            .Write(begin_ptr(templateScriptBytes), templateScriptBytes.size())
+            .Finalize(&actualTemplateHash.front());
+        if (actualTemplateHash != templateHash)
+        {
+            LOG(SCRIPT, "Script template: template is incorrect preimage");
+            return SCRIPT_ERR_TEMPLATE;
+        }
+    }
+    else
+    {
+        LOG(SCRIPT, "Script template: template hash is incorrect size");
+        return SCRIPT_ERR_TEMPLATE;
+    }
+    return SCRIPT_ERR_OK;
+}
 
 bool VerifyScript(const CScript &scriptSig,
     const CScript &scriptPubKey,
@@ -2411,44 +2474,86 @@ bool VerifyScript(const CScript &scriptSig,
     if (sis.checker)
         DbgAssert(flags == sis.checker->flags(), );
     unsigned int maxActualSigops = 0xFFFFFFFF; // TODO add sigop execution limits
-    ScriptTemplateError terror;
-    CScript::const_iterator constraintStart = scriptPubKey.begin();
-    uint256 templateHashConstraint = GetScriptTemplate(scriptPubKey, terror, &constraintStart);
-    if (terror == ScriptTemplateError::INVALID)
-    {
-        return set_error(serror, SCRIPT_ERR_TEMPLATE);
-    }
-    else if (terror == ScriptTemplateError::OK)
-    {
-        // The constraint script is everything after the script output attributes in the scriptpubkey.
-        CScript constraint(constraintStart, scriptPubKey.end());
 
-        // Grab the template script (its the first data push in the scriptSig)
-        CScript::const_iterator pc = scriptSig.begin();
-        std::vector<unsigned char> templateScriptBytes;
-        opcodetype templateDataOpcode;
-        if (!scriptSig.GetOp(pc, templateDataOpcode, templateScriptBytes))
+    if (scriptPubKey.type == ScriptType::TEMPLATE)
+    {
+        CScript::const_iterator restOfOutput = scriptPubKey.begin();
+        CGroupTokenInfo groupInfo;
+        VchType templateHash;
+        VchType argsHash;
+        ScriptTemplateError terror =
+            GetScriptTemplate(scriptPubKey, &groupInfo, &templateHash, &argsHash, &restOfOutput);
+        if (terror == ScriptTemplateError::OK)
+        {
+            // Grab the template script (after the group in the scriptSig)
+            CScript::const_iterator pc = scriptSig.begin();
+            CScript templateScript;
+            ScriptError templateLoadError = LoadCheckTemplateHash(scriptSig, pc, templateHash, templateScript);
+            if (templateLoadError != SCRIPT_ERR_OK)
+            {
+                return set_error(serror, templateLoadError);
+            }
+
+            size_t argsHashSize = argsHash.size();
+            std::vector<unsigned char> argsScriptBytes;
+            if (argsHashSize != 0) // no hash (OP_0) means no args
+            {
+                // Grab the args script (its the 2nd data push in the scriptSig)
+                opcodetype argsDataOpcode;
+                if (!scriptSig.GetOp(pc, argsDataOpcode, argsScriptBytes))
+                {
+                    return set_error(serror, SCRIPT_ERR_TEMPLATE);
+                }
+
+                if (argsHashSize == CHash160::OUTPUT_SIZE)
+                {
+                    VchType actualArgsHash(CHash160::OUTPUT_SIZE);
+                    CHash160()
+                        .Write(begin_ptr(argsScriptBytes), argsScriptBytes.size())
+                        .Finalize(&actualArgsHash.front());
+                    if (actualArgsHash != argsHash)
+                    {
+                        LOG(SCRIPT, "Script template: args is incorrect preimage");
+                        return set_error(serror, SCRIPT_ERR_TEMPLATE);
+                    }
+                }
+                else if (argsHashSize == CHash256::OUTPUT_SIZE)
+                {
+                    VchType actualArgsHash(CHash256::OUTPUT_SIZE);
+                    CHash256()
+                        .Write(begin_ptr(argsScriptBytes), argsScriptBytes.size())
+                        .Finalize(&actualArgsHash.front());
+                    if (actualArgsHash != argsHash)
+                    {
+                        LOG(SCRIPT, "Script template: args is incorrect preimage");
+                        return set_error(serror, SCRIPT_ERR_TEMPLATE);
+                    }
+                }
+                else
+                {
+                    LOG(SCRIPT, "Script template: arg hash is incorrect size");
+                    return set_error(serror, SCRIPT_ERR_TEMPLATE);
+                }
+            }
+
+            CScript argsScript(argsScriptBytes.begin(), argsScriptBytes.end());
+            // The visible args is the rest of the scriptPubKey
+            argsScript += CScript(restOfOutput, scriptPubKey.end());
+            // The rest of the scriptSig is the satisfier
+            CScript satisfier(pc, scriptSig.end());
+
+            return VerifyTemplate(
+                templateScript, argsScript, satisfier, flags, maxOps, maxActualSigops, sis, serror, tracker);
+        }
+        else
         {
             return set_error(serror, SCRIPT_ERR_TEMPLATE);
         }
-        CScript templat(templateScriptBytes.begin(), templateScriptBytes.end());
-
-        // The rest of the scriptSig is the satisfier
-        CScript satisfier(pc, scriptSig.end());
-
-        // Make sure that the template matches the constraint's hash
-        uint256 templateHash;
-        CHash256().Write(begin_ptr(templateScriptBytes), templateScriptBytes.size()).Finalize(templateHash.begin());
-        if (templateHashConstraint != templateHash)
-        {
-            return set_error(serror, SCRIPT_ERR_TEMPLATE);
-        }
-
-        return VerifyTemplate(templat, constraint, satisfier, flags, maxOps, maxActualSigops, sis, serror, tracker);
     }
-    else if (terror == ScriptTemplateError::NOT_A_TEMPLATE)
+    else
     {
-        return VerifyTraditionalScript(scriptSig, scriptPubKey, flags, maxOps, sis, serror, tracker);
+        // Verify a "legacy"-mode script
+        return VerifySatoScript(scriptSig, scriptPubKey, flags, maxOps, sis, serror, tracker);
     }
 
     // all cases should have been handled

@@ -47,10 +47,10 @@ class GetLogCategories (BitcoinTestFramework):
 
     def run_test (self):
         # Note zmq is off by default
-        exp0 = "coindb tor addrman libevent http rpc partitioncheck bench prune reindex mempoolrej blk evict parallel rand req bloom estimatefee lck proxy dbase selectcoins zmq qt ibd respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks"
-        exp1 = "libevent http partitioncheck bench prune reindex mempoolrej blk evict parallel rand req bloom estimatefee lck proxy dbase selectcoins zmq qt ibd respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks"
-        exp2 = "libevent http partitioncheck bench prune reindex mempoolrej parallel rand req bloom estimatefee dbase selectcoins zmq qt ibd respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks"
-        exp3 = "libevent http partitioncheck bench prune reindex mempoolrej parallel req bloom estimatefee dbase selectcoins zmq respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks"
+        exp0 = "coindb tor addrman libevent http rpc partitioncheck bench prune reindex mempoolrej blk evict parallel rand req bloom estimatefee lck proxy dbase selectcoins zmq qt ibd respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks script"
+        exp1 = "libevent http partitioncheck bench prune reindex mempoolrej blk evict parallel rand req bloom estimatefee lck proxy dbase selectcoins zmq qt ibd respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks script"
+        exp2 = "libevent http partitioncheck bench prune reindex mempoolrej parallel rand req bloom estimatefee dbase selectcoins zmq qt ibd respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks script"
+        exp3 = "libevent http partitioncheck bench prune reindex mempoolrej parallel req bloom estimatefee dbase selectcoins zmq respend weakblocks cmpctblock electrum mempoolsync priorityq dsproof tweaks script"
         exp4 = exp1
         exp5 = exp0
         exp6 = ""

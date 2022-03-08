@@ -2941,7 +2941,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                 // vouts to the payees
                 for (const CRecipient &recipient : vecSend)
                 {
-                    CTxOut txout(CTxOut::LEGACY, recipient.nAmount, recipient.scriptPubKey);
+                    CTxOut txout(CTxOut::SATOSCRIPT, recipient.nAmount, recipient.scriptPubKey);
 
                     if (txout.IsDust())
                     {
@@ -2988,7 +2988,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                     txNew.vout.clear();
                     for (const CRecipient &recipient : vecSend)
                     {
-                        CTxOut txout(CTxOut::LEGACY, recipient.nAmount, recipient.scriptPubKey);
+                        CTxOut txout(CTxOut::SATOSCRIPT, recipient.nAmount, recipient.scriptPubKey);
 
                         if (recipient.fSubtractFeeFromAmount)
                         {
@@ -3068,7 +3068,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                             scriptChange = GetScriptForDestination(vchPubKey.GetID());
                         }
 
-                        CTxOut newTxOut(CTxOut::LEGACY, nChange, scriptChange);
+                        CTxOut newTxOut(CTxOut::SATOSCRIPT, nChange, scriptChange);
 
                         // We do not move dust-change to fees, because the sender would end up paying more than
                         // requested.
