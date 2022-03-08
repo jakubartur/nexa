@@ -22,6 +22,10 @@
 #include "uint256.h"
 #include "util.h"
 
+uint64_t maxSatoScriptOps = MAX_OPS_PER_SCRIPT;
+uint64_t maxScriptTemplateOps = MAX_OPS_PER_SCRIPT_TEMPLATE;
+
+
 /** Implements script binary arithmetic and comparison opcodes that use BigNums.
     Declared here because its only needed in the interpreter even though it is implemented in BigNum.cpp
 */
@@ -294,7 +298,7 @@ bool ScriptMachine::BeginStep(const CScript &_script)
     vfExec.clear();
 
     set_error(&error, SCRIPT_ERR_UNKNOWN_ERROR);
-    if (script->size() > MAX_SCRIPT_SIZE)
+    if (script->size() > maxScriptSize)
     {
         script = nullptr;
         return set_error(&error, SCRIPT_ERR_SCRIPT_SIZE);
@@ -2465,7 +2469,6 @@ static ScriptError LoadCheckTemplateHash(const CScript &satisfier,
 bool VerifyScript(const CScript &scriptSig,
     const CScript &scriptPubKey,
     unsigned int flags,
-    unsigned int maxOps,
     const ScriptImportedState &sis,
     ScriptError *serror,
     ScriptMachineResourceTracker *tracker)
@@ -2542,8 +2545,8 @@ bool VerifyScript(const CScript &scriptSig,
             // The rest of the scriptSig is the satisfier
             CScript satisfier(pc, scriptSig.end());
 
-            return VerifyTemplate(
-                templateScript, argsScript, satisfier, flags, maxOps, maxActualSigops, sis, serror, tracker);
+            return VerifyTemplate(templateScript, argsScript, satisfier, flags, maxScriptTemplateOps, maxActualSigops,
+                sis, serror, tracker);
         }
         else
         {
@@ -2553,7 +2556,7 @@ bool VerifyScript(const CScript &scriptSig,
     else
     {
         // Verify a "legacy"-mode script
-        return VerifySatoScript(scriptSig, scriptPubKey, flags, maxOps, sis, serror, tracker);
+        return VerifySatoScript(scriptSig, scriptPubKey, flags, maxSatoScriptOps, sis, serror, tracker);
     }
 
     // all cases should have been handled

@@ -329,7 +329,7 @@ BOOST_AUTO_TEST_CASE(dsproof_orphan_handling)
             ScriptImportedState sis1(&checker1, MakeTransactionRef(spend2), empty, std::vector<CTxOut>(), 0);
             ScriptError_t error;
             if (!VerifyScript(scriptSigRes, scriptPubKey, STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID,
-                    MAX_OPS_PER_SCRIPT, sis1, &error))
+                    sis1, &error))
             {
                 LOG(DSPROOF, "Sanity check signature failed due to: %s\n", ScriptErrorString(error));
                 assert(0);

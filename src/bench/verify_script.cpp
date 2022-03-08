@@ -93,8 +93,7 @@ static void VerifyScriptBench(benchmark::State &state)
     while (state.KeepRunning())
     {
         ScriptError err;
-        bool success =
-            VerifyScript(txSpend.vin[0].scriptSig, txCredit.vout[0].scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
+        bool success = VerifyScript(txSpend.vin[0].scriptSig, txCredit.vout[0].scriptPubKey, flags, sis, &err);
         assert(err == SCRIPT_ERR_OK);
         assert(success);
     }

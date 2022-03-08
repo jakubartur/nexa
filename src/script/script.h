@@ -27,11 +27,41 @@
 #include <boost/optional.hpp>
 // #include <optional>
 
+/* Notes on the limits of the script template system:
+
+In the old style, the prevout holds the script, not the current tx. This allows an attack where a single transaction
+"gathers" a huge number of large scripts from prevouts. What is the maximum executable script bytes per transaction
+within the old style?
+
+An old CTxIn is 32+4 (prevout) + 0 (script) + 4 + 8 = 48 bytes at a minimum. Worst case this means
+(max tx size)/(TxIn size) or 1000000/48 = 20833 possible inputs.
+
+The old max script size is 10000 bytes. Multiplying this by the possible inputs results in a maximum of 208,330,000
+executed script bytes per tx. (Since a single 1MB transaction is the densest way to gather prevouts, this number is
+also the densest script byte execution per MB of block).
+
+Using script templates, executed script bytes are located in the transaction that executes them (caveat: with the
+exception of the push-only constraint "scripts" which must be limited to 1000 pushes due to the max stack size, and
+256 inputs due to the recently added max vin limitation. But for a tx that doesn't immediately fail, each push must
+be accompanied by an op_drop in the script template due to the clean stack rule, so constraint script pushes still
+must have a proportional consumption of bytes (a bunch of OP_DROP instructions) located in this transaction). This
+means that the maximum executed script bytes is approximately the maximum transaction size, or 1,000,000 bytes.
+
+In other words, the using the script template system, the maximum executable instructions per transaction is 0.5% of
+the old way.
+
+So no limits on script template size is really needed, since the transaction size limit is sufficient constraint.
+A max size of 100000 bytes and 50000 non-push opcodes was chosen as an initial limit out of an abundance of caution.
+*/
+
 // Maximum number of bytes pushable to the stack
 static const unsigned int MAX_SCRIPT_ELEMENT_SIZE = 520;
 
 // Maximum number of non-push operations per script
 static const int MAX_OPS_PER_SCRIPT = 201;
+
+// Maximum number of non-push operations per script
+static const int MAX_OPS_PER_SCRIPT_TEMPLATE = 50000;
 
 // 2020-05-15 sigchecks consensus rule
 // Maximum number of signature check operations per transaction
@@ -42,6 +72,9 @@ static const int MAX_PUBKEYS_PER_MULTISIG = 20;
 
 // Maximum script length in bytes
 static const int MAX_SCRIPT_SIZE = 10000;
+
+// Maximum template script length in bytes
+static const int MAX_SCRIPT_TEMPLATE_SIZE = 100000;
 
 // Maximum number of values on script interpreter stack
 static const int MAX_STACK_SIZE = 1000;

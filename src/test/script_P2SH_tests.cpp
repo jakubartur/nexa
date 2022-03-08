@@ -47,7 +47,7 @@ static bool Verify(const CScript &scriptSig, const CScript &scriptPubKey, bool f
     // None of these tests rely on introspection of the validation data so its ok to pass bad data.
     ScriptImportedState sis(&tsc, MakeTransactionRef(txTo), CValidationState(), std::vector<CTxOut>(), 0);
 
-    return VerifyScript(scriptSig, scriptPubKey, flags, MAX_OPS_PER_SCRIPT, sis, &err);
+    return VerifyScript(scriptSig, scriptPubKey, flags, sis, &err);
 }
 
 
@@ -121,8 +121,7 @@ BOOST_AUTO_TEST_CASE(sign)
             txTo[i].vin[0].scriptSig = txTo[j].vin[0].scriptSig;
             txTo[i].vin[0].amount = output->nValue;
             bool sigOK = CScriptCheck(nullptr, output->scriptPubKey, output->nValue, txTo[i], std::vector<CTxOut>(), 0,
-                SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_ENABLE_SIGHASH_FORKID, MAX_OPS_PER_SCRIPT,
-                false)();
+                SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_STRICTENC | SCRIPT_ENABLE_SIGHASH_FORKID, false)();
             if (i == j)
                 BOOST_CHECK_MESSAGE(sigOK, strprintf("VerifySignature %d %d", i, j));
             else

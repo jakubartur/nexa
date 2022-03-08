@@ -549,7 +549,7 @@ static void MutateTxSign(CMutableTransaction &tx, const string &flagStr)
         ScriptImportedState sis(&tsc, MakeTransactionRef(mergedTx), CValidationState(), spendingCoins, i);
 
         // Nothing we are capable of signing can be more than the original 201 ops so using it is fine.
-        if (!VerifyScript(txin.scriptSig, prevPubKey, flags, MAX_OPS_PER_SCRIPT, sis))
+        if (!VerifyScript(txin.scriptSig, prevPubKey, flags, sis))
             fComplete = false;
     }
 
