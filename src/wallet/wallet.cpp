@@ -980,8 +980,6 @@ bool CWallet::AddToWallet(CWalletTxRef wtx, bool fFromLoadWallet, CWalletDB *pwa
         wtx->MarkDirty();
 
         // Notify UI of new or updated transaction
-        NotifyTransactionChanged(this, wtx->GetId(), fInsertedNew ? CT_NEW : CT_UPDATED);
-        // Notify UI of new or updated transaction
         NotifyTransactionChanged(this, wtx->GetIdem(), fInsertedNew ? CT_NEW : CT_UPDATED);
 
         // notify an external script when a wallet transaction comes in or is updated
@@ -1135,7 +1133,6 @@ bool CWallet::AbandonTransaction(const uint256 &hashTx)
             wtx->setAbandoned(); // Since all outputs in mapWallet point to the same object this will set all outputs
             wtx->MarkDirty();
             wtx->WriteToDisk(&walletdb);
-            NotifyTransactionChanged(this, wtx->GetId(), CT_UPDATED);
             NotifyTransactionChanged(this, wtx->GetIdem(), CT_UPDATED);
             // Iterate over all its outputs, and mark transactions in the wallet that spend them abandoned too
             for (size_t i = 0; i < wtx->vout.size(); i++)
@@ -1170,7 +1167,6 @@ void CWallet::MarkDoubleSpent(const uint256 &txid)
     if (wtx)
     {
         wtx->fDoubleSpent = true;
-        NotifyTransactionChanged(this, wtx->GetId(), CT_UPDATED);
         NotifyTransactionChanged(this, wtx->GetIdem(), CT_UPDATED);
     }
 }
@@ -3377,7 +3373,7 @@ bool CWallet::CommitTransaction(CWalletTx &wtxNew, CReserveKey &reservekey)
         {
             CWalletTxRef wtx = mapWallet[txin.prevout].tx;
             wtx->BindWallet(this);
-            NotifyTransactionChanged(this, wtx->GetId(), CT_UPDATED);
+            NotifyTransactionChanged(this, wtx->GetIdem(), CT_UPDATED);
         }
 
         if (fFileBacked)
@@ -3950,7 +3946,6 @@ void CWallet::UpdatedTransaction(const COutPoint &outpt)
     MapWallet::const_iterator mi = mapWallet.find(outpt);
     if (mi != mapWallet.end())
     {
-        NotifyTransactionChanged(this, mi->second.tx->GetId(), CT_UPDATED);
         NotifyTransactionChanged(this, mi->second.tx->GetIdem(), CT_UPDATED);
     }
 }
