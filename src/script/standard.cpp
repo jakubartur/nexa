@@ -453,6 +453,11 @@ public:
         *script << OP_HASH160 << ToByteVector(scriptID) << OP_EQUAL;
         return true;
     }
+    bool operator()(const ScriptTemplateDestination &id) const
+    {
+        *script = id.toScript();
+        return true;
+    }
 };
 } // namespace
 

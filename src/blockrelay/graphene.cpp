@@ -102,8 +102,6 @@ void CGrapheneBlock::AddNewTransactions(std::vector<CTransaction> vMissingTx, CN
             NegotiateGrapheneVersion(pfrom))] = MakeTransactionRef(tx);
 
         uint256 hash = tx.GetId();
-        uint64_t cheapHash = GetShortID(
-            pfrom->gr_shorttxidk0.load(), pfrom->gr_shorttxidk1.load(), hash, NegotiateGrapheneVersion(pfrom));
 
         if (idx >= missingTxIdxs.size())
             throw std::runtime_error("Range exceeded in missingTxIdxs");

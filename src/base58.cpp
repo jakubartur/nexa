@@ -7,6 +7,7 @@
 
 #include "hashwrapper.h"
 #include "script/script.h"
+#include "streams.h"
 #include "uint256.h"
 
 #include <assert.h>
@@ -228,27 +229,9 @@ public:
         return EncodeBase58Check(data);
     }
 
-    std::string operator()(const CNoDestination &no) const { return ""; }
-};
-
-const std::vector<uint8_t> &bitpay_pubkey_prefix = std::vector<unsigned char>(1, 28);
-const std::vector<uint8_t> &bitpay_script_prefix = std::vector<unsigned char>(1, 40);
-
-class BitpayDestinationEncoder : public boost::static_visitor<std::string>
-{
-public:
-    BitpayDestinationEncoder() {}
-    std::string operator()(const CKeyID &id) const
+    std::string operator()(const ScriptTemplateDestination &id) const
     {
-        std::vector<uint8_t> data = bitpay_pubkey_prefix;
-        data.insert(data.end(), id.begin(), id.end());
-        return EncodeBase58Check(data);
-    }
-
-    std::string operator()(const CScriptID &id) const
-    {
-        std::vector<uint8_t> data = bitpay_script_prefix;
-        data.insert(data.end(), id.begin(), id.end());
+        std::vector<uint8_t> data = id.appendTo(m_params.Base58Prefix(CChainParams::SCRIPT_TEMPLATE_ADDRESS));
         return EncodeBase58Check(data);
     }
 
@@ -279,20 +262,22 @@ CTxDestination DecodeDestination(const std::string &str, const CChainParams &par
         return CScriptID(hash);
     }
 
-    // Decode Bitpay forms
-    if (data.size() == 20 + bitpay_pubkey_prefix.size() &&
-        std::equal(bitpay_pubkey_prefix.begin(), bitpay_pubkey_prefix.end(), data.begin()))
+    const std::vector<uint8_t> &st = params.Base58Prefix(CChainParams::SCRIPT_TEMPLATE_ADDRESS);
+    if (std::equal(st.begin(), st.end(), data.begin()))
     {
-        memcpy(hash.begin(), &data[bitpay_pubkey_prefix.size()], 20);
-        return CKeyID(hash);
+        ScriptTemplateDestination ret;
+        std::vector<uint8_t> tmp(data.begin() + st.size(), data.end()); // Inefficient copy
+        try
+        {
+            CDataStream strm(tmp, SER_NETWORK, PROTOCOL_VERSION);
+            strm >> ret;
+            return ret;
+        }
+        catch (std::ios_base::failure &e) // Its not a script template address
+        {
+        }
     }
 
-    if (data.size() == 20 + bitpay_script_prefix.size() &&
-        std::equal(bitpay_script_prefix.begin(), bitpay_script_prefix.end(), data.begin()))
-    {
-        memcpy(hash.begin(), &data[bitpay_script_prefix.size()], 20);
-        return CScriptID(hash);
-    }
     return CNoDestination();
 }
 } // namespace
@@ -330,9 +315,4 @@ std::string EncodeLegacyAddr(const CTxDestination &dest, const CChainParams &par
 CTxDestination DecodeLegacyAddr(const std::string &str, const CChainParams &params)
 {
     return DecodeDestination(str, params);
-}
-
-std::string EncodeBitpayAddr(const CTxDestination &dest)
-{
-    return boost::apply_visitor(BitpayDestinationEncoder(), dest);
 }

@@ -905,6 +905,20 @@ public:
      * instantly when entering the UTXO set.
      */
     bool IsUnspendable() const { return (size() > 0 && *begin() == OP_RETURN) || (size() > MAX_SCRIPT_SIZE); }
+
+    /** Set this script to a special value that is invalid -- any transaction including it will fail.
+        This is used as a "false" return value, but it is better than (for instance) returning an empty script,
+        since that is valid and spendable (by OP_1 as the satisfier).  */
+    CScript &SetInvalid()
+    {
+        clear();
+        *this << OP_INVALIDOPCODE;
+        return *this;
+    }
+
+    /** Check whether this is the "canonical" invalid script */
+    bool IsInvalid() { return *begin() == OP_INVALIDOPCODE; }
+
     /** Remove all instructions in this script. */
     void clear()
     {

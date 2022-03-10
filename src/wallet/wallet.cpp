@@ -4036,6 +4036,15 @@ public:
             Process(script);
     }
 
+    void operator()(const ScriptTemplateDestination &id)
+    {
+        assert(0); // TODO
+        // CScript script;
+        // if (keystore.GetCScript(scriptId, script))
+        //    Process(script);
+    }
+
+
     void operator()(const CNoDestination &none) {}
 };
 

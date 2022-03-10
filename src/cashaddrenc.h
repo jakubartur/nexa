@@ -16,7 +16,8 @@ enum CashAddrType : uint8_t
 {
     PUBKEY_TYPE = 0,
     SCRIPT_TYPE = 1,
-    GROUP_TYPE = 2,
+    GROUP_TYPE = 11, // This just defines a group (not a destination address)
+    SCRIPT_TEMPLATE_TYPE = 19,
 };
 
 std::string EncodeCashAddr(const CTxDestination &, const CChainParams &);

@@ -48,14 +48,39 @@ ScriptError ConvertWellKnownTemplateHash(VchType &templateHash, CScript &templat
    @param[in/out] templateScript The script, either extracted from the satisfier or copied from the list of well-known
        scripts.
 */
-ScriptError LoadCheckTemplateHash(const CScript &satisfier, CScript::const_iterator &satisfierIter, VchType &templateHash, CScript &templateScript);
+ScriptError LoadCheckTemplateHash(const CScript &satisfier,
+    CScript::const_iterator &satisfierIter,
+    VchType &templateHash,
+    CScript &templateScript);
 
 void NumericOpcodeToVector(opcodetype opcode, VchType &templateHash);
 
+/** Create a CScript suitable for placement in a CTxOut that spends to a script template with args and group 
+    @param[in] scriptHash  Hash160 or Hash256 of the script template
+    @param[in] argsHash  Hash160 or Hash256 of the template's arguments in CScript format.
+    @param[in] visibleArgs  Arguments (in CScript format) that you want to be visible in the output.
+    @param[in] group  Group Identifier (if output should be grouped, otherwise use NoGroup)
+    @param[in] grpQuantity  Quantity of tokens (if any).  If -1 is passed, the resulting CScript will place OP_0 
+    where the group quantity should be, provided that a group is specified. This is an illegal value so the script 
+    will not validate.  This is used to pass information around (as addresses), without needing to specify a token 
+    quantity.
+*/
+CScript ScriptTemplateOutput(const VchType &scriptHash,
+    const VchType &argsHash = VchType(),
+    const VchType &visibleArgs = VchType(),
+    const CGroupTokenID &group = NoGroup,
+    CAmount grpQuantity = -1);
+
+
 /** Well-known script templates */
 
-/** p2pkt - pay-to-public key template */
+/** p2pkt - pay-to-public key template script */
 extern const CScript p2pkt;
-extern const std::vector<unsigned char> p2pktId;  // Push will convert this vector to OP_1
+/** p2pkt well known identifier: just a 1 byte vector containing "1" */
+extern const std::vector<unsigned char> p2pktId; // Push will convert this vector to OP_1
 
+/** Create a CScript suitable for placement in a CTxOut that spends into a P2PKT */
+CScript P2pktOutput(const VchType &argsHash, const CGroupTokenID &group = NoGroup, CAmount grpQuantity = 0);
+/** Create a CScript suitable for placement in a CTxOut that spends into a P2PKT */
+CScript P2pktOutput(const CPubKey &pubkey, const CGroupTokenID &group = NoGroup, CAmount grpQuantity = 0);
 #endif

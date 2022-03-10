@@ -1200,6 +1200,10 @@ public:
     {
         memset(dest, 0, 21); // not a good address
     }
+    std::string operator()(const ScriptTemplateDestination &id) const
+    {
+        memset(dest, 0, 21); // not meaningful
+    }
 };
 
 

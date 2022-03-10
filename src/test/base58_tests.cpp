@@ -87,6 +87,7 @@ public:
     bool operator()(const CKeyID &id) const { return (exp_addrType == "pubkey"); }
     bool operator()(const CScriptID &id) const { return (exp_addrType == "script"); }
     bool operator()(const CNoDestination &no) const { return (exp_addrType == "none"); }
+    bool operator()(const ScriptTemplateDestination &id) const { return (exp_addrType == "script template"); }
 };
 
 // Visitor to check address payload

@@ -186,6 +186,13 @@ public:
         }
         return obj;
     }
+
+    UniValue operator()(const ScriptTemplateDestination &id) const
+    {
+        UniValue obj(UniValue::VOBJ);
+        // TODO
+        return obj;
+    }
 };
 #endif
 

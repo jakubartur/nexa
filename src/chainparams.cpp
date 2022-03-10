@@ -395,7 +395,9 @@ public:
         base58Prefixes[SECRET_KEY] = std::vector<uint8_t>(1, 239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
-        cashaddrPrefix = "nexreg";
+        base58Prefixes[SCRIPT_TEMPLATE_ADDRESS] = std::vector<unsigned char>(1, 8);
+
+        cashaddrPrefix = "nexareg";
     }
 };
 static CRegTestParams regTestParams;
@@ -475,6 +477,7 @@ public:
         base58Prefixes[SECRET_KEY] = std::vector<uint8_t>(1, 239);
         base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+        base58Prefixes[SCRIPT_TEMPLATE_ADDRESS] = std::vector<unsigned char>(1, 8);
 
         cashaddrPrefix = strNetworkID;
 
@@ -498,7 +501,7 @@ class CNextChainParams : public CChainParams
 public:
     CNextChainParams()
     {
-        strNetworkID = "nex"; // Do not use the const string because of ctor execution order issues
+        strNetworkID = "nexa"; // Do not use the const string because of ctor execution order issues
 
         consensus.nSubsidyHalvingInterval = 210000 * 5; // 2 minute blocks rather than 10 min -> * 5
         uint32_t tgtBits = 0x1e0fffff; // largest powLimit to provide enough bits for ASERT
@@ -573,6 +576,10 @@ public:
         base58Prefixes[EXT_SECRET_KEY] =
             boost::assign::list_of(0x42)(0x6c)(0x6b)(0x73).convert_to_container<std::vector<unsigned char> >();
         cashaddrPrefix = strNetworkID;
+
+        // use 8 for prefix of N in base58
+        // 19 for n in bech32
+        base58Prefixes[SCRIPT_TEMPLATE_ADDRESS] = std::vector<unsigned char>(1, 8);
 
         vFixedSeeds = std::vector<SeedSpec6>();
 

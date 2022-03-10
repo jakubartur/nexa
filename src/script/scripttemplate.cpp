@@ -203,3 +203,35 @@ ScriptError LoadCheckTemplateHash(const CScript &satisfier,
     }
     return SCRIPT_ERR_OK;
 }
+
+CScript ScriptTemplateOutput(const VchType& scriptHash, const VchType &argsHash, const VchType &visibleArgs, const CGroupTokenID& group, CAmount grpQuantity)
+{
+    CScript ret;
+    if (group != NoGroup)
+    {
+        if (grpQuantity != -1)
+        {
+            ret = (CScript(ScriptType::TEMPLATE) << group.bytes() << SerializeAmount(grpQuantity) << scriptHash << argsHash) + CScript(visibleArgs.begin(), visibleArgs.end());
+        }
+        else  // Encodes an invalid quantity (for use within addresses)
+        {
+            ret = (CScript(ScriptType::TEMPLATE) << group.bytes() << OP_0 << scriptHash << argsHash) + CScript(visibleArgs.begin(), visibleArgs.end());
+        }
+    }
+    else  // Not grouped
+    {
+        ret = (CScript(ScriptType::TEMPLATE) << OP_0 << scriptHash << argsHash) + CScript(visibleArgs.begin(), visibleArgs.end());
+    }
+    return ret;
+}
+
+CScript P2pktOutput(const VchType &argsHash, const CGroupTokenID& group, CAmount grpQuantity)
+{
+    return ScriptTemplateOutput(p2pktId, argsHash, VchType(), group, grpQuantity);
+}
+
+CScript P2pktOutput(const CPubKey &pubkey, const CGroupTokenID& group, CAmount grpQuantity)
+{
+    CScript tArgs = CScript() << ToByteVector(pubkey);
+    return ScriptTemplateOutput(p2pktId, VchHash160(tArgs), VchType(), group, grpQuantity);
+}

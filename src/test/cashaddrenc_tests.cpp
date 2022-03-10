@@ -47,6 +47,7 @@ public:
     void operator()(const CKeyID &id) { isKey = true; }
     void operator()(const CScriptID &id) { isScript = true; }
     void operator()(const CNoDestination &) {}
+    void operator()(const ScriptTemplateDestination &id) { isScriptTemplate = true; }
     static bool IsScriptDst(const CTxDestination &d)
     {
         DstTypeChecker checker;
@@ -62,9 +63,10 @@ public:
     }
 
 private:
-    DstTypeChecker() : isKey(false), isScript(false) {}
-    bool isKey;
-    bool isScript;
+    DstTypeChecker() {}
+    bool isKey = false;
+    bool isScript = false;
+    bool isScriptTemplate = false;
 };
 
 // Map all possible size bits in the version to the expected size of the
@@ -232,12 +234,6 @@ BOOST_AUTO_TEST_CASE(check_type)
         auto content = DecodeCashAddrContent(cashaddr::Encode(params.CashAddrPrefix(), data), params);
         BOOST_CHECK_EQUAL(content.type, v);
         BOOST_CHECK_EQUAL(content.hash.size(), 20UL);
-
-        // Check that using the reserved bit result in a failure.
-        data[0] |= 0x10;
-        content = DecodeCashAddrContent(cashaddr::Encode(params.CashAddrPrefix(), data), params);
-        BOOST_CHECK_EQUAL(content.type, 0);
-        BOOST_CHECK_EQUAL(content.hash.size(), 0UL);
     }
 }
 

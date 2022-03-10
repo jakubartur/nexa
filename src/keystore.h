@@ -60,6 +60,11 @@ public:
         bool operator()(const CKeyID &id) const { return keystore->HaveKey(id); }
         bool operator()(const CScriptID &id) const { return keystore->HaveCScript(id); }
         bool operator()(const CNoDestination &) const { return false; }
+        bool operator()(const ScriptTemplateDestination &id) const
+        {
+            assert(0);
+            // return keystore->Have(id);
+        }
     };
 
     virtual bool HaveTxDestination(const CTxDestination &addr)

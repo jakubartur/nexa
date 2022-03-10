@@ -77,6 +77,7 @@ public:
     CGroupTokenID operator()(const CKeyID &id) const { return CGroupTokenID(id); }
     CGroupTokenID operator()(const CScriptID &id) const { return CGroupTokenID(id); }
     CGroupTokenID operator()(const CNoDestination &) const { return CGroupTokenID(); }
+    CGroupTokenID operator()(const ScriptTemplateDestination &id) const { return id.Group(); }
 };
 
 CGroupTokenID GetGroupToken(const CTxDestination &id)
@@ -154,6 +155,14 @@ public:
         {
             *script << OP_HASH160 << ToByteVector(scriptID) << OP_EQUAL;
         }
+        return true;
+    }
+
+    bool operator()(const ScriptTemplateDestination &id) const
+    {
+        *script = id.toScript(group, quantity);
+        if (script->IsInvalid())
+            return false;
         return true;
     }
 };

@@ -5,6 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "cashaddr.h"
+#include "assert.h"
 
 namespace
 {
@@ -227,6 +228,7 @@ std::string Encode(const std::string &prefix, const data &values)
     ret.reserve(ret.size() + combined.size());
     for (uint8_t c : combined)
     {
+        assert(c < 32);
         ret += CHARSET[c];
     }
 
@@ -238,10 +240,6 @@ std::string Encode(const std::string &prefix, const data &values)
  */
 std::pair<std::string, data> Decode(const std::string &str, const std::string &default_prefix)
 {
-    // Is within size constraints.
-    if (str.size() > (MAX_CASHADDR_SIZE + default_prefix.size() + 1))
-        return {};
-
     // Go over the string and do some sanity checks.
     bool lower = false, upper = false, hasNumber = false;
     size_t prefixSize = 0;

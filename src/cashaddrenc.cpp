@@ -22,37 +22,37 @@ std::vector<uint8_t> PackAddrData(const T &id, uint8_t type)
     uint8_t version_byte(type << 3);
     size_t size = id.size();
     uint8_t encoded_size = 0;
-    switch (size * 8)
+    if ((type != SCRIPT_TEMPLATE_TYPE) && (type != GROUP_TYPE))
     {
-    case 160:
-        encoded_size = 0;
-        break;
-    case 192:
-        encoded_size = 1;
-        break;
-    case 224:
-        encoded_size = 2;
-        break;
-    case 256:
-        encoded_size = 3;
-        break;
-    case 320:
-        encoded_size = 4;
-        break;
-    case 384:
-        encoded_size = 5;
-        break;
-    case 448:
-        encoded_size = 6;
-        break;
-    case 512:
-        encoded_size = 7;
-        break;
-    default:
-        if (type == GROUP_TYPE) // Groups can be any length
+        switch (size * 8)
+        {
+        case 160:
+            encoded_size = 0;
+            break;
+        case 192:
+            encoded_size = 1;
+            break;
+        case 224:
+            encoded_size = 2;
+            break;
+        case 256:
+            encoded_size = 3;
+            break;
+        case 320:
+            encoded_size = 4;
+            break;
+        case 384:
+            encoded_size = 5;
+            break;
+        case 448:
+            encoded_size = 6;
+            break;
+        case 512:
             encoded_size = 7;
-        else
+            break;
+        default:
             throw std::runtime_error("Error packing cashaddr: invalid address length");
+        }
     }
     version_byte |= encoded_size;
     std::vector<uint8_t> data = {version_byte};
@@ -85,6 +85,11 @@ public:
         return cashaddr::Encode(params.CashAddrPrefix(), data);
     }
 
+    std::string operator()(const ScriptTemplateDestination &id) const
+    {
+        std::vector<uint8_t> data = PackAddrData(id.appendTo(VchType()), SCRIPT_TEMPLATE_TYPE);
+        return cashaddr::Encode(params.CashAddrPrefix(), data);
+    }
     std::string operator()(const CNoDestination &) const { return ""; }
 
 private:
@@ -155,14 +160,9 @@ CashAddrContent DecodeCashAddrContent(const std::string &addr, const CChainParam
 
     // Decode type and size from the version.
     uint8_t version = data[0];
-    if (version & 0x80)
-    {
-        // First bit is reserved.
-        return {};
-    }
 
-    auto type = CashAddrType((version >> 3) & 0x1f);
-    if ((type != GROUP_TYPE) || (version & 7) != 7) // group size 7 means any size
+    auto type = CashAddrType(version >> 3);
+    if ((type != SCRIPT_TEMPLATE_TYPE) && (type != GROUP_TYPE))
     {
         uint32_t hash_size = 20 + 4 * (version & 0x03);
         if (version & 0x04)
@@ -184,21 +184,30 @@ CashAddrContent DecodeCashAddrContent(const std::string &addr, const CChainParam
 
 CTxDestination DecodeCashAddrDestination(const CashAddrContent &content)
 {
-    if (content.hash.size() != 20)
-    {
-        // Only 20 bytes hash are supported now.
-        return CNoDestination{};
-    }
-
-    uint160 hash;
-    std::copy(begin(content.hash), end(content.hash), hash.begin());
-
     switch (content.type)
     {
     case PUBKEY_TYPE:
+    {
+        uint160 hash;
+        std::copy(begin(content.hash), end(content.hash), hash.begin());
         return CKeyID(hash);
+    }
     case SCRIPT_TYPE:
+    {
+        uint160 hash;
+        std::copy(begin(content.hash), end(content.hash), hash.begin());
         return CScriptID(hash);
+    }
+    case SCRIPT_TEMPLATE_TYPE:
+    {
+        ScriptTemplateDestination ret;
+        VchType tmp(content.hash.begin(), content.hash.end());
+        CDataStream strm(tmp, SER_NETWORK, PROTOCOL_VERSION);
+        strm >> ret;
+        return ret;
+    }
+    case GROUP_TYPE: // a group is not a valid destination for funds...
+        return CNoDestination{};
     default:
         return CNoDestination{};
     }

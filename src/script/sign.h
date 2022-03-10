@@ -107,20 +107,9 @@ public:
     virtual bool HaveWatchOnly(const CScript &dest) const { return true; }
     virtual bool HaveWatchOnly() const { return true; }
 
-    class CheckTxDestination : public boost::static_visitor<bool>
-    {
-        const CKeyStore *keystore;
-
-    public:
-        CheckTxDestination(const CKeyStore *_keystore) : keystore(_keystore) {}
-        bool operator()(const CKeyID &id) const { return keystore->HaveKey(id); }
-        bool operator()(const CScriptID &id) const { return keystore->HaveCScript(id); }
-        bool operator()(const CNoDestination &) const { return false; }
-    };
-
     virtual bool HaveTxDestination(const CTxDestination &addr)
     {
-        return boost::apply_visitor(CheckTxDestination(this), addr);
+        return boost::apply_visitor(CKeyStore::CheckTxDestination(this), addr);
     }
 };
 
