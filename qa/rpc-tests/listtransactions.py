@@ -154,7 +154,7 @@ class ListTransactionsTest(BitcoinTestFramework):
                             {"category": "receive", "amount": Decimal("440000.44")},
                             {"txidem": txid, "account": "toself"})
 
-        multisig = self.nodes[1].createmultisig(1, [self.nodes[1].getnewaddress()])
+        multisig = self.nodes[1].createmultisig(1, [self.nodes[1].getnewaddress("p2pkh")])
         self.nodes[0].importaddress(multisig["redeemScript"], "watchonly", False, True)
         txid = self.nodes[1].sendtoaddress(multisig["address"], 100000)
         self.nodes[1].generate(1)
@@ -176,7 +176,6 @@ def Test():
     t.drop_to_pdb = True
     bitcoinConf = {
         "debug": ["all","-libevent"],
-        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
     }
     flags = standardFlags()
     # flags.append("--tmpdir=/tmp/test")

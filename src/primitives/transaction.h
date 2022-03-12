@@ -151,6 +151,8 @@ public:
     {
         SATOSCRIPT = 0,
         TEMPLATE = 1,
+
+        INFER = 0x8000 // Not a real type: implies the type should be infered from the script at construction time
     };
 
     static ScriptType ScriptTypeOf(uint8_t ctxoutType) { return ScriptType(ctxoutType & 1); }
@@ -162,8 +164,9 @@ public:
     CScript scriptPubKey;
 
     CTxOut() { SetNull(); }
-    CTxOut(uint8_t version, const CAmount &nValueIn, CScript scriptPubKeyIn);
+    CTxOut(const CAmount &nValueIn, CScript scriptPubKeyIn, uint16_t type = INFER);
 
+    // Note, when storing a CTxOut in a Coin (UTXO), a different serialization is used, located in compressor.h
     ADD_SERIALIZE_METHODS;
 
     template <typename Stream, typename Operation>

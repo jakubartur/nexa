@@ -7,13 +7,15 @@
 #ifndef BITCOIN_SCRIPT_ISMINE_H
 #define BITCOIN_SCRIPT_ISMINE_H
 
-#include "chain.h" // freeze CBlockIndex
-#include "script/standard.h"
-
 #include <stdint.h>
+#include <string>
+
+#include "script/standard.h"
 
 class CKeyStore;
 class CScript;
+class CScriptNum;
+class CBlockIndex;
 
 /** IsMine() return codes */
 enum isminetype

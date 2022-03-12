@@ -74,6 +74,8 @@ class DummySizeOnlyKeyStore : public CKeyStore
 {
 public:
     static const CPubKey dummyPubKey;
+    SpendableP2PKT dummySpendable;
+    DummySizeOnlyKeyStore() : dummySpendable(dummyPubKey, this) {}
     virtual ~DummySizeOnlyKeyStore() {}
     //! Add a key to the store.
     virtual bool AddKeyPubKey(const CKey &key, const CPubKey &pubkey) { return true; }
@@ -84,15 +86,25 @@ public:
     //! Check whether a key corresponding to a given address is present in the store, caller must hold cs_KeyStore
     virtual bool _HaveKey(const CKeyID &address) const { return true; }
 
+    bool GetKey(const CTxDestination &dest, CKey &keyOut) const
+    {
+        keyOut = CKey();
+        return true;
+    }
     virtual bool GetKey(const CKeyID &address, CKey &keyOut) const
     {
         keyOut = CKey();
         return true;
     }
     virtual void GetKeys(std::set<CKeyID> &setAddress) const {}
-    virtual bool GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const
+    virtual bool GetPubKey(const CKeyID &address, CPubKey &pubKeyOut) const
     {
-        vchPubKeyOut = dummyPubKey;
+        pubKeyOut = dummyPubKey;
+        return true;
+    }
+    virtual bool GetPubKey(const ScriptTemplateDestination &address, CPubKey &pubKeyOut) const
+    {
+        pubKeyOut = dummyPubKey;
         return true;
     }
 
@@ -106,6 +118,9 @@ public:
     virtual bool RemoveWatchOnly(const CScript &dest) { return true; }
     virtual bool HaveWatchOnly(const CScript &dest) const { return true; }
     virtual bool HaveWatchOnly() const { return true; }
+
+    virtual isminetype HaveTemplate(const CScript &output) const { return ISMINE_SPENDABLE; }
+    virtual const Spendable *_GetTemplate(const CScript &output) const { return &dummySpendable; }
 
     virtual bool HaveTxDestination(const CTxDestination &addr)
     {

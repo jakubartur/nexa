@@ -219,9 +219,14 @@ bool CBloomFilter::MatchAndInsertOutputs(const CTransactionRef &tx)
                 {
                     txnouttype type;
                     vector<vector<unsigned char> > vSolutions;
-                    if (Solver(txout.scriptPubKey, type, vSolutions) &&
-                        (type == TX_PUBKEY || type == TX_MULTISIG || type == TX_CLTV))
-                        insert(COutPoint(hash, i));
+                    if (Solver(txout.scriptPubKey, type, vSolutions))
+                    {
+                        if (type == TX_PUBKEY || type == TX_MULTISIG || type == TX_CLTV)
+                            insert(COutPoint(hash, i));
+                        // Also add if its the script template variety of p2pubkey
+                        else if (type == TX_SCRIPT_TEMPLATE && vSolutions[0] == p2pktId)
+                            insert(COutPoint(hash, i));
+                    }
                 }
                 break;
             }

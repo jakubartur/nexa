@@ -53,7 +53,7 @@ bool CScriptCheck::operator()()
     unsigned int nFlags = checker.flags();
     if (!VerifyScript(scriptSig, scriptPubKey, nFlags, sis, &error, &smRes))
     {
-        LOGA("Script Error: %s\n", ScriptErrorString(error));
+        LOG(SCRIPT, "Script Error: %s\n", ScriptErrorString(error));
         return false;
     }
     if (resourceTracker)
@@ -69,7 +69,8 @@ bool CScriptCheck::operator()()
         if ((smRes.consensusSigCheckCount > 1) && ((smRes.consensusSigCheckCount * 43) - 60 > lenScriptSig))
         {
             error = SCRIPT_ERR_SIGCHECKS_LIMIT_EXCEEDED;
-            LOGA("Sigchecks limit exceeded, with %d sigchecks: min script length (%d) > satisfier script len (%d)",
+            LOG(SCRIPT,
+                "Sigchecks limit exceeded, with %d sigchecks: min script length (%d) > satisfier script len (%d)",
                 smRes.consensusSigCheckCount, (smRes.consensusSigCheckCount * 43) - 60, lenScriptSig);
             return false;
         }

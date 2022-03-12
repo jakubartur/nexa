@@ -239,6 +239,10 @@ bool CCryptoKeyStore::AddKeyPubKey(const CKey &key, const CPubKey &pubkey)
 
         if (!AddCryptedKey(pubkey, vchCryptedSecret))
             return false;
+
+        // Add an entry for the standard pay-to-public-key-template script form.
+        CScript output = P2pktOutput(pubkey);
+        mapTemplates[output] = new SpendableP2PKT(pubkey, this);
     }
     return true;
 }
@@ -252,6 +256,9 @@ bool CCryptoKeyStore::AddCryptedKey(const CPubKey &vchPubKey, const std::vector<
             return false;
 
         mapCryptedKeys[vchPubKey.GetID()] = make_pair(vchPubKey, vchCryptedSecret);
+        // Add an entry for the standard pay-to-public-key-template script form.
+        CScript output = P2pktOutput(vchPubKey);
+        mapTemplates[output] = new SpendableP2PKT(vchPubKey, this);
     }
     return true;
 }
@@ -270,6 +277,23 @@ bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey &keyOut) const
             const std::vector<unsigned char> &vchCryptedSecret = (*mi).second.second;
             return DecryptKey(vMasterKey, vchCryptedSecret, vchPubKey, keyOut);
         }
+    }
+    return false;
+}
+
+bool CCryptoKeyStore::GetKey(const CTxDestination &dest, CKey &keyOut) const
+{
+    const CKeyID *keyID = boost::get<CKeyID>(&dest);
+    if (keyID)
+    {
+        return CCryptoKeyStore::GetKey(*keyID, keyOut);
+    }
+    const ScriptTemplateDestination *st = boost::get<ScriptTemplateDestination>(&dest);
+    if (st)
+    {
+        CPubKey pub;
+        if (CBasicKeyStore::GetPubKey(*st, pub))
+            return CCryptoKeyStore::GetKey(pub.GetID(), keyOut);
     }
     return false;
 }

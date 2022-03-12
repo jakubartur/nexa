@@ -2937,7 +2937,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                 // vouts to the payees
                 for (const CRecipient &recipient : vecSend)
                 {
-                    CTxOut txout(CTxOut::SATOSCRIPT, recipient.nAmount, recipient.scriptPubKey);
+                    CTxOut txout(recipient.nAmount, recipient.scriptPubKey);
 
                     if (txout.IsDust())
                     {
@@ -2984,7 +2984,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                     txNew.vout.clear();
                     for (const CRecipient &recipient : vecSend)
                     {
-                        CTxOut txout(CTxOut::SATOSCRIPT, recipient.nAmount, recipient.scriptPubKey);
+                        CTxOut txout(recipient.nAmount, recipient.scriptPubKey);
 
                         if (recipient.fSubtractFeeFromAmount)
                         {
@@ -3061,10 +3061,10 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                                 return false;
                             }
 
-                            scriptChange = GetScriptForDestination(vchPubKey.GetID());
+                            scriptChange = P2pktOutput(vchPubKey);
                         }
 
-                        CTxOut newTxOut(CTxOut::SATOSCRIPT, nChange, scriptChange);
+                        CTxOut newTxOut(nChange, scriptChange);
 
                         // We do not move dust-change to fees, because the sender would end up paying more than
                         // requested.
@@ -3958,7 +3958,8 @@ void CWallet::GetScriptForMining(boost::shared_ptr<CReserveScript> &script)
         return;
 
     script = rKey;
-    script->reserveScript = CScript() << ToByteVector(pubkey) << OP_CHECKSIG;
+    // script->reserveScript = CScript() << ToByteVector(pubkey) << OP_CHECKSIG;
+    script->reserveScript = P2pktOutput(pubkey);
 }
 
 void CWallet::LockCoin(const COutPoint &output)
@@ -4038,10 +4039,17 @@ public:
 
     void operator()(const ScriptTemplateDestination &id)
     {
-        assert(0); // TODO
-        // CScript script;
-        // if (keystore.GetCScript(scriptId, script))
-        //    Process(script);
+        CScript ugs = UngroupedScriptTemplate(id.output);
+        LOCK(keystore.cs_KeyStore);
+        const Spendable *sp = keystore._GetTemplate(ugs);
+        if (sp)
+        {
+            std::vector<CPubKey> involved = sp->PubKeys();
+            for (const auto &i : involved)
+            {
+                vKeys.push_back(i.GetID());
+            }
+        }
     }
 
 

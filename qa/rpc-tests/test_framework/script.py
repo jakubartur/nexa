@@ -845,6 +845,14 @@ class CScript(bytes):
 
                 yield (opcode, data, sop_idx)
 
+    def nth(self, n):
+        """Return the nth statement in this script (0-based)."""
+        cnt = 0
+        for op in self:
+            if cnt == n: return op
+            cnt+=1
+        return None
+    
     def __iter__(self):
         """'Cooked' iteration
 

@@ -31,7 +31,7 @@ class KeyPoolTest(BitcoinTestFramework):
         wallet_info = nodes[0].getwalletinfo()
         assert(addr_before_encrypting_data['hdmasterkeyid'] != wallet_info['hdmasterkeyid'])
         assert(addr_data['hdmasterkeyid'] == wallet_info['hdmasterkeyid'])
-        
+
         try:
             addr = nodes[0].getnewaddress()
             raise AssertionError('Keypool should be exhausted after one address')
@@ -85,3 +85,11 @@ class KeyPoolTest(BitcoinTestFramework):
 
 if __name__ == '__main__':
     KeyPoolTest().main(None,{"keypool":1})  # BU add limited keypool here, not across all other tests
+
+def Test():
+    flags = standardFlags()
+    t = KeyPoolTest()
+    t.drop_to_pdb = True
+    t.main(flags, {"keypool":1})
+    print("completed!")
+

@@ -30,17 +30,17 @@ class TxnCloneTest(BitcoinTestFramework):
         starting_balance = COINBASE_REWARD*25
         for i in range(4):
             assert_equal(self.nodes[i].getbalance(), starting_balance)
-            self.nodes[i].getnewaddress("")  # bug workaround, coins generated assigned to first getnewaddress!
+            self.nodes[i].getnewaddress("p2pkt","")  # bug workaround, coins generated assigned to first getnewaddress!
 
         self.nodes[0].settxfee(100)
         FooAmt = COINBASE_REWARD*25 - 31000000
 
-        node0_address_foo = self.nodes[0].getnewaddress("foo")
+        node0_address_foo = self.nodes[0].getnewaddress("p2pkt","foo")
         fund_foo_txid = self.nodes[0].sendfrom("", node0_address_foo, FooAmt)
         fund_foo_tx = self.nodes[0].gettransaction(fund_foo_txid)
 
         # Coins are sent to node1_address
-        node1_address = self.nodes[1].getnewaddress("from0")
+        node1_address = self.nodes[1].getnewaddress("p2pkt","from0")
 
         # Send tx1, and another transaction tx2 that won't be cloned
         txidem1 = self.nodes[0].sendfrom("foo", node1_address, 40, 0)

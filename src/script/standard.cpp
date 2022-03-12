@@ -42,6 +42,8 @@ const char *GetTxnOutputType(txnouttype t)
         return "grouppubkeyhash";
     case TX_GRP_SCRIPTHASH:
         return "groupscripthash";
+    case TX_SCRIPT_TEMPLATE:
+        return "scripttemplate";
     }
     return nullptr;
 }
@@ -247,6 +249,19 @@ bool ExtendedSolver(const CScript &scriptPubKey,
     grp.clear();
     vSolutionsRet.clear();
 
+    if (scriptPubKey.type == ScriptType::TEMPLATE)
+    {
+        // Get the group data out and put the template hash and args hash in Ret 0 and 1 respectively.
+        // Right now its not necessary to dig thru the template's visible args, but when new templates are
+        // devised that this wallet can sign which use visible args, we might have to do that.
+        typeRet = TX_SCRIPT_TEMPLATE;
+        vSolutionsRet.resize(2);
+        ScriptTemplateError err = GetScriptTemplate(scriptPubKey, &grp, &vSolutionsRet[0], &vSolutionsRet[1], nullptr);
+        if (err == ScriptTemplateError::OK)
+            return true;
+        return false;
+    }
+
     // Shortcut for pay-to-script-hash, which are more constrained than the other types:
     // it is always OP_HASH160 20 [20 byte hash] OP_EQUAL
     // or [data] OP_GROUP OP_DROP OP_HASH160 20 [20 byte hash] OP_EQUAL
@@ -342,7 +357,12 @@ bool ExtractDestinationAndType(const CScript &scriptPubKey, CTxDestination &addr
     if (!ExtendedSolver(scriptPubKey, whichType, vSolutions, grp))
         return false;
 
-    if (whichType == TX_PUBKEY)
+    if (whichType == TX_SCRIPT_TEMPLATE)
+    {
+        addressRet = ScriptTemplateDestination(UngroupedScriptTemplate(scriptPubKey));
+        return true;
+    }
+    else if (whichType == TX_PUBKEY)
     {
         CPubKey pubKey(vSolutions[0]);
         if (!pubKey.IsValid())

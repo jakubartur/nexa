@@ -333,45 +333,84 @@ UtxoData::iterator FindRandomFrom(const std::set<COutPoint> &utxoSet)
 
 BOOST_AUTO_TEST_CASE(ccoins_serialization)
 {
-    // Good example
-    CDataStream ss1(ParseHex("97f23c835800816115944e077fe7c803cfa57f29b36bf87c1d35"), SER_DISK, CLIENT_VERSION);
-    Coin cc1;
-    ss1 >> cc1;
+    {
+        // Good example
+        CKeyID keyid1 = CKeyID(uint160(ParseHex("816115944e077fe7c803cfa57f29b36bf87c1d35")));
+        CScript script1;
+        script1 << OP_DUP << OP_HASH160 << ToByteVector(keyid1) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-    CKeyID keyid1 = CKeyID(uint160(ParseHex("816115944e077fe7c803cfa57f29b36bf87c1d35")));
-    CScript script1;
-    script1 << OP_DUP << OP_HASH160 << ToByteVector(keyid1) << OP_EQUALVERIFY << OP_CHECKSIG;
+        Coin cc;
+        cc.fCoinBase = 0;
+        cc.nHeight = 203998;
+        cc.out = CTxOut(60000000000LL, script1);
+        CDataStream ss(SER_DISK, CLIENT_VERSION);
+        ss << cc;
+        // printf("ser: %s\n", HexStr(ss.begin(), ss.end()).c_str());
 
-    BOOST_CHECK_EQUAL(cc1.fCoinBase, false);
-    BOOST_CHECK_EQUAL(cc1.nHeight, static_cast<unsigned int>(203998));
-    BOOST_CHECK_EQUAL(cc1.out.nValue, 60000000000LL);
-    BOOST_CHECK_EQUAL(HexStr(cc1.out.scriptPubKey), HexStr(script1));
+        std::string hex = "97f23c00835800816115944e077fe7c803cfa57f29b36bf87c1d35";
+        BOOST_CHECK_EQUAL(HexStr(ss.begin(), ss.end()), hex);
+        CDataStream ss1(ParseHex(hex), SER_DISK, CLIENT_VERSION);
 
-    // Good example
-    CDataStream ss2(ParseHex("8ddf77bbd123008c988f1a4a4de2161e0f50aac7f17e7f9555caa4"), SER_DISK, CLIENT_VERSION);
-    Coin cc2;
-    ss2 >> cc2;
+        Coin cc1;
+        ss1 >> cc1;
 
-    CKeyID keyid2 = CKeyID(uint160(ParseHex("8c988f1a4a4de2161e0f50aac7f17e7f9555caa4")));
-    CScript script2;
-    script2 << OP_DUP << OP_HASH160 << ToByteVector(keyid2) << OP_EQUALVERIFY << OP_CHECKSIG;
+        BOOST_CHECK_EQUAL(cc1.fCoinBase, false);
+        BOOST_CHECK_EQUAL(cc1.nHeight, static_cast<unsigned int>(203998));
+        BOOST_CHECK_EQUAL(cc1.out.nValue, 60000000000LL);
+        BOOST_CHECK_EQUAL(HexStr(cc1.out.scriptPubKey), HexStr(script1));
+    }
 
-    BOOST_CHECK_EQUAL(cc2.fCoinBase, true);
-    BOOST_CHECK_EQUAL(cc2.nHeight, static_cast<unsigned int>(120891));
-    BOOST_CHECK_EQUAL(cc2.out.nValue, 110397);
-    BOOST_CHECK_EQUAL(HexStr(cc2.out.scriptPubKey), HexStr(script2));
+    {
+        // Good example
+        CKeyID keyid2 = CKeyID(uint160(ParseHex("8c988f1a4a4de2161e0f50aac7f17e7f9555caa4")));
+        CScript script2;
+        script2 << OP_DUP << OP_HASH160 << ToByteVector(keyid2) << OP_EQUALVERIFY << OP_CHECKSIG;
 
-    // Smallest possible example
-    CDataStream ss3(ParseHex("000006"), SER_DISK, CLIENT_VERSION);
-    Coin cc3;
-    ss3 >> cc3;
-    BOOST_CHECK_EQUAL(cc3.fCoinBase, false);
-    BOOST_CHECK_EQUAL(cc3.nHeight, static_cast<unsigned int>(0));
-    BOOST_CHECK_EQUAL(cc3.out.nValue, static_cast<unsigned int>(0));
-    BOOST_CHECK_EQUAL(cc3.out.scriptPubKey.size(), static_cast<unsigned int>(0));
+        Coin cc;
+        cc.fCoinBase = true;
+        cc.nHeight = 120891;
+        cc.out = CTxOut(110397, script2);
+        CDataStream ss(SER_DISK, CLIENT_VERSION);
+        ss << cc;
+        // printf("ser: %s\n", HexStr(ss.begin(), ss.end()).c_str());
+
+        std::string hex = "8ddf7700bbd123008c988f1a4a4de2161e0f50aac7f17e7f9555caa4";
+        BOOST_CHECK_EQUAL(HexStr(ss.begin(), ss.end()), hex);
+
+        CDataStream ss2(ParseHex(hex), SER_DISK, CLIENT_VERSION);
+        Coin cc2;
+        ss2 >> cc2;
+
+        BOOST_CHECK_EQUAL(cc2.fCoinBase, true);
+        BOOST_CHECK_EQUAL(cc2.nHeight, static_cast<unsigned int>(120891));
+        BOOST_CHECK_EQUAL(cc2.out.nValue, 110397);
+        BOOST_CHECK_EQUAL(HexStr(cc2.out.scriptPubKey), HexStr(script2));
+    }
+
+    {
+        // Smallest possible example
+        Coin cc;
+        cc.fCoinBase = false;
+        cc.nHeight = 0;
+        cc.out = CTxOut(0, CScript());
+        CDataStream ss(SER_DISK, CLIENT_VERSION);
+        ss << cc;
+        // printf("ser: %s\n", HexStr(ss.begin(), ss.end()).c_str());
+
+        std::string hex = "00000006";
+        BOOST_CHECK_EQUAL(HexStr(ss.begin(), ss.end()), hex);
+
+        CDataStream ss3(ParseHex(hex), SER_DISK, CLIENT_VERSION);
+        Coin cc3;
+        ss3 >> cc3;
+        BOOST_CHECK_EQUAL(cc3.fCoinBase, false);
+        BOOST_CHECK_EQUAL(cc3.nHeight, static_cast<unsigned int>(0));
+        BOOST_CHECK_EQUAL(cc3.out.nValue, static_cast<unsigned int>(0));
+        BOOST_CHECK_EQUAL(cc3.out.scriptPubKey.size(), static_cast<unsigned int>(0));
+    }
 
     // scriptPubKey that ends beyond the end of the stream
-    CDataStream ss4(ParseHex("000007"), SER_DISK, CLIENT_VERSION);
+    CDataStream ss4(ParseHex("00000007"), SER_DISK, CLIENT_VERSION);
     try
     {
         Coin cc4;
@@ -388,7 +427,7 @@ BOOST_AUTO_TEST_CASE(ccoins_serialization)
     tmp << VARINT(x);
     BOOST_CHECK_EQUAL(HexStr(tmp.begin(), tmp.end()), "8a95c0bb00");
 
-    CDataStream ss5(ParseHex("0008a95c0bb00"), SER_DISK, CLIENT_VERSION);
+    CDataStream ss5(ParseHex("000008a95c0bb00"), SER_DISK, CLIENT_VERSION);
     try
     {
         Coin cc5;

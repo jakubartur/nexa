@@ -76,8 +76,17 @@ class MyTest (BitcoinTestFramework):
         self.rnode = self.nodes[1]  # node can relay to node 1
         self.pynodeCnxn = pynode.cnxns[0]
 
+        # Make a bunch of satoscript utxos because this test uses them
+        addr = self.node.getnewaddress("p2pkh")
+        self.node.sendtoaddress(addr, 10000)
+        self.node.sendtoaddress(addr, 10000)
+        self.node.sendtoaddress(addr, 10000)
+        self.node.sendtoaddress(addr, 10000)
+        self.node.generate(1)
+
         # grab a list of coins to work with
         utxos = self.node.listunspent()
+        utxos = list(filter(lambda x: x["scriptType"] != "template", utxos)) # Find inputs that are not a template
 
         # Try a valid tx
         utxo = utxos.pop()
@@ -86,7 +95,7 @@ class MyTest (BitcoinTestFramework):
         tx1.vout.append(TxOut(0,utxo["amount"]-fee, CScript([OP_1])))
         # result = node.fundrawtransaction(tx1.toHex())
         result = self.node.signrawtransaction(tx1.toHex())
-        print(result)
+        # print(result)
         tx1 = CTransaction(result)
         self.invGetdata(tx1)
         tx1rpcIdem = util.uint256ToRpcHex(tx1.GetIdem())
@@ -124,7 +133,6 @@ def Test():
     #signal.signal(signal.SIGINT, lambda sig, stk: pdb.Pdb().set_trace(stk))
     bitcoinConf = {
         "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
     }
     flags = standardFlags()
     # logging.getLogger().setLevel(logging.DEBUG)

@@ -93,17 +93,17 @@ BOOST_AUTO_TEST_CASE(pushtxstate)
     CMutableTransaction tx;
     CScript simpleConstraint = CScript() << OP_1;
     std::vector<CTxOut> coins;
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 12345678, simpleConstraint));
+    tx.vout.push_back(CTxOut(12345678, simpleConstraint));
 
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 23456789, simpleConstraint));
+    coins.push_back(CTxOut(23456789, simpleConstraint));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 23456789));
     s = CScript() << PushTxStateSpecifier::TX_INCOMING_AMOUNT << OP_PUSH_TX_STATE << 23456789 << OP_EQUAL;
     testScript(s, &tx, coins);
     s = CScript() << PushTxStateSpecifier::TX_OUTGOING_AMOUNT << OP_PUSH_TX_STATE << 12345678 << OP_EQUAL;
     testScript(s, &tx, coins);
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 34567890, simpleConstraint));
+    coins.push_back(CTxOut(34567890, simpleConstraint));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 34567890));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 45678901, simpleConstraint));
+    tx.vout.push_back(CTxOut(45678901, simpleConstraint));
 
     s = CScript() << PushTxStateSpecifier::TX_INCOMING_AMOUNT << OP_PUSH_TX_STATE << (23456789 + 34567890) << OP_EQUAL;
     testScript(s, &tx, coins);
@@ -203,17 +203,17 @@ BOOST_AUTO_TEST_CASE(covenantedAndSubgroupPushtxstate)
     CGroupTokenID subgrp(subgrpbytes);
 
     // Pull in 2 inputs and make sure that the first one is set as the covenant.
-    coins.push_back(CTxOut(CTxOut::TEMPLATE, 10, tmplop1(grp1, 100)));
+    coins.push_back(CTxOut(10, tmplop1(grp1, 100)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
-    coins.push_back(CTxOut(CTxOut::TEMPLATE, 10, tmplop1op1(grp1, 200)));
+    coins.push_back(CTxOut(10, tmplop1op1(grp1, 200)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
     // Pull in a subgroup and try to use it
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, gp2op1(subgrp, 200)));
+    coins.push_back(CTxOut(10, gp2op1(subgrp, 200)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
 
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, simpleConstraint));
-    tx.vout.push_back(CTxOut(CTxOut::TEMPLATE, 1, tmplop1(grp1, 300)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(subgrp, 200)));
+    tx.vout.push_back(CTxOut(10, simpleConstraint));
+    tx.vout.push_back(CTxOut(1, tmplop1(grp1, 300)));
+    tx.vout.push_back(CTxOut(1, gp2op1(subgrp, 200)));
 
     // the first input template
     CScript tmpl = CScript() << OP_1;
@@ -254,25 +254,25 @@ BOOST_AUTO_TEST_CASE(groupauthoritypushtxstate)
     int64_t auth1 =
         (int64_t)(GroupAuthorityFlags::AUTHORITY | GroupAuthorityFlags::MINT | GroupAuthorityFlags::SUBGROUP);
     int64_t auth2 = (int64_t)(GroupAuthorityFlags::AUTHORITY | GroupAuthorityFlags::MELT | GroupAuthorityFlags::BATON);
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, gp2op1(grp1, auth1)));
+    coins.push_back(CTxOut(10, gp2op1(grp1, auth1)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, gp2op1(grp2, auth2)));
+    coins.push_back(CTxOut(10, gp2op1(grp2, auth2)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, gp2op1(grp2, 600)));
+    coins.push_back(CTxOut(10, gp2op1(grp2, 600)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10000, gp2op1(fgrp1, 0)));
+    coins.push_back(CTxOut(10000, gp2op1(fgrp1, 0)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10000));
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 2345, gp2op1(fgrp1, 0)));
+    coins.push_back(CTxOut(2345, gp2op1(fgrp1, 0)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 2345));
 
     // Create a tx involving 2 groups with 3 inputs and 4 outputs
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 9, simpleConstraint));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp1, 1234)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp1, 1)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp2, 2)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp2, 3)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 12345, gp2op1(fgrp1, 0)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp2, auth2))); // Output a child authority
+    tx.vout.push_back(CTxOut(9, simpleConstraint));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp1, 1234)));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp1, 1)));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp2, 2)));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp2, 3)));
+    tx.vout.push_back(CTxOut(12345, gp2op1(fgrp1, 0)));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp2, auth2))); // Output a child authority
 
     TestAmountsAndCounts(tx, coins, grp1, 0, 1, 1235, 2); // counts include authorities
     TestAmountsAndCounts(tx, coins, grp2, 600, 2, 5, 3);
@@ -305,17 +305,17 @@ BOOST_AUTO_TEST_CASE(grouppushtxstate)
 
 
     // Create a tx involving 2 groups with 3 inputs and 4 outputs
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, simpleConstraint));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp1, 7)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp2, 1)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp2, 2)));
-    tx.vout.push_back(CTxOut(CTxOut::SATOSCRIPT, 1, gp2op1(grp2, 3)));
+    tx.vout.push_back(CTxOut(1, simpleConstraint));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp1, 7)));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp2, 1)));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp2, 2)));
+    tx.vout.push_back(CTxOut(1, gp2op1(grp2, 3)));
 
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, gp2op1(grp1, 3)));
+    coins.push_back(CTxOut(10, gp2op1(grp1, 3)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, gp2op1(grp1, 4)));
+    coins.push_back(CTxOut(10, gp2op1(grp1, 4)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
-    coins.push_back(CTxOut(CTxOut::SATOSCRIPT, 10, gp2op1(grp2, 6)));
+    coins.push_back(CTxOut(10, gp2op1(grp2, 6)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
 
     TestAmountsAndCounts(tx, coins, grp1, 7, 2, 7, 1);

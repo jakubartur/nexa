@@ -27,7 +27,6 @@ CGroupTokenID GetGroupToken(const CTxDestination &id);
 CGroupTokenID GetGroupToken(const std::string &cashAddrGrpId, const CChainParams &params = Params());
 
 CTxDestination ControllingAddress(const CGroupTokenID &grp, txnouttype addrType);
-std::string EncodeGroupToken(const CGroupTokenID &grp, const CChainParams &params = Params());
 
 //* Calculate a group ID based on the provided inputs.  Pass and empty script to opRetTokDesc if there is not
 // going to be an OP_RETURN output in the transaction.

@@ -117,7 +117,7 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         # next block size hasn't yet changed because the median has not changed beyond the default value.
         logging.info("Test max adaptive block size not exceeded")
         self.MineBlock(self.nodes[0], 100000, 10, 11000)
-        assert_greater_than(96610, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
+        assert_greater_than(96900, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
         assert_greater_than(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"], 96200)
         assert_equal(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"], 100000)
         assert_equal(self.nodes[0].getblockcount(), 151)
@@ -143,7 +143,7 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         nextblocksize = self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"];
         self.MineBlock(self.nodes[0], 100000, 10, 11000)
         assert_greater_than(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"], 110000)
-        assert_greater_than(110400, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
+        assert_greater_than(110700, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
         assert_greater_than(nextblocksize, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
         assert_greater_than(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"], 116400)
         assert_greater_than(117500, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"])
@@ -162,7 +162,7 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         self.MineBlock(self.nodes[0], 120000, 10, 11000)
         nextblocksize = self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"];
         assert_greater_than(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"], 110200)
-        assert_greater_than(110400, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
+        assert_greater_than(110700, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
         assert_greater_than(nextblocksize, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
         assert_greater_than(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"], 121300)
         assert_greater_than(122600, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"])
@@ -172,7 +172,7 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         self.MineBlock(self.nodes[0], 120000, 10, 11000)
         nextblocksize = self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"];
         assert_greater_than(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"], 110200)
-        assert_greater_than(110400, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
+        assert_greater_than(110700, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
         assert_greater_than(nextblocksize, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["blocksize"])
         assert_greater_than(self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"], 121300)
         assert_greater_than(122600, self.nodes[0].getblockstats(self.nodes[0].getbestblockhash())["nextmaxblocksize"])

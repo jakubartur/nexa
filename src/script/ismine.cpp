@@ -8,6 +8,7 @@
 
 #include "core_io.h" // freeze debug only
 
+#include "chain.h"
 #include "key.h"
 #include "keystore.h"
 #include "script/script.h"
@@ -89,102 +90,112 @@ static isminetype IsMine(const CKeyStore &keystore,
     CBlockIndex *bestBlock,
     bool alreadyLocked)
 {
-    vector<valtype> vSolutions;
-    txnouttype whichType;
-    if (!Solver(scriptPubKey, whichType, vSolutions))
+    if (scriptPubKey.type == ScriptType::TEMPLATE)
     {
-        if (keystore.HaveWatchOnly(scriptPubKey))
-            return ISMINE_WATCH_UNSOLVABLE;
-        return ISMINE_NO;
+        return keystore.HaveTemplate(scriptPubKey);
     }
-
-    CKeyID keyID;
-    switch (whichType)
+    else
     {
-    case TX_NONSTANDARD:
-    case TX_NULL_DATA:
-    case TX_LABELPUBLIC:
-        break;
-    case TX_PUBKEY:
-    {
-        keyID = CPubKey(vSolutions[0]).GetID();
-        bool haveKey = alreadyLocked ? keystore._HaveKey(keyID) : keystore.HaveKey(keyID);
-        if (haveKey)
-            return ISMINE_SPENDABLE;
-    }
-    break;
-    case TX_PUBKEYHASH:
-    case TX_GRP_PUBKEYHASH:
-    {
-        keyID = CKeyID(uint160(vSolutions[0]));
-        bool haveKey = alreadyLocked ? keystore._HaveKey(keyID) : keystore.HaveKey(keyID);
-        if (haveKey)
-            return ISMINE_SPENDABLE;
-    }
-    break;
-    case TX_SCRIPTHASH:
-    case TX_GRP_SCRIPTHASH:
-    {
-        CScriptID scriptID = CScriptID(uint160(vSolutions[0]));
-        CScript subscript;
-        if (keystore.GetCScript(scriptID, subscript))
+        vector<valtype> vSolutions;
+        txnouttype whichType;
+        if (!Solver(scriptPubKey, whichType, vSolutions))
         {
-            isminetype ret = IsMine(keystore, subscript, bestBlock);
-            // FIXME do not always log, use a  specific debug category or create one if no others fit
-            LOGA("Freeze SUBSCRIPT = %s! **** MINE=%d  *****  \n", ::ScriptToAsmStr(subscript), ret);
-            // if (ret == ISMINE_SPENDABLE) TODO Don't understand why this line was required. Had to comment it so all
-            // minetypes in subscripts (eg CLTV) are recognizable
-            return ret;
+            if (keystore.HaveWatchOnly(scriptPubKey))
+                return ISMINE_WATCH_UNSOLVABLE;
+            return ISMINE_NO;
+        }
+
+        CKeyID keyID;
+        switch (whichType)
+        {
+        case TX_SCRIPT_TEMPLATE:
+            // actually handled in if clause above
+            return ISMINE_NO;
+        case TX_NONSTANDARD:
+        case TX_NULL_DATA:
+        case TX_LABELPUBLIC:
+            break;
+        case TX_PUBKEY:
+        {
+            keyID = CPubKey(vSolutions[0]).GetID();
+            bool haveKey = alreadyLocked ? keystore._HaveKey(keyID) : keystore.HaveKey(keyID);
+            if (haveKey)
+                return ISMINE_SPENDABLE;
         }
         break;
-    }
-    case TX_MULTISIG:
-    {
-        // Only consider transactions "mine" if we own ALL the
-        // keys involved. Multi-signature transactions that are
-        // partially owned (somebody else has a key that can spend
-        // them) enable spend-out-from-under-you attacks, especially
-        // in shared-wallet situations.
-        vector<valtype> keys(vSolutions.begin() + 1, vSolutions.begin() + vSolutions.size() - 1);
-        if (HaveKeys(keys, keystore) == keys.size())
-            return ISMINE_SPENDABLE;
-        break;
-    }
-    case TX_CLTV:
-    {
-        keyID = CPubKey(vSolutions[1]).GetID();
-        bool haveKey = alreadyLocked ? keystore._HaveKey(keyID) : keystore.HaveKey(keyID);
-        if (haveKey)
+        case TX_PUBKEYHASH:
+        case TX_GRP_PUBKEYHASH:
         {
-            CScriptNum nFreezeLockTime(vSolutions[0], true, 5);
-
-            // FIXME do not always log, use a  specific debug category or create one if no others fit
-            LOGA("Found Freeze Have Key. nFreezeLockTime=%d. BestBlockHeight=%d \n", nFreezeLockTime.getint64(),
-                bestBlock->height());
-            if (nFreezeLockTime < LOCKTIME_THRESHOLD)
+            keyID = CKeyID(uint160(vSolutions[0]));
+            bool haveKey = alreadyLocked ? keystore._HaveKey(keyID) : keystore.HaveKey(keyID);
+            if (haveKey)
+                return ISMINE_SPENDABLE;
+        }
+        break;
+        case TX_SCRIPTHASH:
+        case TX_GRP_SCRIPTHASH:
+        {
+            CScriptID scriptID = CScriptID(uint160(vSolutions[0]));
+            CScript subscript;
+            if (keystore.GetCScript(scriptID, subscript))
             {
-                // locktime is a block
-                if (nFreezeLockTime > bestBlock->height())
-                    return ISMINE_WATCH_SOLVABLE;
+                isminetype ret = IsMine(keystore, subscript, bestBlock);
+                // FIXME do not always log, use a  specific debug category or create one if no others fit
+                LOGA("Freeze SUBSCRIPT = %s! **** MINE=%d  *****  \n", ::ScriptToAsmStr(subscript), ret);
+                // if (ret == ISMINE_SPENDABLE) TODO Don't understand why this line was required. Had to comment it so
+                // all minetypes in subscripts (eg CLTV) are recognizable
+                return ret;
+            }
+            break;
+        }
+        case TX_MULTISIG:
+        {
+            // Only consider transactions "mine" if we own ALL the
+            // keys involved. Multi-signature transactions that are
+            // partially owned (somebody else has a key that can spend
+            // them) enable spend-out-from-under-you attacks, especially
+            // in shared-wallet situations.
+            vector<valtype> keys(vSolutions.begin() + 1, vSolutions.begin() + vSolutions.size() - 1);
+            if (HaveKeys(keys, keystore) == keys.size())
+                return ISMINE_SPENDABLE;
+            break;
+        }
+        case TX_CLTV:
+        {
+            keyID = CPubKey(vSolutions[1]).GetID();
+            bool haveKey = alreadyLocked ? keystore._HaveKey(keyID) : keystore.HaveKey(keyID);
+            if (haveKey)
+            {
+                CScriptNum nFreezeLockTime(vSolutions[0], true, 5);
+
+                // FIXME do not always log, use a  specific debug category or create one if no others fit
+                LOGA("Found Freeze Have Key. nFreezeLockTime=%d. BestBlockHeight=%d \n", nFreezeLockTime.getint64(),
+                    bestBlock->height());
+                if (nFreezeLockTime < LOCKTIME_THRESHOLD)
+                {
+                    // locktime is a block
+                    if (nFreezeLockTime > bestBlock->height())
+                        return ISMINE_WATCH_SOLVABLE;
+                    else
+                        return ISMINE_SPENDABLE;
+                }
                 else
-                    return ISMINE_SPENDABLE;
+                {
+                    // locktime is a time
+                    if (nFreezeLockTime > bestBlock->GetMedianTimePast())
+                        return ISMINE_WATCH_SOLVABLE;
+                    else
+                        return ISMINE_SPENDABLE;
+                }
             }
             else
             {
-                // locktime is a time
-                if (nFreezeLockTime > bestBlock->GetMedianTimePast())
-                    return ISMINE_WATCH_SOLVABLE;
-                else
-                    return ISMINE_SPENDABLE;
+                LOGA("Found Freeze DONT HAVE KEY!! \n");
+                return ISMINE_NO;
             }
         }
-        else
-        {
-            LOGA("Found Freeze DONT HAVE KEY!! \n");
-            return ISMINE_NO;
-        }
+        } // switch
     }
-    } // switch
 
     if (keystore.HaveWatchOnly(scriptPubKey))
     {
@@ -193,6 +204,7 @@ static isminetype IsMine(const CKeyStore &keystore,
         return ProduceSignature(DummySignatureCreator(&keystore), scriptPubKey, scriptSig) ? ISMINE_WATCH_SOLVABLE :
                                                                                              ISMINE_WATCH_UNSOLVABLE;
     }
+
     return ISMINE_NO;
 }
 

@@ -140,6 +140,27 @@ static bool SignStep(const BaseSignatureCreator &creator,
     CKeyID keyID;
     switch (whichTypeRet)
     {
+    case TX_SCRIPT_TEMPLATE:
+    {
+        const CKeyStore &keystore = creator.KeyStore();
+        // Solver parses out stuff like the group, so mash back together the important items and look that up in our
+        // keystore rather then looking the scriptPubKey up directly.
+        // Really though, we need to look up the script in whatever way someone might have stored it, so there might
+        // be other searches here in the future.  This one will catch all "well-known" scripts.
+        CScript strippedScript = ScriptTemplateOutput(vSolutions[0], vSolutions[1]);
+        {
+            LOCK(keystore.cs_KeyStore);
+            const Spendable *sp = keystore._GetTemplate(strippedScript);
+            if (!sp)
+                return false; // I can't sign this; I don't know about it
+            // Spendable knows how to create a scriptSig... but it doesn't know how to actually sign
+            // but the signature creator does.
+            scriptSigRet = sp->SpendScript(creator);
+            if (scriptSigRet.size() == 0)
+                return false;
+        }
+    }
+        return true;
     // These are OP_RETURN unspendable outputs so they should never be an input that needs signing
     case TX_LABELPUBLIC:
     case TX_NONSTANDARD:
@@ -343,6 +364,7 @@ static CScript CombineSignatures(const CScript &scriptPubKey,
 {
     switch (txType)
     {
+    case TX_SCRIPT_TEMPLATE:
     case TX_NONSTANDARD:
     case TX_NULL_DATA:
         // Don't know anything about this, assume bigger one is correct:

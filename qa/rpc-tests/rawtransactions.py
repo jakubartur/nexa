@@ -203,7 +203,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         wallet.sort(key=lambda x: x["amount"], reverse=False)
         utxo = wallet.pop()
         amt = utxo["amount"]
-        addr = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress())["legacy"]
+        addr = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress("p2pkh"))["legacy"]
         outp = {addr: amt-decimal.Decimal(100)}  # give some fee
         txn = createrawtransaction([utxo], outp, createWastefulOutput)  # create a nonstandard tx
         signedtxn = self.nodes[0].signrawtransaction(txn)
@@ -287,7 +287,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         # finally, let's make sure that a standard tx works with the standard flag set
         utxo = wallet.pop()
         amt = utxo["amount"]
-        addr = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress())["legacy"]
+        addr = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress("p2pkh"))["legacy"]
         outp = {addr: amt-decimal.Decimal(100)}  # give some fee
         txn = createrawtransaction([utxo], outp, p2pkh)  # create a standard tx
         signedtxn = self.nodes[0].signrawtransaction(txn)
@@ -314,8 +314,8 @@ class RawTransactionsTest(BitcoinTestFramework):
 
         # 4a. valid parameters - supply a txid that is in the orphanpool
         unknown_txid = "c5c6ef8d06b90564e6c5451d7650b8dfc44349bee73ad85519bec3d24a680f23"
-        address1 = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress())["legacy"]
-        address2 = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress())["legacy"]
+        address1 = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress("p2pkh"))["legacy"]
+        address2 = self.nodes[0].getaddressforms(self.nodes[0].getnewaddress("p2pkh"))["legacy"]
         outputs = {address1 : 49000000, address2 : 1000000}
         inputs = []
         inputs.append({ "outpoint" : unknown_txid, "amount" : 51})

@@ -64,9 +64,12 @@ std::string CTxIn::ToString() const
     return str;
 }
 
-CTxOut::CTxOut(uint8_t typeIn, const CAmount &nValueIn, CScript scriptPubKeyIn)
+CTxOut::CTxOut(const CAmount &nValueIn, CScript scriptPubKeyIn, uint16_t typeIn)
 {
-    type = typeIn;
+    if ((typeIn & INFER) > 0)
+        type = (scriptPubKeyIn.type == ScriptType::TEMPLATE) ? CTxOut::TEMPLATE : CTxOut::SATOSCRIPT;
+    else
+        type = (uint8_t)typeIn;
     nValue = nValueIn;
     scriptPubKey = scriptPubKeyIn;
 }

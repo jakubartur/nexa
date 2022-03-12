@@ -141,10 +141,8 @@ CTransactionRef BlockAssembler::coinbaseTx(const CScript &scriptPubKeyIn, int _n
     tx.vout.resize(2);
     // Coinbase uniquification must be stored in a vout because idem does not cover scriptSig
     const int dataIdx = 1;
-    tx.vout[dataIdx].scriptPubKey = CScript() << OP_RETURN << _nHeight;
-    tx.vout[dataIdx].nValue = 0;
-    tx.vout[0].scriptPubKey = scriptPubKeyIn;
-    tx.vout[0].nValue = nValue;
+    tx.vout[dataIdx] = CTxOut(0, CScript() << OP_RETURN << _nHeight);
+    tx.vout[0] = CTxOut(nValue, scriptPubKeyIn);
 
     // BU005 add block size settings to the coinbase
     std::string cbmsg = FormatCoinbaseMessage(BUComments, minerComment);

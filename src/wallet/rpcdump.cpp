@@ -604,7 +604,9 @@ UniValue importpubkey(const UniValue &params, bool fHelp)
 
     LOCK2(cs_main, pwalletMain->cs_wallet);
 
+    // Import a few different ways to use this pubkey
     ImportAddress(pubKey.GetID(), strLabel);
+    ImportAddress(ScriptTemplateDestination(P2pktOutput(pubKey)), strLabel);
     ImportScript(GetScriptForRawPubKey(pubKey), strLabel, false);
 
     if (fRescanLocal)
@@ -754,13 +756,8 @@ UniValue dumpprivkey(const UniValue &params, bool fHelp)
     {
         throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
     }
-    const CKeyID *keyID = boost::get<CKeyID>(&dest);
-    if (!keyID)
-    {
-        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to a key");
-    }
     CKey vchSecret;
-    if (!pwalletMain->GetKey(*keyID, vchSecret))
+    if (!pwalletMain->GetKey(dest, vchSecret))
         throw JSONRPCError(RPC_WALLET_ERROR, "Private key for address " + strAddress + " is not known");
     return CBitcoinSecret(vchSecret).ToString();
 }

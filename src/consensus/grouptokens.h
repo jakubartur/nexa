@@ -143,6 +143,9 @@ public:
     bool hasFlag(GroupTokenIdFlags flag) const;
 };
 
+/** Convert a groupID to a string */
+std::string EncodeGroupToken(const CGroupTokenID &grp, const CChainParams &params = Params());
+
 namespace std
 {
 template <>

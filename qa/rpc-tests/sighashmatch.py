@@ -65,8 +65,9 @@ class SigHashMatchTest(BitcoinTestFramework):
         utxo = unspents.pop()
         amt = utxo["amount"]
         addr = utxo["address"]
-        outp = {"dummy" : amt - 1000}  # give some fee
-        txn = CTransaction().deserialize(createrawtransaction([utxo], outp, p2pkh))
+        outp = { "dummy" : amt - 1000}  # give some fee
+        hextx = createrawtransaction([utxo], outp, p2pkh)
+        txn = CTransaction().deserialize(hextx)
 
         # create signature manually using txn.SignatureHash() calculation
         # plus the new signdata RPC call, append the sighashbyte and make sure
@@ -78,13 +79,13 @@ class SigHashMatchTest(BitcoinTestFramework):
         key.set_compressed(True)
         pub = key.get_pubkey()
 
-        scriptcode = CScript([pub, OP_CHECKSIG])
+        scriptcode = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
         hashcode = SIGHASH_ALL | SIGHASH_FORKID
         sighash = txn.SignatureHash(0, bytes(scriptcode), int(amt*COIN), hashcode, debug=False)
-        txn_mansig = unhexlify(self.nodes[0].signdata(addr, "hash",
-                                            hexlify(sighash).decode("ascii")))
+        txn_mansig = unhexlify(self.nodes[0].signdata(addr, "hash", hexlify(sighash).decode("ascii")))
         fullsig = txn_mansig+bytes([hashcode])
-        txn.vin[0].scriptSig = CScript([fullsig])
+        templateArgs = CScript([pub])
+        txn.vin[0].scriptSig = CScript([templateArgs, fullsig])
         txid = self.nodes[0].sendrawtransaction(txn.toHex())
         assert len(txid) == 64
 
@@ -99,7 +100,6 @@ def Test():
     t.drop_to_pdb = True
     bitcoinConf = {
         "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000,  # we don't want any transactions rejected due to insufficient fees...
         "usecashaddr" : 0
     }
     flags = standardFlags()

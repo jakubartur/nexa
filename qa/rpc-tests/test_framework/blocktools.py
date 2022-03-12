@@ -69,7 +69,7 @@ def gen_return_txouts():
 # Create a spend of each passed-in utxo, splicing in "txouts" to each raw
 # transaction to make it large.  See gen_return_txouts() above.
 def create_lots_of_big_transactions(node, txouts, utxos, num, feePerKb):
-    addr = node.getnewaddress()
+    addr = node.getnewaddress("p2pkh")
     txidems = []
     txids = []
     fee = 0
@@ -220,6 +220,13 @@ this is junk data. this is junk data. this is junk data. this is junk data. this
 def p2pkh(btcAddress):
     """ create a pay-to-public-key-hash script"""
     ret = CScript([OP_DUP, OP_HASH160, address2bin(btcAddress), OP_EQUALVERIFY, OP_CHECKSIG])
+    return ret
+
+def p2t(btcAddress):
+    """ create a pay-to-template script"""
+    pdb.set_trace()
+    tmp = address2bin(btcAddress)
+    ret = CScript(tmp)
     return ret
 
 def spend_coinbase_tx(node, coinbase, to_address, amount, in_amount=None):

@@ -235,3 +235,19 @@ CScript P2pktOutput(const CPubKey &pubkey, const CGroupTokenID& group, CAmount g
     CScript tArgs = CScript() << ToByteVector(pubkey);
     return ScriptTemplateOutput(p2pktId, VchHash160(tArgs), VchType(), group, grpQuantity);
 }
+
+
+CScript UngroupedScriptTemplate(const CScript &templateIn)
+{
+    CScript::const_iterator rest = templateIn.begin();
+    CGroupTokenInfo groupInfo;
+    VchType templateHash;
+    VchType argsHash;
+    ScriptTemplateError terror = GetScriptTemplate(templateIn, &groupInfo, &templateHash, &argsHash, &rest);
+    if (terror == ScriptTemplateError::OK)
+    {
+        VchType restOfScript(rest, templateIn.end());
+        return ScriptTemplateOutput(templateHash, argsHash, restOfScript);
+    }
+    DbgAssert(false, return templateIn);
+}

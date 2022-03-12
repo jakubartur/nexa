@@ -11,6 +11,7 @@
 #include "main.h"
 #include "net.h"
 #include "netbase.h"
+#include "rpc/blockchain.h"
 #include "rpc/server.h"
 #include "timedata.h"
 #include "util.h"
@@ -154,10 +155,19 @@ public:
         UniValue obj(UniValue::VOBJ);
         CPubKey vchPubKey;
         obj.pushKV("isscript", false);
-        if (pwalletMain && pwalletMain->GetPubKey(keyID, vchPubKey))
+        if (pwalletMain)
         {
-            obj.pushKV("pubkey", HexStr(vchPubKey));
-            obj.pushKV("iscompressed", vchPubKey.IsCompressed());
+            if (pwalletMain->GetPubKey(keyID, vchPubKey))
+            {
+                obj.pushKV("pubkey", HexStr(vchPubKey));
+                obj.pushKV("iscompressed", vchPubKey.IsCompressed());
+            }
+            auto keyMd = pwalletMain->mapKeyMetadata.find(keyID);
+            if ((keyMd != pwalletMain->mapKeyMetadata.end()) && !keyMd->second.hdKeypath.empty())
+            {
+                obj.pushKV("hdkeypath", keyMd->second.hdKeypath);
+                obj.pushKV("hdmasterkeyid", keyMd->second.hdMasterKeyID.GetHex());
+            }
         }
         return obj;
     }
@@ -190,7 +200,21 @@ public:
     UniValue operator()(const ScriptTemplateDestination &id) const
     {
         UniValue obj(UniValue::VOBJ);
-        // TODO
+        CPubKey pub;
+        // If we can get a controlling pubkey out of this script, print info about it
+        if (pwalletMain && pwalletMain->CBasicKeyStore::GetPubKey(id, pub))
+        {
+            obj.pushKV("pubkey", HexStr(pub));
+            obj.pushKV("iscompressed", pub.IsCompressed());
+            const CKeyID &keyID = pub.GetID();
+            auto keyMd = pwalletMain->mapKeyMetadata.find(keyID);
+            if ((keyMd != pwalletMain->mapKeyMetadata.end()) && !keyMd->second.hdKeypath.empty())
+            {
+                obj.pushKV("hdkeypath", keyMd->second.hdKeypath);
+                obj.pushKV("hdmasterkeyid", keyMd->second.hdMasterKeyID.GetHex());
+            }
+        }
+        ScriptPubKeyToJSON(id.toScript(), obj, true);
         return obj;
     }
 };
@@ -251,16 +275,6 @@ UniValue validateaddress(const UniValue &params, bool fHelp)
         ret.pushKVs(detail);
         if (pwalletMain && pwalletMain->mapAddressBook.count(dest))
             ret.pushKV("account", pwalletMain->mapAddressBook[dest].name);
-        const CKeyID *keyID = boost::get<CKeyID>(&dest);
-        if (keyID)
-        {
-            if (pwalletMain && pwalletMain->mapKeyMetadata.count(*keyID) &&
-                !pwalletMain->mapKeyMetadata[*keyID].hdKeypath.empty())
-            {
-                ret.pushKV("hdkeypath", pwalletMain->mapKeyMetadata[*keyID].hdKeypath);
-                ret.pushKV("hdmasterkeyid", pwalletMain->mapKeyMetadata[*keyID].hdMasterKeyID.GetHex());
-            }
-        }
 #endif
     }
     return ret;

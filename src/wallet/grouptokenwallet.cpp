@@ -104,12 +104,6 @@ CGroupTokenID GetGroupToken(const std::string &addr, const CChainParams &params)
     return CGroupTokenID();
 }
 
-std::string EncodeGroupToken(const CGroupTokenID &grp, const CChainParams &params)
-{
-    return EncodeCashAddr(grp.bytes(), CashAddrType::GROUP_TYPE, params);
-}
-
-
 class CGroupScriptVisitor : public boost::static_visitor<bool>
 {
 private:
@@ -375,9 +369,8 @@ uint64_t RenewAuthority(const COutput &authority, std::vector<CRecipient> &outpu
         // Get a new address from the wallet to put the new mint authority in.
         CPubKey pubkey;
         childAuthorityKey.GetReservedKey(pubkey);
-        CTxDestination authDest = pubkey.GetID();
-        CScript script = GetScriptForDestination(
-            authDest, tg.associatedGroup, (CAmount)(tg.controllingGroupFlags & GroupAuthorityFlags::ALL_FLAG_BITS));
+        CScript script = P2pktOutput(
+            pubkey, tg.associatedGroup, (CAmount)(tg.controllingGroupFlags & GroupAuthorityFlags::ALL_FLAG_BITS));
         CRecipient recipient = {script, GROUPED_SATOSHI_AMT, false};
         outputs.push_back(recipient);
         totalBchNeeded += GROUPED_SATOSHI_AMT;
@@ -411,7 +404,7 @@ void ConstructTx(CWalletTx &wtxNew,
         // Add group outputs based on the passed recipient data to the tx.
         for (const CRecipient &recipient : outputs)
         {
-            CTxOut txout(CTxOut::SATOSCRIPT, recipient.nAmount, recipient.scriptPubKey);
+            CTxOut txout(recipient.nAmount, recipient.scriptPubKey);
             tx.vout.push_back(txout);
             approxSize += ::GetSerializeSize(txout, SER_DISK, CLIENT_VERSION);
         }
@@ -434,8 +427,7 @@ void ConstructTx(CWalletTx &wtxNew,
                 throw JSONRPCError(
                     RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
-            CTxOut txout(CTxOut::SATOSCRIPT, GROUPED_SATOSHI_AMT,
-                GetScriptForDestination(newKey.GetID(), grpID, totalGroupedAvailable - totalGroupedNeeded));
+            CTxOut txout(GROUPED_SATOSHI_AMT, P2pktOutput(newKey, grpID, totalGroupedAvailable - totalGroupedNeeded));
             tx.vout.push_back(txout);
             approxSize += ::GetSerializeSize(txout, SER_DISK, CLIENT_VERSION);
         }
@@ -480,8 +472,7 @@ void ConstructTx(CWalletTx &wtxNew,
                 throw JSONRPCError(
                     RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
 
-            CTxOut txout(
-                CTxOut::SATOSCRIPT, totalAvailable - totalNeeded - fee, GetScriptForDestination(newKey.GetID()));
+            CTxOut txout(totalAvailable - totalNeeded - fee, P2pktOutput(newKey));
             // figure out what the additional fee will be for the change output
             approxSize += ::GetSerializeSize(txout, SER_DISK, CLIENT_VERSION);
             fee = wallet->GetRequiredFee(approxSize) + TOKEN_EXTRA_FEE;
@@ -968,10 +959,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
         LOCK(wallet->cs_wallet);
         unsigned int curparam = 1;
 
-        // CCoinControl coinControl;
-        // coinControl.fAllowOtherInputs = true; // Allow a normal bitcoin input for change
         COutput coin;
-
         {
             std::vector<COutput> coins;
             CAmount lowest = MAX_MONEY;
@@ -1010,7 +998,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
         {
             CPubKey authKey;
             authKeyReservation.GetReservedKey(authKey);
-            authDest = authKey.GetID();
+            authDest = ScriptTemplateDestination(P2pktOutput(authKey));
         }
         else
         {
@@ -1025,7 +1013,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
                 }
                 CPubKey authKey;
                 authKeyReservation.GetReservedKey(authKey);
-                authDest = authKey.GetID();
+                authDest = ScriptTemplateDestination(P2pktOutput(authKey));
             }
             curparam++;
         }
@@ -1036,6 +1024,8 @@ extern UniValue token(const UniValue &params, bool fHelp)
 
         CScript script =
             GetScriptForDestination(authDest, grpID, (CAmount)GroupAuthorityFlags::ACTIVE_FLAG_BITS | grpNonce);
+        if (script.size() == 0)
+            throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid destination address (not a script template)");
         CRecipient recipient = {script, GROUPED_SATOSHI_AMT, false};
         outputs.push_back(recipient);
         totalNeeded += recipient.nAmount;

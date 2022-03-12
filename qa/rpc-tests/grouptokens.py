@@ -43,8 +43,7 @@ class GroupTokensTest (BitcoinTestFramework):
         for t in txjson["vout"]:
             asm = t["scriptPubKey"]["asm"].split()
             assert(len(asm) > 0)  # output script must be something
-
-            if asm[2] == "OP_GROUP":
+            if "group" in t["scriptPubKey"]:
                 hasGroupOutput += 1
                 groupFlags = int(asm[1], 10)
 
@@ -308,7 +307,6 @@ def Test():
     t.drop_to_pdb = True
     bitcoinConf = {
         "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
     }
     logging.getLogger().setLevel(logging.INFO)
     # you may want these additional flags:

@@ -35,6 +35,10 @@ def waitForRescan(node):
 
 class WalletTest (BitcoinTestFramework):
 
+    def add_options(self, parser):
+        parser.add_option("--addrType", dest="addrType", default="p2pkt", action="store",
+                          help="Choose p2pkt or p2pkh address types to use with the wallet")
+
     def check_fee_amount(self, curr_balance, balance_with_fee, fee_per_byte, tx_size):
         """Return curr_balance after asserting the fee was in range"""
         fee = balance_with_fee - curr_balance
@@ -58,6 +62,7 @@ class WalletTest (BitcoinTestFramework):
         self.sync_blocks()
 
     def run_test (self):
+        addrType = self.options.addrType
 
         # Check that there's no UTXO on none of the nodes
         assert_equal(len(self.nodes[0].listunspent()), 0)
@@ -90,8 +95,8 @@ class WalletTest (BitcoinTestFramework):
 
         # Send 21 BTC from 0 to 2 using sendtoaddress call.
         # Second transaction will be child of first, and will require a fee
-        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 5000000)
-        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 4000000)
+        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), 5000000)
+        self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), 4000000)
         SentAmt = 9000000
 
         walletinfo = self.nodes[0].getwalletinfo()
@@ -113,7 +118,7 @@ class WalletTest (BitcoinTestFramework):
         tmp = {"txidem": unspent_0["txidem"], "vout": unspent_0["vout"]}
         tmp1 = unspent_0["outpoint"]
         self.nodes[2].lockunspent(False, [tmp])
-        assert_raises(JSONRPCException, self.nodes[2].sendtoaddress, self.nodes[2].getnewaddress(), 20000000)
+        assert_raises(JSONRPCException, self.nodes[2].sendtoaddress, self.nodes[2].getnewaddress(addrType), 20000000)
         assert_equal([{'outpoint': unspent_0['outpoint']}], self.nodes[2].listlockunspent())
         self.nodes[2].lockunspent(True, [tmp1])
         assert_equal(len(self.nodes[2].listlockunspent()), 0)
@@ -139,9 +144,14 @@ class WalletTest (BitcoinTestFramework):
             inputs = []
             outputs = {}
             inputs.append({ "outpoint" : utxo["outpoint"], "amount" : utxo["amount"]})
-            outputs[self.nodes[2].getnewaddress("from1")] = utxo["amount"]
+            outputs[self.nodes[2].getnewaddress(addrType, "from1")] = utxo["amount"]
             raw_tx = self.nodes[0].createrawtransaction(inputs, outputs)
-            txns_to_send.append(self.nodes[0].signrawtransaction(raw_tx))
+            signed_tx = self.nodes[0].signrawtransaction(raw_tx)
+            if not signed_tx['complete']:
+                pdb.set_trace()
+                signed_tx2 = self.nodes[0].signrawtransaction(raw_tx)
+            assert_equal(signed_tx['complete'], True)
+            txns_to_send.append(signed_tx)
 
         # Have node 1 (miner) send the transactions
         self.nodes[1].enqueuerawtransaction(txns_to_send[0]["hex"])
@@ -156,7 +166,7 @@ class WalletTest (BitcoinTestFramework):
         assert_equal(self.nodes[2].getbalance("from1"), COINBASE_REWARD*2-SentAmt)
 
         # Send 5 BTC normal
-        address = self.nodes[0].getnewaddress("test")
+        address = self.nodes[0].getnewaddress(addrType, "test")
         fee_per_byte = Decimal('100') / 1000
         self.nodes[2].settxfee(fee_per_byte * 1000)
         txid = self.nodes[2].sendtoaddress(address, 5000000, "", "", False)
@@ -194,8 +204,8 @@ class WalletTest (BitcoinTestFramework):
         # Create a couple of transactions, then start up a fourth
         # node (nodes[3]) and ask nodes[0] to rebroadcast.
         # EXPECT: nodes[3] should have those transactions in its txpool.
-        txid1 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000000)
-        txid2 = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(), 1000000)
+        txid1 = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(addrType), 1000000)
+        txid2 = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(addrType), 1000000)
         sync_mempools(self.nodes)
 
         self.nodes.append(start_node(3, self.options.tmpdir, ['-usehd=0']))
@@ -219,7 +229,7 @@ class WalletTest (BitcoinTestFramework):
         #4. check if recipient (node0) can list the zero value tx
         usp = self.nodes[1].listunspent()
         inputs = [{"outpoint":usp[0]['outpoint'], "amount":usp[0]['amount']}]
-        outputs = {self.nodes[1].getnewaddress(): COINBASE_REWARD - Decimal('200'), self.nodes[0].getnewaddress(): 11.11}
+        outputs = {self.nodes[1].getnewaddress(addrType): COINBASE_REWARD - Decimal('200'), self.nodes[0].getnewaddress(addrType): 11.11}
 
         rawTx = self.nodes[1].createrawtransaction(inputs, outputs).replace("c0833842", "00000000") #replace 11.11 with 0.0 (int32)
         decRawTx = self.nodes[1].decoderawtransaction(rawTx)
@@ -255,7 +265,7 @@ class WalletTest (BitcoinTestFramework):
         assert_equal(node1bal, node1restartbal)
         assert_equal(node2bal, node2restartbal)
 
-        txIdNotBroadcasted  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 2000000)
+        txIdNotBroadcasted  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), 2000000)
         txObjNotBroadcasted = self.nodes[0].gettransaction(txIdNotBroadcasted)
         self.nodes[1].generate(1) #mine a block, tx should not be in there
         self.sync_all()
@@ -270,7 +280,7 @@ class WalletTest (BitcoinTestFramework):
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
 
         #create another tx
-        txIdNotBroadcasted  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 2000000)
+        txIdNotBroadcasted  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), 2000000)
 
         #restart the nodes with -walletbroadcast=1
         stop_nodes(self.nodes)
@@ -288,29 +298,29 @@ class WalletTest (BitcoinTestFramework):
         assert_equal(self.nodes[2].getbalance(), node_2_bal)
 
         #send a tx with value in a string (PR#6380 +)
-        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "2000000")
+        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), "2000000")
         txObj = self.nodes[0].gettransaction(txId)
         assert_equal(txObj['amount'], Decimal('-2000000'))
         assert_equal(txObj['satoshi'], Decimal('-200000000'));
 
-        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "100")
+        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), "100")
         txObj = self.nodes[0].gettransaction(txId)
         assert_equal(txObj['amount'], Decimal('-100'))
         assert_equal(txObj['satoshi'], Decimal('-10000'))
 
         #check if JSON parser can handle scientific notation in strings
-        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), "100")
+        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), "100")
         txObj = self.nodes[0].gettransaction(txId)
         assert_equal(txObj['amount'], Decimal('-100'))
 
-        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(), 100)
+        txId  = self.nodes[0].sendtoaddress(self.nodes[2].getnewaddress(addrType), 100)
 
         # this is now a valid call because we convert on server side instead of client side
         self.nodes[0].generate("2")
 
         # Import address and private key to check correct behavior of spendable unspents
         # 1. Send some coins to generate new UTXO
-        address_to_import = self.nodes[2].getnewaddress()
+        address_to_import = self.nodes[2].getnewaddress(addrType)
         txid = self.nodes[0].sendtoaddress(address_to_import, 1000000)
         self.nodes[0].generate(1)
         self.sync_all()
@@ -336,7 +346,7 @@ class WalletTest (BitcoinTestFramework):
                            {"spendable": True})
 
         # Mine a block from node0 to an address from node1
-        cbAddr = self.nodes[1].getnewaddress()
+        cbAddr = self.nodes[1].getnewaddress(addrType)
         blkHash = self.nodes[0].generatetoaddress(1, cbAddr)[0]
         cbTxId = self.nodes[0].getblock(blkHash)['txid'][0]
         self.sync_all()
@@ -351,7 +361,7 @@ class WalletTest (BitcoinTestFramework):
 
         # test multiple private key import, and watch only address import
         bal = self.nodes[2].getbalance()
-        addrs = [ self.nodes[1].getnewaddress() for i in range(0,21)]
+        addrs = [ self.nodes[1].getnewaddress(addrType) for i in range(0,21)]
         pks   = [ self.nodes[1].dumpprivkey(x) for x in addrs]
         SendQty = Decimal("100000")
         for a in addrs:
@@ -398,12 +408,12 @@ class WalletTest (BitcoinTestFramework):
                                {"label": ""})
 
         # now try P2SH
-        btcAddress = self.nodes[1].getnewaddress()
+        btcAddress = self.nodes[1].getnewaddress(addrType)
         btcAddress = self.nodes[1].getaddressforms(btcAddress)["legacy"]
         ( p2shAddress, redeemScript) = GenerateSingleSigP2SH(btcAddress)
         self.nodes[0].sendtoaddress(p2shAddress,1000000)
 
-        btcAddress2 = self.nodes[1].getnewaddress()
+        btcAddress2 = self.nodes[1].getnewaddress(addrType)
         btcAddress2 = self.nodes[1].getaddressforms(btcAddress2)["legacy"]
         ( p2shAddress2, redeemScript2) = GenerateSingleSigP2SH(btcAddress2)
         self.nodes[0].sendtoaddress(p2shAddress2,1000000)

@@ -141,20 +141,17 @@ class DecodeScriptTest(BitcoinTestFramework):
         txSave.vin[0].scriptSig = origSatisfier[0:-1] + bytes([0x82])  # Lop off the sighash type (last byte) and add another
         decode = node.decoderawtransaction(txSave.toHex())
         assert "[NONE|ANYONECANPAY]" in decode["vin"][0]["scriptSig"]["asm"]
-        # same way to do the above
-        txSave.vin[0].scriptSig = CScript([origSatisfier[1:-1] + bytes([0x82])]) # isolate the sig itself and the wrap in a CScript encoding
-        decode = node.decoderawtransaction(txSave.toHex())
-        assert "[NONE|ANYONECANPAY]" in decode["vin"][0]["scriptSig"]["asm"]
-        signature_sighash_decoded = decode["vin"][0]["scriptSig"]["asm"]
 
+        signature_sighash_decoded = decode["vin"][0]["scriptSig"]["asm"].split()[1]
         txSave.vin[0].scriptSig = origSatisfier[0:-1] + bytes([0xC3])  # Lop off the sighash type (last byte) and add another
         decode = node.decoderawtransaction(txSave.toHex())
         assert "[SINGLE|FORKID|ANYONECANPAY]" in decode["vin"][0]["scriptSig"]["asm"]
-        signature_2_sighash_decoded = decode["vin"][0]["scriptSig"]["asm"]
+        signature_2_sighash_decoded = decode["vin"][0]["scriptSig"]["asm"].split()[1]
 
         # 2) multisig scriptSig
-        s1 = origSatisfier[1:-1] + bytes([0x82])
-        s2 = origSatisfier[1:-1] + bytes([0xC3])
+        sig = CScript(origSatisfier).nth(1)
+        s1 = sig[0:-1] + bytes([0x82])
+        s2 = sig[0:-1] + bytes([0xC3])
         txSave.vin[0].scriptSig = CScript([ 0, s1, s2])
         rpc_result = self.nodes[0].decoderawtransaction(bytes_to_hex_str(txSave.serialize()))
         assert_equal('0 ' + signature_sighash_decoded + ' ' + signature_2_sighash_decoded, rpc_result['vin'][0]['scriptSig']['asm'])
@@ -182,7 +179,6 @@ def Test():
     #signal.signal(signal.SIGINT, lambda sig, stk: pdb.Pdb().set_trace(stk))
     bitcoinConf = {
         "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
     }
     flags = standardFlags()
     t.main(flags, bitcoinConf, None)

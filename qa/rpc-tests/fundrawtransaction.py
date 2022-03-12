@@ -50,12 +50,10 @@ class RawTransactionsTest(BitcoinTestFramework):
         # The size of the signature of every input may be at most 2 bytes larger
         # than a minimum sized signature.
 
-        #      Legacy = 2 bytes * minRelayTxFeePerByte, but with Schnorr sigs which are all 64 bytes the
-        #      estimated fee calculation will always be accurate and we therefore no longer need a feetolerance.
-        #      We leave feeTolerance here for historical purposes.
-        feeTolerance = 0 * min_relay_tx_fee/1000
-        if feeTolerance < 0.01:
-            feeTolerance = 0.01
+        # feeTolerance is the difference between the wallet's single-shot tx construction and the
+        # stepwise (fundrawtransaction) construction.  Since these 2 constructions can legitimately include additional
+        # inputs or outputs this tolerance needs to be pretty high
+        feeTolerance = Decimal("2.00") # 200 bytes at 1 sat/byte
 
         self.nodes[2].generate(1)
         self.sync_blocks()
@@ -246,7 +244,6 @@ class RawTransactionsTest(BitcoinTestFramework):
 
         inputs  = [ {'outpoint' : utx['outpoint'], 'amount' : utx['amount']}]
         outputs = { self.nodes[0].getnewaddress() : utx['amount'] - decimal.Decimal("10.0") }
-        print("amount utx: " + str(utx['amount']))
         rawtx   = self.nodes[2].createrawtransaction(inputs, outputs)
 
         dec_tx  = self.nodes[2].decoderawtransaction(rawtx)
@@ -364,34 +361,49 @@ class RawTransactionsTest(BitcoinTestFramework):
 
 
         ############################################################
-        #compare fee of a standard pubkeyhash transaction
+        #compare fee of a standard transaction
         inputs = []
         outputs = {self.nodes[1].getnewaddress():1000.1}
         rawTx = self.nodes[0].createrawtransaction(inputs, outputs)
         fundedTx = self.nodes[0].fundrawtransaction(rawTx)
-        #create same transaction over sendtoaddress
+        signedTx = self.nodes[0].signrawtransaction(fundedTx["hex"])
+        signedDecoded = self.nodes[0].decoderawtransaction(signedTx['hex'])
+        signedFee = signedDecoded['fee']
+
+        # fundrawtransaction should have the proper fee for signed tx, even though its not signed so compare
+        # since schnorr sigs are 1 size this should be exact.
+        assert fundedTx["fee"] == signedFee
+
+        # create similar transaction over sendtoaddress
         txId = self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000.1)
-        signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
+        signedFee2 = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
-        #compare fee
-        feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
-        assert(feeDelta >= 0)
-        assert(feeDelta <= feeTolerance)
+        # compare fee to make sure both constructions are reasonable
+        feeDelta = abs(Decimal(signedFee) - Decimal(fundedTx['fee']))
+        assert feeDelta <= feeTolerance
         ############################################################
 
         ############################################################
-        #compare fee of a standard pubkeyhash transaction with multiple outputs
+        #compare fee of a standard transaction with multiple outputs
         inputs = []
         outputs = {self.nodes[1].getnewaddress():1000.1,self.nodes[1].getnewaddress():1000.2,self.nodes[1].getnewaddress():1000.1,self.nodes[1].getnewaddress():1000.3,self.nodes[1].getnewaddress():200,self.nodes[1].getnewaddress():300}
         rawTx = self.nodes[0].createrawtransaction(inputs, outputs)
         fundedTx = self.nodes[0].fundrawtransaction(rawTx)
-        #create same transaction over sendtoaddress
+        signedTx = self.nodes[0].signrawtransaction(fundedTx["hex"])
+        signedDecoded = self.nodes[0].decoderawtransaction(signedTx['hex'])
+        signedFee = signedDecoded['fee']
+
+        # fundrawtransaction should have the proper fee for signed tx, even though its not signed so compare
+        # since schnorr sigs are 1 size this should be exact.
+        assert fundedTx["fee"] == signedFee
+
+        # create same transaction over sendtoaddress
         txId = self.nodes[0].sendmany("", outputs)
         signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
-        #compare fee
-        feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
-        assert(feeDelta >= 0 and feeDelta <= feeTolerance)
+        # compare fee
+        feeDelta = abs(Decimal(signedFee) - Decimal(fundedTx['fee']))
+        assert feeDelta <= feeTolerance
         ############################################################
 
 
@@ -417,8 +429,8 @@ class RawTransactionsTest(BitcoinTestFramework):
         signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
         #compare fee
-        feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
-        assert(feeDelta >= 0 and feeDelta <= feeTolerance)
+        feeDelta = abs(Decimal(fundedTx['fee']) - Decimal(signedFee))
+        assert feeDelta <= feeTolerance
         ############################################################
         self.checkBal(self.nodes[1])
 
@@ -451,8 +463,8 @@ class RawTransactionsTest(BitcoinTestFramework):
         signedFee = self.nodes[0].getrawtxpool(True)[txId]['fee']
 
         #compare fee
-        feeDelta = Decimal(fundedTx['fee']) - Decimal(signedFee)
-        assert(feeDelta >= 0 and feeDelta <= feeTolerance)
+        feeDelta = abs(Decimal(fundedTx['fee']) - Decimal(signedFee))
+        assert feeDelta <= feeTolerance
         ############################################################
 
 
@@ -484,10 +496,9 @@ class RawTransactionsTest(BitcoinTestFramework):
 
         signedTx = self.nodes[2].signrawtransaction(fundedTx['hex'])
         txId = self.nodes[2].enqueuerawtransaction(signedTx['hex'], "flush")
-
-        self.sync_all()
+        waitFor(5, lambda: self.nodes[1].gettxpoolinfo()["size"]>0)
         self.nodes[1].generate(1)
-        self.sync_all()
+        self.sync_blocks()
 
         # make sure funds are received at node1
         assert_equal(oldBalance+Decimal('1000.10'), self.nodes[1].getbalance())

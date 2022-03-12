@@ -9,10 +9,6 @@
 
 namespace
 {
-// You have at most 512 bits to encode + 40 bits checksum + 8 bits version field for a 560 bit payload.
-// You can encode 5 bits per character, so that's 560 / 5 = 112.
-static uint32_t MAX_CASHADDR_SIZE = 112;
-
 typedef std::vector<uint8_t> data;
 
 /**

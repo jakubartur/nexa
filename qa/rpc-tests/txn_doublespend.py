@@ -27,12 +27,12 @@ class TxnDoubleSpendTest(BitcoinTestFramework):
         for i in range(4):
             assert_equal(self.nodes[i].getbalance(), starting_balance)
             assert_equal(self.nodes[i].getbalance("*"), starting_balance)
-            self.nodes[i].getnewaddress("")  # bug workaround, coins generated assigned to first getnewaddress!
+            self.nodes[i].getnewaddress("p2pkh", "")  # bug workaround, coins generated assigned to first getnewaddress!
 
         startHeight = self.nodes[2].getblockcount()
 
         # Coins are sent to node1_address
-        node1_address = self.nodes[1].getnewaddress("from0")
+        node1_address = self.nodes[1].getnewaddress("p2pkh", "from0")
 
         # First: use raw transaction API to send 1240 BTC to node1_address,
         # but don't broadcast:
@@ -48,7 +48,7 @@ class TxnDoubleSpendTest(BitcoinTestFramework):
         rawtx_input_1["outpoint"] = unspent[1]["outpoint"]
         rawtx_input_1["amount"] = unspent[1]["amount"]
         inputs = [rawtx_input_0, rawtx_input_1]
-        change_address = self.nodes[0].getnewaddress()
+        change_address = self.nodes[0].getnewaddress("p2pkh")
         outputs = {}
         outputs[node1_address] = doublespend_amt
         outputs[change_address] = Decimal("10000000.0") + doublespend_fee

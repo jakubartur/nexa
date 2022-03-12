@@ -114,6 +114,7 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream &s, Operation ser_action)
     {
+        READWRITE(txout.type);
         if (!ser_action.ForRead())
         {
             uint64_t nVal = CompressAmount(txout.nValue);
@@ -127,6 +128,10 @@ public:
         }
         CScriptCompressor cscript(REF(txout.scriptPubKey));
         READWRITE(cscript);
+        if (ser_action.ForRead())
+        {
+            txout.scriptPubKey.type = CTxOut::ScriptTypeOf(txout.type);
+        }
     }
 };
 

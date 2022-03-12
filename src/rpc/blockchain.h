@@ -48,5 +48,6 @@ std::set<CBlockIndex *, CompareBlocksByHeight> GetChainTips();
 
 UniValue mempoolToJSON(bool fVerbose = false, bool idem = false);
 UniValue blockToJSON(const CBlock &block, const CBlockIndex *blockindex, bool txDetails = false, bool listTxns = true);
+void ScriptPubKeyToJSON(const CScript &scriptPubKey, UniValue &out, bool fIncludeHex);
 
 #endif

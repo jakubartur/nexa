@@ -384,3 +384,8 @@ bool CGroupTokenID::hasFlag(GroupTokenIdFlags flag) const
                hasGroupTokenIdFlag((GroupTokenIdFlags)((data[30] << 8) | data[31]), flag) :
                false;
 }
+
+std::string EncodeGroupToken(const CGroupTokenID &grp, const CChainParams &params)
+{
+    return EncodeCashAddr(grp.bytes(), CashAddrType::GROUP_TYPE, params);
+}

@@ -71,6 +71,8 @@ CScript ScriptTemplateOutput(const VchType &scriptHash,
     const CGroupTokenID &group = NoGroup,
     CAmount grpQuantity = -1);
 
+CScript UngroupedScriptTemplate(const CScript &templateIn);
+
 
 /** Well-known script templates */
 

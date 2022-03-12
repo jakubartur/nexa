@@ -5,6 +5,8 @@
 
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import (start_nodes, start_node, assert_equal, bitcoind_processes, assert_raises_rpc_error)
+from test_framework.util import standardFlags
+import pdb
 
 def read_dump(file_name, addrs, hd_master_addr_old):
     """
@@ -69,7 +71,7 @@ class WalletDumpTest(BitcoinTestFramework):
         test_addr_count = 20
         addrs = []
         for i in range(0,test_addr_count):
-            addr = self.nodes[0].getnewaddress()
+            addr = self.nodes[0].getnewaddress("p2pkh")
             vaddr= self.nodes[0].validateaddress(addr) #required to get hd keypath
             addrs.append(vaddr)
         # Should be a no-op:
@@ -78,8 +80,7 @@ class WalletDumpTest(BitcoinTestFramework):
         # dump unencrypted wallet
         self.nodes[0].dumpwallet(tmpdir + "/node0/wallet.unencrypted.dump")
 
-        found_addr, found_addr_chg, found_addr_rsv, hd_master_addr_unenc = \
-            read_dump(tmpdir + "/node0/wallet.unencrypted.dump", addrs, None)
+        found_addr, found_addr_chg, found_addr_rsv, hd_master_addr_unenc = read_dump(tmpdir + "/node0/wallet.unencrypted.dump", addrs, None)
         assert_equal(found_addr, test_addr_count)  # all keys must be in the dump
         assert_equal(found_addr_chg, 50)  # 50 blocks where mined
         assert_equal(found_addr_rsv, 90 + 1)  # keypool size (TODO: fix off-by-one)
@@ -93,8 +94,7 @@ class WalletDumpTest(BitcoinTestFramework):
         self.nodes[0].keypoolrefill()
         self.nodes[0].dumpwallet(tmpdir + "/node0/wallet.encrypted.dump")
 
-        found_addr, found_addr_chg, found_addr_rsv, hd_master_addr_enc = \
-            read_dump(tmpdir + "/node0/wallet.encrypted.dump", addrs, hd_master_addr_unenc)
+        found_addr, found_addr_chg, found_addr_rsv, hd_master_addr_enc = read_dump(tmpdir + "/node0/wallet.encrypted.dump", addrs, hd_master_addr_unenc)
         assert_equal(found_addr, test_addr_count)
         assert_equal(found_addr_chg, 90 + 1 + 50)  # old reserve keys are marked as change now
         assert_equal(found_addr_rsv, 90 + 1)  # keypool size (TODO: fix off-by-one)
@@ -104,3 +104,13 @@ class WalletDumpTest(BitcoinTestFramework):
 
 if __name__ == '__main__':
     WalletDumpTest().main ()
+
+def Test():
+    t = WalletDumpTest()
+    t.drop_to_pdb = True
+    bitcoinConf = {
+        "debug": ["rpc","net", "blk", "thin", "mempool", "req", "bench", "evict"],
+    }
+
+    flags = standardFlags()
+    t.main(flags, bitcoinConf, None)

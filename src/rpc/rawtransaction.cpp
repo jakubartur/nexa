@@ -52,22 +52,60 @@ void ScriptPubKeyToJSON(const CScript &scriptPubKey, UniValue &out, bool fInclud
     if (fIncludeHex)
         out.pushKV("hex", HexStr(scriptPubKey.begin(), scriptPubKey.end()));
 
-    if (!ExtractDestinations(scriptPubKey, type, addresses, nRequired))
+    if (scriptPubKey.type == ScriptType::TEMPLATE)
     {
+        CGroupTokenInfo groupInfo;
+        std::vector<unsigned char> templateHash;
+        std::vector<unsigned char> argsHash;
+        CScript::const_iterator rest = scriptPubKey.begin();
+        ScriptTemplateError err = GetScriptTemplate(scriptPubKey, &groupInfo, &templateHash, &argsHash, &rest);
+        if (err == ScriptTemplateError::OK)
+        {
+            out.pushKV("type", "scripttemplate");
+            if (templateHash == p2pktId)
+                out.pushKV("scriptHash", "pay2pubkeytemplate");
+            else
+                out.pushKV("scriptHash", GetHex(templateHash));
+            out.pushKV("argsHash", GetHex(argsHash));
+            if (groupInfo.associatedGroup != NoGroup)
+            {
+                out.pushKV("group", EncodeGroupToken(groupInfo.associatedGroup, Params()));
+                out.pushKV("groupQuantity", UniValue(groupInfo.quantity));
+                // TODO display as flags
+                out.pushKV("groupAuthority", UniValue((uint64_t)groupInfo.controllingGroupFlags));
+            }
+            // Show the address without any group info
+            VchType restOfScript(rest, scriptPubKey.end());
+            ScriptTemplateDestination addr(ScriptTemplateOutput(templateHash, argsHash, restOfScript));
+            addresses.push_back(addr);
+        }
+        else
+        {
+            out.pushKV("type", "scripttemplate");
+            out.pushKV("error", "invalid");
+        }
+    }
+    else
+    {
+        if (!ExtractDestinations(scriptPubKey, type, addresses, nRequired))
+        {
+            out.pushKV("type", GetTxnOutputType(type));
+            return;
+        }
+
+        out.pushKV("reqSigs", nRequired);
         out.pushKV("type", GetTxnOutputType(type));
-        return;
     }
 
-    out.pushKV("reqSigs", nRequired);
-    out.pushKV("type", GetTxnOutputType(type));
-
-    UniValue a(UniValue::VARR);
-    for (const CTxDestination &addr : addresses)
+    if (addresses.size() > 0)
     {
-        a.push_back(EncodeDestination(addr));
+        UniValue a(UniValue::VARR);
+        for (const CTxDestination &addr : addresses)
+        {
+            a.push_back(EncodeDestination(addr));
+        }
+        out.pushKV("addresses", a);
     }
-
-    out.pushKV("addresses", a);
 }
 
 
@@ -117,6 +155,7 @@ void TxToJSON(const CTransaction &tx, const int64_t txTime, const uint256 hashBl
         const CTxOut &txout = tx.vout[i];
         UniValue out(UniValue::VOBJ);
         out.pushKV("value", ValueFromAmount(txout.nValue));
+        out.pushKV("type", txout.type);
         out.pushKV("n", (int64_t)i);
         UniValue o(UniValue::VOBJ);
         ScriptPubKeyToJSON(txout.scriptPubKey, o, true);
@@ -979,7 +1018,7 @@ UniValue createrawtransaction(const UniValue &params, bool fHelp)
         {
             std::vector<unsigned char> data = ParseHexV(sendTo[name_].getValStr(), "Data");
 
-            CTxOut out(CTxOut::SATOSCRIPT, 0, CScript() << OP_RETURN << data);
+            CTxOut out(0, CScript() << OP_RETURN << data, CTxOut::SATOSCRIPT);
             rawTx.vout.push_back(out);
         }
         else
@@ -999,7 +1038,7 @@ UniValue createrawtransaction(const UniValue &params, bool fHelp)
             CScript scriptPubKey = GetScriptForDestination(destination);
             CAmount nAmount = AmountFromValue(sendTo[name_]);
 
-            CTxOut out(CTxOut::SATOSCRIPT, nAmount, scriptPubKey);
+            CTxOut out(nAmount, scriptPubKey);
             rawTx.vout.push_back(out);
         }
     }

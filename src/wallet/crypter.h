@@ -186,8 +186,10 @@ public:
         return mapCryptedKeys.count(address) > 0;
     }
 
+    bool GetKey(const CTxDestination &dest, CKey &keyOut) const;
     bool GetKey(const CKeyID &address, CKey &keyOut) const;
     bool GetPubKey(const CKeyID &address, CPubKey &vchPubKeyOut) const;
+
     void GetKeys(std::set<CKeyID> &setAddress) const
     {
         if (!IsCrypted())

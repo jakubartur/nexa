@@ -109,7 +109,7 @@ class ZMQTest (BitcoinTestFramework):
             "Generate {0} blocks (and {0} coinbase txes)".format(num_blocks))
 
         # DS does not support P2PK so make sure there's a P2PKH in the wallet
-        addr = self.nodes[0].getnewaddress()
+        addr = self.nodes[0].getnewaddress("p2pkh")
         fundTx = self.nodes[0].sendtoaddress(addr, 10)
         # Notify of new tx
         zmqNotif = self.hashtx.receive().hex()
@@ -184,11 +184,11 @@ class ZMQTest (BitcoinTestFramework):
             self.rawtx.unsubscribe()
 
             wallet = self.nodes[0].listunspent()
-            walletp2pkh = list(filter(lambda x : len(x["scriptPubKey"]) != 70, wallet)) # Find an input that is not P2PK
+            walletp2pkh = list(filter(lambda x : len(x["scriptPubKey"]) != 70 and x["scriptType"] != "template", wallet)) # Find an input that is not P2PKH
             t = walletp2pkh.pop()
             inputs = []
             inputs.append({ "outpoint" : t["outpoint"], "amount" : t["amount"]})
-            outputs = { self.nodes[1].getnewaddress() : t["amount"] }
+            outputs = { self.nodes[1].getnewaddress("p2pkh") : t["amount"] }
 
             rawtx   = self.nodes[0].createrawtransaction(inputs, outputs)
             rawtx   = self.nodes[0].signrawtransaction(rawtx)
@@ -200,7 +200,7 @@ class ZMQTest (BitcoinTestFramework):
                 assert False
                 self.sync_all()
 
-            outputs = { self.nodes[1].getnewaddress() : t["amount"] }
+            outputs = { self.nodes[1].getnewaddress("p2pkh") : t["amount"] }
             rawtx   = self.nodes[0].createrawtransaction(inputs, outputs)
             rawtx   = self.nodes[0].signrawtransaction(rawtx)
             waitFor(30, lambda: self.nodes[0].gettxpoolinfo()["size"] > mpTx)  # make sure the original tx propagated in time

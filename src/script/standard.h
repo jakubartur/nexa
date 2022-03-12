@@ -139,7 +139,8 @@ enum txnouttype
     TX_LABELPUBLIC,
     TX_NULL_DATA,
     TX_GRP_PUBKEYHASH,
-    TX_GRP_SCRIPTHASH
+    TX_GRP_SCRIPTHASH,
+    TX_SCRIPT_TEMPLATE
 };
 
 class CNoDestination

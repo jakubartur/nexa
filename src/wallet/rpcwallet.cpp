@@ -106,13 +106,14 @@ UniValue getnewaddress(const UniValue &params, bool fHelp)
     if (!EnsureWalletIsAvailable(fHelp))
         return NullUniValue;
 
-    if (fHelp || params.size() > 1)
-        throw runtime_error("getnewaddress ( \"account\" )\n"
+    if (fHelp || params.size() > 2)
+        throw runtime_error("getnewaddress (\"type\" \"account\" )\n"
                             "\nReturns a new address for receiving payments.\n"
                             "If 'account' is specified (DEPRECATED), it is added to the address book \n"
                             "so payments received with the address will be credited to 'account'.\n"
                             "\nArguments:\n"
-                            "1. \"account\"        (string, optional) DEPRECATED. The account name for the address to "
+                            "1. \"type\" (string, optional) 'p2pkt' for pay to public key template or 'p2pkh' (legacy)"
+                            "2. \"account\"        (string, optional) DEPRECATED. The account name for the address to "
                             "be linked to. If not provided, the default account \"\" is used. It can also be set to "
                             "the empty string \"\" to represent the default account. The account does not need to "
                             "exist, it will be created if there is no account by the given name.\n"
@@ -125,8 +126,12 @@ UniValue getnewaddress(const UniValue &params, bool fHelp)
 
     // Parse the account first so we don't generate a key if there's an error
     string strAccount;
+    if (params.size() > 1)
+        strAccount = AccountFromValue(params[1]);
+
+    string strAddrType = "p2pkt";
     if (params.size() > 0)
-        strAccount = AccountFromValue(params[0]);
+        strAddrType = AccountFromValue(params[0]);
 
     if (!pwalletMain->IsLocked())
         pwalletMain->TopUpKeyPool();
@@ -135,11 +140,19 @@ UniValue getnewaddress(const UniValue &params, bool fHelp)
     CPubKey newKey;
     if (!pwalletMain->GetKeyFromPool(newKey))
         throw JSONRPCError(RPC_WALLET_KEYPOOL_RAN_OUT, "Error: Keypool ran out, please call keypoolrefill first");
-    CKeyID keyID = newKey.GetID();
 
-    pwalletMain->SetAddressBook(keyID, strAccount, "receive");
-
-    return EncodeDestination(keyID);
+    if (strAddrType == "p2pkh")
+    {
+        CKeyID keyID = newKey.GetID();
+        pwalletMain->SetAddressBook(keyID, strAccount, "receive");
+        return EncodeDestination(keyID);
+    }
+    else
+    {
+        ScriptTemplateDestination dest(P2pktOutput(newKey));
+        pwalletMain->SetAddressBook(dest, strAccount, "receive");
+        return EncodeDestination(dest);
+    }
 }
 
 CTxDestination GetAccountAddress(string strAccount, bool bForceNew = false)
@@ -645,13 +658,9 @@ UniValue signdata(const UniValue &params, bool fHelp)
     if (!IsValidDestination(dest))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid coin address");
 
-    const CKeyID *keyID = boost::get<CKeyID>(&dest);
-    if (!keyID)
-        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
-
     CKey key;
-    if (!pwalletMain->GetKey(*keyID, key))
-        throw JSONRPCError(RPC_WALLET_ERROR, "Private key not available");
+    if (!pwalletMain->GetKey(dest, key))
+        throw JSONRPCError(RPC_WALLET_ERROR, "Private key not available, or address has no single key");
 
     uint256 hash;
     if (datatype == "string")
@@ -689,8 +698,8 @@ UniValue signdata(const UniValue &params, bool fHelp)
         UniValue ret(UniValue::VOBJ);
         ret.pushKV("msghash", hash.ToString());
         ret.pushKV("signature", GetHex(sig.data(), sig.size()));
-        ret.pushKV("pubkeyhash", keyID->GetHex());
         CPubKey pub = key.GetPubKey();
+        ret.pushKV("pubkeyhash", pub.GetID().GetHex());
         ret.pushKV("pubkey", GetHex(pub.begin(), pub.size()));
         return ret;
     }
@@ -2916,6 +2925,12 @@ UniValue listunspent(const UniValue &params, bool fHelp)
                 entry.pushKV("account", pwalletMain->mapAddressBook[address].name);
         }
         entry.pushKV("scriptPubKey", HexStr(pk.begin(), pk.end()));
+        if (pk.type == ScriptType::TEMPLATE)
+            entry.pushKV("scriptType", "template");
+        else if (pk.type == ScriptType::SATOSCRIPT)
+            entry.pushKV("scriptType", "satoscript");
+        else if (pk.type == ScriptType::PUSH_ONLY)
+            entry.pushKV("scriptType", "pushonly");
         if (pk.IsPayToScriptHash())
         {
             CTxDestination address2;

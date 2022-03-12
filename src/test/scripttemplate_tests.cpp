@@ -128,7 +128,7 @@ BOOST_AUTO_TEST_CASE(verifywellknown)
 
         CScript txin = (CScript() << vch(hashedArgs)) + satisfier;
         CScript txout = (CScript(ScriptType::TEMPLATE) << nogroup << p2pktId << hash256(hashedArgs));
-        ret = VerifyScript(txin, txout, flags, 100, sis, &error, &tracker);
+        ret = VerifyScript(txin, txout, flags, sis, &error, &tracker);
         BOOST_CHECK(ret);
         // make sure that the expect script ran by checking the number of sigchecks it should have done,
         // and that the sig and pubkey are correct.
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(verifywellknown)
         // Since the preimage is well-known the param is ignored, throwing off all the params (so vch(p2pkt) will
         // be seen as the hash of the args causing a failure
         CScript txin2 = (CScript() << vch(p2pkt) << vch(hashedArgs)) + satisfier;
-        ret = VerifyScript(txin2, txout, flags, 100, sis, &error, &tracker);
+        ret = VerifyScript(txin2, txout, flags, sis, &error, &tracker);
         BOOST_CHECK(!ret);
     }
 }
