@@ -180,22 +180,28 @@ bool CTxMemPool::_CalculateMemPoolAncestors(const CTxMemPoolEntry &entry,
 
     if (fSearchForParents)
     {
-        // Get parents of this transaction that are in the mempool.
-        // Our current transaction ("entry") is not yet in the mempool so we can not look for its
+        // Get parents of this transaction that are in the txpool.
+        // Our current transaction ("entry") is not yet in the txpool so we can not look for its
         // parents using GetMemPoolParents(). Therefore we need to instead lookup the parents
         // by using the inputs of this transaction.
         for (unsigned int i = 0; i < tx.vin.size(); i++)
         {
             auto prevout = outpointMap.find(tx.vin[i].prevout);
+            bool fInOutpointMap = true;
             if (prevout == outpointMap.end())
             {
-                LOGA("WARNING: mempool inconsistent, outpointMap entry not found!");
-                continue;
+                fInOutpointMap = false;
             }
             uint256 phash = prevout->second.first;
             TxIdIter piter = mapTx.find(phash);
-            if (piter != mapTx.end()) // If the parent is still in the mempool...
+            if (piter != mapTx.end()) // If the parent is still in the txpool...
             {
+                if (!fInOutpointMap)
+                {
+                    DbgAssert("ERROR: mempool inconsistent, entry in txpool but no outpointMap entry!", );
+                    continue;
+                }
+
                 parentHashes.insert(piter);
                 if (parentHashes.size() + 1 > limitAncestorCount)
                 {
@@ -204,6 +210,8 @@ bool CTxMemPool::_CalculateMemPoolAncestors(const CTxMemPoolEntry &entry,
                     return false;
                 }
             }
+            else if (fInOutpointMap)
+                DbgAssert("ERROR: mempool inconsistent, outpointMap entry found but no entry in txpool!", );
         }
     }
     else
@@ -270,7 +278,7 @@ bool CTxMemPool::_CalculateMemPoolAncestors(const CTxMemPoolEntry &entry,
             }
         }
 
-        parentHashes.erase(parentElemIter); // BU: Fix use after free bug by removing this last
+        parentHashes.erase(parentElemIter);
     }
 
     return true;
