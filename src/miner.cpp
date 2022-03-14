@@ -463,21 +463,10 @@ void BlockAssembler::addPackageTxs(std::vector<const CTxMemPoolEntry *> *vtxe, b
             }
         }
 
-        LOGA("Consider mining TX %s priority %f, package size %d, fee %d, ancestor count %d\n",
-            iter->GetSharedTx()->GetId().GetHex(), iter->GetPriority(nHeight), packageSize, packageFees,
-            ancestors.size());
+        // Do not add free transactions here. They should only be added in addPriorityTxes()
         if (packageFees < ::minRelayTxFee.GetFee(packageSize))
         {
-            LOGA("Treating Tx %s as free because fee %d < %d \n", iter->GetSharedTx()->GetId().GetHex(), packageFees,
-                ::minRelayTxFee.GetFee(packageSize));
-
-            if (nBlockSize >= nBlockMinSize)
-            {
-                // Everything else we might consider has a lower fee rate so no need to continue
-                LOGA("Skipping this and lower fee value tx because free space (%d) is full (current block size %d)",
-                    nBlockMinSize, nBlockSize);
-                return;
-            }
+            return;
         }
 
         // Test if package fits in the block
