@@ -35,7 +35,7 @@ uint256 GetPrevoutHash(const CTransaction &txTo)
     CHashWriter ss(SER_GETHASH, 0);
     for (unsigned int n = 0; n < txTo.vin.size(); n++)
     {
-        ss << txTo.vin[n].prevout;
+        ss << txTo.vin[n].type << txTo.vin[n].prevout;
     }
     return ss.GetHash();
 }
@@ -128,6 +128,8 @@ public:
         // In case of SIGHASH_ANYONECANPAY, only the input being signed is serialized
         if (fAnyoneCanPay)
             nInput = nIn;
+        // Serialize the prevout
+        ::Serialize(s, txTo.vin[nInput].type);
         // Serialize the prevout
         ::Serialize(s, txTo.vin[nInput].prevout);
         // Serialize the script

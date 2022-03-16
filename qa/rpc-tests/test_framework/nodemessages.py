@@ -570,18 +570,21 @@ class CTxIn(object):
             self.prevout = COutPoint()
         else:
             self.prevout = outpoint
+        self.t = 0
         self.scriptSig = scriptSig
         self.nSequence = nSequence
         self.amount = amount
 
     def fromRpcUtxo(self, d):
         """Initialize this CTxIn from a dictionary received by the listunspent RPC call"""
+        self.t = 0
         self.prevout = COutPoint(d["outpoint"])
         self.scriptSig = b""
         self.amount = int(d['amount']*COIN)
         self.nSequence = 0
 
     def deserialize(self, f):
+        self.t = struct.unpack("<B", f.read(1))[0]
         self.prevout = COutPoint()
         self.prevout.deserialize(f)
         self.scriptSig = deser_string(f)
@@ -590,6 +593,7 @@ class CTxIn(object):
 
     def serialize(self, stype):
         r = b""
+        r += struct.pack("<B", self.t)
         r += self.prevout.serialize()
         if stype != SER_IDEM:
             r += ser_string(self.scriptSig)
@@ -831,6 +835,7 @@ class CTransaction(object):
         else:
             op_ser = b""
             for inp in self.vin:
+                op_ser += struct.pack("<B", inp.t)
                 op_ser += inp.prevout.serialize(SER_IDEM)
             return hash256(op_ser)
 

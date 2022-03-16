@@ -261,15 +261,17 @@ bool ContextualCheckBlockHeader(const CChainParams &chainparams,
     return true;
 }
 
+static std::atomic<CBlockIndex *> pindexHeaderOld{nullptr};
+static std::atomic<int64_t> nLastTime{0};
+
 static void NotifyHeaderTip()
 {
     if (!pindexBestHeader.load())
         return;
 
-    static std::atomic<CBlockIndex *> pindexHeaderOld{pindexBestHeader.load()};
-    static std::atomic<int64_t> nLastTime{0};
-    if (pindexBestHeader.load()->chainWork() > pindexHeaderOld.load()->chainWork() &&
-        (GetTime() - nLastTime > 1 || !IsInitialBlockDownload()))
+    if ((pindexHeaderOld.load() == nullptr) ||
+        (pindexBestHeader.load()->chainWork() > pindexHeaderOld.load()->chainWork() &&
+            (GetTime() - nLastTime > 1 || !IsInitialBlockDownload())))
     {
         uiInterface.NotifyHeaderTip(false, pindexBestHeader.load(), true);
         pindexHeaderOld.store(pindexBestHeader.load());

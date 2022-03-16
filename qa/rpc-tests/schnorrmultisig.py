@@ -237,7 +237,6 @@ def Test():
     t.drop_to_pdb = True
     bitcoinConf = {
         "debug": ["dbase", "selectcoins"], # ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000,  # we don't want any transactions rejected due to insufficient fees...
         "logtimemicros":1,
         "checkmempool":0,
         # "par":1  # Reduce the # of threads in bitcoind for easier debugging

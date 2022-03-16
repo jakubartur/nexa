@@ -109,12 +109,13 @@ class MyTest (BitcoinTestFramework):
         utxo = utxos.pop()
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(utxo))
-        tx2.vin[0].scriptSig = b'\x61'*50 + b'\x64'
+        tx2.vin[0].scriptSig = b'\x61'*48 + b'\x64'
         tx2.vout.append(TxOut(0,utxo["amount"]-fee, CScript([OP_1])))
         self.tryAtx(tx2, b'mandatory-script-verify-flag-failed', 'mandatory-script-verify-flag-failed (Invalid OP_IF construction)')
 
         # Try undersize transaction
-        tx2.vin[0].scriptSig = b'\x61'
+        tx2.vin[0].scriptSig = b''
+        tx2.vout[0].scriptPubKey = b'\x64'
         tx2.rehash()
         assert len(tx2.toHex()) == 128, "transaction changed size so this test needs to be reworked"
         self.tryAtx(tx2, b'txn-undersize', 'txn-undersize')

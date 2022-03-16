@@ -254,7 +254,8 @@ class ValidateblocktemplateTest(BitcoinTestFramework):
                         JSONRPCException, "invalid block: bad-txns-inputs-missingorspent")
 
         txes = [tx3, tx4]
-        txes.sort(key=lambda x: x.GetId(), reverse=True)
+        # sort is lexical ordering which is backwards for little-endian bitcoin so just use GetRpcHexId for simplicity
+        txes.sort(key=lambda x: x.GetRpcHexId(), reverse=True)
         logging.info("bad tx ordering")
         block = create_block(tip, nextheight, work, coinbase, next_time, txes, ctor=False)
         block.rehash()

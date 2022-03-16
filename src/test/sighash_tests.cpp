@@ -113,6 +113,7 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle)
     {
         tx.vin.push_back(CTxIn());
         CTxIn &txin = tx.vin.back();
+        txin.type = InsecureRand32() & 255; // doesn't need to be a valid type for this test
         txin.prevout.hash = InsecureRand256();
         RandomScript(txin.scriptSig);
         txin.nSequence = (InsecureRandBool()) ? InsecureRand32() : (unsigned int)-1;
@@ -121,6 +122,7 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle)
     {
         tx.vout.push_back(CTxOut());
         CTxOut &txout = tx.vout.back();
+        txout.type = InsecureRand32() & 255; // doesn't need to be a valid type for this test
         txout.nValue = InsecureRandRange(100000000);
         RandomScript(txout.scriptPubKey);
     }
