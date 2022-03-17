@@ -49,8 +49,7 @@ void GUIUtilTests::toCurrentEncodingTest() {
     // garbage in, garbage out
     QVERIFY(ToCurrentEncoding("garbage", config) == "garbage");
 
-    QString cashaddr_pubkey =
-        "nex:qqjk5f068wpfdhmqh5rnrrqkhryl6lacq5rfu5u004";
+    QString cashaddr_pubkey = "nexa:qqjk5f068wpfdhmqh5rnrrqkhryl6lacq5tl8m6qg7";
     QString base58_pubkey = "B7run8V4hf1NJ46UUB2WkHXC8aW6NVz1iR";
 
     config.SetCashAddrEncoding(true);

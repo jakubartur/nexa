@@ -174,11 +174,15 @@ class MyTest (BitcoinTestFramework):
         amt = int(sum([x["amount"] for x in inputs]) * cashlib.NEX)
         tx.vout.append(CTxOut(amt, output))
 
+        p2pkt = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
         sighashtype = 0x41
         n = 0
         for i, priv in zip(inputs, privkeys):
-            sig = cashlib.signTxInput(tx, n, i["amount"], i["scriptPubKey"], priv, sighashtype)
-            tx.vin[n].scriptSig = cashlib.spendscript(sig)  # P2PK
+            sig = cashlib.signTxInput(tx, n, i["amount"], p2pkt, priv, sighashtype)
+            # tx.vin[n].scriptSig = cashlib.spendscript(sig)  # P2PK
+            pubkey = cashlib.pubkey(priv)
+            args = bytes(CScript([pubkey]))
+            tx.vin[n].scriptSig = CScript([ args, sig])
             n += 1
 
         txhex = hexlify(tx.serialize()).decode("utf-8")

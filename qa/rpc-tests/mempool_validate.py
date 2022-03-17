@@ -127,11 +127,19 @@ def createTx(dests, sources, node, maxx=None, fee=1, nextWallet=None, generatedT
             i += 1
 
         sighashtype = 0x41
+        p2pkt = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
+        # to make this fully general, you'd have to check the template hash in the scriptPubKey and get the corresponding code
+        # but wallet always genrates p2pkt
+        code = p2pkt if w.get("scriptType", None) == 'template' else w['scriptPubKey']
         n = 0
         # print("amountin: %d amountout: %d outscript: %s" % (w["satoshi"], amt, w["scriptPubKey"]))
-        sig = cashlib.signTxInput(tx, n, w["satoshi"], w["scriptPubKey"], w["privkey"], sighashtype)
+        sig = cashlib.signTxInput(tx, n, w["satoshi"], code, w["privkey"], sighashtype)
 
-        if w["scriptPubKey"][0:2] == hexOP_DUP or w["scriptPubKey"][0] == binOP_DUP:  # P2PKH starts with OP_DUP
+        if w.get("scriptType", None) == 'template':
+            pubkey = cashlib.pubkey(w["privkey"])
+            args = bytes(CScript([pubkey]))
+            tx.vin[n].scriptSig = CScript([ args, sig])
+        elif w["scriptPubKey"][0:2] == hexOP_DUP or w["scriptPubKey"][0] == binOP_DUP:  # P2PKH starts with OP_DUP
             tx.vin[n].scriptSig = cashlib.spendscript(sig, w["pubkey"])  # P2PKH
         else:
             tx.vin[n].scriptSig = cashlib.spendscript(sig)  # P2PK

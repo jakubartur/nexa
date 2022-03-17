@@ -266,7 +266,7 @@ static void MutateTxAddOutAddr(CMutableTransaction &tx, const string &strInput)
     if (vStrInputParts.size() == 3)
     {
         if (vStrInputParts[1] != "bchreg" && vStrInputParts[1] != "bitcoincash" && vStrInputParts[1] != "bchnol" &&
-            vStrInputParts[1] != "bchtest")
+            vStrInputParts[1] != "bchtest" && vStrInputParts[1] != "nexa" && vStrInputParts[1] != "nexareg")
         {
             throw runtime_error(tfm::format("TX output unknown destination address type %s.", vStrInputParts[1]));
         }

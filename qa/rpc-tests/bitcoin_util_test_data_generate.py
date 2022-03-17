@@ -46,9 +46,6 @@ class MyTest (BitcoinTestFramework):
         
     def run_test (self):
 
-        logging.info("This is a template for you to use when making new tests")
-
-
         bal = self.nodes[0].getbalance()
 
         tx = CTransaction()

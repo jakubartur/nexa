@@ -122,13 +122,15 @@ void ReceiveRequestDialog::setModel(OptionsModel *_model)
 // This converts to clients current configuration.
 QString ToCurrentEncoding(const QString &addr, const Config &cfg)
 {
-    if (!IsValidDestinationString(addr.toStdString(), cfg.GetChainParams()))
+    std::string addrstd = addr.toStdString();
+    if (!IsValidDestinationString(addrstd, cfg.GetChainParams()))
     {
         // We have something sketchy as input. Do not try to convert.
         return addr;
     }
-    CTxDestination dst = DecodeDestination(addr.toStdString(), cfg.GetChainParams());
-    return QString::fromStdString(EncodeDestination(dst, cfg.GetChainParams(), cfg));
+    CTxDestination dst = DecodeDestination(addrstd, cfg.GetChainParams());
+    std::string dststr = EncodeDestination(dst, cfg.GetChainParams(), cfg);
+    return QString::fromStdString(dststr);
 }
 
 void ReceiveRequestDialog::setInfo(const SendCoinsRecipient &_info)

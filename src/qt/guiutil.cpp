@@ -158,7 +158,7 @@ QString bitcoinURIScheme(const CChainParams &params, bool useCashAddr)
 {
     if (!useCashAddr)
     {
-        return "nex";
+        return "nexa";
     }
     return QString::fromStdString(params.CashAddrPrefix());
 }

@@ -37,10 +37,10 @@
     "args":
     ["-create",
      "in=123:5897de6bd6027a475eadd57019d4e6872c396d0716c4875a5f1a6fcfdf385c1f",
-     "in=2.345678:bf829c6bcf84579331337659d31f89dfd138f7f7785802d5501c92333145ca7c",
+     "in=23456.78:bf829c6bcf84579331337659d31f89dfd138f7f7785802d5501c92333145ca7c",
      "in=2345:22a6f904655d53ae2ff70e701a0bbd90aa3975c0f40bfc6cc996a9049e31cdfc",
-     "outaddr=0.18:BE6F4dsgJJUeofAAok3RMV2GRapst9J1BT",
-     "outaddr=4:BLmd93qnUSpHMiLwLKeWhYsYZWetaDcjdA"],
+     "outaddr=0.18:nexa:nqtsq5g5afx6leupc52th7k3gf9vc3dxl6zfev63wp0y86n9",
+     "outaddr=4:NJSrKBexSQvc3zaxG8FYmcDRLBc8LzURieMyBTR"],
     "output_cmp": "txcreate1.hex"
   },
   { "exec": "./bitcoin-tx",
@@ -54,7 +54,7 @@
      "set=privatekeys:[\"6KZS64n2pCSECFgX9JG285k6McZmUAtjpNbeZDjyAgHduo7NnFz6\"]",
      "set=prevtxs:[{\"outpoint\":\"4d49a71ec9da436f71ec4ee231d04f292a29cd316f598bb7068feccabdc59485\",\"amount\":10,\"scriptPubKey\":\"76a91491b24bf9f5288532960ac687abb035127b1d28a588ac\"}]",
      "sign=ALL",
-     "outaddr=0.001:BLmd93qnUSpHMiLwLKeWhYsYZWetaDcjdA"],
+     "outaddr=10:NJSrKBexSQvc3zaxG8FYmcDRLBc8LzURieMyBTR"],
     "output_cmp": "txcreatesign.hex"
   },
   { "exec": "./bitcoin-tx",
@@ -74,24 +74,24 @@
   { "exec": "./bitcoin-tx",
     "args":
     ["-create",
-     "in=0.181:5897de6bd6027a475eadd57019d4e6872c396d0716c4875a5f1a6fcfdf385c1f",
-     "outaddr=0.18:BLmd93qnUSpHMiLwLKeWhYsYZWetaDcjdA",
+     "in=181:5897de6bd6027a475eadd57019d4e6872c396d0716c4875a5f1a6fcfdf385c1f",
+     "outaddr=180:BLmd93qnUSpHMiLwLKeWhYsYZWetaDcjdA",
      "outdata=4:54686973204f505f52455455524e207472616e73616374696f6e206f7574707574207761732063726561746564206279206d6f646966696564206372656174657261777472616e73616374696f6e2e"],
     "output_cmp": "txcreatedata1.hex"
   },
   { "exec": "./bitcoin-tx",
     "args":
     ["-create",
-     "in=0.1801:5897de6bd6027a475eadd57019d4e6872c396d0716c4875a5f1a6fcfdf385c1f",
-     "outaddr=0.18:BLmd93qnUSpHMiLwLKeWhYsYZWetaDcjdA",
+     "in=19.01:5897de6bd6027a475eadd57019d4e6872c396d0716c4875a5f1a6fcfdf385c1f",
+     "outaddr=18:BLmd93qnUSpHMiLwLKeWhYsYZWetaDcjdA",
      "outdata=54686973204f505f52455455524e207472616e73616374696f6e206f7574707574207761732063726561746564206279206d6f646966696564206372656174657261777472616e73616374696f6e2e"],
     "output_cmp": "txcreatedata2.hex"
   },
   { "exec": "./bitcoin-tx",
     "args":
     ["-regtest", "-create",
-     "in=0.18001:5897de6bd6027a475eadd57019d4e6872c396d0716c4875a5f1a6fcfdf385c1f:4294967293",
-     "outaddr=0.18:bchreg:qqkx25nsqzuzcftu7hs7w2f2ne3ayedefu8mpceqwy"],
+     "in=181.01:5897de6bd6027a475eadd57019d4e6872c396d0716c4875a5f1a6fcfdf385c1f:4294967293",
+     "outaddr=180:nexareg:qzuw86k89kkssurfhh4qwjg42c26llrfj5faprq6l0"],
     "output_cmp": "txcreatedata_seq0.hex"
   },
   { "exec": "./bitcoin-tx",
@@ -102,7 +102,7 @@
   },
   { "exec": "./bitcoin-tx",
     "args":
-    ["-regtest", "-create", "in=100:a6203029526697378230d48f70d9f05c1983465a10d9934eecceb5c8ded6fefc", "outaddr=50.0:bchreg:qqkx25nsqzuzcftu7hs7w2f2ne3ayedefu8mpceqwy"],
+    ["-regtest", "-create", "in=100:a6203029526697378230d48f70d9f05c1983465a10d9934eecceb5c8ded6fefc", "outaddr=50.0:nexareg:nqtsq5g5zxecdcjw8scj77zjgdm3z883m6cxwpl0dzs9kax6"],
     "output_cmp": "txcreatedata_cashaddr.hex"
   }
 ]
