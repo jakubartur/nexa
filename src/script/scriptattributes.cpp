@@ -59,7 +59,6 @@ bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pcin, CGrou
     std::vector<unsigned char> groupId;
     std::vector<unsigned char> tokenQty;
     std::vector<unsigned char> data;
-    opcodetype opcode;
     opcodetype opcodeGrp;
     opcodetype opcodeQty;
     const ScriptType scriptType = script.type;
@@ -67,33 +66,23 @@ bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pcin, CGrou
     DbgAssert(scriptType != ScriptType::PUSH_ONLY, return false);
     if (scriptType == ScriptType::SATOSCRIPT)
     {
-        if (!script.GetOp(pc, opcodeGrp, groupId))
-        {
-            grp->associatedGroup = NoGroup;
-            return false;
-        }
-        if (!script.GetOp(pc, opcodeQty, tokenQty))
-        {
-            grp->associatedGroup = NoGroup;
-            return false;
-        }
-        if (!script.GetOp(pc, opcode, data))
-        {
-            grp->associatedGroup = NoGroup;
-            return false;
-        }
+        grp->associatedGroup = NoGroup;
+        grp->invalid = false;
+        return true; // Script is "grouped" but the group is the native token
     }
     else if (scriptType == ScriptType::TEMPLATE)
     {
         if (!script.GetOp(pc, opcodeGrp, groupId))
         {
             grp->associatedGroup = NoGroup;
+            grp->invalid = true;
             return false; // Script is bad
         }
         if (opcodeGrp == OP_0)
         {
             grp->associatedGroup = NoGroup;
             grp->quantity = 0;
+            grp->invalid = false;
             // Since the script matched the opgroup syntax, move the caller's pc foward.
             if (pcin)
                 *pcin = pc;
@@ -103,45 +92,35 @@ bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pcin, CGrou
         if (!script.GetOp(pc, opcodeQty, tokenQty))
         {
             grp->associatedGroup = NoGroup;
+            grp->invalid = true;
             return false;
         }
-        opcode = OP_GROUP; // Implied by the general format, if the above passed
     }
     else
-    {
-        return false;
-    }
-
-    if (opcode != OP_GROUP)
     {
         grp->associatedGroup = NoGroup;
         return false;
     }
-    else // If OP_GROUP is used, enforce rules on the other fields
-    {
-        // group must be 32 bytes or more
-        if (opcodeGrp < 0x20)
-        {
-            grp->invalid = true;
-            return false;
-        }
-        /* Disallow amounts to be encoded as a single byte because these may need to have special encodings if
-   the SCRIPT_VERIFY_MINIMALDATA flag is set
-    // quantity must be 1, 2, 4, or 8 bytes
-    if (((opcodeQty < OP_1)||(opcodeQty > OP_16)) && (opcodeQty != OP_1NEGATE) && (opcodeQty != 1) && (opcodeQty != 2)
-   && (opcodeQty != 4) && (opcodeQty != 8))
-    {
-        invalid = true;
-        return;
-    }
-    */
 
-        // Quantity must be a 2, 4, or 8 byte number
-        if ((opcodeQty != 2) && (opcodeQty != 4) && (opcodeQty != 8))
+    // group must be 32 bytes or more
+    // recall that opcodes lower than PUSHDATA1 (0x4c) push that many bytes onto the stack
+    if (opcodeGrp < 0x20)
+    {
+        grp->invalid = true;
+        return false;
+    }
+    // Must be true based on the opcode test
+    DbgAssert(groupId.size() >= 0x20,
         {
             grp->invalid = true;
             return false;
-        }
+        });
+
+    // Quantity must be a 2, 4, or 8 byte number
+    if ((opcodeQty != 2) && (opcodeQty != 4) && (opcodeQty != 8))
+    {
+        grp->invalid = true;
+        return false;
     }
 
     try
@@ -158,6 +137,7 @@ bool IsScriptGrouped(const CScript &script, CScript::const_iterator *pcin, CGrou
         grp->controllingGroupFlags = (GroupAuthorityFlags)grp->quantity;
     }
     grp->associatedGroup = groupId;
+    grp->invalid = false;
     // Since the script matched the opgroup syntax, move the caller's pc foward.
     if (pcin)
         *pcin = pc;
@@ -289,69 +269,4 @@ ScriptTemplateError GetScriptTemplate(const CScript &script,
     if (pcout)
         *pcout = pc;
     return ScriptTemplateError::OK;
-
-#if 0 // legacy mode template logic
-    IsScriptGrouped(script, &pc); // Move past the group
-
-    // If its not an OP_TEMPLATE, then return the hash of the script with the OP_GROUP prefix stripped off
-    CScript restScript = CScript(pc, script.end());
-    std::vector<unsigned char> rest = ToByteVector(restScript);
-    CSHA256 sha;
-    sha.Write(&rest[0], rest.size());
-    uint256 restHash;
-    sha.Finalize(restHash.begin());
-
-    // expecting DATA OP_TEMPLATE
-
-    // next will be the template hash if it exists
-    std::vector<unsigned char> templateId;
-    if (!script.GetOp(pc, opcodeTemplateData, templateId))
-    {
-        return restHash;
-    }
-    if (!IsPushOpcode(opcodeTemplateData))
-        return restHash;
-
-    // Now the template opcode
-    std::vector<unsigned char> betterBeNoData;
-    if (!script.GetOp(pc, opcode, betterBeNoData))
-    {
-        return restHash;
-    }
-
-    if (opcode != OP_TEMPLATE)
-    {
-        return restHash;
-    }
-
-    // template hash must be 32 bytes
-    if (opcodeTemplateData != 0x20)
-    {
-        error = ScriptTemplateError::INVALID;
-        return nothing;
-    }
-
-    if (pcout)
-        *pcout = pc;
-    error = ScriptTemplateError::OK;
-    return uint256(templateId);
-#endif
-}
-
-bool MatchGroupedPayToPubkeyHash(const CScript &script, std::vector<uint8_t> &pubkeyhash, CGroupTokenInfo &grp)
-{
-    // Bitcoin address tx, sender provides hash of pubkey, receiver provides signature and pubkey
-    // Template: "OP_DUP << OP_HASH160 << OP_PUBKEYHASH << OP_EQUALVERIFY << OP_CHECKSIG"
-    CScript::const_iterator pc = script.begin();
-    if (!IsScriptGrouped(script, &pc, &grp))
-        return false;
-    unsigned int offset = &pc[0] - &script.begin()[0];
-
-    if (script.size() == offset + 25 && pc[0] == OP_DUP && pc[1] == OP_HASH160 &&
-        pc[2] == CPubKey::PUBLIC_KEY_HASH160_SIZE && pc[23] == OP_EQUALVERIFY && pc[24] == OP_CHECKSIG)
-    {
-        pubkeyhash = std::vector<uint8_t>(pc + 3, pc + CPubKey::PUBLIC_KEY_HASH160_SIZE + 3);
-        return true;
-    }
-    return false;
 }

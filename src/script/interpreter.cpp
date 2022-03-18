@@ -608,17 +608,6 @@ bool ScriptMachine::Step()
                 }
                 break;
 
-                case OP_GROUP: // OP_GROUP just pops its args during script evaluation
-                    if (stack.size() < 2)
-                        return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
-                    popstack(stack);
-                    popstack(stack);
-                    break;
-                case OP_TEMPLATE: // OP_TEMPLATE just pops during script evaluation
-                    if (stack.size() < 1)
-                        return set_error(serror, SCRIPT_ERR_INVALID_STACK_OPERATION);
-                    popstack(stack);
-                    break;
                 case OP_EXEC:
                 {
                     if (execDepth >= MAX_EXEC_DEPTH)
