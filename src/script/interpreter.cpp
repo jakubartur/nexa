@@ -2385,9 +2385,6 @@ bool VerifySatoScript(const CScript &scriptSig,
     // a clean stack (the P2SH inputs remain).
     if ((flags & SCRIPT_VERIFY_CLEANSTACK) != 0)
     {
-        // Disallow CLEANSTACK without P2SH, as otherwise a switch CLEANSTACK->P2SH+CLEANSTACK
-        // would be possible, which is not a softfork (and P2SH should be one).
-        assert((flags & SCRIPT_VERIFY_P2SH) != 0);
         if (sm.getStack().size() != 1)
         {
             LOG(SCRIPT, "Script: Stack size is %d", sm.getStack().size());
@@ -2488,6 +2485,9 @@ bool VerifyScript(const CScript &scriptSig,
     }
     else
     {
+        // P2SH disabled on nexa mainnet.  Left on in regtest, testnet to maintain tests.
+        if (Params().NetworkIDString() == "nexa")
+            flags &= ~SCRIPT_VERIFY_P2SH;
         // Verify a "legacy"-mode script
         return VerifySatoScript(scriptSig, scriptPubKey, flags, maxSatoScriptOps, sis, serror, tracker);
     }

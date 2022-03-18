@@ -833,11 +833,11 @@ BOOST_AUTO_TEST_CASE(script_build_1)
                         .PushRedeem());
     tests.push_back(TestBuilder(
         CScript() << OP_DUP << OP_HASH160 << ToByteVector(keys.pubkey1.GetID()) << OP_EQUALVERIFY << OP_CHECKSIG,
-        "P2SH(P2PKH), bad sig", SCRIPT_VERIFY_P2SH, true)
+        "P2SH(P2PKH), p2sh is disallowed", SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_CLEANSTACK, true)
                         .PushSigSchnorr(keys.key0)
                         .DamagePush(10)
                         .PushRedeem()
-                        .SetScriptError(SCRIPT_ERR_EQUALVERIFY));
+                        .SetScriptError(SCRIPT_ERR_CLEANSTACK));
     tests.push_back(TestBuilder(
         CScript() << ToByteVector(keys.pubkey1C) << OP_CHECKSIG, "BIP66 example 3, without DERSIG", scriptFlags)
                         .Num(0)
@@ -921,27 +921,6 @@ BOOST_AUTO_TEST_CASE(script_build_1)
                         .PushSigSchnorr(keys.key1, HackSigHashType(5))
                         .DamagePush(10)
                         .SetScriptError(SCRIPT_ERR_SIG_HASHTYPE));
-    tests.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey2C) << OP_CHECKSIG,
-        "P2SH(P2PK) with non-push scriptSig but no P2SH or SIGPUSHONLY", 0, true)
-                        .PushSigSchnorr(keys.key2)
-                        .Add(CScript() << OP_NOP8)
-                        .PushRedeem());
-    tests.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey2C) << OP_CHECKSIG,
-        "P2PK with non-push scriptSig but with P2SH validation", scriptFlags)
-                        .PushSigSchnorr(keys.key2)
-                        .Add(CScript() << OP_NOP8));
-    tests.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey2C) << OP_CHECKSIG,
-        "P2SH(P2PK) with non-push scriptSig but no SIGPUSHONLY", SCRIPT_VERIFY_P2SH, true)
-                        .PushSigSchnorr(keys.key2)
-                        .Add(CScript() << OP_NOP8)
-                        .PushRedeem()
-                        .SetScriptError(SCRIPT_ERR_SIG_PUSHONLY));
-    tests.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey2C) << OP_CHECKSIG,
-        "P2SH(P2PK) with non-push scriptSig but not P2SH", SCRIPT_VERIFY_SIGPUSHONLY, true)
-                        .PushSigSchnorr(keys.key2)
-                        .Add(CScript() << OP_NOP8)
-                        .PushRedeem()
-                        .SetScriptError(SCRIPT_ERR_SIG_PUSHONLY));
     tests.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG,
         "P2PK with unnecessary input but no CLEANSTACK", SCRIPT_VERIFY_P2SH)
                         .Num(11)
@@ -965,7 +944,8 @@ BOOST_AUTO_TEST_CASE(script_build_1)
     tests.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG, "P2SH with CLEANSTACK",
         SCRIPT_VERIFY_CLEANSTACK | SCRIPT_VERIFY_P2SH, true)
                         .PushSigSchnorr(keys.key0)
-                        .PushRedeem());
+                        .PushRedeem()
+                        .SetScriptError(SCRIPT_ERR_CLEANSTACK));
 
     static const CAmount TEST_AMOUNT = 12345000000000;
     tests.push_back(TestBuilder(CScript() << ToByteVector(keys.pubkey0) << OP_CHECKSIG, "P2PK FORKID",

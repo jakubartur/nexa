@@ -15,7 +15,7 @@ const std::string CBaseChainParams::LEGACY_UNIT_TESTS = "main";
 const std::string CBaseChainParams::TESTNET = "test";
 const std::string CBaseChainParams::SCALENET = "scale";
 const std::string CBaseChainParams::REGTEST = "regtest";
-const std::string CBaseChainParams::NEXTCHAIN = "nex";
+const std::string CBaseChainParams::NEXTCHAIN = "nexa";
 
 /**
  * Main network
@@ -128,7 +128,7 @@ std::string ChainNameFromCommandLine()
     num_selected += fTestNet;
     bool fScaleNet = GetBoolArg("-scalenet", false);
     num_selected += fScaleNet;
-    bool fNextChain = GetBoolArg("-nextchain", false);
+    bool fNextChain = GetBoolArg("-nextchain", false) || GetBoolArg("-nexa", false);
     num_selected += fNextChain;
 
     if (num_selected > 1)

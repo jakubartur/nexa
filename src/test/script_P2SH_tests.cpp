@@ -56,6 +56,8 @@ BOOST_FIXTURE_TEST_SUITE(script_P2SH_tests, BasicTestingSetup)
 BOOST_AUTO_TEST_CASE(sign)
 {
     LOCK(cs_main);
+    std::string popNetwork = Params().NetworkIDString();
+    SelectParams("regtest"); // P2SH disabled on nexa mainnet
     // Pay-to-script-hash looks like this:
     // scriptSig:    <sig> <sig...> <serialized_script>
     // scriptPubKey: HASH160 <hash> EQUAL
@@ -128,10 +130,15 @@ BOOST_AUTO_TEST_CASE(sign)
                 BOOST_CHECK_MESSAGE(!sigOK, strprintf("VerifySignature %d %d", i, j));
             txTo[i].vin[0].scriptSig = sigSave;
         }
+
+    SelectParams(popNetwork); // P2SH disabled on nexa mainnet
 }
 
 BOOST_AUTO_TEST_CASE(norecurse)
 {
+    std::string popNetwork = Params().NetworkIDString();
+    SelectParams("regtest"); // P2SH disabled on nexa mainnet
+
     ScriptError err;
     // Make sure only the outer pay-to-script-hash does the
     // extra-validation thing:
@@ -155,11 +162,15 @@ BOOST_AUTO_TEST_CASE(norecurse)
 
     BOOST_CHECK(Verify(scriptSig2, p2sh2, true, err));
     BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
+    SelectParams(popNetwork); // P2SH disabled on nexa mainnet
 }
 
 BOOST_AUTO_TEST_CASE(set)
 {
     LOCK(cs_main);
+    std::string popNetwork = Params().NetworkIDString();
+    SelectParams("regtest"); // P2SH disabled on nexa mainnet
+
     // Test the CScript::Set* methods
     CBasicKeyStore keystore;
     CKey key[4];
@@ -216,6 +227,7 @@ BOOST_AUTO_TEST_CASE(set)
         BOOST_CHECK_MESSAGE(
             IsStandardTx(MakeTransactionRef(CTransaction(txTo[i])), reason), strprintf("txTo[%d].IsStandard", i));
     }
+    SelectParams(popNetwork); // P2SH disabled on nexa mainnet
 }
 
 BOOST_AUTO_TEST_CASE(is)
@@ -256,29 +268,12 @@ BOOST_AUTO_TEST_CASE(is)
     BOOST_CHECK(!not_p2sh.IsPayToScriptHash());
 }
 
-BOOST_AUTO_TEST_CASE(switchover)
-{
-    // Test switch over code
-    CScript notValid;
-    ScriptError err;
-    notValid << OP_11 << OP_12 << OP_EQUALVERIFY;
-    CScript scriptSig;
-    scriptSig << Serialize(notValid);
-
-    CScript fund = GetScriptForDestination(CScriptID(notValid));
-
-
-    // Validation should succeed under old rules (hash is correct):
-    BOOST_CHECK(Verify(scriptSig, fund, false, err));
-    BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_OK, ScriptErrorString(err));
-    // Fail under new:
-    BOOST_CHECK(!Verify(scriptSig, fund, true, err));
-    BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_EQUALVERIFY, ScriptErrorString(err));
-}
-
 BOOST_AUTO_TEST_CASE(AreInputsStandard)
 {
     LOCK(cs_main);
+    std::string popNetwork = Params().NetworkIDString();
+    SelectParams("regtest"); // P2SH disabled on nexa mainnet
+
     CCoinsView coinsDummy;
     CCoinsViewCache coins(&coinsDummy);
     CBasicKeyStore keystore;
@@ -397,6 +392,7 @@ BOOST_AUTO_TEST_CASE(AreInputsStandard)
         GetP2SHSigOpCount(MakeTransactionRef(CTransaction(txToNonStd2)), coins, STANDARD_SCRIPT_VERIFY_FLAGS), 20U);
     // Check that no sigops show up when P2SH is not activated.
     BOOST_CHECK_EQUAL(GetP2SHSigOpCount(MakeTransactionRef(CTransaction(txToNonStd2)), coins, SCRIPT_VERIFY_NONE), 0U);
+    SelectParams(popNetwork); // P2SH disabled on nexa mainnet
 }
 
 BOOST_AUTO_TEST_SUITE_END()

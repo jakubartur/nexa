@@ -201,6 +201,9 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
 
     // Multisig nested in P2SH
     {
+        std::string popNetwork = Params().NetworkIDString();
+        SelectParams("regtest"); // P2SH disabled on nexa mainnet
+
         CScript redeemScript = CScript() << 1 << ToByteVector(pubkey) << ToByteVector(pubkey) << 2
                                          << OP_CHECKMULTISIGVERIFY;
         CScript scriptPubKey = GetScriptForDestination(CScriptID(redeemScript));
@@ -214,6 +217,7 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
         // passed in.
         BOOST_CHECK_EQUAL(
             GetTransactionSigOpCount(MakeTransactionRef(CTransaction(spendingTx)), coins, SCRIPT_VERIFY_NONE), 0ULL);
+        SelectParams(popNetwork); // P2SH disabled on nexa mainnet
     }
 }
 
