@@ -291,8 +291,6 @@ enum opcodetype
     OP_SETBMD = 0xeb,
     OP_BIN2BIGNUM = 0xec,
     OP_EXEC = 0xed,
-    OP_GROUP = 0xee,
-    OP_TEMPLATE = 0xef,
     // The first op_code value after all defined opcodes
     FIRST_UNDEFINED_OP_VALUE,
 

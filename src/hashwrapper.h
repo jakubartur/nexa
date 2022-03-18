@@ -123,6 +123,24 @@ inline uint256 Hash(const T1 p1begin,
     return result;
 }
 
+/** Compute the 256-bit hash an object. */
+template <typename T1>
+inline std::vector<unsigned char> VchHash(const T1 pbegin, const T1 pend)
+{
+    static unsigned char pblank[1] = {};
+    std::vector<unsigned char> result(32);
+    CHash160()
+        .Write(pbegin == pend ? pblank : (const unsigned char *)&pbegin[0], (pend - pbegin) * sizeof(pbegin[0]))
+        .Finalize(&result[0]);
+    return result;
+}
+
+/** Compute the 256-bit hash of a vector. */
+inline std::vector<unsigned char> VchHash(const std::vector<unsigned char> &vch)
+{
+    return VchHash(vch.begin(), vch.end());
+}
+
 /** Compute the 160-bit hash an object. */
 template <typename T1>
 inline uint160 Hash160(const T1 pbegin, const T1 pend)

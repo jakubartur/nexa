@@ -6,6 +6,7 @@
 #include "script/interpreter.h"
 #include "script/pushtxstate.h"
 #include "script/script.h"
+#include "script/scripttemplate.h"
 #include "scriptnum10.h"
 #include "test/test_bitcoin.h"
 
@@ -119,24 +120,20 @@ BOOST_AUTO_TEST_CASE(pushtxstate)
 }
 
 // create a group pay to OP_1
+CScript successConstraint = CScript() << OP_1 << OP_DROP;
+VchType successConstraintHash = VchHash160(ToByteVector(successConstraint));
 CScript gp2op1(const CGroupTokenID &group, CAmount amt)
 {
-    CScript script = CScript() << group.bytes() << SerializeAmount(amt) << OP_GROUP << OP_1;
+    CScript script = ScriptTemplateOutput(successConstraintHash, VchType(), VchType(), group, amt);
     return script;
 }
 
-CScript tmplop1(const CGroupTokenID &group, CAmount amt)
-{
-    CScript tmpl = CScript() << OP_1;
-    CScript txout = CScript(ScriptType::TEMPLATE) << group.bytes() << SerializeAmount(amt) << hash256(tmpl) << OP_0;
-    return txout;
-}
-
+CScript op1op1 = CScript() << OP_1 << OP_DROP << OP_1 << OP_DROP;
+VchType op1op1Hash = VchHash(ToByteVector(op1op1));
 CScript tmplop1op1(const CGroupTokenID &group, CAmount amt)
 {
-    CScript tmpl = CScript() << OP_1 << OP_DROP << OP_1;
-    CScript constraint = CScript(ScriptType::TEMPLATE)
-                         << group.bytes() << SerializeAmount(amt) << hash256(tmpl) << OP_0;
+    CScript tmpl = CScript() << OP_1 << OP_DROP << OP_1 << OP_DROP;
+    CScript constraint = CScript(ScriptType::TEMPLATE) << group.bytes() << SerializeAmount(amt) << op1op1Hash << OP_0;
     return constraint;
 }
 
@@ -203,32 +200,29 @@ BOOST_AUTO_TEST_CASE(covenantedAndSubgroupPushtxstate)
     CGroupTokenID subgrp(subgrpbytes);
 
     // Pull in 2 inputs and make sure that the first one is set as the covenant.
-    coins.push_back(CTxOut(10, tmplop1(grp1, 100)));
+    coins.push_back(CTxOut(10, gp2op1(grp1, 100)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
     coins.push_back(CTxOut(10, tmplop1op1(grp1, 200)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
     // Pull in a subgroup and try to use it
-    coins.push_back(CTxOut(10, gp2op1(subgrp, 200)));
+    coins.push_back(CTxOut(10, tmplop1op1(subgrp, 200)));
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 10));
 
     tx.vout.push_back(CTxOut(10, simpleConstraint));
-    tx.vout.push_back(CTxOut(1, tmplop1(grp1, 300)));
-    tx.vout.push_back(CTxOut(1, gp2op1(subgrp, 200)));
-
-    // the first input template
-    CScript tmpl = CScript() << OP_1;
-    uint256 hash = hash256(tmpl);
-    // the 2nd input template
-    CScript tmpl2 = CScript() << OP_1 << OP_DROP << OP_1;
-    uint256 hash2 = hash256(tmpl2);
+    tx.vout.push_back(CTxOut(1, gp2op1(grp1, 300)));
+    tx.vout.push_back(CTxOut(1, tmplop1op1(subgrp, 200)));
 
     // ensure that first script is returned as the covenant
-    s = CScript() << PushTxStateSpecifier::GROUP_COVENANT_HASH << grp1.bytes() << OP_CAT << OP_PUSH_TX_STATE << hash
-                  << OP_EQUAL;
+    s = CScript() << PushTxStateSpecifier::GROUP_COVENANT_HASH << grp1.bytes() << OP_CAT << OP_PUSH_TX_STATE
+                  << successConstraintHash << OP_EQUAL;
     testScript(s, &tx, coins);
     // ensure that 2nd script is NOT returned as the covenant
-    s = CScript() << PushTxStateSpecifier::GROUP_COVENANT_HASH << grp1.bytes() << OP_CAT << OP_PUSH_TX_STATE << hash2
-                  << OP_EQUAL << OP_FALSE << OP_EQUAL;
+    s = CScript() << PushTxStateSpecifier::GROUP_COVENANT_HASH << grp1.bytes() << OP_CAT << OP_PUSH_TX_STATE
+                  << op1op1Hash << OP_EQUAL << OP_FALSE << OP_EQUAL;
+    testScript(s, &tx, coins);
+
+    s = CScript() << PushTxStateSpecifier::GROUP_COVENANT_HASH << subgrp.bytes() << OP_CAT << OP_PUSH_TX_STATE
+                  << op1op1Hash << OP_EQUAL;
     testScript(s, &tx, coins);
 
     // The subgroup counts should not include anything from the parent group,

@@ -11,7 +11,6 @@
 #include "script/script.h"
 #include "util.h"
 #include "utilstrencodings.h"
-bool MatchGroupedPayToPubkeyHash(const CScript &script, std::vector<uint8_t> &pubkeyhash, CGroupTokenInfo &grp);
 
 using namespace std;
 
@@ -302,25 +301,10 @@ bool ExtendedSolver(const CScript &scriptPubKey,
         vSolutionsRet.push_back(std::move(data));
         return true;
     }
-    /* nonstandard
-    if (MatchGroupedPayToPubkey(scriptPubKey, data, grp))
-    {
-        typeRet = TX_GRP_PUBKEY;
-        vSolutionsRet.push_back(std::move(data));
-        return true;
-    }
-    */
 
     if (MatchPayToPubkeyHash(scriptPubKey, data))
     {
         typeRet = TX_PUBKEYHASH;
-        vSolutionsRet.push_back(std::move(data));
-        return true;
-    }
-
-    if (MatchGroupedPayToPubkeyHash(scriptPubKey, data, grp))
-    {
-        typeRet = TX_GRP_PUBKEYHASH;
         vSolutionsRet.push_back(std::move(data));
         return true;
     }

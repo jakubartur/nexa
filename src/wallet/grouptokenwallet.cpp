@@ -127,8 +127,7 @@ public:
         script->clear();
         if (group.isUserGroup())
         {
-            *script << group.bytes() << SerializeAmount(quantity) << OP_GROUP << OP_DUP << OP_HASH160
-                    << ToByteVector(keyID) << OP_EQUALVERIFY << OP_CHECKSIG;
+            DbgAssert(false, return false); // Grouped things MUST use templates
         }
         else
         {
@@ -142,8 +141,7 @@ public:
         script->clear();
         if (group.isUserGroup())
         {
-            *script << group.bytes() << SerializeAmount(quantity) << OP_GROUP << OP_HASH160 << ToByteVector(scriptID)
-                    << OP_EQUAL;
+            DbgAssert(false, return false); // Grouped things MUST use templates
         }
         else
         {

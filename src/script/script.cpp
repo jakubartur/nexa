@@ -320,12 +320,8 @@ const char *GetOpName(opcodetype opcode)
         return "OP_BIN2BIGNUM";
     case OP_SETBMD:
         return "OP_SETBMD";
-    case OP_GROUP:
-        return "OP_GROUP";
     case OP_EXEC:
         return "OP_EXEC";
-    case OP_TEMPLATE:
-        return "OP_TEMPLATE";
 
     case OP_INVALIDOPCODE:
         return "OP_INVALIDOPCODE";
@@ -520,7 +516,6 @@ unsigned int CScript::GetSigOpCount(const uint32_t flags, const CScript &scriptS
 bool CScript::IsPayToScriptHash(vector<unsigned char> *hashBytes) const
 {
     CScript::const_iterator pc = begin();
-    IsScriptGrouped(*this, &pc);
     unsigned int offset = &pc[0] - &begin()[0];
     // Extra-fast test for pay-to-script-hash CScripts:
     if (this->size() == offset + 23 && (*this)[offset] == OP_HASH160 && (*this)[offset + 1] == 0x14 &&
