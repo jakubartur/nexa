@@ -211,6 +211,36 @@ BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
     BOOST_CHECK_MESSAGE(CheckTransaction(txref, state), "at max vins");
     BOOST_CHECK(state.IsValid());
 
+    /* Uncomment to regenerate this transaction for inclusion into the python test code.  It will make a different
+       tx every time since some of the data is random
+    */
+    /*
+    printf("Huge TX for testpynode.py:\n");
+    std::string s = txref->HexStr();
+    for(size_t i=0; i< s.length(); i+=150)
+    {
+        printf("'%s',\n", s.substr(i, 150).c_str());
+    }
+    printf("Idem: %s\n", txref->GetIdem().GetHex().c_str());
+    printf("Id: %s\n", txref->GetId().GetHex().c_str());
+    */
+
+    auto tmptype = tx.vout[5].type;
+    tx.vout[5].type = 2;
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "txout type invalid");
+    BOOST_CHECK(!state.IsValid());
+    BOOST_CHECK(state.GetRejectReason() == "bad-txns-invalid-txout-type");
+    tx.vout[5].type = tmptype;
+
+    tmptype = tx.vin[5].type;
+    tx.vin[5].type = 2;
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "txin type invalid");
+    BOOST_CHECK(!state.IsValid());
+    BOOST_CHECK(state.GetRejectReason() == "bad-txns-invalid-txin-type");
+    tx.vin[5].type = tmptype;
+
     // Check that 1 more vout causes a tx failure
     tx.vin.push_back(CTxIn(COutPoint(InsecureRand256()), 100));
     txref = MakeTransactionRef(tx);

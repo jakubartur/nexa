@@ -55,7 +55,7 @@ class MyTest (BitcoinTestFramework):
 
         # Send 1 BTC from 0 to 2 using sendtoaddress call.
         try:
-            self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1)
+            self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 1000)
         except JSONRPCException as e: # an exception you don't catch is a testing error
             raise
 
@@ -83,7 +83,6 @@ def Test():
     #signal.signal(signal.SIGINT, lambda sig, stk: pdb.Pdb().set_trace(stk))
     bitcoinConf = {
         "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
     }
     logging.getLogger().setLevel(logging.INFO)
     flags = standardFlags()

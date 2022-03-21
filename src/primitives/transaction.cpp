@@ -37,6 +37,7 @@ SatoshiTxIn::SatoshiTxIn(uint256 hashPrevTx, uint32_t nOut, CScript scriptSigIn,
 
 CTxIn::CTxIn(COutPoint prevoutIn, CAmount amountIn, CScript scriptSigIn, uint32_t nSequenceIn)
 {
+    type = UTXO;
     prevout = prevoutIn;
     scriptSig = scriptSigIn;
     nSequence = nSequenceIn;
@@ -45,6 +46,7 @@ CTxIn::CTxIn(COutPoint prevoutIn, CAmount amountIn, CScript scriptSigIn, uint32_
 
 CTxIn::CTxIn(uint256 hashPrevTx, uint32_t nOut, CAmount amountIn, CScript scriptSigIn, uint32_t nSequenceIn)
 {
+    type = UTXO;
     prevout = COutPoint(hashPrevTx, nOut);
     scriptSig = scriptSigIn;
     nSequence = nSequenceIn;

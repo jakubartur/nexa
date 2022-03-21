@@ -199,6 +199,8 @@ bool CheckTransaction(const CTransactionRef tx, CValidationState &state)
     CAmount nValueOut = 0;
     for (const CTxOut &txout : tx->vout)
     {
+        if ((txout.type != CTxOut::SATOSCRIPT) && (txout.type != CTxOut::TEMPLATE))
+            return state.DoS(100, false, REJECT_INVALID, "bad-txns-invalid-txout-type");
         if (txout.nValue < 0)
             return state.DoS(100, false, REJECT_INVALID, "bad-txns-vout-negative");
         if (txout.nValue > MAX_MONEY)
@@ -218,6 +220,12 @@ bool CheckTransaction(const CTransactionRef tx, CValidationState &state)
     {
         if (tx->vin.empty())
             return state.DoS(10, false, REJECT_INVALID, "bad-txns-vin-empty");
+
+        for (const CTxIn &txin : tx->vin)
+        {
+            if (txin.type != CTxIn::UTXO)
+                return state.DoS(100, false, REJECT_INVALID, "bad-txns-invalid-txin-type");
+        }
 
         // Check for duplicate inputs.
         // Simply checking every pair is O(n^2).

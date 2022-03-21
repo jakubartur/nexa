@@ -120,7 +120,9 @@ private:
     bool fDirty;
 
 public:
-    std::string dbgName;
+    // Naming a tx is useful for tracking during debugging but wastes space.  This code will be left in, commented out
+    // for later use.
+    // std::string dbgName;
     unsigned char sighashType;
     int dsproof = -1;
     CTxMemPoolEntry();

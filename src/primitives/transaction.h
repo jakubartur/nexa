@@ -67,6 +67,11 @@ public:
 class CTxIn
 {
 public:
+    enum
+    {
+        UTXO = 0,
+    };
+    uint8_t type = UTXO; // Can also be used as versioning
     COutPoint prevout;
     CScript scriptSig;
     uint32_t nSequence;
@@ -115,6 +120,7 @@ public:
     template <typename Stream, typename Operation>
     inline void SerializationOp(Stream &s, Operation ser_action)
     {
+        READWRITE(type);
         READWRITE(prevout);
         if (!(s.GetType() & SER_GETIDEM))
         {

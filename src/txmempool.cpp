@@ -551,9 +551,10 @@ void CTxMemPoolEntry::UpdateAncestorState(int64_t modifySize,
     nSigOpCountWithAncestors += modifySigOps;
     DbgAssert(int(nSigOpCountWithAncestors) >= 0, );
 
-    if (dbgName.size())
-        printf("%s: Updated Ancestor state: nSizeWithAncestors=%lu nModFeesWithAncestors=%lu nCountWithAncestors=%lu\n",
-            dbgName.c_str(), nSizeWithAncestors, nModFeesWithAncestors, nCountWithAncestors);
+    // if (dbgName.size())
+    //    printf("%s: Updated Ancestor state: nSizeWithAncestors=%lu nModFeesWithAncestors=%lu
+    //    nCountWithAncestors=%lu\n",
+    //        dbgName.c_str(), nSizeWithAncestors, nModFeesWithAncestors, nCountWithAncestors);
     fDirty = dirty;
 }
 
@@ -573,11 +574,12 @@ void CTxMemPoolEntry::ReplaceAncestorState(int64_t modifySize,
 
     fDirty = dirty;
 
-    if (dbgName.size())
-    {
-        printf("%s: Replace Ancestor state: nSizeWithAncestors=%lu nModFeesWithAncestors=%lu nCountWithAncestors=%lu\n",
-            dbgName.c_str(), nSizeWithAncestors, nModFeesWithAncestors, nCountWithAncestors);
-    }
+    // if (dbgName.size())
+    // {
+    //    printf("%s: Replace Ancestor state: nSizeWithAncestors=%lu nModFeesWithAncestors=%lu
+    //    nCountWithAncestors=%lu\n",
+    //        dbgName.c_str(), nSizeWithAncestors, nModFeesWithAncestors, nCountWithAncestors);
+    // }
 }
 
 CTxMemPool::CTxMemPool() : nTransactionsUpdated(0), m_dspStorage(new DoubleSpendProofStorage())
