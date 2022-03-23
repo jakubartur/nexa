@@ -872,19 +872,19 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
     CAmount feeAmt = chainparams.GetConsensus().initialSubsidy / 1000LL;
     CAmount outAmt = chainparams.GetConsensus().initialSubsidy - feeAmt;
-    // invalid (pre-p2sh) txn in mempool, template creation fails
+    // invalid txn in mempool, template creation fails
     tx.vin.resize(1);
     tx.vin[0] = txFirst[0]->SpendOutput(0);
     tx.vin[0].scriptSig = CScript() << OP_1;
     tx.vout.resize(1);
     tx.vout[0].nValue = outAmt;
     script = CScript() << OP_0;
-    tx.vout[0].scriptPubKey = GetScriptForDestination(CScriptID(script));
+    tx.vout[0].scriptPubKey = OP_0;
     hash = tx.GetIdem();
     mempool.addUnchecked(entry.Fee(feeAmt).Time(GetTime()).SpendsCoinbase(true).FromTx(tx));
     tx.vin[0].prevout = COutPoint(hash, 0);
     tx.vin[0].amount = outAmt;
-    tx.vin[0].scriptSig = CScript() << std::vector<unsigned char>(script.begin(), script.end());
+    tx.vin[0].scriptSig = CScript();
     tx.vout[0].nValue -= feeAmt;
     mempool.addUnchecked(entry.Fee(feeAmt).Time(GetTime()).SpendsCoinbase(false).FromTx(tx));
 
