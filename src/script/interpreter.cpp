@@ -1696,11 +1696,6 @@ bool ScriptMachine::Step()
 
                 case OP_REVERSEBYTES:
                 {
-                    if (!(flags & SCRIPT_ENABLE_OP_REVERSEBYTES))
-                    {
-                        return set_error(serror, SCRIPT_ERR_BAD_OPCODE);
-                    }
-
                     // (in -- out)
                     if (stack.size() < 1)
                     {
@@ -2340,14 +2335,6 @@ bool VerifySatoScript(const CScript &scriptSig,
 
         CScript pubKey2(stackCopy.back());
         sm.PopStack();
-
-        // Bail out early if SCRIPT_DISALLOW_SEGWIT_RECOVERY is not set, the
-        // redeem script is a p2sh segwit program, and it was the only item
-        // pushed onto the stack.
-        if ((flags & SCRIPT_DISALLOW_SEGWIT_RECOVERY) == 0 && sm.getStack().empty() && pubKey2.IsWitnessProgram())
-        {
-            return set_success(serror);
-        }
 
         sm.ClearAltStack();
         if (!sm.Eval(pubKey2))

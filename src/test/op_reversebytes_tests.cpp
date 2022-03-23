@@ -50,8 +50,7 @@ static void CheckErrorIfEnabled(const uint32_t flags,
     const CScript &script,
     const ScriptError expected)
 {
-    CheckErrorWithFlags(flags | SCRIPT_ENABLE_OP_REVERSEBYTES, original_stack, script, expected);
-    CheckErrorWithFlags(flags & ~SCRIPT_ENABLE_OP_REVERSEBYTES, original_stack, script, SCRIPT_ERR_BAD_OPCODE);
+    CheckErrorWithFlags(flags, original_stack, script, expected);
 }
 
 /**
@@ -63,8 +62,7 @@ static void CheckPassIfEnabled(const uint32_t flags,
     const CScript &script,
     const stacktype &expected)
 {
-    CheckPassWithFlags(flags | SCRIPT_ENABLE_OP_REVERSEBYTES, original_stack, script, expected);
-    CheckErrorWithFlags(flags & ~SCRIPT_ENABLE_OP_REVERSEBYTES, original_stack, script, SCRIPT_ERR_BAD_OPCODE);
+    CheckPassWithFlags(flags, original_stack, script, expected);
 }
 
 /**

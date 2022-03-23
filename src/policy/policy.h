@@ -51,8 +51,7 @@ static const unsigned int STANDARD_SCRIPT_VERIFY_FLAGS = MANDATORY_SCRIPT_VERIFY
                                                          SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY |
                                                          SCRIPT_VERIFY_CHECKSEQUENCEVERIFY |
                                                          SCRIPT_VERIFY_SIGPUSHONLY |
-                                                         SCRIPT_ENABLE_CHECKDATASIG |
-                                                         SCRIPT_DISALLOW_SEGWIT_RECOVERY;
+                                                         SCRIPT_ENABLE_CHECKDATASIG;
 /* clang-format on */
 
 /** For convenience, standard but not mandatory verify flags. */

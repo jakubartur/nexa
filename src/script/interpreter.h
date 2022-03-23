@@ -115,28 +115,14 @@ enum
     //
     SCRIPT_ENABLE_SIGHASH_FORKID = (1U << 16),
 
-    // Enable Replay protection.
-    // This is just a placeholder, BU does not implement automatic reply protections
-    // as descurbed here:
-    // github.com/bitcoincashorg/bitcoincash.org/blob/master/spec/may-2018-hardfork.md#automatic-replay-protection
-    // https:
-    SCRIPT_ENABLE_REPLAY_PROTECTION = (1U << 17),
-
     // Count sigops for OP_CHECKDATASIG and variant. The interpreter treats
     // OP_CHECKDATASIG(VERIFY) as always valid, this flag only affects sigops
     // counting.
     //
     SCRIPT_ENABLE_CHECKDATASIG = (1U << 18),
 
-    // The exception to CLEANSTACK and P2SH for the recovery of coins sent
-    // to p2sh segwit addresses is not allowed.
-    SCRIPT_DISALLOW_SEGWIT_RECOVERY = (1U << 20),
-
     // May2020: Require the number of sigchecks in an input to not exceed (the scriptSig length + 60) // 43
     SCRIPT_VERIFY_INPUT_SIGCHECKS = (1U << 22),
-
-    // Whether the new OP_REVERSEBYTES opcode can be used.
-    SCRIPT_ENABLE_OP_REVERSEBYTES = (1U << 23),
 
     // Flag that allows us to determine if the script interpreter should allow
     // 64-bit integer arithmetic and the return of OP_MUL or use the previous
@@ -145,8 +131,6 @@ enum
 
     // Flag for Native Introspection opcodes.
     SCRIPT_NATIVE_INTROSPECTION = (1U << 25),
-
-
 };
 
 class BaseSignatureChecker;

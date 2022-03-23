@@ -890,8 +890,6 @@ public:
 
     // if this is a p2sh then the script hash is filled into the passed param if its not null
     bool IsPayToScriptHash(std::vector<unsigned char> *hashBytes = nullptr) const;
-    bool IsWitnessProgram(int &version, std::vector<uint8_t> &program) const;
-    bool IsWitnessProgram() const;
 
     /** Called by IsStandardTx and P2SH/BIP62 VerifyScript (which makes it consensus-critical). */
     bool IsPushOnly(const_iterator pc) const;

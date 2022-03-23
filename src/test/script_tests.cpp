@@ -303,8 +303,7 @@ void DoTest(const CScript &scriptPubKey,
         uint32_t extra_flags = InsecureRand32();
         // Some flags are not purely-restrictive and thus we can't assume
         // anything about what happens when they are flipped. Keep them as-is.
-        extra_flags &=
-            ~(SCRIPT_ENABLE_SIGHASH_FORKID | SCRIPT_ENABLE_REPLAY_PROTECTION | SCRIPT_ENABLE_OP_REVERSEBYTES);
+        extra_flags &= ~(SCRIPT_ENABLE_SIGHASH_FORKID);
         uint32_t combined_flags = expect ? (flags & ~extra_flags) : (flags | extra_flags);
         // Weed out invalid flag combinations.
         if (combined_flags & SCRIPT_VERIFY_CLEANSTACK)
@@ -2272,42 +2271,6 @@ BOOST_AUTO_TEST_CASE(script_FindAndDelete)
     expect = ScriptFromHex("03feed");
     BOOST_CHECK_EQUAL(s.FindAndDelete(d), 1);
     BOOST_CHECK(s == expect);
-}
-
-BOOST_AUTO_TEST_CASE(IsWitnessProgram)
-{
-    // Valid version: [0,16]
-    // Valid program_len: [2,40]
-    for (int version = -1; version <= 17; version++)
-    {
-        for (unsigned int program_len = 1; program_len <= 41; program_len++)
-        {
-            CScript script;
-            std::vector<uint8_t> program(program_len, '\42');
-            int parsed_version;
-            std::vector<uint8_t> parsed_program;
-            script << version << program;
-            bool result = script.IsWitnessProgram(parsed_version, parsed_program);
-            bool expected = version >= 0 && version <= 16 && program_len >= 2 && program_len <= 40;
-            BOOST_CHECK_EQUAL(result, expected);
-            if (result)
-            {
-                BOOST_CHECK_EQUAL(version, parsed_version);
-                BOOST_CHECK(program == parsed_program);
-            }
-        }
-    }
-    // Tests with 1 and 3 stack elements
-    {
-        CScript script;
-        script << OP_0;
-        BOOST_CHECK_MESSAGE(!script.IsWitnessProgram(), "Failed IsWitnessProgram check with 1 stack element");
-    }
-    {
-        CScript script;
-        script << OP_0 << std::vector<uint8_t>(20, '\42') << OP_1;
-        BOOST_CHECK_MESSAGE(!script.IsWitnessProgram(), "Failed IsWitnessProgram check with 3 stack elements");
-    }
 }
 
 BOOST_AUTO_TEST_CASE(script_debugger)

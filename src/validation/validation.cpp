@@ -1229,8 +1229,8 @@ bool CheckInputs(const CTransactionRef &tx,
                         // Note that this will create strange error messages like
                         // "upgrade-conditional-script-failure (Opcode missing or not
                         // understood)".
-                        CScriptCheck check3(nullptr, scriptPubKey, amount, tx, spendingCoins, state, i,
-                            mandatoryFlags ^ SCRIPT_ENABLE_OP_REVERSEBYTES, cacheStore);
+                        CScriptCheck check3(
+                            nullptr, scriptPubKey, amount, tx, spendingCoins, state, i, mandatoryFlags, cacheStore);
                         if (check3())
                         {
                             if (debugger)
@@ -1961,9 +1961,9 @@ uint32_t GetBlockScriptFlags(const CBlockIndex *pindex, const Consensus::Params 
 
     uint32_t flags = SCRIPT_VERIFY_NONE | SCRIPT_VERIFY_P2SH | SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY |
                      SCRIPT_VERIFY_DERSIG | SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | SCRIPT_VERIFY_MINIMALDATA |
-                     SCRIPT_ENABLE_OP_REVERSEBYTES | SCRIPT_VERIFY_LOW_S | SCRIPT_VERIFY_NULLFAIL |
-                     SCRIPT_VERIFY_STRICTENC | SCRIPT_ENABLE_SIGHASH_FORKID | SCRIPT_VERIFY_SIGPUSHONLY |
-                     SCRIPT_VERIFY_CLEANSTACK | SCRIPT_ENABLE_CHECKDATASIG;
+                     SCRIPT_VERIFY_LOW_S | SCRIPT_VERIFY_NULLFAIL | SCRIPT_VERIFY_STRICTENC |
+                     SCRIPT_ENABLE_SIGHASH_FORKID | SCRIPT_VERIFY_SIGPUSHONLY | SCRIPT_VERIFY_CLEANSTACK |
+                     SCRIPT_ENABLE_CHECKDATASIG;
 
     return flags;
 }
