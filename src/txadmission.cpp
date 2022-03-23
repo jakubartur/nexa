@@ -694,14 +694,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
     }
 
     uint32_t featureFlags = 0;
-    featureFlags |= SCRIPT_ENABLE_OP_REVERSEBYTES | SCRIPT_VERIFY_INPUT_SIGCHECKS;
+    featureFlags |= SCRIPT_VERIFY_INPUT_SIGCHECKS;
     uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS | featureFlags;
-
-    // Disable DISALLOW_SEGWIT in case we accept non standard transactions.
-    if (!fRequireStandard)
-    {
-        flags &= ~SCRIPT_DISALLOW_SEGWIT_RECOVERY;
-    }
 
     // Only accept nLockTime-using transactions that can be mined in the next
     // block; we don't want our mempool filled up with transactions that can't
