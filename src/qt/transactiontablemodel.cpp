@@ -72,8 +72,11 @@ public:
             for (MapWallet::iterator it = wallet->mapWallet.begin(); it != wallet->mapWallet.end(); ++it)
             {
                 CWalletTxRef wtx = it->second.tx;
-                if (TransactionRecord::showTransaction(*wtx))
-                    cachedWallet.append(TransactionRecord::decomposeTransaction(wallet, *wtx));
+                if (it->first.hash == wtx->GetId())
+                {
+                    if (TransactionRecord::showTransaction(*wtx))
+                        cachedWallet.append(TransactionRecord::decomposeTransaction(wallet, *wtx));
+                }
             }
         }
     }
