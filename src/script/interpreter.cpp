@@ -340,8 +340,8 @@ bool ScriptMachine::EndStep()
 bool ScriptMachine::Step()
 {
     bool fRequireMinimal = (flags & SCRIPT_VERIFY_MINIMALDATA) != 0;
-    const bool integers64Bit = (flags & SCRIPT_64_BIT_INTEGERS) != 0;
-    const bool nativeIntrospection = (flags & SCRIPT_NATIVE_INTROSPECTION) != 0;
+    const bool integers64Bit = (flags & SCRIPT_ALLOW_64_BIT_INTEGERS) != 0;
+    const bool nativeIntrospection = (flags & SCRIPT_ALLOW_NATIVE_INTROSPECTION) != 0;
 
     const size_t maxIntegerSize =
         integers64Bit ? CScriptNum::MAXIMUM_ELEMENT_SIZE_64_BIT : CScriptNum::MAXIMUM_ELEMENT_SIZE_32_BIT;

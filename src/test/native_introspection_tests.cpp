@@ -82,8 +82,8 @@ static void CheckPassWithFlags(uint32_t flags,
 
 BOOST_AUTO_TEST_CASE(opcodes_basic)
 {
-    const uint32_t flags = MANDATORY_SCRIPT_VERIFY_FLAGS | SCRIPT_NATIVE_INTROSPECTION;
-    const uint32_t flags_inactive = flags & ~SCRIPT_NATIVE_INTROSPECTION;
+    const uint32_t flags = MANDATORY_SCRIPT_VERIFY_FLAGS | SCRIPT_ALLOW_NATIVE_INTROSPECTION;
+    const uint32_t flags_inactive = flags & ~SCRIPT_ALLOW_NATIVE_INTROSPECTION;
 
     CCoinsView dummy;
     CCoinsViewCache coins(&dummy);

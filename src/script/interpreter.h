@@ -124,13 +124,14 @@ enum
     // May2020: Require the number of sigchecks in an input to not exceed (the scriptSig length + 60) // 43
     SCRIPT_VERIFY_INPUT_SIGCHECKS = (1U << 22),
 
-    // Flag that allows us to determine if the script interpreter should allow
+    // Flag which determines if the script interpreter should allow
     // 64-bit integer arithmetic and the return of OP_MUL or use the previous
     // semantics.
-    SCRIPT_64_BIT_INTEGERS = (1U << 24),
+    SCRIPT_ALLOW_64_BIT_INTEGERS = (1U << 24),
 
-    // Flag for Native Introspection opcodes.
-    SCRIPT_NATIVE_INTROSPECTION = (1U << 25),
+    // Flag which determines if the script interpretor should allow
+    // Native Introspection opcodes.
+    SCRIPT_ALLOW_NATIVE_INTROSPECTION = (1U << 25),
 };
 
 class BaseSignatureChecker;
