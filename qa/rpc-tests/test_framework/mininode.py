@@ -100,9 +100,6 @@ class NodeConnCB(object):
     def wait_for_verack(self):
         self.wait_for(lambda : self.verack_received)
 
-    def wait_for_xverack_old(self):
-        self.wait_for(lambda : self.xverack_received)
-
     def deliver(self, conn, message):
         deliver_sleep = self.get_deliver_sleep_time()
         if deliver_sleep is not None:
@@ -123,7 +120,6 @@ class NodeConnCB(object):
         else:
             if type(self.extversion) == msg_extversion:
                 conn.send_message(self.extversion)
-        
         conn.ver_send = min(MY_VERSION, message.nVersion)
         if message.nVersion < 209:
             conn.ver_recv = conn.ver_send
@@ -187,7 +183,8 @@ class NodeConnCB(object):
     def on_extversion(self, conn, message):
         # reply with a verack since we got both the version and extversion messages
         conn.xver = message
-        conn.send_message(msg_verack())
+        if self.extversion != None:  # already sent otherwise
+            conn.send_message(msg_verack())
 
 # More useful callbacks and functions for NodeConnCB's which have a single NodeConn
 
@@ -267,7 +264,13 @@ class NodeConn(asyncore.dispatcher):
         b"sendcmpct": msg_sendcmpct,
         b"cmpctblock": msg_cmpctblock,
         b"getblocktxn": msg_getblocktxn,
-        b"blocktxn": msg_blocktxn
+        b"blocktxn": msg_blocktxn,
+        b"capdinv": msg_capdinv,
+        b"capdgetmsg": msg_capdgetmsg,
+        b"capdmsg": msg_capdmsg,
+        b"capdq": msg_capdquery,
+        b"capdqreply": msg_capdqreply,
+        b"capdinfo": msg_capdinfo
     }, bumessagemap)
 
     BTC_MAGIC_BYTES = {
@@ -282,7 +285,7 @@ class NodeConn(asyncore.dispatcher):
         "regtest": b"\xda\xb5\xbf\xfa",
     }
 
-    def __init__(self, dstaddr, dstport, rpc, callback, net="regtest", services=1, bitcoinCash=True, send_initial_version = True, send_extversion = False):
+    def __init__(self, dstaddr, dstport, rpc, callback, net="regtest", services=1, bitcoinCash=True, send_initial_version = True, extversion_service = False):
         self.bitcoinCash = bitcoinCash
         if self.bitcoinCash:
             self.MAGIC_BYTES = self.CASH_MAGIC_BYTES
@@ -309,7 +312,7 @@ class NodeConn(asyncore.dispatcher):
         if send_initial_version:
             # stuff version msg into sendbuf
             vt = msg_version()
-            if send_extversion:
+            if extversion_service:
                 services = services | (1<<11)
             vt.nServices = services
             vt.addrTo.ip = self.dstaddr
@@ -381,6 +384,7 @@ class NodeConn(asyncore.dispatcher):
         with mininode_lock:
             try:
                 sent = self.send(self.sendbuf)
+                # print("actually sent: ", sent,  self.sendbuf)
             except:
                 self.handle_close()
                 return
@@ -433,8 +437,8 @@ class NodeConn(asyncore.dispatcher):
                     t.deserialize(f)
                     self.got_message(t)
                 else:
-                    print("Unknown command: '" + str(command) + "' ")
-                    self.show_debug_msg("Unknown command: '" + str(command) + "' " +
+                    print("Unknown command: '" + command.decode() + "' ")
+                    self.show_debug_msg("Unknown command: '" + command.decode() + "' " +
                                         repr(msg))
                     # pdb.set_trace()
         except Exception as e:
@@ -447,7 +451,7 @@ class NodeConn(asyncore.dispatcher):
     def send_message(self, message, pushbuf=False):
         if self.state != "connected" and not pushbuf:
             raise IOError('Not connected, no pushbuf')
-        self.show_debug_msg("Send %s" % repr(message))
+        self.show_debug_msg("Enqueue for send %s" % repr(message))
         command = message.command
         data = message.serialize()
         tmsg = self.MAGIC_BYTES[self.network]

@@ -16,6 +16,7 @@
 #include "blockrelay/mempool_sync.h"
 #include "blockrelay/thinblock.h"
 #include "blockstorage/blockstorage.h"
+#include "capd.h"
 #include "chain.h"
 #include "dosman.h"
 #include "electrum/electrs.h"
@@ -549,6 +550,8 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
             xver.set_u64c(XVer::BU_MEMPOOL_SYNC_MIN_VERSION_SUPPORTED, mempoolSyncMinVersionSupported.Value());
             xver.set_u64c(XVer::BU_XTHIN_VERSION, 2); // xthin version
             xver.set_u64c(XVer::BU_TXN_CONCATENATION, 1);
+            if (capdPoolSize.Value() != 0)
+                xver.set_u64c(XVer::BU_CAPD_VERSION, 1); // capd version
 
             electrum::set_extversion_flags(xver, chainparams.NetworkIDString());
 
@@ -2101,6 +2104,11 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
         std::string result = DebuggerToString(debugger);
         pfrom->PushMessage(NetMsgType::RESTXVAL, nonce, result);
     }
+    else if ((capdPoolSize.Value() > 0) && pfrom->IsCapdEnabled() &&
+             (strCommand.substr(0, 4) == NetMsgType::CAPDPREFIX))
+    {
+        capdProtocol.HandleCapdMessage(pfrom, strCommand, vRecv, nStopwatchTimeReceived);
+    }
 
     else if (strCommand == NetMsgType::REJECT)
     {
@@ -2235,8 +2243,8 @@ bool ProcessMessages(CNode *pfrom)
                         pfrom->fDisconnect = true;
                         dosMan.Misbehaving(pfrom, 1);
                         return error(
-                            "recieved early handshake message after successfully connected, disconnecting peer=%s",
-                            pfrom->GetLogName());
+                            "received handshake message '%s' after successful initialization, disconnecting peer=%s",
+                            frontCommand, pfrom->GetLogName());
                     }
                 }
             }
@@ -2833,6 +2841,10 @@ bool SendMessages(CNode *pto)
                 }
             }
         }
+
+        // Send any CAPD communication that might be pending
+        if (pto->capd)
+            pto->capd->FlushMessages();
 
         // If the chain is not entirely sync'd then look for new blocks to download.
         //

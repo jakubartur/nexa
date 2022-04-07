@@ -50,7 +50,7 @@ class ExtversionTest(BitcoinTestFramework):
         pynode.connect(0, '127.0.0.1', p2p_port(0), self.nodes[0],
                        protohandler = VersionlessProtoHandler(),
                        send_initial_version = send_initial_version,
-                       send_extversion = send_extversion)
+                       extversion_service = send_extversion)
         return pynode.cnxns[0]
 
     def network_and_finish(self):

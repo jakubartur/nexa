@@ -50,6 +50,7 @@ class CSubNet;
 class CNode;
 class CNodeRef;
 class CNetMessage;
+class CapdNode;
 
 namespace boost
 {
@@ -365,6 +366,11 @@ public:
 
     // socket
     SOCKET hSocket;
+
+    /** Set to true if capd is enabled in this node (based on XVersion config) */
+    bool isCapdEnabled = false;
+    /** The "hook" into capd functionality */
+    CapdNode *capd = nullptr;
 
     CCriticalSection cs_vSend;
     CDataStream ssSend GUARDED_BY(cs_vSend);
@@ -974,6 +980,7 @@ public:
 
     void copyStats(CNodeStats &stats);
 
+    bool IsCapdEnabled() { return isCapdEnabled; }
     // Network stats
     static void RecordBytesRecv(uint64_t bytes);
     static void RecordBytesSent(uint64_t bytes);

@@ -359,8 +359,48 @@ extern const char *REQTXVAL;
  * A p2p message for the validaterawtransaction rpc response
  */
 extern const char *RESTXVAL;
-}; // namespace NetMsgType
 
+/** all CAPD messages have this prefix
+ * NOT AN ACTUAL MESSAGE
+ */
+extern const char *CAPDPREFIX;
+
+/**
+ * Contains CAPD message notifications
+ * only if XVERSION capd enabled
+ * This is a seperate message from normal INV so that it can be de-prioritized
+ */
+extern const char *CAPDINV;
+/**
+ * Request CAPD messages by hash only if EXTVERSION capd enabled
+ */
+extern const char *CAPDGETMSG;
+/**
+ * Contains CAPD messages, only if EXTVERSION capd enabled
+ */
+extern const char *CAPDMSG;
+/**
+ * Request info about the capd pool only if EXTVERSION capd enabled
+ */
+extern const char *CAPDGETINFO;
+/**
+ * Provide info about the capd pool only if EXTVERSION capd enabled
+ */
+extern const char *CAPDINFO;
+/**
+ * Search for matching messages only if EXTVERSION capd enabled
+ */
+extern const char *CAPDQUERY;
+/**
+ * Reply with matching messages only if EXTVERSION capd enabled
+ */
+extern const char *CAPDQUERYREPLY;
+/**
+ * Remove an installed notification only if EXTVERSION capd enabled
+ */
+extern const char *CAPDREMOVENOTIFY;
+
+}; // namespace NetMsgType
 
 /* Get a vector of all valid message types (see above) */
 const std::vector<std::string> &getAllNetMessageTypes();

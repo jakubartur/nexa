@@ -15,6 +15,7 @@
 #include "blockrelay/mempool_sync.h"
 #include "blockrelay/thinblock.h"
 #include "blockstorage/blockcache.h"
+#include "capd.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "clientversion.h"
@@ -278,11 +279,19 @@ CTweak<uint64_t> pruneIntervalTweak("prune.pruneInterval",
         DEFAULT_PRUNE_INTERVAL),
     DEFAULT_PRUNE_INTERVAL);
 
-CTweak<uint32_t> netMagic("net.magic", "network prefix override. if 0 (default), do not override.", 0);
+CTweak<uint32_t> netMagic("net.magic", "Network prefix override. if 0 (default), do not override.", 0);
 
 CTweak<uint32_t> randomlyDontInv("net.randomlyDontInv",
     "Skip sending an INV for some percent of transactions (default: 0)",
     0);
+
+CTweakRef<uint64_t> capdPoolSize("cache.maxCapdPool",
+    strprintf("Set the counterparty and protocol discovery message pool size.\nDefault is %d, 0 disables.\n"
+              "Note that enabling CAPD will only happen for new node connections, and\n"
+              "disabling will make this node silently drop incoming CAPD messages.",
+        CapdMsgPool::DEFAULT_MSG_POOL_MAX_SIZE),
+    &msgpoolMaxSize,
+    &CapdMsgPoolSizeValidator);
 
 CTweak<bool> ignoreNetTimeouts("net.ignoreTimeouts",
     "ignore inactivity timeouts, used during debugging (default: false)",

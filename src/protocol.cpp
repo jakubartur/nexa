@@ -74,6 +74,16 @@ const char *DSPROOF = "dsproof";
 
 const char *REQTXVAL = "req-txval";
 const char *RESTXVAL = "res-txval";
+
+const char *CAPDPREFIX = "capd";
+const char *CAPDGETINFO = "capdgetinfo";
+const char *CAPDINFO = "capdinfo";
+const char *CAPDINV = "capdinv";
+const char *CAPDGETMSG = "capdgetmsg";
+const char *CAPDMSG = "capdmsg";
+const char *CAPDQUERY = "capdq";
+const char *CAPDQUERYREPLY = "capdqreply";
+const char *CAPDREMOVENOTIFY = "capdremove";
 }; // namespace NetMsgType
 
 static const char *ppszTypeName[] = {
@@ -87,6 +97,7 @@ static const char *ppszTypeName[] = {
     NetMsgType::DSPROOF,
 };
 
+/* clang-format off */
 /** All known message types. Keep this in the same order as the list of
  * messages above and in protocol.h.
  */
@@ -141,7 +152,16 @@ const static std::string allNetMessageTypes[] = {
     NetMsgType::DSPROOF,
     NetMsgType::REQTXVAL,
     NetMsgType::RESTXVAL,
+    NetMsgType::CAPDINV,
+    NetMsgType::CAPDGETMSG,
+    NetMsgType::CAPDMSG,
+    NetMsgType::CAPDGETINFO,
+    NetMsgType::CAPDINFO,
+    NetMsgType::CAPDQUERY,
+    NetMsgType::CAPDQUERYREPLY
 };
+/* clang-format on */
+
 const static std::vector<std::string> allNetMessageTypesVec(allNetMessageTypes,
     allNetMessageTypes + ARRAYLEN(allNetMessageTypes));
 

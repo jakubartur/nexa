@@ -87,6 +87,7 @@ enum
 
     TWEAKS         = 0x1000000000,
     SCRIPT         = 0x2000000000,
+    CAPD           = 0x4000000000,
     VALIDATION     = 0x4000000000000000UL,
     TOKEN          = 0x8000000000000000UL
     // clang-format on
@@ -114,7 +115,7 @@ To add a new log category:
             {SELECTCOINS, "selectcoins"}, {ESTIMATEFEE, "estimatefee"}, {QT, "qt"}, {IBD, "ibd"},               \
             {GRAPHENE, "graphene"}, {RESPEND, "respend"}, {WB, "weakblocks"}, {CMPCT, "cmpctblock"},            \
             {ELECTRUM, "electrum"}, {MPOOLSYNC, "mempoolsync"}, {PRIORITYQ, "priorityq"}, {DSPROOF, "dsproof"}, \
-            {TWEAKS, "tweaks"}, {SCRIPT, "script"}, {ZMQ, "zmq"}, {VALIDATION, "validation"},                   \
+            {TWEAKS, "tweaks"}, {SCRIPT, "script"}, {ZMQ, "zmq"}, {VALIDATION, "validation"}, {CAPD, "capd"},   \
         {                                                                                                       \
             TOKEN, "token"                                                                                      \
         }                                                                                                       \
