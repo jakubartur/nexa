@@ -18,6 +18,7 @@
 #include "blockrelay/blockrelay_common.h"
 #include "blockrelay/graphene.h"
 #include "blockrelay/mempool_sync.h"
+#include "capd.h"
 #include "chainparams.h"
 #include "connmgr.h"
 #include "consensus/consensus.h"
@@ -2595,6 +2596,10 @@ void ThreadMessageHandler()
             pnode->Release();
         }
 
+        // Pass any invs for any CAPD messages that have arrived to every node
+        if ((shutdown_threads.load() == false) && (capdPoolSize.Value() > 0))
+            capdProtocol.FlushGossipMessagesToNodes();
+
         if (fSleep)
         {
             std::unique_lock<std::mutex> lock(wakeableDelayMutex);
@@ -3353,6 +3358,12 @@ CNode::~CNode()
     // Decrement thintype peer counters
     thinrelay.RemovePeers(this);
 
+    // Clean up the CAPD node information, if it exists
+    auto tmp = capd;
+    capd = nullptr;
+    if (tmp)
+        delete tmp;
+
     GetNodeSignals().FinalizeNode(GetId());
 }
 
@@ -3513,6 +3524,24 @@ void CNode::ReadConfigFromExtversion()
             negotiatedGrapheneVersion = GRAPHENE_NO_VERSION_SUPPORTED;
         else
             negotiatedGrapheneVersion = upper;
+    }
+
+    uint64_t num = extversion.as_u64c(XVer::BU_CAPD_VERSION);
+    if (num)
+    {
+        if (!capd)
+            capd = new CapdNode(this);
+        isCapdEnabled = true;
+    }
+    else
+    {
+        // Don't delete the capd object here because doing so will require taking modification locks in all places
+        // capd is used.  Instead, once capd is created, it will always exist so use locks are not requred.
+        // If a node turns CAPD on then off, its ok to waste a bit of space, but we'll delete the msgpool to recover
+        // the majority of the used RAM.
+        if (capd)
+            capd->clear();
+        isCapdEnabled = false;
     }
 }
 

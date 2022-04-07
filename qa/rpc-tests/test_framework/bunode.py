@@ -16,6 +16,10 @@ REQ_THINBLOCK = 2
 REQ_XTHINBLOCK = 4
 REQ_BLOCK = 8
 
+# Node services fields
+NODE_NETWORK = (1 << 0)
+NODE_EXTVERSION = (1 << 11)
+NODE_BITCOIN_CASH =  (1 << 5)
 
 class BUProtocolHandler(NodeConnCB):
     def __init__(self, extversion=None):
@@ -298,10 +302,6 @@ version messages. Useful for testing that part of the P2P handshake. """
         self.show_debug_msg("verack received\n")
         self.verack_received = True
 
-    def on_xverack(self, conn, message):
-        self.show_debug_msg("xverack received\n")
-        self.xverack_received = True
-
 class BasicBUCashNode():
     def __init__(self):
         self.cnxns = {}
@@ -309,10 +309,10 @@ class BasicBUCashNode():
         self.nthin = 0
         self.nxthin = 0
 
-    def connect(self, id, ip, port, rpc=None, protohandler=None, send_initial_version = True, send_extversion = False):
+    def connect(self, id, ip, port, rpc=None, protohandler=None, send_initial_version = True, extversion_service = True):
         if not protohandler:
             protohandler = BUProtocolHandler()
-        conn = NodeConn(ip, port, rpc, protohandler, bitcoinCash=True, send_initial_version = send_initial_version, send_extversion = send_extversion)
+        conn = NodeConn(ip, port, rpc, protohandler, services=NODE_NETWORK | NODE_EXTVERSION | NODE_BITCOIN_CASH, bitcoinCash=True, send_initial_version = send_initial_version, extversion_service = extversion_service)
         protohandler.add_connection(conn)
         protohandler.add_parent(self)
         self.cnxns[id] = protohandler

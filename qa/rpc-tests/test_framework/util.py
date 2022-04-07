@@ -160,7 +160,7 @@ class NoConfigValue:
         pass
 
 def waitFor(timeout, fn, onError="timeout in waitFor", sleepAmt=1.0):
-    """  Repeatedly calls fn while it returns None, raising an assert after timeout.  If fn returns non None, return that result
+    """  Repeatedly calls fn while it returns None or False, raising an assert after timeout.  If fn returns non None/False, return that result
     """
     timeout = float(timeout)
     while 1:
