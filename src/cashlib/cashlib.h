@@ -27,7 +27,23 @@ SLAPI int SignTxECDSA(unsigned char *txData,
     uint32_t nHashType,
     unsigned char *keyData,
     unsigned char *result,
-                      unsigned int resultLen);
+    unsigned int resultLen);
+
+/** Sign one input of a transaction using a Schnorr signature
+    All buffer arguments should be in binary-serialized data.
+    The transaction (txData) must contain the COutPoint (tx hash and vout) of all relevant inputs,
+    however, it is not necessary to provide the spend script.
+*/
+SLAPI int SignBchTxSchnorr(unsigned char *txData,
+    int txbuflen,
+    unsigned int inputIdx,
+    int64_t inputAmount,
+    unsigned char *prevoutScript,
+    uint32_t priorScriptLen,
+    uint32_t nHashType,
+    unsigned char *keyData,
+    unsigned char *result,
+    unsigned int resultLen);
 
 /** Sign one input of a transaction using a Schnorr signature
     All buffer arguments should be in binary-serialized data.
@@ -40,10 +56,11 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     int64_t inputAmount,
     unsigned char *prevoutScript,
     uint32_t priorScriptLen,
-    uint32_t nHashType,
+    unsigned char *hashType,
+    unsigned int hashTypeLen,
     unsigned char *keyData,
     unsigned char *result,
-                      unsigned int resultLen);
+    unsigned int resultLen);
 
 /* Sign a hash (presumably the hash of some data) using an ECDSA signature */
 SLAPI int SignHashECDSA(const unsigned char *hash,

@@ -86,23 +86,11 @@ BOOST_AUTO_TEST_CASE(uahf_sighash)
     CTransaction tx(t);
 
     {
-        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SigHashType(BaseSigHashType::ALL));
-        const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
-        CScript &scriptSigRes = t.vin[0].scriptSig;
-        bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
-        // The return value will indicate that the signature is not fully valid (because SIGHASH_FORKID is missing)
-        // however it will have been signed correctly and can be used for our testing purpose.
-        BOOST_CHECK(!worked);
-        BOOST_CHECK(IsTxProbablyNewSigHash(t) == false);
-    }
-
-    {
-        TransactionSignatureCreator tsc(&keystore, &tx, 0, tx.vin[0].amount, SigHashType(SIGHASH_ALL | SIGHASH_FORKID));
+        TransactionSignatureCreator tsc(&keystore, &tx, 0, defaultSigHashType);
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
         BOOST_CHECK(worked);
-        BOOST_CHECK(IsTxProbablyNewSigHash(t) == true);
     }
 }
 

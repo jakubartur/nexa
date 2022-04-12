@@ -21,6 +21,7 @@
 #include "rpc/register.h"
 #include "rpc/server.h"
 #include "script/sigcache.h"
+#include "script/sighashtype.h"
 #include "test/testutil.h"
 #include "txadmission.h"
 #include "txdb.h"
@@ -175,7 +176,6 @@ CTxMemPoolEntry TestMemPoolEntryHelper::FromTx(const CTransaction &txn, CTxMemPo
         spendsCoinbase, sigOpCount, lp);
     // ret.dbgName = dbgName;
     // dbgName = ""; // Reset to no name every time we pull a new entry from this object
-    ret.sighashType = SIGHASH_ALL; // For testing, give the transaction any valid sighashtype
     return ret;
 }
 

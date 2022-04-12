@@ -39,7 +39,6 @@ CTxMemPoolEntry::CTxMemPoolEntry()
     nModSize = 0;
     nUsageSize = 0;
     feeDelta = 0;
-    sighashType = 0;
 }
 
 CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef _tx,
@@ -61,7 +60,6 @@ CTxMemPoolEntry::CTxMemPoolEntry(const CTransactionRef _tx,
 
     CAmount nValueIn = tx->GetValueOut() + nFee;
     assert(inChainInputValue <= nValueIn);
-    sighashType = 0;
     feeDelta = 0;
 
     nCountWithAncestors = 1;

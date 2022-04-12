@@ -51,7 +51,7 @@ public:
         const CAmount &amountIn,
         unsigned int flags,
         bool storeIn = true)
-        : TransactionSignatureChecker(txToIn, nInIn, amountIn, flags), store(storeIn)
+        : TransactionSignatureChecker(txToIn, nInIn, flags), store(storeIn)
     {
     }
 

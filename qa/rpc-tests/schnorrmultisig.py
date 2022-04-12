@@ -40,9 +40,7 @@ from test_framework.script import (
     OP_1,
     OP_CHECKMULTISIG,
     OP_TRUE,
-    SIGHASH_ALL,
-    SIGHASH_FORKID,
-    SignatureHashForkId,
+    SIGHASH_ALL
 )
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error, p2p_port, waitFor, uint256ToRpcHex
@@ -184,10 +182,9 @@ class SchnorrMultisigTest(BitcoinTestFramework):
                 CTxIn(txfund.OutpointAt(0), txfund.vout[0].nValue , b''))
 
             # Sign the transaction
-            sighashtype = SIGHASH_ALL | SIGHASH_FORKID
+            sighashtype = SIGHASH_ALL
             hashbyte = bytes([sighashtype & 0xff])
-            sighash = SignatureHashForkId(
-                script, txspend, 0, sighashtype, value)
+            sighash = txspend.SignatureHashNexa(0, script, sighashtype)
             if sigtype == 'schnorr':
                 txsig = schnorr.sign(privkeybytes, sighash) + hashbyte
             elif sigtype == 'ecdsa':

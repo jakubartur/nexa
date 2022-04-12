@@ -13,6 +13,7 @@ import copy
 from test_framework.schnorr import sign
 from test_framework.siphash import siphash256
 import test_framework.util as util
+from test_framework.constants import *
 
 MY_VERSION = 70014 # past bip-252 for compactblocks
 
@@ -23,9 +24,7 @@ SER_IDEM = 1
 
 INVALID_OPCODE = b'\xff'
 
-from .constants import SIGHASH_ALL, \
-    SIGHASH_FORKID, SIGHASH_ANYONECANPAY, \
-    SIGHASH_SINGLE, SIGHASH_NONE
+from .constants import SIGHASH_ALL, SIGHASH_ANYONECANPAY, SIGHASH_NONE
 
 MY_SUBVERSION = b"/python-mininode-tester:0.0.3/"
 
@@ -832,9 +831,142 @@ class CTransaction(object):
         return "CTransaction(nVersion=%i vin=%s vout=%s nLockTime=%i)" \
             % (self.nVersion, repr(self.vin), repr(self.vout), self.nLockTime)
 
-    def SignatureHash(self, in_number, scriptCode, nValue, hashcode = SIGHASH_ALL | SIGHASH_FORKID, single = False, debug=False):
-        """Calculate hash digest for given input, using SIGHASH_FORKID
-        (Bitcoin Cash signing). Returns it in binary, little-endian.
+    def hashPrevoutsNexa(self, hashcode, in_number):
+        if len(hashcode) == 0: hashcode = bytes([0])
+        outCode = hashcode[0]&0xf0
+        op_ser = b""
+        if outCode == SIGHASH_ALL_IN or outCode == SIGHASH_FIRSTN_IN:
+            loopEnd = len(self.vin) if outCode == SIGHASH_ALL_IN else hashcode[1]
+            for i in range(0,loopEnd):
+                inp = self.vin[i]
+                op_ser += struct.pack("<B", inp.t)
+                op_ser += inp.prevout.serialize(SER_IDEM)
+        elif outCode == SIGHASH_THIS_IN:
+            inp = self.vin[in_number]
+            op_ser += struct.pack("<B", inp.t)
+            op_ser += inp.prevout.serialize(SER_IDEM)
+        else:
+            assert false, "unknown hashcode"
+        return hash256(op_ser)
+
+
+    def hashInputAmountsNexa(self, hashcode, in_number):
+        if len(hashcode) == 0: hashcode = bytes([0])
+        outCode = hashcode[0]&0xf0
+        op_ser = b""
+        if outCode == SIGHASH_ALL_IN or outCode == SIGHASH_FIRSTN_IN:
+            loopEnd = len(self.vin) if outCode == SIGHASH_ALL_IN else hashcode[1]
+            for i in range(0,loopEnd):
+                inp = self.vin[i]
+                op_ser += struct.pack("<q", int(inp.amount))
+        elif outCode == SIGHASH_THIS_IN:
+            inp = self.vin[in_number]
+            op_ser += struct.pack("<q", int(inp.amount))
+        else:
+            assert false, "unknown hashcode"
+        return hash256(op_ser)
+
+
+    def hashSequenceNexa(self, hashcode, in_number):
+        if len(hashcode) == 0: hashcode = bytes([0])
+        outCode = hashcode[0]&0xf0
+        op_ser = b""
+        if outCode == SIGHASH_ALL_IN or outCode == SIGHASH_FIRSTN_IN:
+            loopEnd = len(self.vin) if outCode == SIGHASH_ALL_IN else hashcode[1]
+            for i in range(0,loopEnd):
+                inp = self.vin[i]
+                op_ser += struct.pack("<I", inp.nSequence)
+        elif outCode == SIGHASH_THIS_IN:
+            inp = self.vin[in_number]
+            op_ser += struct.pack("<I", inp.nSequence)
+        else:
+            assert false, "unknown hashcode"
+        return hash256(op_ser)
+
+    def hashOutputsNexa(self, hashcode, in_number):
+        if len(hashcode) == 0: hashcode = bytes([0])
+        outCode = hashcode[0]&0xf
+        op_ser = b""
+        if outCode == SIGHASH_ALL_OUT or outCode == SIGHASH_FIRSTN_OUT:
+            loopEnd = len(self.vin) if outCode == SIGHASH_ALL_OUT else hashcode[1]
+            for i in range(0,loopEnd):
+                out = self.vout[i]
+                op_ser += out.serialize()
+        elif outCode == TWO_OUT:
+            out = self.out[hashcode[1]]
+            op_ser += struct.pack("<B", out.t)
+            op_ser += out.serialize()
+            out = self.out[hashcode[2]]
+            op_ser += struct.pack("<B", out.t)
+            op_ser += out.serialize()
+        else:
+            assert false, "unknown hashcode"
+        return hash256(op_ser)
+
+    def SignatureHashNexa(self, in_number, scriptCode, hashcode = SIGHASH_ALL, single = False, debug=False):
+        """Calculate hash digest for given input. Returns it in binary, little-endian.
+
+        txin is the corresponding input CTransaction. Supplying it is
+        necessary to include the scriptPubKey in the hashed output.
+
+        If single is True, just a single invocation of SHA256 is done,
+        instead of the usual, expected double hashing. This is to aid
+        applications such as CHECKDATASIG(VERIFY).
+        """
+        if type(hashcode) == int:  # easy API for single byte sighashtypes
+            hashcode = bytes([hashcode])
+        assert type(hashcode) == bytes  # New style sighashtype
+
+        h_prevouts = self.hashPrevoutsNexa(hashcode, in_number)
+        if debug:
+            print("Hash prevouts:", hexlify(h_prevouts[::-1]))
+
+        h_inputamounts = self.hashInputAmountsNexa(hashcode, in_number)
+        if debug:
+            print("Hash input amounts:", hexlify(h_inputamounts[::-1]))
+
+        h_sequence = self.hashSequenceNexa(hashcode, in_number)
+        if debug:
+            print("Hash sequence:", hexlify(h_sequence[::-1]))
+
+        h_outputs = self.hashOutputsNexa(hashcode, in_number)
+        if debug:
+            print("Hash outputs:", hexlify(h_outputs[::-1]))
+
+        hashdata = struct.pack("<B", self.nVersion)
+        hashdata += h_prevouts
+        hashdata += h_inputamounts
+        hashdata += h_sequence
+
+        # FIXME: long scriptPubKeys not supported yet
+        assert 75 >= len(scriptCode) > 0
+        hashdata += struct.pack("<B", len(scriptCode))
+        hashdata += scriptCode
+        if debug:
+            print("ScriptCode:", scriptCode.hex())
+
+        hashdata += h_outputs
+        hashdata += struct.pack("<I", self.nLockTime)
+        if debug:
+            print("locktime:", self.nLockTime)
+        hashdata += hashcode
+        if debug:
+            print("hashcode: %s" % hexlify(hashcode))
+
+        if debug:
+            print("Hash all data:", hexlify(hashdata))
+        if single:
+            ret = sha256(hashdata)
+            if debug:
+                print("Final SHA256 sighash is: ", hexlify(ret[::-1]))
+        else:
+            ret = hash256(hashdata)
+            if debug:
+                print("Final Double SHA256 sighash is: ", hexlify(ret[::-1]))
+        return ret
+
+    def SignatureHashBCH(self, in_number, scriptCode, nValue, hashcode = BTCBCH_SIGHASH_ALL, single = False, debug=False):
+        """Calculate hash digest for given input. Returns it in binary, little-endian.
 
         txin is the corresponding input CTransaction. Supplying it is
         necessary to include the scriptPubKey in the hashed output.
@@ -860,7 +992,6 @@ class CTransaction(object):
 
         hashdata += h_sequence
         hashdata += self.vin[in_number].prevout.serialize()
-
 
         # FIXME: long scriptPubKeys not supported yet
         assert 75 >= len(scriptCode) > 0
@@ -899,7 +1030,7 @@ class CTransaction(object):
         return ret
 
     def hashPrevouts(self, hashcode):
-        if hashcode & SIGHASH_ANYONECANPAY:
+        if hashcode & BTCBCH_SIGHASH_ANYONECANPAY:
             return 32 * b"\x00"
         else:
             op_ser = b""
@@ -909,7 +1040,7 @@ class CTransaction(object):
             return hash256(op_ser)
 
     def hashInputAmounts(self, hashcode):
-        if hashcode & SIGHASH_ANYONECANPAY:
+        if hashcode & BTCBCH_SIGHASH_ANYONECANPAY:
             return 32 * b"\x00"
         else:
             op_ser = b""
@@ -919,9 +1050,9 @@ class CTransaction(object):
 
 
     def hashSequence(self, hashcode):
-        if (hashcode & SIGHASH_ANYONECANPAY or
-            hashcode & 0x1f == SIGHASH_SINGLE or
-            hashcode & 0x1f == SIGHASH_NONE):
+        if (hashcode & BTCBCH_SIGHASH_ANYONECANPAY or
+            hashcode & 0x1f == BTCBCH_SIGHASH_SINGLE or
+            hashcode & 0x1f == BTCBCH_SIGHASH_NONE):
             return 32 * b"\x00"
         else:
             seq_ser = b""
@@ -930,10 +1061,10 @@ class CTransaction(object):
             return hash256(seq_ser)
 
     def hashOutputs(self, hashcode, in_number):
-        if hashcode & 0x1f == SIGHASH_SINGLE and in_number < len(self.vout):
+        if hashcode & 0x1f == BTCBCH_SIGHASH_SINGLE and in_number < len(self.vout):
             return hash256(self.vout[in_number].serialize())
-        elif ((not (hashcode & 0x1f == SIGHASH_SINGLE)) and
-              (not (hashcode & 0x1f == SIGHASH_NONE))):
+        elif ((not (hashcode & 0x1f == BTCBCH_SIGHASH_SINGLE)) and
+              (not (hashcode & 0x1f == BTCBCH_SIGHASH_NONE))):
             out_ser = b""
             for out in self.vout:
                 out_ser += out.serialize()
@@ -945,7 +1076,7 @@ class CTransaction(object):
         """Consensus-correct SignatureHash (legacy variant)
 
         Returns (hash, err) to precisely match the consensus-critical behavior of
-        the SIGHASH_SINGLE bug. (inIdx is *not* checked for validity)
+        the BTCBCH_SIGHASH_SINGLE bug. (inIdx is *not* checked for validity)
         """
         from .script import FindAndDelete, CScript, OP_CODESEPARATOR
 
@@ -961,14 +1092,14 @@ class CTransaction(object):
             txin.scriptSig = b''
         txtmp.vin[inIdx].scriptSig = FindAndDelete(script, CScript([OP_CODESEPARATOR]))
 
-        if (hashtype & 0x1f) == SIGHASH_NONE:
+        if (hashtype & 0x1f) == BTCBCH_SIGHASH_NONE:
             txtmp.vout = []
 
             for i in range(len(txtmp.vin)):
                 if i != inIdx:
                     txtmp.vin[i].nSequence = 0
 
-        elif (hashtype & 0x1f) == SIGHASH_SINGLE:
+        elif (hashtype & 0x1f) == BTCBCH_SIGHASH_SINGLE:
             outIdx = inIdx
             if outIdx >= len(txtmp.vout):
                 return (HASH_ONE, "outIdx %d out of range (%d)" % (outIdx, len(txtmp.vout)))
@@ -983,7 +1114,7 @@ class CTransaction(object):
                 if i != inIdx:
                     txtmp.vin[i].nSequence = 0
 
-        if hashtype & SIGHASH_ANYONECANPAY:
+        if hashtype & BTCBCH_SIGHASH_ANYONECANPAY:
             tmp = txtmp.vin[inIdx]
             txtmp.vin = []
             txtmp.vin.append(tmp)

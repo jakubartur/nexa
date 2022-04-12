@@ -1390,17 +1390,13 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
     const CKeyStore &keystore = tempKeystore;
 #endif
 
-    bool fForkId = true;
     SigHashType sigHashType = defaultSigHashType;
     if (params.size() > 3 && !params[3].isNull())
     {
         sigHashType.from(params[3].get_str());
         if (sigHashType.isInvalid())
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid sighash param");
-        fForkId = sigHashType.isBch();
     }
-
-    bool fHashSingle = sigHashType.hasSingle();
 
     uint32_t sigType = SIGTYPE_SCHNORR;
     if (params.size() > 4 && !params[4].isNull())
@@ -1437,49 +1433,25 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
         const CScript &prevPubKey = coin->out.scriptPubKey;
         const CAmount &amount = coin->out.nValue;
 
-        // Only sign SIGHASH_SINGLE if there's a corresponding output:
-        if (!fHashSingle || (i < mergedTx.vout.size()))
-        {
-            SignSignature(keystore, prevPubKey, mergedTx, i, amount, sigHashType, sigType);
-        }
-        // ... and merge in other signatures:
+        SignSignature(keystore, prevPubKey, mergedTx, i, amount, sigHashType, sigType);
+        // merge in other signatures:
 
         // We can't sign any sophisticated introspection contracts anyway so we'll never verify a script that requires
         // transaction validation state.  Make an empty one.
         CValidationState unnecessaryState;
-        if (fForkId)
+        for (const CMutableTransaction &txv : txVariants)
         {
-            for (const CMutableTransaction &txv : txVariants)
-            {
-                txin.scriptSig = CombineSignatures(prevPubKey,
-                    TransactionSignatureChecker(&txConst, i, amount, SCRIPT_ENABLE_SIGHASH_FORKID), txin.scriptSig,
-                    txv.vin[i].scriptSig);
-            }
-            ScriptError serror = SCRIPT_ERR_OK;
-            auto flags = STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID;
-            MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, flags);
-            ScriptImportedState sis(&tsc, txref, unnecessaryState, spentCoins, i);
-            if (!VerifyScript(txin.scriptSig, prevPubKey, flags, sis, &serror))
-            {
-                TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
-            }
+            txin.scriptSig =
+                CombineSignatures(prevPubKey, TransactionSignatureChecker(&txConst, i, SCRIPT_ENABLE_SIGHASH_FORKID),
+                    txin.scriptSig, txv.vin[i].scriptSig);
         }
-        else
+        ScriptError serror = SCRIPT_ERR_OK;
+        auto flags = STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID;
+        MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, flags);
+        ScriptImportedState sis(&tsc, txref, unnecessaryState, spentCoins, i);
+        if (!VerifyScript(txin.scriptSig, prevPubKey, flags, sis, &serror))
         {
-            // Still support signing legacy chain transactions
-            for (const CMutableTransaction &txv : txVariants)
-            {
-                txin.scriptSig = CombineSignatures(prevPubKey,
-                    TransactionSignatureChecker(&txConst, i, amount, STANDARD_SCRIPT_VERIFY_FLAGS), txin.scriptSig,
-                    txv.vin[i].scriptSig);
-            }
-            ScriptError serror = SCRIPT_ERR_OK;
-            MutableTransactionSignatureChecker tsc(&mergedTx, i, amount, STANDARD_SCRIPT_VERIFY_FLAGS);
-            ScriptImportedState sis(&tsc, txref, unnecessaryState, spentCoins, i);
-            if (!VerifyScript(txin.scriptSig, prevPubKey, STANDARD_SCRIPT_VERIFY_FLAGS, sis, &serror))
-            {
-                TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
-            }
+            TxInErrorToJSON(txin, vErrors, ScriptErrorString(serror));
         }
     }
     bool fComplete = vErrors.empty();

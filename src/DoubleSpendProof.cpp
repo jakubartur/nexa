@@ -60,30 +60,9 @@ void hashTx(DoubleSpendProof::Spender &spender, const CTransaction &tx, int inpu
     DbgAssert(!spender.pushData.empty(), return );
     DbgAssert(!spender.pushData.front().empty(), return );
     auto sigHashType = SigHashType(spender.pushData.front());
-    if (!sigHashType.hasAnyoneCanPay())
-    {
-        spender.hashPrevOutputs = GetPrevoutHash(tx);
-        spender.hashInAmounts = GetInputAmountHash(tx);
-    }
-    p("Hashing prevouts to: %s\n", spender.hashPrevOutputs.GetHex().c_str());
-    p("Hashing input amounts to: %s\n", spender.hashInAmounts.GetHex().c_str());
-    if (!sigHashType.hasAnyoneCanPay() && !sigHashType.hasSingle() && !sigHashType.hasNone())
-    {
-        spender.hashSequence = GetSequenceHash(tx);
-        p("Hashing input sequence numbers to: %s\n", spender.hashSequence.GetHex().c_str());
-    }
-    if (!sigHashType.hasSingle() && !sigHashType.hasNone())
-    {
-        spender.hashOutputs = GetOutputsHash(tx);
-        p("Hashing every output to: %s\n", spender.hashOutputs.GetHex().c_str());
-    }
-    else if (sigHashType.hasSingle() && (size_t)inputIndex < tx.vout.size())
-    {
-        CHashWriter ss(SER_GETHASH, 0);
-        ss << tx.vout[inputIndex];
-        spender.hashOutputs = ss.GetHash();
-        p("Hashing just output %d to: %s\n", inputIndex, spender.hashOutputs.GetHex().c_str());
-    }
+
+    SignatureHashNexaComponents(tx, inputIndex, sigHashType, spender.hashPrevOutputs, spender.hashSequence,
+        spender.hashInAmounts, spender.hashOutputs);
 }
 
 class DSPSignatureChecker : public BaseSignatureChecker
@@ -105,32 +84,15 @@ public:
         std::vector<uint8_t> vchSig(vchSigIn);
         if (vchSig.empty())
             return false;
-        vchSig.pop_back(); // drop the hashtype byte tacked on to the end of the signature
+        RemoveSigHashType(vchSig); // drop the hashtype byte tacked on to the end of the signature
 
         p("DSP construct hash:\n");
-        CHashWriter ss(SER_GETHASH, 0);
-        ss << ((uint8_t)m_spender.txVersion) << m_spender.hashPrevOutputs << m_spender.hashInAmounts
-           << m_spender.hashSequence;
-        p("txversion: %x\n", m_spender.txVersion);
-        p("prevouts: %s\n", m_spender.hashPrevOutputs.GetHex().c_str());
-        p("input amounts: %s\n", m_spender.hashInAmounts.GetHex().c_str());
-        p("input sequence numbers: %s\n", m_spender.hashSequence.GetHex().c_str());
-        ss << m_proof->Outpoint();
-        p("outpoint: %s\n", m_proof->Outpoint().GetHex().c_str());
-        ss << static_cast<const CScriptBase &>(scriptCode);
-        p("ScriptCode: %s\n", scriptCode.GetHex().c_str());
-        ss << m_amount << m_spender.outSequence << m_spender.hashOutputs;
-        p("Amount: %ld\n", (long int)m_amount);
-        p("This input sequence: %d\n", m_spender.outSequence);
-        p("hashOutputs: %s\n", m_spender.hashOutputs.GetHex().c_str());
         SigHashType sighashtype(m_spender.pushData.front());
-        ss << m_spender.lockTime << sighashtype;
-        p("Locktime: %d\n", m_spender.lockTime);
-        p("sighashtype: %x\n", sighashtype.getRawSigHashType());
-        p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
-        const uint256 sighash = ss.GetHash();
-        p("Final sighash is: %s\n", sighash.GetHex().c_str());
-
+        uint256 sighash;
+        if (!SignatureHashNexa(scriptCode, m_spender.txVersion, m_spender.lockTime, sighashtype,
+                m_spender.hashPrevOutputs, m_spender.hashSequence, m_spender.hashInAmounts, m_spender.hashOutputs,
+                sighash, nullptr))
+            return false;
         return pubkey.VerifySchnorr(sighash, vchSig);
     }
     bool CheckLockTime(const CScriptNum &) const override { return true; }
@@ -155,6 +117,7 @@ DoubleSpendProof DoubleSpendProof::create(const CTransaction &t1, const CTransac
 
     size_t inputIndex1 = 0;
     size_t inputIndex2 = 0;
+    bool done = false;
     for (; inputIndex1 < t1.vin.size(); ++inputIndex1)
     {
         const CTxIn &in1 = t1.vin.at(inputIndex1);
@@ -189,17 +152,12 @@ DoubleSpendProof DoubleSpendProof::create(const CTransaction &t1, const CTransac
                 assert(!s2.pushData.empty()); // we resized it
                 if (s1.pushData.front().empty() || s2.pushData.front().empty())
                     throw std::runtime_error("scriptSig has no signature");
-                auto hashType = SigHashType(s1.pushData.front());
-                if (!hashType.isBch())
-                    throw std::runtime_error("Tx1 is not a Bitcoin Cash transaction");
-
-                hashType = SigHashType(s2.pushData.front());
-                if (!hashType.isBch())
-                    throw std::runtime_error("Tx2 is not a Bitcoin Cash transaction");
-
+                done = true;
                 break;
             }
         }
+        if (done)
+            break;
     }
 
     if (answer.m_prevOutpoint.IsNull())

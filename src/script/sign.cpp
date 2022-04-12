@@ -33,15 +33,9 @@ const CPubKey DummySizeOnlyKeyStore::dummyPubKey(vchDummyPubKey, vchDummyPubKey 
 TransactionSignatureCreator::TransactionSignatureCreator(const CKeyStore *keystoreIn,
     const CTransaction *txToIn,
     unsigned int nInIn,
-    const CAmount &amountIn,
-    SigHashType sigHashTypeIn,
-    uint32_t nSigTypeIn)
-    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), sigHashType(sigHashTypeIn),
-      nSigType(nSigTypeIn),
-      checker(txTo,
-          nIn,
-          amount,
-          STANDARD_SCRIPT_VERIFY_FLAGS | ((sigHashTypeIn.isBch()) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
+    SigHashType sigHashTypeIn)
+    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), sigHashType(sigHashTypeIn),
+      checker(txTo, nIn, STANDARD_SCRIPT_VERIFY_FLAGS)
 {
     for (unsigned int i = 0; i < txToIn->vin.size(); i++) // catch uninitialized amounts
     {
@@ -50,6 +44,49 @@ TransactionSignatureCreator::TransactionSignatureCreator(const CKeyStore *keysto
 }
 
 bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
+    const CKeyID &address,
+    const CScript &scriptCode) const
+{
+    // Bad tx info
+    if (txTo == nullptr || nIn >= txTo->vin.size())
+        return false;
+    CKey key;
+    if (!keystore->GetKey(address, key))
+    {
+        return false;
+    }
+
+    uint256 hash;
+    if (!SignatureHashNexa(scriptCode, *txTo, nIn, sigHashType, hash))
+        return false;
+    if (!key.SignSchnorr(hash, vchSig))
+        return false;
+    sigHashType.appendToSig(vchSig);
+
+    // CPubKey pub = key.GetPubKey();
+    p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig), HexStr(pub.begin(), pub.end()), hash.GetHex());
+    return true;
+}
+
+TransactionSignatureCreatorBTCBCH::TransactionSignatureCreatorBTCBCH(const CKeyStore *keystoreIn,
+    const CTransaction *txToIn,
+    unsigned int nInIn,
+    const CAmount &amountIn,
+    uint8_t sigHashTypeIn,
+    uint32_t nSigTypeIn)
+    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), sigHashType(sigHashTypeIn),
+      nSigType(nSigTypeIn),
+      checker(txTo,
+          nIn,
+          STANDARD_SCRIPT_VERIFY_FLAGS | ((sigHashTypeIn & BTCBCH_SIGHASH_FORKID) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
+{
+    for (unsigned int i = 0; i < txToIn->vin.size(); i++) // catch uninitialized amounts
+    {
+        assert(txTo->vin[i].amount != -1);
+    }
+}
+
+bool TransactionSignatureCreatorBTCBCH::CreateSig(std::vector<uint8_t> &vchSig,
     const CKeyID &address,
     const CScript &scriptCode) const
 {
@@ -65,7 +102,11 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
         return false;
     }
 
-    uint256 hash = SignatureHash(scriptCode, *txTo, nIn, sigHashType, amount);
+    uint256 hash;
+    if (sigHashType & BTCBCH_SIGHASH_FORKID)
+        hash = SignatureHashBitcoinCash(scriptCode, *txTo, nIn, sigHashType, amount);
+    else
+        hash = SignatureHashBitcoin(scriptCode, *txTo, nIn, sigHashType);
     if (nSigType != SIGTYPE_SCHNORR)
     {
         LOGA("CreateSig(): Invalid signature type requested \n");
@@ -73,12 +114,13 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
     }
     if (!key.SignSchnorr(hash, vchSig))
         return false;
-    sigHashType.appendToSig(vchSig);
+    vchSig.push_back(sigHashType);
 
     CPubKey pub = key.GetPubKey();
     p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig), HexStr(pub.begin(), pub.end()), hash.GetHex());
     return true;
 }
+
 
 static bool Sign1(const CKeyID &address,
     const BaseSignatureCreator &creator,
@@ -260,9 +302,13 @@ bool SignSignature(const CKeyStore &keystore,
 {
     assert(nIn < txTo.vin.size());
     CTxIn &txin = txTo.vin[nIn];
+    if (txin.amount != amount) // compare input amount to amount in utxo
+    {
+        return false;
+    }
 
     CTransaction txToConst(txTo);
-    TransactionSignatureCreator creator(&keystore, &txToConst, nIn, amount, sigHashType, nSigType);
+    TransactionSignatureCreator creator(&keystore, &txToConst, nIn, sigHashType);
     return ProduceSignature(creator, fromPubKey, txin.scriptSig);
 }
 
@@ -461,12 +507,14 @@ bool DummySignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
 {
     // Create a dummy signature that is a valid DER-encoding
     // This is a validly-encoded 64 byte DER sig; also a valid Schnorr encoding.
-    vchSig.assign(65, 0x44);
+    vchSig.assign(64, 0x44);
     vchSig[0] = 0x30;
     vchSig[1] = 0x3e;
     vchSig[2] = 0x02;
     vchSig[33] = 0x02;
-    vchSig[64] = SIGHASH_ALL | SIGHASH_FORKID;
+    SigHashType biggest;
+    biggest.dummyLongest();
+    biggest.appendToSig(vchSig);
     return true;
 }
 

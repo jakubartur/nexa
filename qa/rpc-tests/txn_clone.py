@@ -54,7 +54,7 @@ class TxnCloneTest(BitcoinTestFramework):
         tx = CTransaction(tx1hex)
         for v in tx.vin:  # Wipe out the sigs
             v.scriptSig = CScript()
-        tx1_clone = self.nodes[0].signrawtransaction(tx.toHex(), None, None, "ALL|ANYONECANPAY|FORKID")
+        tx1_clone = self.nodes[0].signrawtransaction(tx.toHex(), None, None, "THIS_IN|ALL_OUT")
         # Its malleated so the hex representations are different
         assert(tx1_clone["hex"] != tx1hex)
         # but Idem is the same

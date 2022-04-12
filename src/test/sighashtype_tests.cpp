@@ -12,107 +12,121 @@
 
 BOOST_FIXTURE_TEST_SUITE(sighashtype_tests, BasicTestingSetup)
 
+
 static void CheckSigHashType(SigHashType t,
-    BaseSigHashType baseType,
     bool isDefined,
-    uint32_t forkValue,
-    bool hasForkId,
-    bool hasAnyoneCanPay)
+    bool isAll,
+    bool hasNoInputs = false,
+    bool hasNoOutputs = false,
+    bool hasAnyoneCanPay = false,
+    bool has2Outputs = false)
 {
-    BOOST_CHECK(t.getBaseType() == baseType);
     BOOST_CHECK_EQUAL(t.isDefined(), isDefined);
-    BOOST_CHECK_EQUAL(t.getForkValue(), forkValue);
-    BOOST_CHECK_EQUAL(t.isBch(), hasForkId);
+    BOOST_CHECK_EQUAL(t.hasAll(), isAll);
+    BOOST_CHECK_EQUAL(t.hasNoInputs(), hasNoInputs);
+    BOOST_CHECK_EQUAL(t.hasNoOutputs(), hasNoOutputs);
     BOOST_CHECK_EQUAL(t.hasAnyoneCanPay(), hasAnyoneCanPay);
+    if (has2Outputs)
+    {
+        std::string s = t.ToString();
+        BOOST_CHECK(s.find("1_2_OUT") != std::string::npos); // we hard coded the output indexes for this test
+    }
 }
+
 
 BOOST_AUTO_TEST_CASE(sighash_construction_test)
 {
     // Check default values.
-    CheckSigHashType(SigHashType(), BaseSigHashType::ALL, true, 0, false, false);
+    CheckSigHashType(SigHashType(), true, true);
 
     // Check all possible permutations.
-    std::set<BaseSigHashType> baseTypes{
-        BaseSigHashType::UNSUPPORTED, BaseSigHashType::ALL, BaseSigHashType::NONE, BaseSigHashType::SINGLE};
-    std::set<uint32_t> forkValues{0, 1, 0x123456, 0xfedcba, 0xffffff};
-    std::set<bool> forkIdFlagValues{false, true};
-    std::set<bool> anyoneCanPayFlagValues{false, true};
+    // std::set<SigHashType::Input> inpTypes{};
 
-    for (BaseSigHashType baseType : baseTypes)
+    for (SigHashType::Input inp = SigHashType::Input::ALL; inp <= SigHashType::Input::LAST_VALID; ++inp)
     {
-        for (uint32_t forkValue : forkValues)
+        for (SigHashType::Output out = SigHashType::Output::ALL; out <= SigHashType::Output::LAST_VALID; ++out)
         {
-            for (bool hasForkId : forkIdFlagValues)
+            bool hasNoInputs = false;
+            bool hasNoOutputs = false;
+            bool anyoneCanPay = false;
+            bool has2Outputs = false;
+            bool hasAll = false;
+            SigHashType t;
+            if ((inp == SigHashType::Input::ALL) && (out == SigHashType::Output::ALL))
             {
-                for (bool hasAnyoneCanPay : anyoneCanPayFlagValues)
+                t.setAll();
+                hasAll = true;
+            }
+            else
+            {
+                switch (inp)
                 {
-                    const SigHashType t = SigHashType()
-                                              .withBaseType(baseType)
-                                              .withForkValue(forkValue)
-                                              .withForkId(hasForkId)
-                                              .withAnyoneCanPay(hasAnyoneCanPay);
-
-                    bool isDefined = baseType != BaseSigHashType::UNSUPPORTED;
-                    CheckSigHashType(t, baseType, isDefined, forkValue, hasForkId, hasAnyoneCanPay);
-
-                    // Also check all possible alterations.
-                    CheckSigHashType(
-                        t.withForkId(hasForkId), baseType, isDefined, forkValue, hasForkId, hasAnyoneCanPay);
-                    CheckSigHashType(
-                        t.withForkId(!hasForkId), baseType, isDefined, forkValue, !hasForkId, hasAnyoneCanPay);
-                    CheckSigHashType(t.withAnyoneCanPay(hasAnyoneCanPay), baseType, isDefined, forkValue, hasForkId,
-                        hasAnyoneCanPay);
-                    CheckSigHashType(t.withAnyoneCanPay(!hasAnyoneCanPay), baseType, isDefined, forkValue, hasForkId,
-                        !hasAnyoneCanPay);
-
-                    for (BaseSigHashType newBaseType : baseTypes)
-                    {
-                        bool isNewDefined = newBaseType != BaseSigHashType::UNSUPPORTED;
-                        CheckSigHashType(t.withBaseType(newBaseType), newBaseType, isNewDefined, forkValue, hasForkId,
-                            hasAnyoneCanPay);
-                    }
-
-                    for (uint32_t newForkValue : forkValues)
-                    {
-                        CheckSigHashType(t.withForkValue(newForkValue), baseType, isDefined, newForkValue, hasForkId,
-                            hasAnyoneCanPay);
-                    }
+                case SigHashType::Input::ALL:
+                    break;
+                case SigHashType::Input::FIRSTN:
+                    t.setFirstNIn(0); // Test the specific 0 inputs case because we have a hasXX api for that
+                    hasNoInputs = true;
+                    break;
+                case SigHashType::Input::THISIN:
+                    t.withAnyoneCanPay();
+                    anyoneCanPay = true;
+                    break;
+                }
+                switch (out)
+                {
+                case SigHashType::Output::ALL:
+                    break;
+                case SigHashType::Output::FIRSTN:
+                    t.setFirstNOut(0); // Test the specific 0 outputs case because we have a hasXX api for that
+                    hasNoOutputs = true;
+                    break;
+                case SigHashType::Output::TWO:
+                    t.set2Outs(1, 2);
+                    has2Outputs = true;
                 }
             }
+            CheckSigHashType(t, true, hasAll, hasNoInputs, hasNoOutputs, anyoneCanPay, has2Outputs);
         }
     }
 }
 
+
 BOOST_AUTO_TEST_CASE(sighash_serialization_test)
 {
-    std::set<uint32_t> forkValues{0, 1, 0xab1fe9, 0xc81eea, 0xffffff};
-
-    // Test all possible sig hash values embeded in signatures.
-    for (uint32_t sigHashType = 0x00; sigHashType <= 0xff; sigHashType++)
+    std::vector<unsigned char> v;
+    v.reserve(64 + 4);
+    for (unsigned int i = 0; i < 256; i++)
     {
-        for (uint32_t forkValue : forkValues)
+        for (unsigned int j = 1; j < 4; j++)
         {
-            uint32_t rawType = sigHashType | (forkValue << 8);
+            // create a fake signature and append many different sighashtype combinations
+            // we try every sighashtype byte and then append different length sighash data afterwards.
+            // since the data has no illegal values (outside of the context of a specific transaction), we just use 0
+            v.resize(64 + j);
+            v[64] = i;
+            for (unsigned int k = 1; k < j; k++)
+                v[k] = 0; // fill with dummy values
 
-            uint32_t baseType = rawType & 0x1f;
-            bool hasForkId = (rawType & SIGHASH_FORKID) != 0;
-            bool hasAnyoneCanPay = (rawType & SIGHASH_ANYONECANPAY) != 0;
+            SigHashType t(v);
 
-            uint32_t noflag = sigHashType & ~(SIGHASH_FORKID | SIGHASH_ANYONECANPAY);
-            bool isDefined = (noflag != 0) && (noflag <= SIGHASH_SINGLE);
+            if (t.isDefined())
+            {
+                uint8_t up = i >> 4;
+                uint8_t lo = i & 0xf;
+                BOOST_CHECK(up <= static_cast<uint8_t>(SigHashType::Input::LAST_VALID));
+                BOOST_CHECK(lo <= static_cast<uint8_t>(SigHashType::Output::LAST_VALID));
 
-            const SigHashType tbase(rawType);
-
-            // Check deserialization.
-            CheckSigHashType(tbase, BaseSigHashType(baseType), isDefined, forkValue, hasForkId, hasAnyoneCanPay);
-
-            // Check raw value.
-            BOOST_CHECK_EQUAL(tbase.getRawSigHashType(), rawType);
-
-            // Check serialization/deserialization.
-            uint32_t unserializedOutput;
-            (CDataStream(SER_DISK, 0) << tbase) >> unserializedOutput;
-            BOOST_CHECK_EQUAL(unserializedOutput, rawType);
+                SigHashType::Input inp = static_cast<SigHashType::Input>(up);
+                SigHashType::Output out = static_cast<SigHashType::Output>(lo);
+                unsigned int sz = 1; // 1 sighashtype byte
+                if (inp == SigHashType::Input::FIRSTN)
+                    sz++; // 1 byte, N
+                if (out == SigHashType::Output::FIRSTN)
+                    sz++; // 1 byte, N
+                if (out == SigHashType::Output::TWO)
+                    sz += 2; // 2 bytes, A and B
+                BOOST_CHECK(j == sz); // Check that any defined sighashtype has the right number of extra bytes
+            }
         }
     }
 }

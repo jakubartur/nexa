@@ -21,8 +21,10 @@ const unsigned int MAXOPS = 100000; // not relevant for these tests
 
 BOOST_FIXTURE_TEST_SUITE(schnorr_tests, BasicTestingSetup)
 
-static valtype SignatureWithHashType(valtype vchSig, SigHashType sigHash) {
-    vchSig.push_back(static_cast<uint8_t>(sigHash.getRawSigHashType()));
+static valtype SignatureWithHashType(valtype vchSig, SigHashType sigHash)
+{
+    assert(vchSig.isVch());
+    sigHash.appendToSig(vchSig.mdata());
     return vchSig;
 }
 
@@ -106,14 +108,13 @@ BOOST_AUTO_TEST_CASE(opcodes_random_flags) {
     for (int i = 0; i < 4096; i++) {
         uint32_t flags = lcg.next();
 
-        const bool hasForkId = (flags & SCRIPT_ENABLE_SIGHASH_FORKID) != 0;
         const bool hasNullFail = (flags & SCRIPT_VERIFY_NULLFAIL) != 0;
 
         // Prepare 65-byte transaction sigs with right hashtype byte.
         valtype DER64_with_hashtype =
-            SignatureWithHashType(DER64, SigHashType().withForkId(hasForkId));
+            SignatureWithHashType(DER64, defaultSigHashType);
         valtype Zero64_with_hashtype =
-            SignatureWithHashType(Zero64, SigHashType().withForkId(hasForkId));
+            SignatureWithHashType(Zero64, defaultSigHashType);
 
         // Test CHECKSIG & CHECKDATASIG with he non-DER sig, which can fail from
         // encoding, otherwise upon verification.

@@ -49,7 +49,7 @@ uint256 static SignatureHashOld(CScript scriptCode, const CTransaction &txTo, un
     txTmp.vin[nIn].scriptSig = scriptCode;
 
     // Blank out some of the outputs
-    if ((nHashType & 0x1f) == SIGHASH_NONE)
+    if ((nHashType & 0x1f) == BTCBCH_SIGHASH_NONE)
     {
         // Wildcard payee
         txTmp.vout.clear();
@@ -59,7 +59,7 @@ uint256 static SignatureHashOld(CScript scriptCode, const CTransaction &txTo, un
             if (i != nIn)
                 txTmp.vin[i].nSequence = 0;
     }
-    else if ((nHashType & 0x1f) == SIGHASH_SINGLE)
+    else if ((nHashType & 0x1f) == BTCBCH_SIGHASH_SINGLE)
     {
         // Only lock-in the txout payee at same index as txin
         unsigned int nOut = nIn;
@@ -79,7 +79,7 @@ uint256 static SignatureHashOld(CScript scriptCode, const CTransaction &txTo, un
     }
 
     // Blank out other inputs completely, not recommended for open transactions
-    if (nHashType & SIGHASH_ANYONECANPAY)
+    if (nHashType & BTCBCH_SIGHASH_ANYONECANPAY)
     {
         txTmp.vin[0] = txTmp.vin[nIn];
         txTmp.vin.resize(1);
@@ -101,14 +101,14 @@ void static RandomScript(CScript &script)
         script << oplist[InsecureRandRange(sizeof(oplist) / sizeof(oplist[0]))];
 }
 
-void static RandomTransaction(CMutableTransaction &tx, bool fSingle)
+void static RandomTransaction(CMutableTransaction &tx)
 {
     tx.nVersion = InsecureRand32() & 255;
     tx.vin.clear();
     tx.vout.clear();
     tx.nLockTime = (InsecureRandBool()) ? InsecureRand32() : 0;
     int ins = (InsecureRandBits(2)) + 1;
-    int outs = fSingle ? ins : (InsecureRandBits(2)) + 1;
+    int outs = (InsecureRandBits(2)) + 1;
     for (int in = 0; in < ins; in++)
     {
         tx.vin.push_back(CTxIn());
@@ -131,63 +131,17 @@ void static RandomTransaction(CMutableTransaction &tx, bool fSingle)
 class HackSigHashType : public SigHashType
 {
 public:
-    explicit HackSigHashType(uint32_t val) : SigHashType() { sigHash = val; }
+    explicit HackSigHashType(uint8_t val) : SigHashType()
+    {
+        valid = true; // Force bad sighashtypes
+        inp = static_cast<SigHashType::Input>((val >> 4) & 255);
+        out = static_cast<SigHashType::Output>(val & 255);
+    }
 };
 
 
 BOOST_FIXTURE_TEST_SUITE(sighash_tests, BasicTestingSetup)
 
-
-BOOST_AUTO_TEST_CASE(sighash_test)
-{
-    SeedInsecureRand(false);
-
-#if defined(PRINT_SIGHASH_JSON)
-    std::cout << "[\n";
-    std::cout << "\t[\"raw_transaction, script, input_index, hashType, signature_hash (result)\"],\n";
-#endif
-    int nRandomTests = 50000;
-
-#if defined(PRINT_SIGHASH_JSON)
-    nRandomTests = 500;
-#endif
-    for (int i = 0; i < nRandomTests; i++)
-    {
-        HackSigHashType sigHashType(InsecureRand32() & ~SIGHASH_FORKID);
-        if (sigHashType.isInvalid())
-            continue; // Skip impossible sighashes
-
-        CMutableTransaction txTo;
-        RandomTransaction(txTo, sigHashType.hasSingle());
-        CScript scriptCode;
-        RandomScript(scriptCode);
-        int nIn = InsecureRandRange(txTo.vin.size());
-
-        uint256 sh, sho;
-        sho = SignatureHashOld(scriptCode, txTo, nIn, sigHashType.getRawSigHashType());
-        sh = SignatureHash(scriptCode, txTo, nIn, sigHashType, 0, 0);
-#if defined(PRINT_SIGHASH_JSON)
-        CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-        ss << txTo;
-
-        std::cout << "\t[\"";
-        std::cout << HexStr(ss.begin(), ss.end()) << "\", \"";
-        std::cout << HexStr(scriptCode) << "\", ";
-        std::cout << nIn << ", ";
-        std::cout << nHashType << ", \"";
-        std::cout << sh.GetHex() << "\"]";
-        if (i + 1 != nRandomTests)
-        {
-            std::cout << ",";
-        }
-        std::cout << "\n";
-#endif
-        BOOST_CHECK(sh == sho);
-    }
-#if defined(PRINT_SIGHASH_JSON)
-    std::cout << "]\n";
-#endif
-}
 
 #if 0 // hard coded test change with new tx format
 // Goal: check that SignatureHash generates correct hash
@@ -253,7 +207,7 @@ BOOST_AUTO_TEST_CASE(sighash_test_fail)
     CScript scriptCode = CScript();
     CTransaction tx;
     const int nIn = 1;
-    const HackSigHashType sigHashType(0);
+    const HackSigHashType sigHashType(6);
     // should fail because nIn point is invalid
     // Note that this basically broken behavior of SignatureHashLegacy()
     uint256 hash = SignatureHash(scriptCode, tx, nIn, sigHashType, 0, 0);

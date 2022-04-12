@@ -131,29 +131,34 @@ class DecodeScriptTest(BitcoinTestFramework):
         txhex = node.getrawtransaction(txidem)
         decode = node.decoderawtransaction(txhex)
         # standard sighashtype for our signing
-        assert "[ALL|FORKID]" in decode["vin"][0]["scriptSig"]["asm"]
+        assert "[ALL]" in decode["vin"][0]["scriptSig"]["asm"]
         hexScriptSig = decode["vin"][0]["scriptSig"]["hex"]
 
         # now we'll put in other sighashtypes.  Even though the sig will be bad, decoderawtransaction does not care
         txSave = CTransaction(txhex)
         origSatisfier = txSave.vin[0].scriptSig
+        modSatisfier = bytearray(txSave.vin[0].scriptSig)
+        modSatisfier[35] = 65 # make the serialized sig vector one longer
 
-        txSave.vin[0].scriptSig = origSatisfier[0:-1] + bytes([0x82])  # Lop off the sighash type (last byte) and add another
+        txSave.vin[0].scriptSig = bytes(modSatisfier) + bytes([0x20])  # Lop off the sighash type (last byte) and add another
         decode = node.decoderawtransaction(txSave.toHex())
-        assert "[NONE|ANYONECANPAY]" in decode["vin"][0]["scriptSig"]["asm"]
+        assert "[THIS_IN|ALL_OUT]" in decode["vin"][0]["scriptSig"]["asm"]
 
         signature_sighash_decoded = decode["vin"][0]["scriptSig"]["asm"].split()[1]
-        txSave.vin[0].scriptSig = origSatisfier[0:-1] + bytes([0xC3])  # Lop off the sighash type (last byte) and add another
+        modSatisfier[35] = 67 # make the serialized sig vector longer
+        txSave.vin[0].scriptSig = bytes(modSatisfier) + bytes([0x11, 0x20, 0x10])  # Lop off the sighash type (last byte) and add another
         decode = node.decoderawtransaction(txSave.toHex())
-        assert "[SINGLE|FORKID|ANYONECANPAY]" in decode["vin"][0]["scriptSig"]["asm"]
+        assert "[FIRST_32_IN|FIRST_16_OUT]" in decode["vin"][0]["scriptSig"]["asm"]
         signature_2_sighash_decoded = decode["vin"][0]["scriptSig"]["asm"].split()[1]
 
         # 2) multisig scriptSig
         sig = CScript(origSatisfier).nth(1)
-        s1 = sig[0:-1] + bytes([0x82])
-        s2 = sig[0:-1] + bytes([0xC3])
+        assert len(sig) == 64 # its ALL/ALL
+        s1 = sig + bytes([0x20])
+        s2 = sig + bytes([0x11, 0x20,  0x10])
         txSave.vin[0].scriptSig = CScript([ 0, s1, s2])
         rpc_result = self.nodes[0].decoderawtransaction(bytes_to_hex_str(txSave.serialize()))
+        # '0 8bb45fa8b774a4c39151f87ff9c871e2511c83fdbce1c7f40f3cd824fab420356de3b710cd49863b7838d557d243d410502c8c7e9247823ef9ec3495a10ad4ab[THIS_IN | ALL_OUT] 8bb45fa8b774a4c39151f87ff9c871e2511c83fdbce1c7f40f3cd824fab420356de3b710cd49863b7838d557d243d410502c8c7e9247823ef9ec3495a10ad4ab[FIRST_0_IN | 0_0_OUT]'
         assert_equal('0 ' + signature_sighash_decoded + ' ' + signature_2_sighash_decoded, rpc_result['vin'][0]['scriptSig']['asm'])
 
         # 3) test a scriptSig that contains more than push operations.

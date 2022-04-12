@@ -79,15 +79,28 @@ class SigHashMatchTest(BitcoinTestFramework):
         key.set_compressed(True)
         pub = key.get_pubkey()
 
+        for hashcode in [ SIGHASH_ALL, bytes(), bytes([SIGHASH_THIS_IN | SIGHASH_ALL_OUT]), bytes([SIGHASH_FIRSTN_IN | SIGHASH_FIRSTN_OUT, 1,1]), bytes([SIGHASH_FIRSTN_IN | SIGHASH_FIRSTN_OUT, 0,1])]:
+            scriptcode = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
+            sighash = txn.SignatureHashNexa(0, bytes(scriptcode), hashcode, debug=False)
+            txn_mansig = unhexlify(self.nodes[0].signdata(addr, "hash", hexlify(sighash).decode("ascii")))
+            hcBytes = hashcode if type(hashcode) == bytes else bytes([hashcode])
+            fullsig = txn_mansig + hcBytes 
+            templateArgs = CScript([pub])
+            txn.vin[0].scriptSig = CScript([templateArgs, fullsig])
+            analysis = self.nodes[0].validaterawtransaction(txn.toHex())
+            assert analysis["isValid"] == True, "Python sighashing problem"
+
+        # finally try issuing the tx
         scriptcode = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
-        hashcode = SIGHASH_ALL | SIGHASH_FORKID
-        sighash = txn.SignatureHash(0, bytes(scriptcode), int(amt*COIN), hashcode, debug=False)
+        hashcode = SIGHASH_ALL
+        sighash = txn.SignatureHashNexa(0, bytes(scriptcode), hashcode, debug=False)
         txn_mansig = unhexlify(self.nodes[0].signdata(addr, "hash", hexlify(sighash).decode("ascii")))
         fullsig = txn_mansig+bytes([hashcode])
         templateArgs = CScript([pub])
         txn.vin[0].scriptSig = CScript([templateArgs, fullsig])
         txid = self.nodes[0].sendrawtransaction(txn.toHex())
         assert len(txid) == 64
+        assert self.nodes[0].gettxpoolinfo()['size'] == 1  # our tx got committed to the pool
 
 if __name__ == '__main__':
     SigHashMatchTest().main(bitcoinConfDict = {"usecashaddr" : 0})

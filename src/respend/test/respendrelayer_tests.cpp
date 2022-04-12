@@ -109,7 +109,7 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
     t1.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
     CTransaction tx1(t1);
     {
-        TransactionSignatureCreator tsc(&keystore, &tx1, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &tx1, 0, defaultSigHashType);
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t1.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -127,7 +127,7 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
     t2.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
     CTransaction tx2(t2);
     {
-        TransactionSignatureCreator tsc(&keystore, &tx2, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &tx2, 0, defaultSigHashType);
         const CScript &scriptPubKey = dummyTransactions[0].vout[1].scriptPubKey;
         CScript &scriptSigRes = t2.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -151,7 +151,7 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
     CTransaction spend1(s1);
     {
         {
-            TransactionSignatureCreator tsc(&keystore, &spend1, 0, 50 * CENT, defaultSigHashType);
+            TransactionSignatureCreator tsc(&keystore, &spend1, 0, defaultSigHashType);
             const CScript &scriptPubKey = tx1.vout[0].scriptPubKey;
             CScript &scriptSigRes = s1.vin[0].scriptSig;
             bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -159,7 +159,7 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
         }
 
         {
-            TransactionSignatureCreator tsc(&keystore, &spend1, 1, 50 * CENT, defaultSigHashType);
+            TransactionSignatureCreator tsc(&keystore, &spend1, 1, defaultSigHashType);
             const CScript &scriptPubKey2 = tx2.vout[0].scriptPubKey;
             CScript &scriptSigRes2 = s1.vin[1].scriptSig;
             bool worked = ProduceSignature(tsc, scriptPubKey2, scriptSigRes2);
@@ -188,7 +188,7 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
 
     CTransaction spend2(s2);
     {
-        TransactionSignatureCreator tsc(&keystore, &spend2, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &spend2, 0, defaultSigHashType);
         const CScript &scriptPubKey = tx1.vout[0].scriptPubKey;
         CScript &scriptSigRes = s2.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -232,7 +232,7 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
 
     // Create another dsproof for against the same original first tx...it should not be possible
     {
-        TransactionSignatureCreator tsc(&keystore, &spend2, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &spend2, 0, defaultSigHashType);
         const CScript &scriptPubKey = tx1.vout[0].scriptPubKey;
         CScript &scriptSigRes = s2.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -256,48 +256,6 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
     }
 
     // The following tests will check for dsproof exceptions
-
-    // 1) Create a dsproof where one transaction is not a bitcoin cash transaction (no fork id)
-    {
-        // remove the dsproof flag from the in mempool transaction
-        WRITELOCK(pool.cs_txmempool);
-        auto item = *iter;
-        item.dsproof = -1;
-        pool.mapTx.replace(iter, item);
-    }
-    {
-        // create a tx without a fork id
-        TransactionSignatureCreator tsc(&keystore, &spend2, 0, 50 * CENT, SigHashType(SIGHASH_ALL));
-        const CScript &scriptPubKey = tx1.vout[0].scriptPubKey;
-        CScript &scriptSigRes = s2.vin[0].scriptSig;
-        bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
-        // The return value will indicate that the signature is not fully valid (because SIGHASH_FORKID is missing)
-        // however it will have been signed correctly and can be used for our testing purpose.
-        BOOST_CHECK(!worked);
-    }
-    CTransaction spend2c(s2);
-    ClearInventory(&node);
-    try
-    {
-        READLOCK(pool.cs_txmempool);
-        const auto dsp = DoubleSpendProof::create(iter->GetTx(), spend2c, pool);
-        BOOST_CHECK_MESSAGE(false, "We should have thrown");
-    }
-    catch (const std::runtime_error &e)
-    {
-        BOOST_CHECK_EQUAL(e.what(), "Tx2 is not a Bitcoin Cash transaction");
-    }
-
-    try
-    {
-        READLOCK(pool.cs_txmempool);
-        const auto dsp = DoubleSpendProof::create(spend2c, iter->GetTx(), pool);
-        BOOST_CHECK_MESSAGE(false, "We should have thrown");
-    }
-    catch (const std::runtime_error &e)
-    {
-        BOOST_CHECK_EQUAL(e.what(), "Tx1 is not a Bitcoin Cash transaction");
-    }
 
     // 2) Create a dsproof that where the transactions do not double spend each other
     try
@@ -383,7 +341,7 @@ BOOST_FIXTURE_TEST_CASE(triggers_correctly, TestChain100Setup)
     t3.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
     CTransaction tx3(t3);
     {
-        TransactionSignatureCreator tsc(&keystore, &tx3, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &tx3, 0, defaultSigHashType);
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t3.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);

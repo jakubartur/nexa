@@ -160,27 +160,26 @@ static bool CheckSignatureEncodingSigHashChoice(const vector<unsigned char> &vch
     ScriptError *serror,
     const bool check_sighash)
 {
+    size_t sigSize = vchSig.size();
     // Empty signature. Not strictly DER encoded, but allowed to provide a
     // compact way to provide an invalid signature for use with CHECK(MULTI)SIG
-    if (vchSig.size() == 0)
+    if (sigSize == 0)
     {
         return true;
     }
 
-    unsigned int expectedSize = 64 + ((check_sighash == true) ? 1 : 0); // 64 sig length plus 1 sighashtype
-    // "DER" encoding doesn't make sense for Schnorr sigs, but this err communi
-    if (vchSig.size() != expectedSize)
+    // Schnorr signatures must be 64 bytes plus the sighashtype (if the caller left that in vchSig)
+    if ((!check_sighash) && (sigSize != 64))
+        set_error(serror, SCRIPT_ERR_SIG_NONSCHNORR);
+
+    if ((sigSize < 64) || (sigSize > 64 + SigHashType::MAX_LEN))
         return set_error(serror, SCRIPT_ERR_SIG_NONSCHNORR);
 
-    if (check_sighash && ((flags & SCRIPT_VERIFY_STRICTENC) != 0))
+    if (check_sighash)
     {
         SigHashType sighashtype = SigHashType(vchSig);
         if (!sighashtype.isDefined())
             return set_error(serror, SCRIPT_ERR_SIG_HASHTYPE);
-
-        // schnorr sigs must use forkid sighash if forkid flag set
-        if ((flags & SCRIPT_ENABLE_SIGHASH_FORKID) && sighashtype.isBtc())
-            return set_error(serror, SCRIPT_ERR_MUST_USE_FORKID);
     }
     return true;
 }
@@ -205,9 +204,7 @@ bool CheckDataSignatureEncoding(const valtype &vchSig, uint32_t flags, ScriptErr
  */
 static bool CheckTransactionSchnorrSignatureEncoding(const valtype &vchSig, uint32_t flags, ScriptError *serror)
 {
-    // Insist that this sig is Schnorr (64-byte signatures + 1 sighash type bit)
-    if (vchSig.size() != 65)
-        return set_error(serror, SCRIPT_ERR_SIG_NONSCHNORR);
+    // Since we only accept Schnorr sigs, this is a pass through
     return CheckSignatureEncodingSigHashChoice(vchSig, flags, serror, true);
 }
 
@@ -2135,30 +2132,17 @@ bool TransactionSignatureChecker::CheckSig(const vector<uint8_t> &vchSigIn,
         return false;
     }
     SigHashType sigHashType = GetSigHashType(vchSig);
+    if (sigHashType.isInvalid())
+        return false;
     RemoveSigHashType(vchSig);
 
     uint256 sighash;
     size_t nHashed = 0;
     if (txTo == nullptr || nIn >= txTo->vin.size())
         return false;
-    CAmount amount = txTo->vin[nIn].amount;
-    // If BCH sighash is possible, check the bit, otherwise ignore the bit.  This is needed because
-    // the bit is undefined (can be any value) before the fork. See block 264084 tx 102
-    if (nFlags & SCRIPT_ENABLE_SIGHASH_FORKID)
-    {
-        if (sigHashType.isBch())
-        {
-            sighash = SignatureHash(scriptCode, *txTo, nIn, sigHashType, amount, &nHashed);
-        }
-        else
-        {
-            return false;
-        }
-    }
-    else
-    {
-        sighash = SignatureHashBitcoin(scriptCode, *txTo, nIn, sigHashType, &nHashed);
-    }
+    if (!SignatureHashNexa(scriptCode, *txTo, nIn, sigHashType, sighash, &nHashed))
+        return false;
+
     nBytesHashed += nHashed;
     ++nSigops;
 

@@ -3,17 +3,12 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 from ctypes import *
 from test_framework.nodemessages import *
+from test_framework.constants import *
 from binascii import hexlify, unhexlify
 from enum import IntEnum, IntFlag
 import pdb
 import hashlib
 import decimal
-
-SIGHASH_ALL = 1
-SIGHASH_NONE = 2
-SIGHASH_SINGLE = 3
-SIGHASH_FORKID = 0x40
-SIGHASH_ANYONECANPAY = 0x80
 
 MAX_STACK_ITEM_LENGTH = 520
 
@@ -91,7 +86,7 @@ def signData(data, key):
     siglen = cashlib.SignData(data,len(data),key, result, 100)
     return result.raw[0:siglen]
 
-def signTxInputECDSA(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_FORKID | SIGHASH_ALL):
+def signTxInputECDSA(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=BTCBCH_SIGHASH_FORKID | BTCBCH_SIGHASH_ALL):
     """Signs one input of a transaction.  Signature is returned.  You must use this signature to construct the spend script
     Parameters:
     tx: Transaction in object, hex or binary format
@@ -101,7 +96,7 @@ def signTxInputECDSA(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=
     key: sign using this private key in binary format
     sigHashType: flags describing what should be signed (SIGHASH_FORKID | SIGHASH_ALL (default), SIGHASH_NONE, SIGHASH_SINGLE, SIGHASH_ANYONECANPAY)
     """
-    assert (sigHashType & SIGHASH_FORKID) > 0, "Did you forget to indicate the bitcoin cash hashing algorithm?"
+    assert (sigHashType & BTCBCH_SIGHASH_FORKID) > 0, "Did you forget to indicate the bitcoin cash hashing algorithm?"
     if type(tx) == str:
         tx = unhexlify(tx)
     elif type(tx) != bytes:
@@ -118,11 +113,11 @@ def signTxInputECDSA(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=
         raise Error("cashlib signtx error")
     return result.raw[0:siglen]
 
-def signTxInput(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_FORKID | SIGHASH_ALL):
+def signTxInput(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_ALL):
     """Default signing is now Schnorr"""
     return signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType)
 
-def signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_FORKID | SIGHASH_ALL):
+def signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashType=SIGHASH_ALL):
     """Signs one input of a transaction.  Schnorr signature is returned.  You must use this signature to construct the spend script
     Parameters:
     tx: Transaction in object, hex or binary format
@@ -130,9 +125,10 @@ def signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashTyp
     inputAmount: how many Satoshi's does this input add to the transaction?
     prevoutScript: the script that this input is spending.
     key: sign using this private key in binary format
-    sigHashType: flags describing what should be signed (SIGHASH_FORKID | SIGHASH_ALL (default), SIGHASH_NONE, SIGHASH_SINGLE, SIGHASH_ANYONECANPAY)
+    sigHashType: bytes describing which parts of the transaction are signed.  If a single byte sighashtype is used, an integer can be passed
     """
-    assert (sigHashType & SIGHASH_FORKID) > 0, "Did you forget to indicate the bitcoin cash hashing algorithm?"
+    if type(sigHashType) == int:  # As a convenience allow 1 byte sighashtypes to be passed as an integer
+        sigHashType = bytes([sigHashType])
     if type(tx) == str:
         tx = unhexlify(tx)
     elif type(tx) != bytes:
@@ -144,7 +140,7 @@ def signTxInputSchnorr(tx, inputIdx, inputAmount, prevoutScript, key, sigHashTyp
 
     result = create_string_buffer(100)
     siglen = cashlib.SignTxSchnorr(tx, len(tx), inputIdx, c_longlong(inputAmount), prevoutScript,
-                            len(prevoutScript), sigHashType, key, result, 100)
+        len(prevoutScript), sigHashType, len(sigHashType), key, result, 100)
     if siglen == 0:
         raise Error("cashlib signtx error")
     return result.raw[0:siglen]

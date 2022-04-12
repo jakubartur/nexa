@@ -17,7 +17,7 @@ Functionality to build scripts, as well as SignatureHash().
 from sys import stdout
 from .mininode import CTransaction, CTxOut, hash256
 from binascii import hexlify
-from .constants import (SIGHASH_ALL, SIGHASH_NONE, SIGHASH_SINGLE, SIGHASH_FORKID, SIGHASH_ANYONECANPAY)
+from .constants import (SIGHASH_ALL, SIGHASH_NONE, SIGHASH_ANYONECANPAY)
 
 import sys
 bchr = chr
@@ -968,7 +968,7 @@ def testScriptRepr():
     assert "112233" in repr(x)
 
 # Wrapper function to ease porting ABC tests.
-def SignatureHashForkId(script, txTo, inIdx, hashtype, amount):
+def SignatureHash(script, txTo, inIdx, hashtype, amount):
     return txTo.SignatureHash(
         scriptCode = script,
         in_number = inIdx,
