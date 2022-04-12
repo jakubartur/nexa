@@ -46,7 +46,7 @@ Optional dependencies:
  Library     | Purpose          | Description
  ------------|------------------|----------------------
  miniupnpc   | UPnP Support     | Firewall-jumping support
- libdb4.8    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
+ libdb5.3    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
  qt          | GUI              | GUI toolkit (only needed when GUI enabled)
  protobuf    | Payments in GUI  | Data interchange format used for payment protocol (only needed when GUI enabled)
  libqrencode | QR codes in GUI  | Optional for generating QR codes (only needed when GUI enabled)
@@ -148,7 +148,7 @@ turned off by default.  See the configure options for upnp behavior desired:
 
 ## Berkeley DB
 
-It is recommended to use Berkeley DB 4.8. If you have to build it yourself:
+It is recommended to use Berkeley DB 5.3. If you have to build it yourself:
 
 ```bash
 BITCOIN_ROOT=$(pwd)
@@ -158,13 +158,13 @@ BDB_PREFIX="${BITCOIN_ROOT}/db4"
 mkdir -p $BDB_PREFIX
 
 # Fetch the source and verify that it is not tampered with
-wget 'https://download.oracle.com/berkeley-db/db-4.8.30.NC.tar.gz'
-echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-4.8.30.NC.tar.gz' | sha256sum -c
-# -> db-4.8.30.NC.tar.gz: OK
-tar -xzvf db-4.8.30.NC.tar.gz
+wget 'https://download.oracle.com/berkeley-db/db-5.3.30.NC.tar.gz'
+echo '12edc0df75bf9abd7f82f821795bcee50f42cb2e5f76a6a281b85732798364ef  db-5.3.30.NC.tar.gz' | sha256sum -c
+# -> db-5.3.30.NC.tar.gz: OK
+tar -xzvf db-5.3.30.NC.tar.gz
 
 # Build the library and install to our prefix
-cd db-4.8.30.NC/build_unix/
+cd db-5.3.30.NC/build_unix/
 #  Note: Do a static build so that it can be embedded into the executable, instead of having to find a .so at runtime
 ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 make install
@@ -248,7 +248,7 @@ disable-wallet mode with:
 ./configure --disable-wallet
 ```
 
-In this case there is no dependency on Berkeley DB 4.8.
+In this case there is no dependency on Berkeley DB 5.3.
 
 Mining is also possible in disable-wallet mode, but only using the `getblocktemplate` RPC
 call not `getwork`.

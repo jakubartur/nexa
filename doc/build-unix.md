@@ -103,7 +103,7 @@ Optional dependencies:
  Library     | Purpose          | Description
  ------------|------------------|----------------------
  miniupnpc   | UPnP Support     | Firewall-jumping support
- libdb4.8    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
+ libdb5.3    | Berkeley DB      | Wallet storage (only needed when wallet enabled)
  qt          | GUI              | GUI toolkit (only needed when GUI enabled)
  protobuf    | Payments in GUI  | Data interchange format used for payment protocol (only needed when GUI enabled)
  libqrencode | QR codes in GUI  | Optional for generating QR codes (only needed when GUI enabled)
@@ -123,7 +123,7 @@ cd BCHUnlimited/
 
 If you only need to run a node, and have no need for a wallet or GUI you can build the binaries with:
 
-In this case there is no dependency on Berkeley DB 4.8 or Qt5.
+In this case there is no dependency on Berkeley DB 5.3 or Qt5.
 
 Mining is also possible in disable-wallet mode, but only using the `getblocktemplate` RPC
 call not `getwork`.
@@ -142,7 +142,7 @@ You will find the `bitcoind` binary in the `src/` folder.
 ## To build with wallet
 
 
-It is recommended to use Berkeley DB 4.8.
+It is recommended to use Berkeley DB 5.3.
 
 If you install the package from the BU Launchpad ppa, as descibed [above](#installing-dependencies-for-wallet-support) you can build with
 
