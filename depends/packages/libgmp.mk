@@ -11,7 +11,7 @@ ifeq  ($(HOST),i686-pc-linux-gnu)
   $(package)_cflags+=-m32
 endif
 
-ifeq  ($(HOST),x86_64-apple-darwin16)
+ifeq  ($(HOST),x86_64-apple-darwin19)
   XTRA_CFG:=--disable-assembly
   XTRA_CFG_ENV:=CC="$(darwin_CC)" CXX="$(darwin_CXX)"
   define $(package)_set_vars
