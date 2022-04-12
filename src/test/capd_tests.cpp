@@ -4,7 +4,7 @@
 
 #include <tgmath.h>
 
-#include "capd.h"
+#include "capd/capd.h"
 #include "streams.h"
 #include "test/test_bitcoin.h"
 // #include "test/test_random.h"

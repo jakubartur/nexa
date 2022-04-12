@@ -15,7 +15,7 @@
 #include "blockrelay/mempool_sync.h"
 #include "blockrelay/thinblock.h"
 #include "blockstorage/blockcache.h"
-#include "capd.h"
+#include "capd/capd.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "clientversion.h"

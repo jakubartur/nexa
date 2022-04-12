@@ -18,7 +18,7 @@
 #include "blockrelay/blockrelay_common.h"
 #include "blockrelay/graphene.h"
 #include "blockrelay/mempool_sync.h"
-#include "capd.h"
+#include "capd/capd.h"
 #include "chainparams.h"
 #include "connmgr.h"
 #include "consensus/consensus.h"

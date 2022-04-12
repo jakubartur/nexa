@@ -14,7 +14,7 @@
 #include "amount.h"
 #include "blockstorage/blockstorage.h"
 #include "blockstorage/sequential_files.h"
-#include "capd.h"
+#include "capd/capd.h"
 #include "chain.h"
 #include "chainparams.h"
 #include "checkpoints.h"
