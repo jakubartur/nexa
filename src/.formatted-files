@@ -12,10 +12,10 @@ banentry.cpp
 banentry.h
 base58.cpp
 base58.h
-bitcoin-cli.cpp
-bitcoind.cpp
-bitcoin-miner.cpp
-bitcoin-tx.cpp
+nexa-cli.cpp
+nexad.cpp
+nexa-miner.cpp
+nexa-tx.cpp
 bitnodes.cpp
 bitnodes.h
 blockrelay/graphene.h

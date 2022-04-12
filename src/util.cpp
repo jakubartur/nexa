@@ -243,8 +243,8 @@ void LogInit()
 }
 } // namespace Logging
 
-const char *const BITCOIN_CONF_FILENAME = "bitcoin.conf";
-const char *const BITCOIN_PID_FILENAME = "bitcoind.pid";
+const char *const CONF_FILENAME = "nexa.conf";
+const char *const PID_FILENAME = "nexa.pid";
 const char *const FORKS_CSV_FILENAME = "forks.csv"; // bip135 added
 // Application startup time (used for uptime calculation)
 const int64_t nStartupTime = GetTime();
@@ -735,7 +735,7 @@ void ReadConfigFile(std::map<std::string, std::string> &mapSettingsRet,
     std::map<std::string, std::vector<std::string> > &mapMultiSettingsRet,
     const AllowedArgs::AllowedArgs &allowedArgs)
 {
-    fs::ifstream streamConfig(GetConfigFile(GetArg("-conf", BITCOIN_CONF_FILENAME)));
+    fs::ifstream streamConfig(GetConfigFile(GetArg("-conf", CONF_FILENAME)));
     if (!streamConfig.good())
         return; // No bitcoin.conf file is OK
 
@@ -760,7 +760,7 @@ void ReadConfigFile(std::map<std::string, std::string> &mapSettingsRet,
 #ifndef WIN32
 fs::path GetPidFile()
 {
-    fs::path pathPidFile(GetArg("-pid", BITCOIN_PID_FILENAME));
+    fs::path pathPidFile(GetArg("-pid", PID_FILENAME));
     if (!pathPidFile.is_complete())
         pathPidFile = GetDataDir() / pathPidFile;
     return pathPidFile;

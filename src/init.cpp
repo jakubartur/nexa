@@ -1140,7 +1140,7 @@ bool AppInit2(Config &config)
         LOGA("Startup time: %s\n", FormatISO8601DateTime(GetTime()));
     LOGA("Default data directory %s\n", GetDefaultDataDir().string());
     LOGA("Using data directory %s\n", strDataDir);
-    LOGA("Using config file %s\n", GetConfigFile(GetArg("-conf", BITCOIN_CONF_FILENAME)).string());
+    LOGA("Using config file %s\n", GetConfigFile(GetArg("-conf", CONF_FILENAME)).string());
     LOGA("Using at most %i connections\n", nMaxConnections);
     std::ostringstream strErrors;
 

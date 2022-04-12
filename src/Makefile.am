@@ -36,38 +36,38 @@ endif
 EXTRA_LIBRARIES = libgmp.a
 
 BITCOIN_CONFIG_INCLUDES=-I$(builddir)/config
-BITCOIN_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
+NEXA_INCLUDES=-I$(builddir) -I$(builddir)/obj $(BDB_CPPFLAGS) $(BOOST_CPPFLAGS) $(LEVELDB_CPPFLAGS) $(CRYPTO_CFLAGS) $(SSL_CFLAGS)
 
-BITCOIN_INCLUDES += -I$(srcdir)/secp256k1/include
-BITCOIN_INCLUDES += -I$(srcdir)/univalue/include
-BITCOIN_INCLUDES += -I$(srcdir)/rsm/include
+NEXA_INCLUDES += -I$(srcdir)/secp256k1/include
+NEXA_INCLUDES += -I$(srcdir)/univalue/include
+NEXA_INCLUDES += -I$(srcdir)/rsm/include
 
-LIBBITCOIN_SERVER=libbitcoin_server.a
-LIBBITCOIN_COMMON=libbitcoin_common.a
-LIBBITCOIN_CONSENSUS=libbitcoin_consensus.a
-LIBBITCOIN_CLI=libbitcoin_cli.a
-LIBBITCOIN_UTIL=libbitcoin_util.a
-LIBBITCOIN_CRYPTO=crypto/libbitcoin_crypto.a
-LIBBITCOIN_CRYPTO_SSE41=crypto/libbitcoin_crypto_sse41.a
-LIBBITCOIN_CRYPTO_AVX2=crypto/libbitcoin_crypto_avx2.a
-LIBBITCOINQT=qt/libbitcoinqt.a
+LIBNEXA_SERVER=libnexa_server.a
+LIBNEXA_COMMON=libnexa_common.a
+LIBNEXA_CONSENSUS=libnexa_consensus.a
+LIBNEXA_CLI=libnexa_cli.a
+LIBNEXA_UTIL=libnexa_util.a
+LIBNEXA_CRYPTO=crypto/libnexa_crypto.a
+LIBNEXA_CRYPTO_SSE41=crypto/libnexa_crypto_sse41.a
+LIBNEXA_CRYPTO_AVX2=crypto/libnexa_crypto_avx2.a
+LIBNEXAQT=qt/libnexaqt.a
 LIBRSM=rsm/librsm.la
 LIBSECP256K1=secp256k1/libsecp256k1.la
 LIBUNIVALUE=univalue/libunivalue.la
 
 if ENABLE_ZMQ
-LIBBITCOIN_ZMQ=libbitcoin_zmq.a
+LIBNEXA_ZMQ=libnexa_zmq.a
 endif
 
-if BUILD_BITCOIN_LIBS
-LIBBITCOINCONSENSUS=libbitcoinconsensus.la
+if BUILD_NEXA_LIBS
+LIBNEXACONSENSUS=libnexaconsensus.la
 if TARGET_LINUX
-LIBBITCOINCASH=libbitcoincash.la
+LIBBITCOINCASH=libnexa.la
 endif
 endif
 
 if ENABLE_WALLET
-LIBBITCOIN_WALLET=libbitcoin_wallet.a
+LIBNEXA_WALLET=libnexa_wallet.a
 endif
 
 $(LIBRSM): $(wildcard rsm/lib/*) $(wildcard rsm/include/*)
@@ -82,18 +82,18 @@ $(LIBUNIVALUE): $(wildcard univalue/lib/*) $(wildcard univalue/include/*)
 # Make is not made aware of per-object dependencies to avoid limiting building parallelization
 # But to build the less dependent modules first, we manually select their order here:
 EXTRA_LIBRARIES += \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_CRYPTO_SSE41) \
-  $(LIBBITCOIN_CRYPTO_AVX2) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_CLI) \
-  $(LIBBITCOIN_WALLET) \
-  $(LIBBITCOIN_ZMQ)
+  $(LIBNEXA_CRYPTO) \
+  $(LIBNEXA_CRYPTO_SSE41) \
+  $(LIBNEXA_CRYPTO_AVX2) \
+  $(LIBNEXA_UTIL) \
+  $(LIBNEXA_COMMON) \
+  $(LIBNEXA_CONSENSUS) \
+  $(LIBNEXA_SERVER) \
+  $(LIBNEXA_CLI) \
+  $(LIBNEXA_WALLET) \
+  $(LIBNEXA_ZMQ)
 
-lib_LTLIBRARIES = $(LIBBITCOINCASH) $(LIBBITCOINCONSENSUS)
+lib_LTLIBRARIES = $(LIBBITCOINCASH) $(LIBNEXACONSENSUS)
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -101,11 +101,11 @@ TESTS =
 BENCHMARKS =
 
 if BUILD_BITCOIND
-  bin_PROGRAMS += bitcoind
+  bin_PROGRAMS += nexad
 endif
 
 if BUILD_BITCOIN_UTILS
-  bin_PROGRAMS += bitcoin-cli bitcoin-tx bitcoin-miner
+  bin_PROGRAMS += nexa-cli nexa-tx nexa-miner
 endif
 
 .PHONY: FORCE check-symbols check-security check-formatting
@@ -269,12 +269,12 @@ obj/build.h: FORCE
 	@$(MKDIR_P) $(builddir)/obj
 	@$(top_srcdir)/share/genbuild.sh $(abs_top_builddir)/src/obj/build.h \
 	  $(abs_top_srcdir)
-libbitcoin_util_a-clientversion.$(OBJEXT): obj/build.h
+libnexa_util_a-clientversion.$(OBJEXT): obj/build.h
 
 # server: shared between bitcoind and bitcoin-qt
-libbitcoin_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
-libbitcoin_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_server_a_SOURCES = \
+libnexa_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
+libnexa_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_server_a_SOURCES = \
   globals.cpp \
   addrman.cpp \
   bandb.cpp \
@@ -361,9 +361,9 @@ libbitcoin_server_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 if ENABLE_ZMQ
-libbitcoin_zmq_a_CPPFLAGS = $(BITCOIN_INCLUDES) $(ZMQ_CFLAGS)
-libbitcoin_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_zmq_a_SOURCES = \
+libnexa_zmq_a_CPPFLAGS = $(NEXA_INCLUDES) $(ZMQ_CFLAGS)
+libnexa_zmq_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_zmq_a_SOURCES = \
   zmq/zmqabstractnotifier.cpp \
   zmq/zmqnotificationinterface.cpp \
   zmq/zmqpublishnotifier.cpp \
@@ -373,9 +373,9 @@ endif
 
 # wallet: shared between bitcoind and bitcoin-qt, but only linked
 # when wallet enabled
-libbitcoin_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_wallet_a_SOURCES = \
+libnexa_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+libnexa_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_wallet_a_SOURCES = \
   wallet/coinselection.cpp \
   wallet/crypter.cpp \
   wallet/db.cpp \
@@ -387,10 +387,10 @@ libbitcoin_wallet_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 if TARGET_LINUX
-libbitcoincash_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoincash_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+libnexa_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 
-libbitcoincash_a_SOURCES = \
+libnexa_a_SOURCES = \
   cashlib/cashlib.cpp \
   base58.cpp \
   base58.h \
@@ -463,9 +463,9 @@ endif
 
 
 # crypto primitives library
-crypto_libbitcoin_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES)
-crypto_libbitcoin_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_a_SOURCES = \
+crypto_libnexa_crypto_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_CONFIG_INCLUDES)
+crypto_libnexa_crypto_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libnexa_crypto_a_SOURCES = \
   crypto/aes.cpp \
   crypto/aes.h \
   crypto/chacha20.h \
@@ -485,29 +485,29 @@ crypto_libbitcoin_crypto_a_SOURCES = \
   crypto/sha512.h
 
 if USE_ASM
-crypto_libbitcoin_crypto_a_SOURCES += crypto/sha256_sse4.cpp
+crypto_libnexa_crypto_a_SOURCES += crypto/sha256_sse4.cpp
 endif
 
-crypto_libbitcoin_crypto_sse41_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_sse41_a_CPPFLAGS = $(AM_CPPFLAGS)
+crypto_libnexa_crypto_sse41_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libnexa_crypto_sse41_a_CPPFLAGS = $(AM_CPPFLAGS)
 if ENABLE_SSE41
-crypto_libbitcoin_crypto_sse41_a_CXXFLAGS += $(SSE41_CXXFLAGS)
-crypto_libbitcoin_crypto_sse41_a_CPPFLAGS += -DENABLE_SSE41
+crypto_libnexa_crypto_sse41_a_CXXFLAGS += $(SSE41_CXXFLAGS)
+crypto_libnexa_crypto_sse41_a_CPPFLAGS += -DENABLE_SSE41
 endif
-crypto_libbitcoin_crypto_sse41_a_SOURCES = crypto/sha256_sse41.cpp
+crypto_libnexa_crypto_sse41_a_SOURCES = crypto/sha256_sse41.cpp
 
-crypto_libbitcoin_crypto_avx2_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-crypto_libbitcoin_crypto_avx2_a_CPPFLAGS = $(AM_CPPFLAGS)
+crypto_libnexa_crypto_avx2_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+crypto_libnexa_crypto_avx2_a_CPPFLAGS = $(AM_CPPFLAGS)
 if ENABLE_AVX2
-crypto_libbitcoin_crypto_avx2_a_CXXFLAGS += $(AVX2_CXXFLAGS)
-crypto_libbitcoin_crypto_avx2_a_CPPFLAGS += -DENABLE_AVX2
+crypto_libnexa_crypto_avx2_a_CXXFLAGS += $(AVX2_CXXFLAGS)
+crypto_libnexa_crypto_avx2_a_CPPFLAGS += -DENABLE_AVX2
 endif
-crypto_libbitcoin_crypto_avx2_a_SOURCES = crypto/sha256_avx2.cpp
+crypto_libnexa_crypto_avx2_a_SOURCES = crypto/sha256_avx2.cpp
 
 # consensus: shared between all executables that validate any consensus rules.
-libbitcoin_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_consensus_a_SOURCES = \
+libnexa_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+libnexa_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_consensus_a_SOURCES = \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
@@ -556,9 +556,9 @@ libbitcoin_consensus_a_SOURCES = \
   version.h
 
 # common: shared between bitcoind, and bitcoin-qt and non-server tools
-libbitcoin_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_common_a_SOURCES = \
+libnexa_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+libnexa_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_common_a_SOURCES = \
   amount.cpp \
   base58.cpp \
   cashaddr.cpp \
@@ -584,9 +584,9 @@ libbitcoin_common_a_SOURCES = \
 # util: shared between all executables.
 # This library *must* be included to make sure that the glibc
 # backward-compatibility objects and their sanity checks are linked.
-libbitcoin_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-libbitcoin_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_util_a_SOURCES = \
+libnexa_util_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+libnexa_util_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_util_a_SOURCES = \
   support/pagelocker.cpp \
   allowed_args.cpp \
   chainparamsbase.cpp \
@@ -610,41 +610,41 @@ libbitcoin_util_a_SOURCES = \
   $(BITCOIN_CORE_H)
 
 if GLIBC_BACK_COMPAT
-libbitcoin_util_a_SOURCES += compat/glibc_compat.cpp
+libnexa_util_a_SOURCES += compat/glibc_compat.cpp
 AM_LDFLAGS += $(COMPAT_LDFLAGS)
 endif
 
 # cli: shared between bitcoin-cli and bitcoin-qt
-libbitcoin_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-libbitcoin_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libbitcoin_cli_a_SOURCES = \
+libnexa_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(EVENT_CFLAGS)
+libnexa_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_cli_a_SOURCES = \
   rpc/client.cpp \
   $(BITCOIN_CORE_H)
 
-nodist_libbitcoin_util_a_SOURCES = $(srcdir)/obj/build.h
+nodist_libnexa_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
 # bitcoind binary #
-bitcoind_SOURCES = bitcoind.cpp
-bitcoind_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-bitcoind_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoind_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+nexad_SOURCES = nexad.cpp
+nexad_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+nexad_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+nexad_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-bitcoind_SOURCES += bitcoind-res.rc
+nexad_SOURCES += bitcoind-res.rc
 endif
 
-bitcoind_LDADD = \
-  $(LIBBITCOIN_SERVER) \
-  $(LIBBITCOIN_COMMON) \
+nexad_LDADD = \
+  $(LIBNEXA_SERVER) \
+  $(LIBNEXA_COMMON) \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_WALLET) \
-  $(LIBBITCOIN_ZMQ) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_CRYPTO_SSE41) \
-  $(LIBBITCOIN_CRYPTO_AVX2) \
+  $(LIBNEXA_UTIL) \
+  $(LIBNEXA_WALLET) \
+  $(LIBNEXA_ZMQ) \
+  $(LIBNEXA_CONSENSUS) \
+  $(LIBNEXA_CRYPTO) \
+  $(LIBNEXA_CRYPTO_SSE41) \
+  $(LIBNEXA_CRYPTO_AVX2) \
   $(LIBLEVELDB) \
   $(LIBLEVELDB_SSE42) \
   $(LIBMEMENV) \
@@ -652,56 +652,56 @@ bitcoind_LDADD = \
   $(LIBSECP256K1)
 
 
-bitcoind_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
+nexad_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
 # bitcoin-cli binary #
-bitcoin_cli_SOURCES = bitcoin-cli.cpp
-bitcoin_cli_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-bitcoin_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoin_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+nexa_cli_SOURCES = nexa-cli.cpp
+nexa_cli_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(EVENT_CFLAGS)
+nexa_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+nexa_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-bitcoin_cli_SOURCES += bitcoin-cli-res.rc
+nexa_cli_SOURCES += bitcoin-cli-res.rc
 endif
 
-bitcoin_cli_LDADD = \
-  $(LIBBITCOIN_CLI) \
+nexa_cli_LDADD = \
+  $(LIBNEXA_CLI) \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_CRYPTO_SSE41) \
-  $(LIBBITCOIN_CRYPTO_AVX2) \
+  $(LIBNEXA_UTIL) \
+  $(LIBNEXA_CRYPTO) \
+  $(LIBNEXA_CRYPTO_SSE41) \
+  $(LIBNEXA_CRYPTO_AVX2) \
   $(LIBRSM)
 
-bitcoin_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+nexa_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
 # bitcoin-tx binary #
-bitcoin_tx_SOURCES = bitcoin-tx.cpp
-bitcoin_tx_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES)
-bitcoin_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoin_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+nexa_tx_SOURCES = nexa-tx.cpp
+nexa_tx_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+nexa_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+nexa_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-bitcoin_tx_SOURCES += bitcoin-tx-res.rc
+nexa_tx_SOURCES += bitcoin-tx-res.rc
 endif
 
-bitcoin_tx_LDADD = \
+nexa_tx_LDADD = \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_CRYPTO_SSE41) \
-  $(LIBBITCOIN_CRYPTO_AVX2) \
+  $(LIBNEXA_COMMON) \
+  $(LIBNEXA_UTIL) \
+  $(LIBNEXA_CONSENSUS) \
+  $(LIBNEXA_CRYPTO) \
+  $(LIBNEXA_CRYPTO_SSE41) \
+  $(LIBNEXA_CRYPTO_AVX2) \
   $(LIBSECP256K1) \
   $(LIBRSM)
 
-bitcoin_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
+nexa_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
 # bitcoin-miner binary #
-bitcoin_miner_SOURCES = bitcoin-miner.cpp \
+nexa_miner_SOURCES = nexa-miner.cpp \
   pow.cpp \
   arith_uint256.cpp \
   arith_uint256.h \
@@ -711,59 +711,59 @@ bitcoin_miner_SOURCES = bitcoin-miner.cpp \
   uint256.h
 
 
-bitcoin_miner_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) $(EVENT_CFLAGS)
-bitcoin_miner_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bitcoin_miner_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+nexa_miner_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(EVENT_CFLAGS)
+nexa_miner_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+nexa_miner_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-bitcoin_miner_SOURCES += bitcoin-miner-res.rc
+nexa_miner_SOURCES += bitcoin-miner-res.rc
 endif
 
-bitcoin_miner_LDADD = \
-  $(LIBBITCOIN_CLI) \
+nexa_miner_LDADD = \
+  $(LIBNEXA_CLI) \
   $(LIBUNIVALUE) \
-  $(LIBBITCOIN_COMMON) \
-  $(LIBBITCOIN_UTIL) \
-  $(LIBBITCOIN_CONSENSUS) \
-  $(LIBBITCOIN_CRYPTO) \
-  $(LIBBITCOIN_CRYPTO_SSE41) \
-  $(LIBBITCOIN_CRYPTO_AVX2) \
+  $(LIBNEXA_COMMON) \
+  $(LIBNEXA_UTIL) \
+  $(LIBNEXA_CONSENSUS) \
+  $(LIBNEXA_CRYPTO) \
+  $(LIBNEXA_CRYPTO_SSE41) \
+  $(LIBNEXA_CRYPTO_AVX2) \
   $(LIBRSM) \
   $(LIBSECP256K1)
 
-bitcoin_miner_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
+nexa_miner_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
 # bitcoincash library #
-if BUILD_BITCOIN_LIBS
+if BUILD_NEXA_LIBS
 if TARGET_LINUX
-libbitcoincash_la_SOURCES = $(libbitcoincash_a_SOURCES) $(crypto_libbitcoin_crypto_a_SOURCES)
+libnexa_la_SOURCES = $(libnexa_a_SOURCES) $(crypto_libnexa_crypto_a_SOURCES)
 
 if GLIBC_BACK_COMPAT
-libbitcoincash_la_SOURCES += compat/glibc_compat.cpp
+libnexa_la_SOURCES += compat/glibc_compat.cpp
 endif
 
-libbitcoincash_la_LDFLAGS = $(AM_LDFLAGS) $(SSL_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) -no-undefined $(RELDFLAGS) $(PTHREAD_FLAGS)
-libbitcoincash_la_LIBADD = $(LIBSECP256K1)
-libbitcoincash_la_CPPFLAGS = $(AM_CPPFLAGS) $(BITCOIN_INCLUDES) -I$(BOOST_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include $(JNI_CXXFLAGS) -DBUILD_BITCOIN_INTERNAL
-libbitcoincash_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_la_LDFLAGS = $(AM_LDFLAGS) $(SSL_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) -no-undefined $(RELDFLAGS) $(PTHREAD_FLAGS)
+libnexa_la_LIBADD = $(LIBSECP256K1)
+libnexa_la_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) -I$(BOOST_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include $(JNI_CXXFLAGS) -DBUILD_BITCOIN_INTERNAL
+libnexa_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 endif
 endif
 #
 
 # bitcoinconsensus library #
-if BUILD_BITCOIN_LIBS
+if BUILD_NEXA_LIBS
 include_HEADERS = script/bitcoinconsensus.h
-libbitcoinconsensus_la_SOURCES = $(crypto_libbitcoin_crypto_a_SOURCES) $(libbitcoin_consensus_a_SOURCES)
+libnexaconsensus_la_SOURCES = $(crypto_libnexa_crypto_a_SOURCES) $(libnexa_consensus_a_SOURCES)
 
 if GLIBC_BACK_COMPAT
-  libbitcoinconsensus_la_SOURCES += compat/glibc_compat.cpp
+  libnexaconsensus_la_SOURCES += compat/glibc_compat.cpp
 endif
 
-libbitcoinconsensus_la_LDFLAGS = $(AM_LDFLAGS) $(BOOST_LIBS) -no-undefined $(RELDFLAGS) $(LIBTOOL_APP_LDFLAGS)  $(PTHREAD_FLAGS)
-libbitcoinconsensus_la_LIBADD = $(LIBSECP256K1)
-libbitcoinconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(BOOST_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
-libbitcoinconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexaconsensus_la_LDFLAGS = $(AM_LDFLAGS) $(BOOST_LIBS) -no-undefined $(RELDFLAGS) $(LIBTOOL_APP_LDFLAGS)  $(PTHREAD_FLAGS)
+libnexaconsensus_la_LIBADD = $(LIBSECP256K1)
+libnexaconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(BOOST_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
+libnexaconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 endif
 #
 CLEANFILES = $(EXTRA_LIBRARIES)

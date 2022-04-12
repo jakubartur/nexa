@@ -125,7 +125,7 @@ share/BitcoindComparisonTool.jar
 /doc/doxygen/
 /doc/Doxyfile
 
-libbitcoinconsensus.pc
+libnexaconsensus.pc
 
 # IDE files
 *.sublime-project

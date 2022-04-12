@@ -29,10 +29,10 @@ class GetLogCategories (BitcoinTestFramework):
         node_opts2 = ["-debug=all,-thin,-graphene,-mempool,-net,-addrman,-tor,-coindb,-rpc,-evict,-blk,-lck,-proxy,-token,-validation"]
         node_opts3 = ["-debug=-token,-validation"]
 
-        #Append rpcauth to bitcoin.conf before initialization
+        #Append rpcauth to nexa.conf before initialization
         node_opts5 = ["debug=all","debug=-thin","debug=-graphene","debug=-mempool","debug=-net"]
         random.shuffle(node_opts5)
-        with open(os.path.join(self.options.tmpdir+"/node3", "bitcoin.conf"), 'a') as f:
+        with open(os.path.join(self.options.tmpdir+"/node3", "nexa.conf"), 'a') as f:
             f.write("\n".join(node_opts5))
 
         self.nodes = [

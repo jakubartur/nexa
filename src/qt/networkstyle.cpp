@@ -15,13 +15,10 @@ static const struct
     const int iconColorHueShift;
     const int iconColorSaturationReduction;
     const char *titleAddText;
-} network_styles[] = {{"main", QAPP_APP_NAME_BUCASH, 0, 0, ""},
-    {"test", QAPP_APP_NAME_TESTNET, 70, 30, QT_TRANSLATE_NOOP("SplashScreen", "[testnet]")},
-    {"test4", QAPP_APP_NAME_TESTNET4, 120, 30, QT_TRANSLATE_NOOP("SplashScreen", "[testnet4]")},
-    {"scale", QAPP_APP_NAME_SCALENET, 180, 30, QT_TRANSLATE_NOOP("SplashScreen", "[scalenet]")},
-    {"nol", QAPP_APP_NAME_NOLNET, 70, 30, QT_TRANSLATE_NOOP("SplashScreen", "[nolimit]")}, // BU
-    {"nex", QAPP_APP_NAME_NEXTCHAIN, 83, 30, QT_TRANSLATE_NOOP("SplashScreen", "Nexa")}, // BU
-    {"regtest", QAPP_APP_NAME_TESTNET, 160, 30, "[regtest]"}};
+} network_styles[] = {{"main", QAPP_APP_NAME, 0, 0, "Nexa"},
+    {"testnet", QAPP_APP_NAME_TESTNET, 70, 30, QT_TRANSLATE_NOOP("SplashScreen", "[testnet]")},
+    {"nexa", QAPP_APP_NAME, 0, 0, QT_TRANSLATE_NOOP("SplashScreen", "")}, // BU
+    {"regtest", QAPP_APP_NAME_REGTEST, 160, 30, "[regtest]"}};
 static const unsigned network_styles_count = sizeof(network_styles) / sizeof(*network_styles);
 
 // titleAddText needs to be const char* for tr()

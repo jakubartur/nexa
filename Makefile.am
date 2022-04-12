@@ -9,9 +9,9 @@ SUBDIRS = src
 GZIP_ENV="-9n"
 export PYTHONPATH
 
-if BUILD_BITCOIN_LIBS
+if BUILD_NEXA_LIBS
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libbitcoinconsensus.pc
+pkgconfig_DATA = libnexaconsensus.pc
 endif
 
 dist_data_DATA = config/forks.csv

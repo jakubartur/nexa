@@ -147,8 +147,8 @@ extern bool fLogTimeMicros;
 extern bool fLogIPs;
 extern volatile bool fReopenDebugLog;
 
-extern const char *const BITCOIN_CONF_FILENAME;
-extern const char *const BITCOIN_PID_FILENAME;
+extern const char *const CONF_FILENAME;
+extern const char *const PID_FILENAME;
 extern const char *const FORKS_CSV_FILENAME; // bip135 added
 
 // Takes a std::vector of strings and splits individual arguments further up if

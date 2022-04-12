@@ -86,10 +86,10 @@ build-debian-nodeps:
         - ccache --show-stats
     artifacts:
         paths:
-            - ./build/src/bitcoind
-            - ./build/src/bitcoin-cli
-            - ./build/src/bitcoin-miner
-            - ./build/src/bitcoin-tx
+            - ./build/src/nexad
+            - ./build/src/nexa-cli
+            - ./build/src/nexa-miner
+            - ./build/src/nexa-tx
             - ./build/src/test/test_bitcoin
             - ./build/src/bench/bench_bitcoin
 
@@ -106,10 +106,10 @@ build-debian-nodeps-qt:
         - ccache --show-stats
     artifacts:
         paths:
-            - ./build/src/bitcoind
-            - ./build/src/bitcoin-cli
-            - ./build/src/bitcoin-miner
-            - ./build/src/bitcoin-tx
+            - ./build/src/nexad
+            - ./build/src/nexa-cli
+            - ./build/src/nexa-miner
+            - ./build/src/nexa-tx
 
 build-debian-tests-nodeps:
     stage: build_tests
@@ -157,10 +157,10 @@ build-debian:
         - build-debian-deps
     artifacts:
         paths:
-            - ./build/src/bitcoind
-            - ./build/src/bitcoin-cli
-            - ./build/src/bitcoin-miner
-            - ./build/src/bitcoin-tx
+            - ./build/src/nexad
+            - ./build/src/nexa-cli
+            - ./build/src/nexa-miner
+            - ./build/src/nexa-tx
             - ./build/src/test/test_bitcoin
             - ./build/src/bench/bench_bitcoin
             - ./build/qa/*
@@ -230,7 +230,7 @@ test-debian-qa:
         paths:
             - ./qa/qa_tests/
             - $CI_PROJECT_DIR/saved-cores
-            - ./build/src/bitcoind
+            - ./build/src/nexad
             - ./build/ctorout.txt
 
 test-debian-benchmarks:
@@ -242,7 +242,7 @@ test-debian-benchmarks:
     dependencies:
         - build-debian-nodeps
 
-# bitcoind clang (no depend, only system lib installed via apt)
+# nexad clang (no depend, only system lib installed via apt)
 .cache-debian-clang:
     extends: .ccache_scripts
     cache:
@@ -268,10 +268,10 @@ build-debian-clang:
         - ccache --show-stats
     artifacts:
         paths:
-            - ./build/src/bitcoind
-            - ./build/src/bitcoin-cli
-            - ./build/src/bitcoin-miner
-            - ./build/src/bitcoin-tx
+            - ./build/src/nexad
+            - ./build/src/nexa-cli
+            - ./build/src/nexa-miner
+            - ./build/src/nexa-tx
             - ./build/src/test/test_bitcoin
 
 build-debian-tests-clang:
