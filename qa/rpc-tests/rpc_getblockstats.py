@@ -197,5 +197,6 @@ def Test():
         "debug": ["rpc","net", "blk", "thin", "mempool", "req", "bench", "evict"]
     }
     flags = standardFlags()
-    # To regenerate the files: flags.append('--gen-test-data')
+    # To regenerate the files:
+    # flags.append('--gen-test-data')
     t.main(flags, bitcoinConf, None)

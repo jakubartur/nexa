@@ -29,16 +29,6 @@ enum
     SIGTYPE_SCHNORR = 1,
 };
 
-/** Signature hash types/flags */
-enum
-{
-    SIGHASH_ALL = 1,
-    SIGHASH_NONE = 2,
-    SIGHASH_SINGLE = 3,
-    SIGHASH_FORKID = 0x40,
-    SIGHASH_ANYONECANPAY = 0x80,
-};
-
 /** Script verification flags */
 enum
 {
@@ -48,7 +38,7 @@ enum
     // Note: The Segwit Recovery feature is an exception to P2SH
     SCRIPT_VERIFY_P2SH = (1U << 0),
 
-    // Passing a non-strict-DER signature or one with undefined hashtype to a checksig operation causes script failure.
+    // Passing a non-strict-DER signature to a checksig operation causes script failure.
     // Evaluating a pubkey that is not (0x04 + 64 bytes) or (0x02 or 0x03 + 32 bytes) by checksig causes script failure.
     // (softfork safe, but not used or intended as a consensus rule).
     SCRIPT_VERIFY_STRICTENC = (1U << 1),
@@ -190,17 +180,13 @@ protected:
 public:
     TransactionSignatureChecker(const CTransaction *txToIn,
         unsigned int nInIn,
-        const CAmount &amountIn,
         unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID)
         : txTo(txToIn), nIn(nInIn), nBytesHashed(0), nSigops(0)
     {
         nFlags = flags;
     }
     TransactionSignatureChecker() {} // 2 phase initialization
-    void Init(const CTransaction *txToIn,
-        unsigned int nInIn,
-        const CAmount &amountIn,
-        unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID)
+    void Init(const CTransaction *txToIn, unsigned int nInIn, unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID)
     {
         txTo = txToIn;
         nIn = nInIn;
@@ -230,7 +216,7 @@ public:
         unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID)
         : TransactionSignatureChecker(), txTo(*txToIn)
     {
-        Init(&txTo, nInIn, amountIn, flags);
+        Init(&txTo, nInIn, flags);
     }
 };
 
@@ -274,7 +260,7 @@ public:
     {
         tx = MakeTransactionRef(*txToIn);
         nIn = inIndex;
-        tsc.Init(&(*tx), nIn, tx->vin[nIn].amount, flags);
+        tsc.Init(&(*tx), nIn, flags);
         checker = &tsc;
     }
     ScriptImportedStateSig(const CTransaction *txToIn,
@@ -284,7 +270,7 @@ public:
     {
         tx = MakeTransactionRef(*txToIn);
         nIn = inIndex;
-        tsc.Init(&(*tx), nIn, tx->vin[nIn].amount, flags);
+        tsc.Init(&(*tx), nIn, flags);
         checker = &tsc;
     }
     ScriptImportedStateSig(const CTransactionRef txToIn,
@@ -294,7 +280,7 @@ public:
     {
         tx = txToIn;
         nIn = inIndex;
-        tsc.Init(&(*tx), nIn, tx->vin[nIn].amount, flags);
+        tsc.Init(&(*tx), nIn, flags);
         checker = &tsc;
     }
 };

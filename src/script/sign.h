@@ -22,10 +22,10 @@ class CTransaction;
 
 struct CMutableTransaction;
 
-extern uint256 GetPrevoutHash(const CTransaction &txTo);
-extern uint256 GetInputAmountHash(const CTransaction &txTo);
-extern uint256 GetSequenceHash(const CTransaction &txTo);
-extern uint256 GetOutputsHash(const CTransaction &txTo);
+extern uint256 GetPrevoutHash(const CTransaction &txTo, unsigned int firstN);
+extern uint256 GetInputAmountHash(const CTransaction &txTo, unsigned int firstN);
+extern uint256 GetSequenceHash(const CTransaction &txTo, unsigned int firstN);
+extern uint256 GetOutputsHash(const CTransaction &txTo, unsigned int firstN);
 
 /** Virtual base class for signature creators. */
 class BaseSignatureCreator
@@ -50,17 +50,34 @@ class TransactionSignatureCreator : public BaseSignatureCreator
 {
     const CTransaction *txTo;
     unsigned int nIn;
-    CAmount amount;
     SigHashType sigHashType;
-    uint32_t nSigType;
     const TransactionSignatureChecker checker;
 
 public:
     TransactionSignatureCreator(const CKeyStore *keystoreIn,
         const CTransaction *txToIn,
         unsigned int nInIn,
+        SigHashType sigHashTypeIn);
+    const BaseSignatureChecker &Checker() const { return checker; }
+    bool CreateSig(std::vector<unsigned char> &vchSig, const CKeyID &keyid, const CScript &scriptCode) const;
+};
+
+/** A signature creator for transactions. */
+class TransactionSignatureCreatorBTCBCH : public BaseSignatureCreator
+{
+    const CTransaction *txTo;
+    unsigned int nIn;
+    CAmount amount;
+    uint8_t sigHashType;
+    uint32_t nSigType;
+    const TransactionSignatureChecker checker;
+
+public:
+    TransactionSignatureCreatorBTCBCH(const CKeyStore *keystoreIn,
+        const CTransaction *txToIn,
+        unsigned int nInIn,
         const CAmount &amountIn,
-        SigHashType sigHashTypeIn,
+        uint8_t sigHashTypeIn,
         uint32_t nSigType = SIGTYPE_SCHNORR);
     const BaseSignatureChecker &Checker() const { return checker; }
     bool CreateSig(std::vector<unsigned char> &vchSig, const CKeyID &keyid, const CScript &scriptCode) const;

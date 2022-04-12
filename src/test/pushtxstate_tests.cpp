@@ -13,8 +13,6 @@
 #include <boost/test/unit_test.hpp>
 #include <stdint.h>
 
-static uint256 hash256(const CScript &script) { return Hash(script.begin(), script.end()); }
-
 BOOST_FIXTURE_TEST_SUITE(pushtxstate_tests, BasicTestingSetup)
 
 void testScript(const CScript &s,
@@ -51,7 +49,7 @@ void testScript(const CScript &s,
         }
     }
 
-    TransactionSignatureChecker checker(txref.get(), inputIdx, -1, flags);
+    TransactionSignatureChecker checker(txref.get(), inputIdx, flags);
     ScriptImportedState sis(&checker, txref, state, coins, inputIdx);
 
     ScriptMachine sm(0, sis, 0xffffffff, 0xffffffff);

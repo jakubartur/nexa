@@ -87,7 +87,7 @@ def create_lots_of_big_transactions(node, txouts, utxos, num, feePerKb):
             tx.vout[-1].nValue = send_value
             newtx = tx.serialize().hex()
 
-        signresult = node.signrawtransaction(newtx, None, None, "FORKID")
+        signresult = node.signrawtransaction(newtx, None, None, "ALL")
         txids.append(signresult["txid"])
         txidem = node.sendrawtransaction(signresult["hex"], True)
         txidems.append(txidem)

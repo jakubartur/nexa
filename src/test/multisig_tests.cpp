@@ -144,11 +144,11 @@ BOOST_AUTO_TEST_CASE(multisig_verify)
 
     BOOST_CHECK(key[0].SignSchnorr(blankHash, vchSig));
     defaultSigHashType.appendToSig(vchSig);
-    vchSig.push_back(0); // add an extra byte
+    vchSig.push_back(0xff); // add an extra byte
     s.clear();
     s << OP_1 << vchSig;
     BOOST_CHECK(!VerifyScript(s, a_or_b, flags, sis1, &err));
-    BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_SIG_NONSCHNORR, ScriptErrorString(err));
+    BOOST_CHECK_MESSAGE(err == SCRIPT_ERR_SIG_HASHTYPE, ScriptErrorString(err));
 
 
     amount = txTo[2].vin[0].amount;

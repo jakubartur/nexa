@@ -965,10 +965,6 @@ BOOST_AUTO_TEST_CASE(grouptoken_basicfunctions)
         COutPoint putxo = AddUtxo(p2pkh(u1), 1, coins);
         COutPoint putxo2 = AddUtxo(p2pkh(u1), 2, coins);
 
-        // my p2sh will just be a p2pkh inside
-        CScript p2shBaseScript = p2pkh(u1);
-        CScriptID sid = CScriptID(p2shBaseScript);
-
         {
             // check token creation tx
             CScript opretScript;

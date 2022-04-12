@@ -102,7 +102,7 @@ ScriptError VerifyWithFlag(const CTransaction &output, const CMutableTransaction
 {
     ScriptError error;
     CTransaction inputi(input);
-    TransactionSignatureChecker tsc(&inputi, 0, input.vout[0].nValue, flags);
+    TransactionSignatureChecker tsc(&inputi, 0, flags);
     ScriptImportedState sis(&tsc);
     bool ret = VerifyScript(inputi.vin[0].scriptSig, output.vout[0].scriptPubKey, flags, sis, &error);
     BOOST_CHECK_EQUAL((ret == true), (error == SCRIPT_ERR_OK));
@@ -159,11 +159,10 @@ BOOST_AUTO_TEST_CASE(GetTxSigOpCost)
     // Default flags
     const uint32_t flags = SCRIPT_VERIFY_P2SH;
 
-    SigHashType sigHashType = SigHashType().withForkId();
     // Any non-0-size sig will be interpreted as a good signature by the sigchecker used in this code.
     // use 65 so this looks like a good schnorr signature.
-    std::vector<unsigned char> fakeSchnorrSig(65);
-    fakeSchnorrSig[64] = static_cast<uint8_t>(sigHashType.getRawSigHashType());
+    std::vector<unsigned char> fakeSchnorrSig(64);
+    defaultSigHashType.appendToSig(fakeSchnorrSig);
 
 
     // Multisig script (legacy counting)
@@ -370,12 +369,11 @@ BOOST_AUTO_TEST_CASE(consensusSigCheck)
 {
     unsigned int sigchecks = 0;
     unsigned int flags = MANDATORY_SCRIPT_VERIFY_FLAGS;
-    SigHashType sigHashType = SigHashType().withForkId();
+    SigHashType sigHashType = SigHashType();
     // Any non-0-size sig will be interpreted as a good signature by the sigchecker used in this code.
     // use 65 so this looks like a good schnorr signature.
-    std::vector<unsigned char> fakeSchnorrSig(65);
-    fakeSchnorrSig[64] = static_cast<uint8_t>(sigHashType.getRawSigHashType());
-
+    std::vector<unsigned char> fakeSchnorrSig(64);
+    sigHashType.appendToSig(fakeSchnorrSig);
     std::vector<unsigned char> fakeSchnorrDataSig(64);
 
     std::vector<unsigned char> someData(10);

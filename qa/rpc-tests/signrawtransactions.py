@@ -37,6 +37,7 @@ class SignRawTransactionsTest(BitcoinTestFramework):
         outputs = {'mpLQjfK79b7CCV4VMJWEWAj5Mpx8Up5zxB': 10.1}
 
         rawTx = self.nodes[0].createrawtransaction(inputs, outputs)
+        decoded = self.nodes[0].decoderawtransaction(rawTx)
         rawTxSigned = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys)
 
         #### Sign with default forkid
@@ -48,19 +49,53 @@ class SignRawTransactionsTest(BitcoinTestFramework):
         assert 'errors' not in rawTxSigned
 
         #### Make sure you can not sign with NOFORKID.
-        rawTxSigned_noforkid = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL|NOFORKID")
+        try:
+            rawTxSigned_noforkid = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "BAD_SIG_HASH_TYPE")
+            assert false
+        except JSONRPCException as e:
+            assert "Invalid sighash" in str(e)
 
-        # 1) The transaction does not have a complete set of signatures
-        assert 'complete' in rawTxSigned_noforkid
-        assert_equal(rawTxSigned_noforkid['complete'], False)
+        rawTxSigned = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL")
 
-        # 2) Script verification error should occurred
-        assert 'errors' in rawTxSigned_noforkid
+        assert 'complete' in rawTxSigned
+        assert_equal(rawTxSigned['complete'], True)
+
+        schnorrOtherSighhashtype = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "THIS_IN|ALL_OUT", "1")
+        assert_equal(schnorrOtherSighhashtype['complete'], True)
+        
+        schnorrOther1 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_1_IN|FIRST_1_OUT", "1")
+        assert_equal(schnorrOther1['complete'], True)
+
+        # Subsequent tests are expecting a certain tx to be built
+        assert len(decoded["vout"]) == 1
+        assert len(decoded["vin"]) == 1
+
+        # beyond end
+        schnorrOther2 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_2_IN|FIRST_1_OUT", "1")
+        assert_equal(schnorrOther2['complete'], False)
+        schnorrOther3 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_1_IN|FIRST_2_OUT", "1")
+        assert_equal(schnorrOther3['complete'], False)
+
+        schnorrOther3 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_1_IN|0_1_OUT", "1")
+        assert_equal(schnorrOther3['complete'], False)
+        schnorrOther3 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_1_IN|1_0_OUT", "1")
+        assert_equal(schnorrOther3['complete'], False)
+        schnorrOther3 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_1_IN|1_1_OUT", "1")
+        assert_equal(schnorrOther3['complete'], False)
+
+        # This dangerous signature can be used on any other tx!
+        schnorrOther4 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_0_IN|FIRST_0_OUT", "1")
+        assert_equal(schnorrOther4['complete'], True)
+
+        # sign first input and 1 output
+        schnorrOther3 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "FIRST_1_IN|0_0_OUT", "1")
+        assert_equal(schnorrOther3['complete'], True)
 
         #### Make sure you can sign with schnorr signatures
-        rawTxSigned_schnorr = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL|FORKID", "1")
-        rawTxSigned_schnorr2 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL|FORKID", "schnorr")
-        rawTxSigned_schnorr3 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL|FORKID", "SCHNORR")
+        rawTxSigned_schnorr = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL", "1")
+        rawTxSigned_schnorr2 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL", "schnorr")
+        rawTxSigned_schnorr3 = self.nodes[0].signrawtransaction(rawTx, inputs, privKeys, "ALL", "SCHNORR")
+        assert_not_equal(schnorrOtherSighhashtype, rawTxSigned_schnorr)
         assert_equal(rawTxSigned_schnorr, rawTxSigned_schnorr2)
         assert_equal(rawTxSigned_schnorr, rawTxSigned_schnorr3)
         # check that different sig types were used
@@ -127,7 +162,7 @@ class SignRawTransactionsTest(BitcoinTestFramework):
         assert_equal(rawTxSigned['errors'][1]['outpoint'], inputs[2]['outpoint'])
 
         # now run the same test with schnorr
-        rawTxSigned2 = self.nodes[0].signrawtransaction(rawTx, scripts, privKeys, "ALL|FORKID", "1")
+        rawTxSigned2 = self.nodes[0].signrawtransaction(rawTx, scripts, privKeys, "ALL", "1")
         # check that different sig types were used
         # With only 1 sig type, this check is N/A for now: assert_not_equal(rawTxSigned, rawTxSigned2)
 

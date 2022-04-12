@@ -77,12 +77,11 @@ static void VerifyScriptBench(benchmark::State &state)
     const CMutableTransaction &txCredit = BuildCreditingTransaction(scriptPubKey);
     CMutableTransaction txSpend = BuildSpendingTransaction(scriptSig, txCredit);
     CScript &ssig = txSpend.vin[0].scriptSig;
-    SigHashType sighashtype(SIGHASH_ALL);
-    uint256 sighash = SignatureHash(witScriptPubkey, txSpend, 0, sighashtype, txCredit.vout[0].nValue);
+    uint256 sighash = SignatureHash(witScriptPubkey, txSpend, 0, defaultSigHashType, txCredit.vout[0].nValue);
     assert(sighash != SIGNATURE_HASH_ERROR);
     std::vector<unsigned char> sig1;
     key.SignSchnorr(sighash, sig1);
-    sighashtype.appendToSig(sig1);
+    defaultSigHashType.appendToSig(sig1);
     auto pubkeyvec = ToByteVector(pubkey);
     sig1.insert(sig1.end(), pubkeyvec.begin(), pubkeyvec.end());
     ssig = CScript() << sig1;

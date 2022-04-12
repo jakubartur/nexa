@@ -2733,10 +2733,9 @@ bool CWallet::SignTransaction(CMutableTransaction &tx)
             return false;
 
         const CScript &scriptPubKey = coin.GetScriptPubKey();
-        const CAmount &amount = coin.GetValue();
         CScript &scriptSigRes = tx.vin[nIn].scriptSig;
         if (!ProduceSignature(
-                TransactionSignatureCreator(this, &txNewConst, nIn, amount, sighashType), scriptPubKey, scriptSigRes))
+                TransactionSignatureCreator(this, &txNewConst, nIn, sighashType), scriptPubKey, scriptSigRes))
         {
             return false;
         }
@@ -3160,13 +3159,12 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                         auto coin = setCoins[inputOrder[nIn]];
                         bool signSuccess = false;
                         const CScript &scriptPubKey = coin.GetScriptPubKey();
-                        CAmount amountIn = coin.GetValue();
                         CScript &scriptSigRes = txNew.vin[nIn].scriptSig;
                         if (sign)
                         {
-                            signSuccess = ProduceSignature(
-                                TransactionSignatureCreator(this, &txNewConst, nIn, amountIn, sighashType),
-                                scriptPubKey, scriptSigRes);
+                            signSuccess =
+                                ProduceSignature(TransactionSignatureCreator(this, &txNewConst, nIn, sighashType),
+                                    scriptPubKey, scriptSigRes);
                         }
                         // We aren't signing this input, so produce a script with the proper form, but without sig or
                         // other specific data.

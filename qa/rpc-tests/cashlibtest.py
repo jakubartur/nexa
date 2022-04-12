@@ -133,11 +133,11 @@ class MyTest (BitcoinTestFramework):
         assert faulted, "only data in spend scripts"
 
         try:
-            cashlib.signTxInput(b"", 0, 5, b"", b"", cashlib.SIGHASH_ALL)
-        except AssertionError:
+            cashlib.signTxInput(b"", 0, 5, b"", b"", b"abc")  # bad sighashtype
+        except cashlib.Error:
             faulted = True
             pass
-        assert faulted, "not signing with bitcoin cash forkid"
+        assert faulted, "bad sighashtype accepted"
 
         # Sanity check id and idem for an empty transaction
         tx = CTransaction()

@@ -244,7 +244,7 @@ BOOST_AUTO_TEST_CASE(dsproof_orphan_handling)
 
     CTransaction tx1(t1);
     {
-        TransactionSignatureCreator tsc(&keystore, &tx1, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &tx1, 0, defaultSigHashType);
         const CScript &scriptPubKey = dummyTransactions[0].vout[0].scriptPubKey;
         CScript &scriptSigRes = t1.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -266,7 +266,7 @@ BOOST_AUTO_TEST_CASE(dsproof_orphan_handling)
                             << OP_CHECKSIG;
     CTransaction tx2(t2);
     {
-        TransactionSignatureCreator tsc(&keystore, &tx2, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &tx2, 0, defaultSigHashType);
         const CScript &scriptPubKey = dummyTransactions[0].vout[1].scriptPubKey;
         CScript &scriptSigRes = t2.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -292,7 +292,7 @@ BOOST_AUTO_TEST_CASE(dsproof_orphan_handling)
 
     CTransaction spend1(s1);
     {
-        TransactionSignatureCreator tsc(&keystore, &spend1, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &spend1, 0, defaultSigHashType);
         const CScript &scriptPubKey = tx1a.vout[0].scriptPubKey;
         CScript &scriptSigRes = s1.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -316,7 +316,7 @@ BOOST_AUTO_TEST_CASE(dsproof_orphan_handling)
 
     CTransaction spend2(s2);
     {
-        TransactionSignatureCreator tsc(&keystore, &spend2, 0, 50 * CENT, defaultSigHashType);
+        TransactionSignatureCreator tsc(&keystore, &spend2, 0, defaultSigHashType);
         const CScript &scriptPubKey = tx1a.vout[0].scriptPubKey;
         CScript &scriptSigRes = s2.vin[0].scriptSig;
         bool worked = ProduceSignature(tsc, scriptPubKey, scriptSigRes);
@@ -324,7 +324,7 @@ BOOST_AUTO_TEST_CASE(dsproof_orphan_handling)
 
         { // Sanity check that the signature is actually correct
             TransactionSignatureChecker checker1(
-                &spend2, 0, 50 * CENT, STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID);
+                &spend2, 0, STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID);
             CValidationState empty;
             ScriptImportedState sis1(&checker1, MakeTransactionRef(spend2), empty, std::vector<CTxOut>(), 0);
             ScriptError_t error;

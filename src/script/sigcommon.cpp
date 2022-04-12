@@ -28,45 +28,83 @@
 // tinyformat::format(std::cout, __VA_ARGS__)
 #endif
 
-const SigHashType defaultSigHashType(SIGHASH_ALL | SIGHASH_FORKID);
+const SigHashType defaultSigHashType; // ALL/ALL is the default construction
 
-uint256 GetPrevoutHash(const CTransaction &txTo)
+uint256 GetPrevoutHashOf(const CTransaction &txTo, unsigned int n)
 {
     CHashWriter ss(SER_GETHASH, 0);
-    for (unsigned int n = 0; n < txTo.vin.size(); n++)
+    assert(n < txTo.vin.size());
+    ss << txTo.vin[n].type << txTo.vin[n].prevout;
+    return ss.GetHash();
+}
+
+uint256 GetPrevoutHash(const CTransaction &txTo, unsigned int firstN)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    assert(firstN <= txTo.vin.size());
+    for (unsigned int n = 0; n < firstN; n++)
     {
         ss << txTo.vin[n].type << txTo.vin[n].prevout;
     }
     return ss.GetHash();
 }
 
-uint256 GetInputAmountHash(const CTransaction &txTo)
+uint256 GetInputAmountHashOf(const CTransaction &txTo, unsigned int n)
 {
     CHashWriter ss(SER_GETHASH, 0);
-    for (unsigned int n = 0; n < txTo.vin.size(); n++)
+    assert(n < txTo.vin.size());
+    ss << txTo.vin[n].amount;
+    return ss.GetHash();
+}
+uint256 GetInputAmountHash(const CTransaction &txTo, unsigned int firstN)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    assert(firstN <= txTo.vin.size());
+
+    for (unsigned int n = 0; n < firstN; n++)
     {
         ss << txTo.vin[n].amount;
     }
     return ss.GetHash();
 }
 
-uint256 GetSequenceHash(const CTransaction &txTo)
+uint256 GetSequenceHash(const CTransaction &txTo, unsigned int firstN)
 {
     CHashWriter ss(SER_GETHASH, 0);
-    for (unsigned int n = 0; n < txTo.vin.size(); n++)
+    assert(firstN <= txTo.vin.size());
+    for (unsigned int n = 0; n < firstN; n++)
     {
         ss << txTo.vin[n].nSequence;
     }
     return ss.GetHash();
 }
 
-uint256 GetOutputsHash(const CTransaction &txTo)
+uint256 GetSequenceHashOf(const CTransaction &txTo, unsigned int n)
 {
     CHashWriter ss(SER_GETHASH, 0);
-    for (unsigned int n = 0; n < txTo.vout.size(); n++)
+    assert(n < txTo.vin.size());
+    ss << txTo.vin[n].nSequence;
+    return ss.GetHash();
+}
+
+uint256 GetOutputsHash(const CTransaction &txTo, unsigned int firstN)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    assert(firstN <= txTo.vout.size());
+
+    for (unsigned int n = 0; n < firstN; n++)
     {
         ss << txTo.vout[n];
     }
+    return ss.GetHash();
+}
+
+uint256 GetOutputsHashOf(const CTransaction &txTo, unsigned int a, unsigned int b)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    assert(a < txTo.vout.size());
+    assert(b < txTo.vout.size());
+    ss << txTo.vout[a] << txTo.vout[b];
     return ss.GetHash();
 }
 
@@ -80,17 +118,18 @@ private:
     const CTransaction &txTo; //! reference to the spending transaction (the one being serialized)
     const CScript &scriptCode; //! output script being consumed
     const unsigned int nIn; //! input index of txTo being signed
-    const bool fAnyoneCanPay; //! whether the hashtype has the SIGHASH_ANYONECANPAY flag set
-    const bool fHashSingle; //! whether the hashtype is SIGHASH_SINGLE
-    const bool fHashNone; //! whether the hashtype is SIGHASH_NONE
+    const bool fAnyoneCanPay; //! whether the hashtype has the BTCBCH_SIGHASH_ANYONECANPAY flag set
+    const bool fHashSingle; //! whether the hashtype is BTCBCH_SIGHASH_SINGLE
+    const bool fHashNone; //! whether the hashtype is BTCBCH_SIGHASH_NONE
 
 public:
     CTransactionSignatureSerializer(const CTransaction &txToIn,
         const CScript &scriptCodeIn,
         unsigned int nInIn,
-        SigHashType hashTypeIn)
-        : txTo(txToIn), scriptCode(scriptCodeIn), nIn(nInIn), fAnyoneCanPay(hashTypeIn.hasAnyoneCanPay()),
-          fHashSingle(hashTypeIn.hasSingle()), fHashNone(hashTypeIn.hasNone())
+        uint8_t hashTypeIn)
+        : txTo(txToIn), scriptCode(scriptCodeIn), nIn(nInIn),
+          fAnyoneCanPay((hashTypeIn & BTCBCH_SIGHASH_ANYONECANPAY) != 0),
+          fHashSingle((hashTypeIn & BTCBCH_SIGHASH_SINGLE) != 0), fHashNone((hashTypeIn & BTCBCH_SIGHASH_NONE) != 0)
     {
     }
 
@@ -125,7 +164,7 @@ public:
     template <typename S>
     void SerializeInput(S &s, unsigned int nInput) const
     {
-        // In case of SIGHASH_ANYONECANPAY, only the input being signed is serialized
+        // In case of BTCBCH_SIGHASH_ANYONECANPAY, only the input being signed is serialized
         if (fAnyoneCanPay)
             nInput = nIn;
         // Serialize the prevout
@@ -186,7 +225,7 @@ const uint256 SIGNATURE_HASH_ERROR(uint256S("00000000000000000000000000000000000
 uint256 SignatureHashBitcoin(const CScript &scriptCode,
     const CTransaction &txTo,
     unsigned int nIn,
-    const SigHashType &sigHashType,
+    const uint8_t nHashType,
     size_t *nHashedOut)
 {
     if (nIn >= txTo.vin.size())
@@ -201,9 +240,8 @@ uint256 SignatureHashBitcoin(const CScript &scriptCode,
         return SIGNATURE_HASH_ERROR;
     }
 
-    // Check for invalid use of SIGHASH_SINGLE
-    uint8_t nHashType = sigHashType.btcSigHashType();
-    if ((nHashType & 0x1f) == SIGHASH_SINGLE)
+    // Check for invalid use of BTCBCH_SIGHASH_SINGLE
+    if ((nHashType & 0x1f) == BTCBCH_SIGHASH_SINGLE)
     {
         if (nIn >= txTo.vout.size())
         {
@@ -219,21 +257,21 @@ uint256 SignatureHashBitcoin(const CScript &scriptCode,
     }
 
     // Wrapper to serialize only the necessary parts of the transaction being signed
-    CTransactionSignatureSerializer txTmp(txTo, scriptCode, nIn, sigHashType);
+    CTransactionSignatureSerializer txTmp(txTo, scriptCode, nIn, nHashType);
 
     // Serialize and hash
     CHashWriter ss(SER_GETHASH, 0);
-    ss << txTmp << sigHashType.getRawSigHashType();
+    ss << txTmp << nHashType;
     if (nHashedOut != nullptr)
         *nHashedOut = ss.GetNumBytesHashed();
     return ss.GetHash();
 }
 
-// ONLY to be called with SIGHASH_FORKID set in nHashType!
+// ONLY to be called with BTCBCH_SIGHASH_FORKID set in nHashType!
 uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     const CTransaction &txTo,
     unsigned int nIn,
-    const SigHashType &sigHashType,
+    const uint8_t nHashType,
     const CAmount &amount,
     size_t *nHashedOut)
 {
@@ -242,33 +280,31 @@ uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     uint256 hashInputAmounts;
     uint256 hashOutputs;
 
-    uint8_t nHashType = sigHashType.bchSigHashType();
-
     p("Signature hash calculation with type: 0x%x\n", nHashType);
-    if (!(nHashType & SIGHASH_ANYONECANPAY))
+    if (!(nHashType & BTCBCH_SIGHASH_ANYONECANPAY))
     {
-        hashPrevouts = GetPrevoutHash(txTo);
+        hashPrevouts = GetPrevoutHash(txTo, txTo.vin.size());
         p("Hashing prevouts to: %s\n", hashPrevouts.GetHex().c_str());
-        hashInputAmounts = GetInputAmountHash(txTo);
+        hashInputAmounts = GetInputAmountHash(txTo, txTo.vin.size());
         p("Hashing input amounts to: %s\n", hashInputAmounts.GetHex().c_str());
     }
 
     /* gets the hash of the sequence numbers of every input */
-    if (!(nHashType & SIGHASH_ANYONECANPAY) && (nHashType & 0x1f) != SIGHASH_SINGLE &&
-        (nHashType & 0x1f) != SIGHASH_NONE)
+    if (!(nHashType & BTCBCH_SIGHASH_ANYONECANPAY) && (nHashType & 0x1f) != BTCBCH_SIGHASH_SINGLE &&
+        (nHashType & 0x1f) != BTCBCH_SIGHASH_NONE)
     {
-        hashSequence = GetSequenceHash(txTo);
+        hashSequence = GetSequenceHash(txTo, txTo.vin.size());
         p("Hashing input sequence numbers to: %s\n", hashSequence.GetHex().c_str());
     }
 
     /* gets the hash of the serialization of every output */
-    if ((nHashType & 0x1f) != SIGHASH_SINGLE && (nHashType & 0x1f) != SIGHASH_NONE)
+    if ((nHashType & 0x1f) != BTCBCH_SIGHASH_SINGLE && (nHashType & 0x1f) != BTCBCH_SIGHASH_NONE)
     {
-        hashOutputs = GetOutputsHash(txTo);
+        hashOutputs = GetOutputsHash(txTo, txTo.vout.size());
         p("Hashing every output to: %s\n", hashOutputs.GetHex().c_str());
     }
     /* Or just serialize the output that corresponds to this input */
-    else if ((nHashType & 0x1f) == SIGHASH_SINGLE && nIn < txTo.vout.size())
+    else if ((nHashType & 0x1f) == BTCBCH_SIGHASH_SINGLE && nIn < txTo.vout.size())
     {
         CHashWriter ss(SER_GETHASH, 0);
         ss << txTo.vout[nIn];
@@ -299,13 +335,157 @@ uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     ss << txTo.nLockTime;
     p("Locktime: %d\n", txTo.nLockTime);
     // Sighash type
-    ss << sigHashType;
-    p("sigHashType: %x\n", sigHashType.getRawSigHashType());
+    ss << nHashType;
+    p("sigHashType: %x\n", nHashType);
 
     p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
     uint256 sighash = ss.GetHash();
     p("Final sighash is: %s\n", sighash.GetHex().c_str());
     return sighash;
+}
+
+bool SignatureHashNexaComponents(const CTransaction &txTo,
+    unsigned int nIn,
+    const SigHashType &sigHashType,
+    uint256 &hashPrevouts,
+    uint256 &hashSequence,
+    uint256 &hashInputAmounts,
+    uint256 &hashOutputs)
+{
+    size_t vinSize = txTo.vin.size();
+    size_t voutSize = txTo.vout.size();
+
+    if (nIn >= vinSize)
+        return false;
+    if (sigHashType.isInvalid())
+        return false;
+
+    switch (sigHashType.inp)
+    {
+    case SigHashType::Input::FIRSTN:
+    {
+        // Shouldn't ever happen because sighashtype would be invalid()
+        DbgAssert(sigHashType.inpData.size() == 1, return false);
+        unsigned int firstN = sigHashType.inpData[0];
+        if (firstN > vinSize)
+            return false;
+        hashPrevouts = GetPrevoutHash(txTo, firstN);
+        hashSequence = GetSequenceHash(txTo, firstN);
+        hashInputAmounts = GetInputAmountHash(txTo, firstN);
+    }
+    break;
+    case SigHashType::Input::THISIN:
+    {
+        // Shouldn't ever happen because sighashtype would be invalid()
+        DbgAssert(sigHashType.inpData.size() == 0, return false);
+        hashPrevouts = GetPrevoutHashOf(txTo, nIn);
+        hashSequence = GetSequenceHashOf(txTo, nIn);
+        hashInputAmounts = GetInputAmountHashOf(txTo, nIn);
+    }
+    break;
+    case SigHashType::Input::ALL:
+        // Shouldn't ever happen because sighashtype would be invalid()
+        DbgAssert(sigHashType.inpData.size() == 0, return false);
+        hashPrevouts = GetPrevoutHash(txTo, vinSize);
+        hashSequence = GetSequenceHash(txTo, vinSize);
+        hashInputAmounts = GetInputAmountHash(txTo, vinSize);
+        break;
+    default:
+        // Shouldn't ever happen because sighashtype would be invalid()
+        return false;
+    }
+
+    switch (sigHashType.out)
+    {
+    case SigHashType::Output::TWO:
+    {
+        DbgAssert(sigHashType.outData.size() == 2, return false);
+        if (sigHashType.outData[0] >= voutSize)
+            return false;
+        if (sigHashType.outData[1] >= voutSize)
+            return false;
+        hashOutputs = GetOutputsHashOf(txTo, sigHashType.outData[0], sigHashType.outData[1]);
+    }
+    break;
+    case SigHashType::Output::FIRSTN:
+    {
+        DbgAssert(sigHashType.outData.size() == 1, return false);
+        unsigned int count = sigHashType.outData[0];
+        if (count > voutSize)
+            return false;
+        hashOutputs = GetOutputsHash(txTo, count);
+    }
+    break;
+    case SigHashType::Output::ALL:
+        hashOutputs = GetOutputsHash(txTo, voutSize);
+        break;
+    default:
+        return false;
+    }
+
+    return true;
+}
+
+bool SignatureHashNexa(const CScript &scriptCode,
+    const CTransaction &txTo,
+    unsigned int nIn,
+    const SigHashType &sigHashType,
+    uint256 &result,
+    size_t *nHashedOut)
+{
+    uint256 hashPrevouts;
+    uint256 hashSequence;
+    uint256 hashInputAmounts;
+    uint256 hashOutputs;
+
+    p("Signature hash calculation with type: %s\n", sigHashType.ToString().c_str());
+    result = SIGNATURE_HASH_ERROR;
+
+    // Calculate all needed portions of the sighash
+    if (!SignatureHashNexaComponents(txTo, nIn, sigHashType, hashPrevouts, hashSequence, hashInputAmounts, hashOutputs))
+        return false;
+
+    return SignatureHashNexa(scriptCode, txTo.nVersion, txTo.nLockTime, sigHashType, hashPrevouts, hashSequence,
+        hashInputAmounts, hashOutputs, result, nHashedOut);
+}
+
+bool SignatureHashNexa(const CScript &scriptCode,
+    uint8_t txVersion,
+    uint32_t txLockTime,
+    const SigHashType &sigHashType,
+    const uint256 &hashPrevouts,
+    const uint256 &hashSequence,
+    const uint256 &hashInputAmounts,
+    const uint256 &hashOutputs,
+    uint256 &result,
+    size_t *nHashedOut)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    // Version
+    ss << txVersion;
+    // Input prevouts/nSequence (none/all, depending on flags)
+    ss << hashPrevouts;
+    ss << hashInputAmounts;
+    ss << hashSequence;
+    ss << static_cast<const CScriptBase &>(scriptCode);
+    p("ScriptCode: %s\n", scriptCode.GetHex().c_str());
+
+    // Outputs (none/one/all, depending on flags)
+    ss << hashOutputs;
+    // Locktime
+    ss << txLockTime;
+    p("Locktime: %d\n", txTo.nLockTime);
+
+    // Sighash type -- if the sighashtype is all, you MUST use the empty vector representation here.
+    ss << sigHashType;
+    p("sigHashType: %s %s\n", sigHashType.ToString(), HexStr(sigHashBytes).c_str());
+
+    p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
+    if (nHashedOut != nullptr)
+        *nHashedOut = ss.GetNumBytesHashed();
+    result = ss.GetHash();
+    p("Final sighash is: %s\n", result.GetHex().c_str());
+    return true;
 }
 
 
@@ -320,21 +500,20 @@ uint256 SignatureHash(const CScript &scriptCode,
     {
         return SIGNATURE_HASH_ERROR;
     }
-    if (sigHashType.isBch())
-    {
-        return SignatureHashBitcoinCash(scriptCode, txTo, nIn, sigHashType, amount, nHashedOut);
-    }
-    return SignatureHashBitcoin(scriptCode, txTo, nIn, sigHashType, nHashedOut);
+    uint256 result;
+    if (!SignatureHashNexa(scriptCode, txTo, nIn, sigHashType, result, nHashedOut))
+        return SIGNATURE_HASH_ERROR;
+    return result;
 }
 
 SigHashType GetSigHashType(const std::vector<unsigned char> &vchSig)
 {
     if (vchSig.size() == 0)
     {
-        return SigHashType(BaseSigHashType::UNSUPPORTED);
+        return SigHashType().invalidate();
     }
 
-    return SigHashType(vchSig[vchSig.size() - 1]);
+    return SigHashType(vchSig);
 }
 
 void RemoveSigHashType(std::vector<unsigned char> &vchSig)
@@ -342,25 +521,172 @@ void RemoveSigHashType(std::vector<unsigned char> &vchSig)
     vchSig.resize(64); // Schnorr signatures are 64 bytes
 }
 
+SigHashType &SigHashType::fromSig(const std::vector<unsigned char> &sig)
+{
+    invalidate(); // Start clean
+    size_t sigsz = sig.size();
+    if (sigsz == 64) // No bytes is ALL/ALL
+    {
+        valid = true;
+        return *this;
+    }
+    if (sigsz < 65)
+        return *this; // invalid
+
+    uint8_t io = sig[64];
+    out = static_cast<SigHashType::Output>(io & 0xf);
+    inp = static_cast<SigHashType::Input>(io >> 4);
+
+    if (out > Output::LAST_VALID)
+        return invalidate();
+    if (inp > Input::LAST_VALID)
+        return invalidate();
+
+    size_t curPos = 65;
+    // Grab any extra bytes needed
+    if (inp == Input::FIRSTN)
+    {
+        if (sigsz <= curPos)
+            return invalidate(); // invalid
+        inpData.resize(1);
+        inpData[0] = sig[curPos];
+        curPos++;
+    }
+
+    if (out == Output::FIRSTN)
+    {
+        if (sigsz <= curPos)
+            return invalidate(); // invalid
+        outData.resize(1);
+        outData[0] = sig[curPos];
+        curPos++;
+    }
+    else if (out == Output::TWO)
+    {
+        if (sigsz <= curPos + 1)
+            return invalidate(); // invalid
+        outData.resize(2);
+        outData[0] = sig[curPos];
+        outData[1] = sig[curPos + 1];
+        curPos += 2;
+    }
+
+    // Require that no extra bytes come after this sighashtype
+    if (sigsz != curPos)
+        return invalidate();
+
+    valid = true;
+    return *this;
+}
+
+/** append this hash type to a signature so that the resulting data describes what it signed */
+bool SigHashType::appendToSig(std::vector<unsigned char> &sig) const
+{
+    // If its an invalid sigtype return false, and use the safest
+    // choice ALL/ALL (which is encoded as 0 bytes)
+    if (!valid)
+        return false;
+
+    // ALL/ALL shorthand is no bytes
+    if ((inp == SigHashType::Input::ALL) && (out == SigHashType::Output::ALL))
+        return true;
+
+    sig.push_back((static_cast<uint8_t>(inp) << 4) | static_cast<uint8_t>(out));
+
+    switch (inp)
+    {
+    case SigHashType::Input::FIRSTN:
+    {
+        DbgAssert(inpData.size() == 1, );
+        assert(inpData.size() > 0);
+        sig.push_back(inpData[0]);
+    }
+    break;
+    case SigHashType::Input::THISIN:
+    case SigHashType::Input::ALL:
+        break;
+
+    default:
+        return false;
+    }
+
+    switch (out)
+    {
+    case SigHashType::Output::TWO:
+    {
+        DbgAssert(outData.size() == 2, );
+        assert(outData.size() > 1);
+        sig.push_back(outData[0]);
+        sig.push_back(outData[1]);
+    }
+    break;
+    case SigHashType::Output::FIRSTN:
+    {
+        DbgAssert(outData.size() == 1, );
+        assert(outData.size() > 0);
+        sig.push_back(outData[0]);
+    }
+    break;
+    case SigHashType::Output::ALL:
+        break;
+    default: // This structure should never hold an illegal sighashtype, except during testing
+        return false;
+    }
+    return true;
+}
+
+
+std::string SigHashType::HexStr() const
+{
+    std::vector<unsigned char> sighashbytes;
+    if (appendToSig(sighashbytes))
+    {
+        return ::HexStr(sighashbytes);
+    }
+    // SigHashType is Invalid
+    return "";
+}
+
 /** Convert to a human readable representation of the sighash */
 std::string SigHashType::ToString() const
 {
-    if (isInvalid())
-        return std::string("UNSUPPORTED");
     std::string ret;
-    if (hasSingle())
-        ret = "SINGLE";
-    else if (hasNone())
-        ret = "NONE";
-    else if (hasAll())
-        ret = "ALL";
-    else
-        return std::string("UNSUPPORTED");
+    if (isInvalid())
+        return std::string("INVALID");
+    if (hasAll())
+        return "ALL";
+    switch (inp)
+    {
+    case Input::ALL:
+        ret = "ALL_IN";
+        break;
+    case Input::FIRSTN:
+        ret = "FIRST_" + std::to_string(inpData[0]) + "_IN";
+        break;
+    case Input::THISIN:
+        ret = "THIS_IN";
+        break;
+    default:
+        return std::string("INVALID");
+    }
 
-    if (isBch())
-        ret += "|FORKID";
-    if (hasAnyoneCanPay())
-        ret += "|ANYONECANPAY";
+    ret += "|";
+
+    switch (out)
+    {
+    case Output::ALL:
+        ret += "ALL_OUT";
+        break;
+    case Output::FIRSTN:
+        ret += "FIRST_" + std::to_string(outData[0]) + "_OUT";
+        break;
+    case Output::TWO:
+        ret += std::to_string(outData[0]) + "_" + std::to_string(outData[1]) + "_OUT";
+        break;
+    default:
+        return std::string("INVALID");
+    }
+
     return ret;
 }
 
@@ -368,27 +694,92 @@ std::string SigHashType::ToString() const
 SigHashType &SigHashType::from(const std::string &flagStr)
 {
     std::vector<std::string> strings;
+
+    if (flagStr == "ALL")
+    {
+        setAll();
+        return *this;
+    }
+
     std::istringstream ss(flagStr);
     std::string s;
     while (getline(ss, s, '|'))
     {
         boost::trim(s);
-        if (s == "ALL")
-            sigHash = SIGHASH_ALL;
-        else if (s == "NONE")
-            sigHash = SIGHASH_NONE;
-        else if (s == "SINGLE")
-            sigHash = SIGHASH_SINGLE;
-        else if (s == "ANYONECANPAY")
-            sigHash |= SIGHASH_ANYONECANPAY;
-        else if (s == "FORKID")
-            sigHash |= SIGHASH_FORKID;
-        else if (s == "NOFORKID")
-            sigHash &= ~SIGHASH_FORKID;
-        else // Abort if incorrect string
+        if (s == "ALL_IN")
         {
-            sigHash = (uint32_t)BaseSigHashType::UNSUPPORTED;
-            return *this;
+            inp = SigHashType::Input::ALL;
+            inpData.resize(0);
+        }
+        else if (s == "ALL_OUT")
+        {
+            out = SigHashType::Output::ALL;
+            outData.resize(0);
+        }
+        else if (s == "THIS_IN")
+        {
+            inp = SigHashType::Input::THISIN;
+            inpData.resize(0);
+        }
+        else
+        {
+            // Parse token by underscores
+            std::istringstream us(s);
+            std::string up;
+            if (!getline(us, up, '_'))
+                return invalidate();
+            if (up == "FIRST")
+            {
+                if (!getline(us, up, '_'))
+                    return invalidate();
+                int n = std::stoi(up);
+                if ((n < 0) || (n > 255))
+                    return invalidate();
+                if (!getline(us, up, '_'))
+                    return invalidate();
+                if (up == "IN")
+                {
+                    setFirstNIn(n);
+                }
+                else if (up == "OUT")
+                {
+                    setFirstNOut(n);
+                }
+                else
+                    return invalidate();
+            }
+            else // 2 outputs following the form: a_b_OUT
+            {
+                int a = 0;
+                try
+                {
+                    a = std::stoi(up);
+                }
+                catch (...)
+                {
+                    return invalidate();
+                }
+                if ((a < 0) || (a > 255))
+                    return invalidate();
+                if (!getline(us, up, '_'))
+                    return invalidate();
+                int b = 0;
+                try
+                {
+                    b = std::stoi(up);
+                }
+                catch (...)
+                {
+                    return invalidate();
+                }
+                if ((b < 0) || (b > 255))
+                    return invalidate();
+                if (!getline(us, up, '_'))
+                    return invalidate();
+                if (up != "OUT")
+                    return invalidate();
+                set2Outs(a, b);
+            }
         }
     }
     return *this;

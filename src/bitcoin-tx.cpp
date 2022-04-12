@@ -237,8 +237,6 @@ static void MutateTxAddInput(CMutableTransaction &tx, const string &strInput)
         throw runtime_error("invalid UTXO id");
     uint256 utxoid(uint256S(strUtxoid));
 
-    static const unsigned int minTxOutSz = 9;
-
     // extract and validate vout
     string strAmount = vStrInputParts[0];
     CAmount amount = ExtractAndValidateValue(strAmount);
@@ -507,8 +505,6 @@ static void MutateTxSign(CMutableTransaction &tx, const string &flagStr)
 
     const CKeyStore &keystore = tempKeystore;
 
-    bool fHashSingle = sigHashType.hasSingle();
-
     std::vector<CTxOut> spendingCoins;
     for (size_t i = 0; i < mergedTx.vin.size(); i++)
     {
@@ -530,9 +526,8 @@ static void MutateTxSign(CMutableTransaction &tx, const string &flagStr)
         const CAmount &amount = coin->out.nValue;
 
         txin.scriptSig.clear();
-        // Only sign SIGHASH_SINGLE if there's a corresponding output:
-        if (!fHashSingle || (i < mergedTx.vout.size()))
-            SignSignature(keystore, prevPubKey, mergedTx, i, amount, sigHashType);
+
+        SignSignature(keystore, prevPubKey, mergedTx, i, amount, sigHashType);
 
         unsigned int flags = SCRIPT_ENABLE_SIGHASH_FORKID | STANDARD_SCRIPT_VERIFY_FLAGS;
         // ... and merge in other signatures:

@@ -11,96 +11,163 @@
 
 #include <cstdint>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
-/**
- * Base signature hash types
- * Base sig hash types not defined in this enum may be used, but they will be
- * represented as UNSUPPORTED.  See transaction
- * c99c49da4c38af669dea436d3e73780dfdb6c1ecf9958baa52960e8baee30e73 for an
- * example where an unsupported base sig hash of 0 was used.
- */
-enum class BaseSigHashType : uint8_t
+/** BTCBCH Signature hash types/flags */
+enum
 {
-    UNSUPPORTED = 0,
-    ALL = SIGHASH_ALL,
-    NONE = SIGHASH_NONE,
-    SINGLE = SIGHASH_SINGLE,
-    BCH = SIGHASH_FORKID,
-    ANYONECANPAY = SIGHASH_ANYONECANPAY
+    BTCBCH_SIGHASH_ALL = 1,
+    BTCBCH_SIGHASH_NONE = 2,
+    BTCBCH_SIGHASH_SINGLE = 3,
+    BTCBCH_SIGHASH_FORKID = 0x40,
+    BTCBCH_SIGHASH_ANYONECANPAY = 0x80,
 };
 
 /** Signature hash type wrapper class */
 class SigHashType
 {
+public:
+    enum class Input : uint8_t
+    {
+        ALL = 0,
+        FIRSTN = 1,
+        THISIN = 2,
+        LAST_VALID = THISIN, // end indicator
+    };
+
+
+    enum class Output : uint8_t
+    {
+        ALL = 0,
+        FIRSTN = 1,
+        TWO = 2,
+        LAST_VALID = TWO, // end indicator
+    };
+
 protected: // tests need direct access
-    uint32_t sigHash;
+    bool valid = false;
+    Input inp = SigHashType::Input::ALL;
+    Output out = SigHashType::Output::ALL;
+    std::vector<uint8_t> inpData;
+    std::vector<uint8_t> outData;
 
 public:
+    enum
+    {
+        MAX_LEN = 4 // 1 type flag, 1 input data, 2 output data is the max sighashtype size
+    };
+
     /** The default constructor creates a sighash that is the most restrictive -- it signs all inputs and outputs */
-    explicit SigHashType() : sigHash(SIGHASH_ALL) {}
+    explicit SigHashType() : valid(true) {}
 
-    explicit SigHashType(BaseSigHashType sigHashIn) : sigHash((uint32_t)sigHashIn) {}
-    explicit SigHashType(uint32_t sigHashIn) : sigHash(sigHashIn) {}
+    /** Grab sighashtype out of a signature */
+    explicit SigHashType(const std::vector<unsigned char> &sig) { fromSig(sig); }
 
-    explicit SigHashType(const std::vector<unsigned char> &sig) : sigHash(sig.back()) {}
+    /** Extract a sighashtype from a Schnorr signature passed as a byte vector, and set this object to that type
+        @return this object  */
+    SigHashType &fromSig(const std::vector<unsigned char> &sig);
 
-    SigHashType withBaseType(BaseSigHashType baseSigHashType) const
+    /** Anyone can pay signs only the current input, so other entities can add addtl inputs to complete the partial tx
+     */
+    SigHashType &withAnyoneCanPay()
     {
-        return SigHashType((sigHash & ~0x1f) | uint32_t(baseSigHashType));
+        inp = Input::THISIN;
+        inpData.resize(0);
+        return *this;
     }
 
-    SigHashType withForkValue(uint32_t forkId) const { return SigHashType((forkId << 8) | (sigHash & 0xff)); }
+    bool isDefined() const { return valid == true; }
+    bool isInvalid() const { return valid == false; }
 
-    SigHashType withForkId(bool forkId = true) const
+    SigHashType &invalidate()
     {
-        return SigHashType((sigHash & ~SIGHASH_FORKID) | (forkId ? SIGHASH_FORKID : 0));
+        setAll();
+        valid = false;
+        return *this;
     }
-
-    SigHashType withAnyoneCanPay(bool anyoneCanPay = true) const
-    {
-        return SigHashType((sigHash & ~SIGHASH_ANYONECANPAY) | (anyoneCanPay ? SIGHASH_ANYONECANPAY : 0));
-    }
-
-    BaseSigHashType getBaseType() const { return BaseSigHashType(sigHash & 0x1f); }
-
-    uint32_t getForkValue() const { return sigHash >> 8; }
-
-    bool isDefined() const
-    {
-        auto baseType = BaseSigHashType(sigHash & ~(SIGHASH_FORKID | SIGHASH_ANYONECANPAY));
-        return baseType >= BaseSigHashType::ALL && baseType <= BaseSigHashType::SINGLE;
-    }
-
-    bool isInvalid() const { return (sigHash == (uint32_t)BaseSigHashType::UNSUPPORTED); }
-
-    bool isBch() const { return (sigHash & SIGHASH_FORKID) != 0; }
-    bool isBtc() const { return (sigHash & SIGHASH_FORKID) == 0; }
 
     // In case of SIGHASH_ANYONECANPAY, only the input being signed is serialized
-    bool hasAnyoneCanPay() const { return (sigHash & SIGHASH_ANYONECANPAY) != 0; }
+    bool hasAnyoneCanPay() const { return inp == Input::THISIN; }
 
-    bool hasSingle() const { return ((sigHash & 0x1f) == SIGHASH_SINGLE) != 0; }
-    bool hasNone() const { return ((sigHash & 0x1f) == SIGHASH_NONE) != 0; }
-    bool hasAll() const { return ((sigHash & 0x1f) == SIGHASH_ALL) != 0; }
-
-    uint32_t getRawSigHashType() const { return sigHash; }
-
-    /** Returns the raw sighash character for BTC signatures.  Asserts if this sig hash is not meant for BTC */
-    uint8_t btcSigHashType() const
+    bool hasNoInputs() const
     {
-        // technically BTC can set this free bit... assert((sigHash & SIGHASH_FORKID) == 0);
-        return sigHash;
+        // SIGHASH_ANYPREVOUT is specified as the "first N" outputs where N==0
+        if (inp == Input::FIRSTN)
+        {
+            assert(inpData.size() == 1);
+            return (inpData[0] == 0);
+        }
+        return false;
+    }
+    bool hasNoOutputs() const
+    {
+        // SIGHASH_NONE is specified as the "first N" outputs where N==0
+        if (out == Output::FIRSTN)
+        {
+            assert(outData.size() == 1);
+            return (outData[0] == 0);
+        }
+        return false;
+    }
+    bool hasAll() const { return ((inp == SigHashType::Input::ALL) && (out == SigHashType::Output::ALL)); }
+
+    // set this sighashtype to the type that generates the longest sighashtype in bytes
+    // (for use in calculating tx fees by tx length estimation).
+    SigHashType &dummyLongest()
+    {
+        setFirstNIn(1);
+        set2Outs(0, 1);
+        return *this;
     }
 
-    /** Returns the raw sighash character for BCH signatures.  Asserts if this sig hash is not meant for BCH */
-    uint8_t bchSigHashType() const
+    SigHashType &setAll()
     {
-        assert((sigHash & SIGHASH_FORKID) != 0);
-        return sigHash;
+        valid = true;
+        inp = SigHashType::Input::ALL;
+        out = SigHashType::Output::ALL;
+        inpData.resize(0);
+        outData.resize(0);
+        return *this;
     }
 
-    /** append this hash type to a signature so that the resulting data describes what it signed */
-    void appendToSig(std::vector<unsigned char> &sig) const { sig.push_back((unsigned char)sigHash); }
+    SigHashType &setFirstNIn(uint8_t n)
+    {
+        valid = true;
+        inp = SigHashType::Input::FIRSTN;
+        inpData.resize(1);
+        inpData[0] = n;
+        return *this;
+    }
+
+    SigHashType &setFirstNOut(uint8_t n)
+    {
+        valid = true;
+        out = SigHashType::Output::FIRSTN;
+        outData.resize(1);
+        outData[0] = n;
+        return *this;
+    }
+    SigHashType &setNoOut() { return setFirstNOut(0); }
+
+
+    SigHashType &set2Outs(uint8_t a, uint8_t b)
+    {
+        valid = true;
+        out = SigHashType::Output::TWO;
+        outData.resize(2);
+        outData[0] = a;
+        outData[1] = b;
+        return *this;
+    }
+
+    /** Append this hash type to a signature (or any other vector) so that the resulting data describes what it signed.
+        Returns false only if this sighashtype is invalid.
+     */
+    bool appendToSig(std::vector<unsigned char> &sig) const;
+
+    /** return this sighashtype as a hex string.  Useful for test, debugging and display */
+    std::string HexStr() const;
 
     /** load a human-readable representation of the sighash into an object.
         if flagStr is empty, or does not define a portion of the sighash, this object is unmodified in that portion.
@@ -112,10 +179,31 @@ public:
     template <typename Stream>
     void Serialize(Stream &s) const
     {
-        ::Serialize(s, sigHash);
+        std::vector<uint8_t> sigHashBytes;
+        appendToSig(sigHashBytes);
+        ::Serialize(s, sigHashBytes);
     }
+
+    friend bool SignatureHashNexaComponents(const CTransaction &txTo,
+        unsigned int nIn,
+        const SigHashType &sigHashType,
+        uint256 &hashPrevouts,
+        uint256 &hashSequence,
+        uint256 &hashInputAmounts,
+        uint256 &hashOutputs);
 };
 
+inline SigHashType::Input &operator++(SigHashType::Input &c)
+{
+    c = static_cast<SigHashType::Input>(static_cast<uint8_t>(c) + 1);
+    return c;
+}
+
+inline SigHashType::Output &operator++(SigHashType::Output &c)
+{
+    c = static_cast<SigHashType::Output>(static_cast<uint8_t>(c) + 1);
+    return c;
+}
 
 /** Calculate the hash that a signature of this transaction signs.  The algorithm depends on sigHashType,
     Both in determining whether to use the Bitcoin Cash or Bitcoin algorithm, and also the specific data and
@@ -127,18 +215,39 @@ uint256 SignatureHash(const CScript &scriptCode,
     const CAmount &amount,
     size_t *nHashedOut = nullptr);
 
-uint256 SignatureHashBitcoin(const CScript &scriptCode,
+bool SignatureHashNexa(const CScript &scriptCode,
     const CTransaction &txTo,
     unsigned int nIn,
     const SigHashType &sigHashType,
+    uint256 &result,
+    size_t *nHashedOut = nullptr);
+
+/** Given the components of the sighash, calculate it
+    (used by double spend proofs and normal signature calculation)
+ */
+bool SignatureHashNexa(const CScript &scriptCode,
+    uint8_t txVersion,
+    uint32_t txLockTime,
+    const SigHashType &sigHashType,
+    const uint256 &hashPrevouts,
+    const uint256 &hashSequence,
+    const uint256 &hashInputAmounts,
+    const uint256 &hashOutputs,
+    uint256 &result,
     size_t *nHashedOut);
+
+uint256 SignatureHashBitcoin(const CScript &scriptCode,
+    const CTransaction &txTo,
+    unsigned int nIn,
+    const uint8_t sigHashType,
+    size_t *nHashedOut = nullptr);
 
 uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     const CTransaction &txTo,
     unsigned int nIn,
-    const SigHashType &sigHashType,
+    const uint8_t sigHashType,
     const CAmount &amount,
-    size_t *nHashedOut);
+    size_t *nHashedOut = nullptr);
 
 /** Extract the sighashtype from a signature */
 SigHashType GetSigHashType(const std::vector<unsigned char> &vchSig);

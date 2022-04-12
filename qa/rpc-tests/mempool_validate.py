@@ -126,7 +126,7 @@ def createTx(dests, sources, node, maxx=None, fee=1, nextWallet=None, generatedT
                              "satoshi": amt, "pubkey": d.pubkey})
             i += 1
 
-        sighashtype = 0x41
+        sighashtype = SIGHASH_ALL
         p2pkt = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
         # to make this fully general, you'd have to check the template hash in the scriptPubKey and get the corresponding code
         # but wallet always genrates p2pkt
@@ -189,7 +189,7 @@ class MyTest (BitcoinTestFramework):
 
     def threadedCreateTx(self, dests, sources, nodeIdx, maxx=None):
         """Create a bunch of transactions using multiple python threads"""
-        NUMTHREADS = 4
+        NUMTHREADS = 1
         if sources is None:
             wallets = self.nodes[nodeIdx].listunspent()
         else:

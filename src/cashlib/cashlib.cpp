@@ -291,8 +291,8 @@ SLAPI int SignTxECDSA(unsigned char *txData,
     unsigned char *result,
     unsigned int resultLen)
 {
-    DbgAssert(nHashType & SIGHASH_FORKID, return 0);
-    SigHashType sigHashType(nHashType);
+    DbgAssert(nHashType & BTCBCH_SIGHASH_FORKID, return 0);
+    uint8_t sigHashType(nHashType);
     checkSigInit();
     CTransaction tx;
     result[0] = 0;
@@ -314,13 +314,69 @@ SLAPI int SignTxECDSA(unsigned char *txData,
     CKey key = LoadKey(keyData);
 
     size_t nHashedOut = 0;
-    uint256 sighash = SignatureHash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
+    uint256 sighash = SignatureHashBitcoinCash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
     std::vector<unsigned char> sig;
     if (!key.SignECDSA(sighash, sig))
     {
         return 0;
     }
-    sigHashType.appendToSig(sig);
+    sig.push_back(sigHashType);
+    unsigned int sigSize = sig.size();
+    if (sigSize > resultLen)
+        return 0;
+    std::copy(sig.begin(), sig.end(), result);
+    return sigSize;
+}
+
+/** Sign one input of a transaction
+    All buffer arguments should be in binary-serialized data.
+    The transaction (txData) must contain the COutPoint (tx hash and vout) of all relevant inputs,
+    however, it is not necessary to provide the spend script.
+*/
+SLAPI int SignBchTxSchnorr(unsigned char *txData,
+    int txbuflen,
+    unsigned int inputIdx,
+    int64_t inputAmount,
+    unsigned char *prevoutScript,
+    uint32_t priorScriptLen,
+    uint32_t nHashType,
+    unsigned char *keyData,
+    unsigned char *result,
+    unsigned int resultLen)
+{
+    DbgAssert(nHashType & BTCBCH_SIGHASH_FORKID, return 0);
+    uint8_t sigHashType = nHashType;
+    checkSigInit();
+    CTransaction tx;
+    result[0] = 0;
+
+    CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
+    try
+    {
+        ssData >> tx;
+    }
+    catch (const std::exception &)
+    {
+        return 0;
+    }
+
+    if (inputIdx >= tx.vin.size())
+        return 0;
+
+    CScript priorScript(prevoutScript, prevoutScript + priorScriptLen);
+    CKey key = LoadKey(keyData);
+
+    size_t nHashedOut = 0;
+    uint256 sighash = SignatureHashBitcoinCash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
+    std::vector<unsigned char> sig;
+    CPubKey pub = key.GetPubKey();
+    if (!key.SignSchnorr(sighash, sig))
+    {
+        return 0;
+    }
+    p("Sign BCH Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig), HexStr(pub.begin(), pub.end()),
+        sighash.GetHex());
+    sig.push_back(sigHashType);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
         return 0;
@@ -339,16 +395,18 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     int64_t inputAmount,
     unsigned char *prevoutScript,
     uint32_t priorScriptLen,
-    uint32_t nHashType,
+    unsigned char *hashType,
+    unsigned int hashTypeLen,
     unsigned char *keyData,
     unsigned char *result,
     unsigned int resultLen)
 {
-    DbgAssert(nHashType & SIGHASH_FORKID, return 0);
-    SigHashType sigHashType(nHashType);
     checkSigInit();
     CTransaction tx;
     result[0] = 0;
+
+    std::vector<uint8_t> sigHashVec(hashType, hashType + hashTypeLen);
+    SigHashType sigHashType;
 
     CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
     try
@@ -547,7 +605,7 @@ SLAPI void *CreateScriptMachine(unsigned int flags,
     smd->tx = txref;
     // Its ok to get the bare tx pointer: the life of the CTransaction is the same as TransactionSignatureChecker
     // -1 is the inputAmount -- no longer used
-    smd->checker = std::make_shared<TransactionSignatureChecker>(smd->tx.get(), inputIdx, -1, flags);
+    smd->checker = std::make_shared<TransactionSignatureChecker>(smd->tx.get(), inputIdx, flags);
     smd->sis = std::make_shared<ScriptImportedState>(&(*smd->checker), smd->tx, state, coins, inputIdx);
     // max ops and max sigchecks are set to the maximum value with the intention that the caller will check these if
     // needed because many uses of the script machine are for debugging and experimental scripts.

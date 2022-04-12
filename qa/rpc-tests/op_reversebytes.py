@@ -40,9 +40,7 @@ from test_framework.script import (
     OP_REVERSEBYTES,
     OP_RETURN,
     OP_TRUE,
-    SIGHASH_ALL,
-    SIGHASH_FORKID,
-    SignatureHashForkId,
+    SIGHASH_ALL
 )
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import assert_equal, assert_raises_rpc_error, p2p_port, waitFor, standardFlags

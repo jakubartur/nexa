@@ -13,37 +13,6 @@
 #include <inttypes.h>
 #include <vector>
 
-bool IsTxProbablyNewSigHash(const CTransaction &tx)
-{
-    bool oldsighash = false;
-    for (auto txin : tx.vin)
-    {
-        std::vector<unsigned char> data;
-        CScript::const_iterator pc(txin.scriptSig.begin());
-        opcodetype op;
-        if (txin.scriptSig.GetOp(pc, op, data))
-        {
-            if (!data.empty())
-            {
-                if (!(data.back() & SIGHASH_FORKID))
-                {
-                    oldsighash = true;
-                }
-            }
-        }
-    }
-    return (oldsighash == false);
-}
-
-bool IsTxUAHFOnly(const CTxMemPoolEntry &txentry)
-{
-    if ((txentry.sighashType & SIGHASH_FORKID) || (txentry.sighashType == 0))
-    {
-        return true;
-    }
-    return false;
-}
-
 // return true for every block from fork block and forward [consensusParams.uahfHeight,+inf)
 bool IsMay2021Enabled(const Consensus::Params &consensusparams, const CBlockIndex *pindexTip)
 {
