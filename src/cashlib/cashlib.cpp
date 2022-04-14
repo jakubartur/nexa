@@ -427,7 +427,6 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     size_t nHashedOut = 0;
     uint256 sighash = SignatureHash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
     std::vector<unsigned char> sig;
-    CPubKey pub = key.GetPubKey();
     if (!key.SignSchnorr(sighash, sig))
     {
         return 0;
