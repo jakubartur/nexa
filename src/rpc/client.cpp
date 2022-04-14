@@ -89,7 +89,7 @@ UniValue CallRPC(const string &strMethod, const UniValue &params)
         {
             throw runtime_error(strprintf(_("Could not locate RPC credentials. No authentication cookie could be "
                                             "found, and no rpcpassword is set in the configuration file (%s)"),
-                GetConfigFile(GetArg("-conf", BITCOIN_CONF_FILENAME)).string().c_str()));
+                GetConfigFile(GetArg("-conf", CONF_FILENAME)).string().c_str()));
         }
     }
     else

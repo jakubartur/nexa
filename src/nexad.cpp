@@ -75,7 +75,7 @@ bool AppInit(int argc, char *argv[])
     //
     // Parameters
     //
-    // If Qt is used, parameters/bitcoin.conf are parsed in qt/bitcoin.cpp's main()
+    // If Qt is used, parameters/nexa.conf are parsed in qt/bitcoin.cpp's main()
     AllowedArgs::Bitcoind allowedArgs(&tweaks);
     try
     {

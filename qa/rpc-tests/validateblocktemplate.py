@@ -359,9 +359,9 @@ def Test():
     # Out-of-source builds are awkward to start because they need an additional flag
     # automatically add this flag during testing for common out-of-source locations
     here = os.path.dirname(os.path.abspath(__file__))
-    if not os.path.exists(os.path.abspath(here + "/../../src/bitcoind")):
-        dbg = os.path.abspath(here + "/../../debug/src/bitcoind")
-        rel = os.path.abspath(here + "/../../release/src/bitcoind")
+    if not os.path.exists(os.path.abspath(here + "/../../src/nexad")):
+        dbg = os.path.abspath(here + "/../../debug/src/nexad")
+        rel = os.path.abspath(here + "/../../release/src/nexad")
         if os.path.exists(dbg):
             print("Running from the debug directory (%s)" % dbg)
             flags.append("--srcdir=%s" % os.path.dirname(dbg))

@@ -37,8 +37,8 @@ class ZMQTest (BitcoinTestFramework):
         self.zmqContext = zmq.Context()
         self.zmqBlock = self.zmqContext.socket(zmq.SUB)
         self.zmqBlock.setsockopt(zmq.SUBSCRIBE, b"hashblock")
-        self.zmqBlock.RCVTIMEO = 30000
-        self.zmqBlock.linger = 500
+        self.zmqBlock.setsockopt(zmq.RCVTIMEO, 30)
+        self.zmqBlock.setsockopt(zmq.LINGER, 5)
         self.zmqBlock.connect("tcp://127.0.0.1:%i" % self.port)
 
         self.zmqSubSocket = self.zmqContext.socket(zmq.SUB)
@@ -46,8 +46,8 @@ class ZMQTest (BitcoinTestFramework):
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"txidem")
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"dsid")
         self.zmqSubSocket.setsockopt(zmq.SUBSCRIBE, b"dsidem")
-        self.zmqSubSocket.RCVTIMEO = 30000
-        self.zmqSubSocket.linger = 500
+        self.zmqBlock.setsockopt(zmq.RCVTIMEO, 30)
+        self.zmqSubSocket.setsockopt(zmq.LINGER, 5)
         self.zmqSubSocket.connect("tcp://127.0.0.1:%i" % self.port)
         return start_nodes(4, self.options.tmpdir, extra_args=[
             ['-zmqpubhashtx=tcp://127.0.0.1:'+str(self.port), '-zmqpubhashblock=tcp://127.0.0.1:'+str(self.port), '-zmqpubhashds=tcp://127.0.0.1:'+str(self.port), '-debug=respend', '-debug=dsproof', '-debug=mempool', '-debug=net', '-debug=zmq'],
@@ -165,7 +165,7 @@ class ZMQTest (BitcoinTestFramework):
 
             # Send 2 transactions that double spend each another
             wallet = self.nodes[0].listunspent()
-            walletp2pkh = list(filter(lambda x : len(x["scriptPubKey"]) != 70, wallet))  # Find an input that is not P2PK
+            walletp2pkh = list(filter(lambda x : x["scriptType"] == 'satoscript' and len(x["scriptPubKey"]) != 70, wallet))  # Find an input that is not P2PK
             t = walletp2pkh.pop()
             inputs = []
             inputs.append({ "outpoint" : t["outpoint"], "amount" : t["amount"]})
@@ -228,7 +228,10 @@ if __name__ == '__main__':
 
 def Test():
     flags = standardFlags()
+    # install ctrl-c handler
+    import signal, pdb
+    signal.signal(signal.SIGINT, lambda sig, stk: pdb.Pdb().set_trace(stk))
+
     t = ZMQTest()
     t.drop_to_pdb = True
     t.main(flags)
- 

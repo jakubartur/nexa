@@ -32,9 +32,9 @@
 SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) : QWidget(0, f), curAlignment(0)
 {
     // x=0, y=0 is the upper left corner
-    int TEXTX = 65;
-    int VERY = 230;
-    int NETY = 250;
+    int TEXTX = 40;
+    int VERY = 130;
+    int NETY = 190;
 
     // set reference point, paddings
     float fontFactor = 1.0;
@@ -74,7 +74,7 @@ SplashScreen::SplashScreen(Qt::WindowFlags f, const NetworkStyle *networkStyle) 
     if (!titleAddText.isEmpty())
     {
         pixPaint.setFont(QFont(font, 40 * fontFactor));
-        pixPaint.setPen(QColor(200, 0, 0));
+        pixPaint.setPen(QColor(200, 200, 0));
         pixPaint.drawText(TEXTX * devicePixelRatio, NETY * devicePixelRatio, titleAddText);
     }
 

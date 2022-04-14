@@ -126,12 +126,12 @@ class BitcoinTestFramework(object):
         self.sync_all()
 
     def stop_node(self, i, expected_stderr='', wait=0):
-        """Stop a bitcoind test node"""
+        """Stop a nexad test node"""
         stop_nodes([self.nodes[i]])
         self.wait_for_node_exit(i, 60)
 
     def stop_nodes(self, wait=0):
-        """Stop multiple bitcoind test nodes"""
+        """Stop multiple nexad test nodes"""
         return stop_nodes(self.nodes)
 
     def start_node(self, i, extra_args=None):
@@ -196,11 +196,11 @@ class BitcoinTestFramework(object):
 
         parser = optparse.OptionParser(usage="%prog [options]")
         parser.add_option("--nocleanup", dest="nocleanup", default=False, action="store_true",
-                          help="Leave bitcoinds and test.* datadir on exit or error")
+                          help="Leave nexads and test.* datadir on exit or error")
         parser.add_option("--noshutdown", dest="noshutdown", default=False, action="store_true",
-                          help="Don't stop bitcoinds after the test execution")
+                          help="Don't stop nexads after the test execution")
         parser.add_option("--srcdir", dest="srcdir", default=os.path.normpath(os.path.dirname(os.path.realpath(__file__))+"/../../../src"),
-                          help="Source directory containing bitcoind/bitcoin-cli (default: %default)")
+                          help="Source directory containing nexad/bitcoin-cli (default: %default)")
 
 
         testname = "".join(
@@ -271,7 +271,7 @@ class BitcoinTestFramework(object):
         PortSeed.n = self.options.port_seed
 
         os.environ['PATH'] = self.options.srcdir + ":" + os.path.join(self.options.srcdir, "qt") + ":" + os.environ['PATH']
-        self.bitcoindBin = os.path.join(self.options.srcdir, "bitcoind")
+        self.bitcoindBin = os.path.join(self.options.srcdir, "nexad")
 
         check_json_precision()
 
@@ -344,7 +344,7 @@ class BitcoinTestFramework(object):
                 stop_nodes(self.nodes)
             wait_bitcoinds()
         else:
-            logging.warning("Note: bitcoinds were not stopped and may still be running")
+            logging.warning("Note: nexads were not stopped and may still be running")
 
         if not self.options.nocleanup and not self.options.noshutdown and success:
             logging.info("Cleaning up")
@@ -371,7 +371,7 @@ class BitcoinTestFramework(object):
             return 1
 
 
-# Test framework for doing p2p comparison testing, which sets up some bitcoind
+# Test framework for doing p2p comparison testing, which sets up some nexad
 # binaries:
 # 1 binary: test binary
 # 2 binaries: 1 test binary, 1 ref binary
@@ -385,11 +385,11 @@ class ComparisonTestFramework(BitcoinTestFramework):
 
     def add_options(self, parser):
         parser.add_option("--testbinary", dest="testbinary",
-                          default=os.getenv("BITCOIND", "bitcoind"),
-                          help="bitcoind binary to test")
+                          default=os.getenv("NEXAD", "nexad"),
+                          help="nexad binary to test")
         parser.add_option("--refbinary", dest="refbinary",
-                          default=os.getenv("BITCOIND", "bitcoind"),
-                          help="bitcoind binary to use for reference nodes (if any)")
+                          default=os.getenv("NEXAD", "nexad"),
+                          help="nexad binary to use for reference nodes (if any)")
 
     def setup_chain(self,bitcoinConfDict=None, wallets=None):  # BU add config params
         logging.info("Initializing test directory %s" % self.options.tmpdir)

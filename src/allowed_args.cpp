@@ -243,18 +243,17 @@ static void addHelpOptions(AllowedArgs &allowedArgs)
 static void addChainSelectionOptions(AllowedArgs &allowedArgs)
 {
     allowedArgs.addHeader(_("Chain selection options:"))
-        .addArg("testnet", optionalBool, _("Use the testnet3 chain"))
+        .addArg("testnet", optionalBool, _("Use the testnet chain"))
         .addDebugArg("regtest", optionalBool,
             "Enter regression test mode, which uses a special chain in which blocks can be solved instantly. "
             "This is intended for regression testing tools and app development.")
-        .addArg("nextchain", optionalBool, _("Use Nextchain"));
+        .addArg("nexa", optionalBool, _("Use Nexa main chain"));
 }
 
 static void addConfigurationLocationOptions(AllowedArgs &allowedArgs)
 {
     allowedArgs.addHeader(_("Configuration location options:"))
-        .addArg(
-            "conf=<file>", requiredStr, strprintf(_("Specify configuration file (default: %s)"), BITCOIN_CONF_FILENAME))
+        .addArg("conf=<file>", requiredStr, strprintf(_("Specify configuration file (default: %s)"), CONF_FILENAME))
         .addArg(
             "forks=<file>", requiredStr, strprintf(_("Specify fork deployment file (default: %s)"), FORKS_CSV_FILENAME))
         .addArg("datadir=<dir>", requiredStr, _("Specify data directory"));
@@ -291,7 +290,7 @@ static void addGeneralOptions(AllowedArgs &allowedArgs, HelpMessageMode mode)
                         "auto, <0 = leave that many cores free, default: %d)"),
                 -GetNumCores(), MAX_SCRIPTCHECK_THREADS, DEFAULT_SCRIPTCHECK_THREADS))
 #ifndef WIN32
-        .addArg("pid=<file>", requiredStr, strprintf(_("Specify pid file (default: %s)"), BITCOIN_PID_FILENAME))
+        .addArg("pid=<file>", requiredStr, strprintf(_("Specify pid file (default: %s)"), PID_FILENAME))
 #endif
         .addArg("prune=<n>", requiredInt,
             strprintf(_("Reduce storage requirements by pruning (deleting) old blocks. This mode is incompatible with "
