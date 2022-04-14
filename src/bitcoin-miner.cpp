@@ -61,37 +61,6 @@ public:
 };
 Secp256k1Init secp;
 
-// Internal miner
-//
-// ScanHash increments nonces looking for a hash with at least some zero bits.
-// If found, it returns out and the caller is responsible for verifying if
-// the generated hash is below the difficulty target. The nonce is usually
-// preserved between calls, however periodically calling code rebuilds the block
-// and nNonce starts over at a random value.
-bool static ScanHash(const CBlockHeader *pblock, uint32_t &nNonce, uint256 *phash)
-{
-    // Write the first 76 bytes of the block header to a double-SHA256 state.
-    CHash256 hasher;
-    CDataStream ss(SER_NETWORK, PROTOCOL_VERSION);
-    ss << *pblock;
-    assert(ss.size() == 80);
-    hasher.Write((unsigned char *)&ss[0], 76);
-
-    while (true)
-    {
-        nNonce++;
-
-        // Write the last 4 bytes of the block header (the nonce) to a copy of
-        // the double-SHA256 state, and compute the result.
-        CHash256(hasher).Write((unsigned char *)&nNonce, 4).Finalize((unsigned char *)phash);
-
-        // Return the nonce if the hash has at least some zero bits,
-        // caller will check if it has enough to reach the target
-        if (((uint16_t *)phash)[15] == 0)
-            return true;
-    }
-}
-
 
 class BitcoinMinerArgs : public AllowedArgs::BitcoinCli
 {
@@ -163,29 +132,6 @@ static bool CpuMinerJsonToData(const UniValue &params, uint256 &headerCommitment
 
     return true;
 }
-
-
-static void CalculateNextMerkleRoot(uint256 &merkle_root, const uint256 &merkle_branch)
-{
-    // Append a branch to the root. Double SHA256 the whole thing:
-    uint256 hash;
-    CHash256()
-        .Write(merkle_root.begin(), merkle_root.size())
-        .Write(merkle_branch.begin(), merkle_branch.size())
-        .Finalize(hash.begin());
-    merkle_root = hash;
-}
-
-static uint256 CalculateMerkleRoot(uint256 &coinbase_hash, const std::vector<uint256> &merkleproof)
-{
-    uint256 merkle_root = coinbase_hash;
-    for (unsigned int i = 0; i < merkleproof.size(); i++)
-    {
-        CalculateNextMerkleRoot(merkle_root, merkleproof[i]);
-    }
-    return merkle_root;
-}
-
 
 static bool CpuMineBlockHasherNextChain(int &ntries,
     uint256 headerCommitment,

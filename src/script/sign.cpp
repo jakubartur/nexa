@@ -116,8 +116,8 @@ bool TransactionSignatureCreatorBTCBCH::CreateSig(std::vector<uint8_t> &vchSig,
         return false;
     vchSig.push_back(sigHashType);
 
-    CPubKey pub = key.GetPubKey();
-    p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig), HexStr(pub.begin(), pub.end()), hash.GetHex());
+    p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig),
+        HexStr(key.GetPubKey().begin(), key.GetPubKey().end()), hash.GetHex());
     return true;
 }
 
