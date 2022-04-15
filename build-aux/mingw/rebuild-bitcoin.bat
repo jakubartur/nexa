@@ -43,7 +43,7 @@ if "%BUILD_32_BIT%" NEQ "" set BUILD_ARCH=T
 if "%BUILD_64_BIT%" NEQ "" set BUILD_ARCH=T
 if "%BUILD_ARCH%" NEQ "T" (
 	echo You must specify building at least one of 32-bit or 64-bit version
-	echo of the Bitcoin client in SET_ENV_VARS.bat.
+	echo of the Nexa client in SET_ENV_VARS.bat.
 	echo Aborting initial configuration...
 	pause
 	exit /b -1
@@ -55,18 +55,18 @@ if not exist "%MINGW_ROOT%" (
 	echo executed mingw-setup.exe, updated SET_ENV_VARS.bat to list the install
 	echo location you chose in the variable MINGW_ROOT, and run config-mingw.bat.
 	echo Current MINGW_ROOT = %MINGW_ROOT%
-	echo Aborting build of Bitcoin client...
+	echo Aborting build of Nexa client...
 	pause
 	exit /b -1
 )
 
 REM Verify that MSYS was correctly installed and updated by previous steps
 if not exist "%MSYS_SH%" (
-	echo MSYS does not appear to have installed correctly.  Build of Bitcoin client
+	echo MSYS does not appear to have installed correctly.  Build of Nexa client
 	echo cannot continue without MSYS being properly installed and config-mingw.bat
 	echo having been successfully executed at least once.
 	echo Current MSYS_SH = %MSYS_SH%
-	echo Aborting build of Bitcoin client...
+	echo Aborting build of Nexa client...
 	pause
 	exit /b -1
 )
@@ -151,16 +151,16 @@ echo Saving bitcoin executables to %BUILD_OUTPUT%
 REM Make sure output directory exists
 mkdir "%BUILD_OUTPUT%\"
 
-REM cd to src to copy bitcoin-tx.exe, bitcoin-cli.exe, and bitcoind.exe
+REM cd to src to copy nexa-tx.exe, nexa-cli.exe, and nexad.exe
 cd "%BITCOIN_GIT_ROOT%\src"
-copy bitcoin-tx.exe "%BUILD_OUTPUT%\bitcoin-tx.exe"
-copy bitcoin-cli.exe "%BUILD_OUTPUT%\bitcoin-cli.exe"
-copy bitcoind.exe "%BUILD_OUTPUT%\bitcoind.exe"
-copy bitcoin-miner.exe "%BUILD_OUTPUT%\bitcoin-miner.exe"
+copy nexa-tx.exe "%BUILD_OUTPUT%\nexa-tx.exe"
+copy nexa-cli.exe "%BUILD_OUTPUT%\nexa-cli.exe"
+copy nexad.exe "%BUILD_OUTPUT%\nexad.exe"
+copy nexa-miner.exe "%BUILD_OUTPUT%\nexa-miner.exe"
 
-REM cd to src\qt to copy bitcoin-qt.exe
+REM cd to src\qt to copy nexa-qt.exe
 cd qt
-copy bitcoin-qt.exe "%BUILD_OUTPUT%\bitcoin-qt.exe"
+copy nexa-qt.exe "%BUILD_OUTPUT%\nexa-qt.exe"
 
 REM Go to the 64-bit build section (in case we are building both 32 and 64 bit)
 GOTO BUILD_START_64
