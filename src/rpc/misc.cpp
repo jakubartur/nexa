@@ -71,8 +71,6 @@ UniValue getinfo(const UniValue &params, bool fHelp)
             "sat/KB\n"
             "  \"status\":\"...\"            (string) long running operations are indicated here (rescan).\n"
             "  \"errors\": \"...\"           (string) any error messages\n"
-            "  \"fork\": \"...\"             (string) \"Bitcoin Cash\" or \"Bitcoin\".  Will display as Bitcoin "
-            "pre-fork.\n"
             "}\n"
             "\nExamples:\n" +
             HelpExampleCli("getinfo", "") + HelpExampleRpc("getinfo", ""));
@@ -125,11 +123,6 @@ UniValue getinfo(const UniValue &params, bool fHelp)
     obj.pushKV("status", statusStrings.GetPrintable());
     obj.pushKV("txindex", IsTxIndexReady() ? "synced" : "not ready");
     obj.pushKV("errors", GetWarnings("statusbar"));
-    auto p = Params();
-    if (p.NetworkIDString() == CBaseChainParams::NEXTCHAIN)
-        obj.pushKV("fork", "NextChain");
-    else
-        obj.pushKV("fork", "Bitcoin Cash");
 
     return obj;
 }
