@@ -4,7 +4,7 @@
 MSYS_BIN=$(echo "/$MSYS_BIN" | sed -e 's/\\/\//g' -e 's/://' -e 's/\"//g')
 PATH_DEPS=$(echo "/$PATH_DEPS" | sed -e 's/\\/\//g' -e 's/://' -e 's/\"//g')
 TOOLCHAIN_BIN=$(echo "/$TOOLCHAIN_BIN" | sed -e 's/\\/\//g' -e 's/://' -e 's/\"//g')
-BITCOIN_GIT_ROOT=$(echo "/$BITCOIN_GIT_ROOT" | sed -e 's/\\/\//g' -e 's/://' -e 's/\"//g')
+NEXA_GIT_ROOT=$(echo "/$NEXA_GIT_ROOT" | sed -e 's/\\/\//g' -e 's/://' -e 's/\"//g')
 BUILD_TYPE=$(basename $PATH_DEPS)
 
 # Set PATH using POSIX style paths
@@ -78,8 +78,8 @@ if [ -n "$SKIP_CONFIGURE" ]; then
 	SKIP_AUTOGEN=YES
 fi
 
-# Build BitcoinUnlimited
-cd "$BITCOIN_GIT_ROOT"
+# Build Nexa
+cd "$NEXA_GIT_ROOT"
 
 #define and export BOOST_ROOT prior to any calls that require
 #executing ./configure (this may include `make clean`) depending on current system state
@@ -117,7 +117,7 @@ if [ -z "$SKIP_CONFIGURE" ]; then
 	# Uncomment below to build debug
 	#ENABLE_DEBUG="--enable-debug"
 
-	CPPFLAGS="-I$PATH_DEPS/db-5.3.28/build_unix \
+	CPPFLAGS="-I$PATH_DEPS/db-5.3.21/build_unix \
 	-I$PATH_DEPS/openssl-1.0.2o/include \
 	-I$PATH_DEPS/libevent-2.0.22/include \
 	-I$PATH_DEPS \
@@ -125,13 +125,13 @@ if [ -z "$SKIP_CONFIGURE" ]; then
 	-I$PATH_DEPS/libpng-1.6.36 \
 	-I$PATH_DEPS/qrencode-4.0.2 \
 	-I$PATH_DEPS/gmp-6.2.0+dfsg" \
-	LDFLAGS="-L$PATH_DEPS/db-5.3.28/build_unix \
+	LDFLAGS="-L$PATH_DEPS/db-5.3.21/build_unix \
 	-L$PATH_DEPS/openssl-1.0.2o \
 	-L$PATH_DEPS/libevent-2.0.22/.libs \
 	-L$PATH_DEPS/miniupnpc \
 	-L$PATH_DEPS/protobuf-2.6.1/src/.libs \
 	-L$PATH_DEPS/libpng-1.6.36/.libs \
-	-L$PATH_DEPS/QT/5.7.1/lib \
+	-L$PATH_DEPS/Qt-5.9.9/5.9.9/lib \
 	-L$PATH_DEPS/qrencode-4.0.2/.libs \
 	-L$PATH_DEPS/gmp-6.2.0+dfsg/.libs" \
 	BOOST_ROOT="$PATH_DEPS/boost_1_68_0" \
@@ -139,10 +139,10 @@ if [ -z "$SKIP_CONFIGURE" ]; then
 	$ENABLE_DEBUG \
 	--disable-upnp-default \
 	$DISABLE_TESTS \
-	--with-qt-incdir="$PATH_DEPS/Qt/5.7.1/include" \
-	--with-qt-libdir="$PATH_DEPS/Qt/5.7.1/lib" \
-	--with-qt-plugindir="$PATH_DEPS/Qt/5.7.1/plugins" \
-	--with-qt-bindir="$PATH_DEPS/Qt/5.7.1/bin" \
+	--with-qt-incdir="$PATH_DEPS/Qt-5.9.9/5.9.9/include" \
+	--with-qt-libdir="$PATH_DEPS/Qt-5.9.9/5.9.9/lib" \
+	--with-qt-plugindir="$PATH_DEPS/Qt-5.9.9/5.9.9/plugins" \
+	--with-qt-bindir="$PATH_DEPS/Qt-5.9.9/5.9.9/bin" \
 	--with-protoc-bindir="$PATH_DEPS/protobuf-2.6.1/src"
 fi
 
@@ -163,9 +163,9 @@ make $MAKE_CORES
 # Strip symbol tables
 if [ -n "$STRIP" ]; then
 	echo 'Stripping exeutables'
-	strip src/bitcoin-tx.exe
-	strip src/bitcoin-cli.exe
-	strip src/bitcoin-miner.exe
-	strip src/bitcoind.exe
-	strip src/qt/bitcoin-qt.exe
+	strip src/nexa-tx.exe
+	strip src/nexa-cli.exe
+	strip src/nexa-miner.exe
+	strip src/nexad.exe
+	strip src/qt/nexa-qt.exe
 fi

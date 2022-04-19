@@ -9,8 +9,8 @@ REM    2. Full path to the 7z.exe file (you should have manually installed this)
 REM    3. Drive letter for other directories, if not C: (otherwise the defaults should be fine)
 REM
 REM    NOTE: It is assumed you are running this configure/build script from the check-out location
-REM          of your bitcoin source under ".\build-aux\mingw\".  If this is true, you do not need
-REM          to modify the BITCOIN_GIT_ROOT path.  Otherwise update this with the absolute path to
+REM          of your nexa source under ".\build-aux\mingw\".  If this is true, you do not need
+REM          to modify the NEXA_GIT_ROOT path.  Otherwise update this with the absolute path to
 REM          the root folder of your checkout.
 REM
 REM    IMPORTANT: It is HIGHLY RECOMMENDED you do not use paths with spaces in them.
@@ -42,7 +42,7 @@ REM If python has been installed and this path is provided, a wrapper script wil
 REM python, python2, and python3.
 REM 
 REM NOTE: If you want to run regression tests (once they are working on Windows), you need to have python installed.
-REM The latest versions of the bitcoin client uses Python3, while previous versions use Python2
+REM The latest versions of the nexa client uses Python3, while previous versions use Python2
 REM It is recommended that you at least install Python3.x as it will include the python version selector "py.exe"
 REM This will automatically detect and start the correct installed version of python based on the desired version
 REM
@@ -54,17 +54,17 @@ REM i.e. C:\Python27\python.exe or C:\Users\username\AppData\Local\Programs\Pyth
 REM set PYTHON2_EXE="C:\Python27\python.exe"
 REM set PYTHON3_EXE="C:\Users\username\AppData\Local\Programs\Python\Python36\python.exe"
 
-REM Set the dependency path.  This is where all of the Bitcoin dependencies will be downloaded and built
+REM Set the dependency path.  This is where all of the nexa dependencies will be downloaded and built
 REM IMPORTANT: DO NOT USE PATHS WITH SPACES for the dependencies root!  If you do, you WILL run into build errors
 set "DEPS_ROOT=C:\deps"
 
-REM Set the path to your Bitcoin git checkout.
-REM NOTE: If you are running these scripts from the bitcoin checkout location, you do not need to modify this
-set "BITCOIN_GIT_ROOT=%CD%\..\..\"
+REM Set the path to your Nexa git checkout.
+REM NOTE: If you are running these scripts from the nexa checkout location, you do not need to modify this
+set "NEXA_GIT_ROOT=%CD%\..\..\"
 
 
 REM ##################################################################################################
-REM These parameters configure how the bitcoin client and dependencies are built.
+REM These parameters configure how the nexa client and dependencies are built.
 REM
 REM The default configuration is:
 REM    1. 32-bit disabled
@@ -73,8 +73,8 @@ REM    3. Build cores disabled (means make without the -jN parameter)
 REM    4. Tests disabled
 REM    5. Clean disabled
 REM    6. Strip enabled
-REM    7. Skip Bitcoin autogen.sh step disabled (useful for rebuilding local changes only)
-REM    8. Skip Bitcoin configure step disbled (useful for rebuilding local changes only)
+REM    7. Skip Nexa autogen.sh step disabled (useful for rebuilding local changes only)
+REM    8. Skip Nexa configure step disbled (useful for rebuilding local changes only)
 REM
 REM NOTE: If you set to build both 32-bit and 64-bit at the same time:
 REM    1. Clean will be enabled
@@ -105,23 +105,23 @@ REM NOTE: If you are switching between the 32-bit and 64-bit tool chains, you sh
 REM       build outputs with this switch, otherwise you may run into linker issues.
 REM SET CLEAN_BUILD=YES
 
-REM Following will strip debug symbols from the generated bitcoin executables, greatly reducing file size.
+REM Following will strip debug symbols from the generated nexa executables, greatly reducing file size.
 REM This will, however, make it more difficult to debug any issues that may occur while testing.
-REM If you want to keep debug symbols in the generated bitcoin executables, uncomment the line below.
+REM If you want to keep debug symbols in the generated nexa executables, uncomment the line below.
 SET STRIP=YES
 
-REM If you want to skip running "./autogen.sh" when building bitcoin uncomment the line below.
+REM If you want to skip running "./autogen.sh" when building nexa uncomment the line below.
 REM This is useful to turn off if you have already run this once and not changed the toolchain
 REM or autogen configuration files, as it eleminates a redundant build step.
-REM NOTE: This only affects the build of the bitcoin executables, not any of the dependencies.
+REM NOTE: This only affects the build of the nexa executables, not any of the dependencies.
 REM       Additionally, this does not perform a check to see if autogen.sh has been run before
 REM       so if you turn this on but have not previously run autogen.sh you will run into errors.
 REM SET SKIP_AUTOGEN=YES
 
-REM If you want to skip running "./configure" when building bitcoin uncomment the line below.
+REM If you want to skip running "./configure" when building nexa uncomment the line below.
 REM This is useful to turn off if you have already run this once and not changed the toolchain
 REM or build configuration, as it eleminates a redundant build step.
-REM NOTE: This only affects the build of the bitcoin executables, not any of the dependencies.
+REM NOTE: This only affects the build of the nexa executables, not any of the dependencies.
 REM       Additionally, this does not perform a check to see if configure has been run before
 REM       so if you turn this on but have not previously run configure you will run into errors.
 REM
