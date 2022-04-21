@@ -59,8 +59,6 @@ public:
     Secp256k1Init() { ECC_Start(); }
     ~Secp256k1Init() { ECC_Stop(); }
 };
-Secp256k1Init secp;
-
 
 class BitcoinMinerArgs : public AllowedArgs::BitcoinCli
 {
@@ -155,7 +153,6 @@ static bool CpuMineBlockHasherNextChain(int &ntries,
         //
         // Search
         //
-        uint256 hash;
         while (!found)
         {
             ++count;
@@ -179,8 +176,8 @@ static bool CpuMineBlockHasherNextChain(int &ntries,
             {
                 // Found a solution
                 found = true;
-                printf("proof-of-work found  \n  hash: %s  \ntarget: %s\n", hash.GetHex().c_str(),
-                    hashTarget.GetHex().c_str());
+                printf("proof-of-work found  \n  mining puzzle solution: %s  \ntarget: %s\n",
+                    miningHash.GetHex().c_str(), hashTarget.GetHex().c_str());
                 break;
             }
             if (ntries-- < 1)
@@ -346,26 +343,40 @@ static UniValue RPCSubmitSolution(const UniValue &solution, int &nblocks)
 
     const UniValue &result = find_value(reply, "result");
 
-    if (result.isStr())
+    if (result.isNull())
     {
-        fprintf(stderr, "Block Candidate rejected. Error: %s\n", result.get_str().c_str());
-        // Print some debug info if the block is rejected
-        UniValue dbg = solution[0].get_obj();
-        fprintf(stderr, "id: %d  time: %d  nonce: %d  version: 0x%x\n", (unsigned int)dbg["id"].get_int64(),
-            (uint32_t)dbg["time"].get_int64(), (uint32_t)dbg["nonce"].get_int64(), (uint32_t)dbg["version"].get_int());
-        fprintf(stderr, "coinbase: %s\n", dbg["coinbase"].get_str().c_str());
+        printf("Unknown submission error, server gave no result\n");
     }
     else
     {
-        if (result.isNull())
+        const UniValue &errValue = find_value(result, "result");
+
+        const UniValue &hashUV = find_value(result, "hash");
+        std::string hashStr = hashUV.isNull() ? "" : hashUV.get_str();
+
+        const UniValue &heightUV = find_value(result, "height");
+        uint64_t height = heightUV.isNull() ? -1 : heightUV.get_int();
+
+
+        if (errValue.isStr())
         {
-            printf("Block Candidate accepted.\n");
-            if (nblocks > 0)
-                nblocks--; // Processed a block
+            fprintf(stderr, "Block Candidate %s rejected. Error: %s\n", hashStr.c_str(), result.get_str().c_str());
+            // Print some debug info if the block is rejected
+            UniValue dbg = solution[0].get_obj();
+            fprintf(stderr, "id: 0x%x  nonce: %s \n", dbg["id"].get_int(), dbg["nonce"].get_str().c_str());
         }
         else
         {
-            fprintf(stderr, "Unknown \"submitminingsolution\" Error.\n");
+            if (errValue.isNull())
+            {
+                printf("Block Candidate %d:%s accepted.\n", height, hashStr.c_str());
+                if (nblocks > 0)
+                    nblocks--; // Processed a block
+            }
+            else
+            {
+                fprintf(stderr, "Unknown \"submitminingsolution\" Error.\n");
+            }
         }
     }
 
@@ -559,6 +570,7 @@ void static MinerThread()
 
 int main(int argc, char *argv[])
 {
+    Secp256k1Init secp;
     SetupEnvironment();
     if (!SetupNetworking())
     {
@@ -588,6 +600,7 @@ int main(int argc, char *argv[])
 
     int nThreads = GetArg("-cpus", 1);
     boost::thread_group minerThreads;
+    printf("Running on %d CPUs\n", nThreads);
     for (int i = 0; i < nThreads - 1; i++)
         minerThreads.create_thread(MinerThread);
 

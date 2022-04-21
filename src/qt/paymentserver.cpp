@@ -70,7 +70,7 @@ void PaymentServer::freeCertStore()
 //
 static QString ipcServerName()
 {
-    QString name("BitcoinQt");
+    QString name("NexaQt");
 
     // Append a simple hash of the datadir
     // Note that GetDataDir(true) returns a different path

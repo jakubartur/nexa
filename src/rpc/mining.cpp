@@ -619,10 +619,10 @@ UniValue mkblocktemplate(const UniValue &params,
     if (!unsafeGetBlockTemplate.Value())
     {
         if (vNodes.empty())
-            throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "Bitcoin is not connected!");
+            throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "full node is not connected to the larger network!");
 
         if (IsInitialBlockDownload())
-            throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "Bitcoin is downloading blocks...");
+            throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "full node is downloading blocks...");
     }
 
     static unsigned int nTransactionsUpdatedLast;
@@ -923,7 +923,12 @@ UniValue SubmitBlock(ConstCBlockRef pblock)
             return "inconclusive";
         state = sc.state;
     }
-    return BIP22ValidationResult(state);
+    UniValue ret(UniValue::VOBJ);
+    ;
+    ret.pushKV("height", (int64_t)pblock->GetHeight());
+    ret.pushKV("hash", blockhash.GetHex());
+    ret.pushKV("result", BIP22ValidationResult(state));
+    return ret;
 }
 
 UniValue submitblock(const UniValue &params, bool fHelp)
@@ -942,6 +947,8 @@ UniValue submitblock(const UniValue &params, bool fHelp)
                             "be included with submissions\n"
                             "    }\n"
                             "\nResult:\n"
+                            "\ndictionary of 'hash', 'height' and 'result' which is empty if accepted\n"
+                            "and an error string if block was rejected.\n"
                             "\nExamples:\n" +
                             HelpExampleCli("submitblock", "\"mydata\"") + HelpExampleRpc("submitblock", "\"mydata\""));
 
