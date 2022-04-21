@@ -37,7 +37,7 @@ if "%BUILD_32_BIT%" NEQ "" (
 	REM The way the toolchain is installed, the \mingw32 subdirectory will always be created
 	set "TOOLCHAIN_BIN=%TOOL_CHAIN_ROOT%\mingw32\bin"
 	set "PATH_DEPS=%DEPS_ROOT%\x86"
-	set "BUILD_OUTPUT=%BITCOIN_GIT_ROOT%\build-output\x86"
+	set "BUILD_OUTPUT=%NEXA_GIT_ROOT%\build-output\x86"
 	
 	GOTO BUILD_START
 )
@@ -51,7 +51,7 @@ if "%BUILD_64_BIT%" NEQ "" (
 	REM The way the toolchain is installed, the \mingw64 subdirectory will always be created
 	set "TOOLCHAIN_BIN=%TOOL_CHAIN_ROOT%\mingw64\bin"
 	set "PATH_DEPS=%DEPS_ROOT%\x64"
-	set "BUILD_OUTPUT=%BITCOIN_GIT_ROOT%\build-output\x64"
+	set "BUILD_OUTPUT=%NEXA_GIT_ROOT%\build-output\x64"
 	
 	set HAS_BUILT_64_BIT=TRUE
 	
@@ -62,14 +62,14 @@ if "%BUILD_64_BIT%" NEQ "" (
 REM Set the path variable to contain the toolchain as well as MSYS bin directories
 set "PATH=%TOOLCHAIN_BIN%;%OLD_PATH%"
 
-%MSYS_SH% "%INST_DIR%\clean-bitcoin.sh"
+%MSYS_SH% "%INST_DIR%\clean-nexa.sh"
 
 REM Remove previously built executable outputs that were copied to non-standard location
-del /F /Q "%BUILD_OUTPUT%\bitcoin-tx.exe"
-del /F /Q "%BUILD_OUTPUT%\bitcoin-cli.exe"
-del /F /Q "%BUILD_OUTPUT%\bitcoind.exe"
-del /F /Q "%BUILD_OUTPUT%\bitcoin-miner.exe"
-del /F /Q "%BUILD_OUTPUT%\bitcoin-qt.exe"
+del /F /Q "%BUILD_OUTPUT%\nexa-tx.exe"
+del /F /Q "%BUILD_OUTPUT%\nexa-cli.exe"
+del /F /Q "%BUILD_OUTPUT%\nexad.exe"
+del /F /Q "%BUILD_OUTPUT%\nexa-miner.exe"
+del /F /Q "%BUILD_OUTPUT%\nexa-qt.exe"
 
 REM Go to the 64-bit build section (in case we are building both 32 and 64 bit)
 GOTO BUILD_START_64

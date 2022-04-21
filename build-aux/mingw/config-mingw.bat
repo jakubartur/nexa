@@ -40,7 +40,7 @@ if "%BUILD_32_BIT%" NEQ "" set BUILD_ARCH=T
 if "%BUILD_64_BIT%" NEQ "" set BUILD_ARCH=T
 if "%BUILD_ARCH%" NEQ "T" (
 	echo You must specify building at least one of 32-bit or 64-bit version
-	echo of the Bitcoin client in SET_ENV_VARS.bat.
+	echo of the Nexa client in SET_ENV_VARS.bat.
 	echo Aborting initial configuration...
 	pause
 	exit /b -1
@@ -69,7 +69,7 @@ if not exist %CMD_7ZIP% (
 
 REM Verify that DEPS_ROOT is specified and exists
 if "%DEPS_ROOT%" EQU "" (
-	echo You must specify a valid path to install Bitcoin client dependencies in
+	echo You must specify a valid path to install Nexa client dependencies in
 	echo the SET_ENV_VARS.bat file.
 	echo Current DEPS_ROOT = %DEPS_ROOT%
 	echo Aborting initial configuration...
@@ -134,7 +134,7 @@ if "%BUILD_32_BIT%" NEQ "" (
 	REM The way the toolchain is installed, the \mingw32 subdirectory will always be created
 	set "TOOLCHAIN_BIN=%TOOL_CHAIN_ROOT%\mingw32\bin"
 	set "PATH_DEPS=%DEPS_ROOT%\x86"
-	set "BUILD_OUTPUT=%BITCOIN_GIT_ROOT%\build-output\x86"
+	set "BUILD_OUTPUT=%NEXA_GIT_ROOT%\build-output\x86"
 	REM For 32-bit builds Boost 1.68 errors if we don't limit address model to 32
 	set "BOOST_BITS=address-model=32"
 	
@@ -150,7 +150,7 @@ if "%BUILD_64_BIT%" NEQ "" (
 	REM The way the toolchain is installed, the \mingw64 subdirectory will always be created
 	set "TOOLCHAIN_BIN=%TOOL_CHAIN_ROOT%\mingw64\bin"
 	set "PATH_DEPS=%DEPS_ROOT%\x64"
-	set "BUILD_OUTPUT=%BITCOIN_GIT_ROOT%\build-output\x64"
+	set "BUILD_OUTPUT=%NEXA_GIT_ROOT%\build-output\x64"
 	REM For 64-bit builds Boost 1.68 is fine with default address model settings
 	set "BOOST_BITS=address-model=64"
 	
@@ -172,7 +172,7 @@ if not exist "%TOOLCHAIN_BIN%\gcc.exe" (
 
 REM Install dependencies (and build this arch)
 %MSYS_SH% "%INST_DIR%\install-deps.sh"
-REM Check to see if make-bitcoin.sh failed (possibly due to missing dependencies)
+REM Check to see if make-nexa.sh failed (possibly due to missing dependencies)
 if %errorlevel% neq 0 (
 	REM Assume that whatever caused the error also wrote an output so we
 	REM don't need to write an output here
@@ -262,11 +262,11 @@ if %errorlevel% neq 0 (
 
 endlocal
 REM ##################################################################################################
-REM Time to build Bitcoin
+REM Time to build Nexa
 REM ##################################################################################################
-echo Building bitcoin...
-%MSYS_SH% "%INST_DIR%\make-bitcoin.sh"
-REM Check to see if make-bitcoin.sh failed (possibly due to missing dependencies)
+echo Building nexa...
+%MSYS_SH% "%INST_DIR%\make-nexa.sh"
+REM Check to see if make-nexa.sh failed (possibly due to missing dependencies)
 if %errorlevel% neq 0 (
 	REM Assume that whatever caused the error also wrote an output so we
 	REM don't need to write an output here
@@ -274,20 +274,20 @@ if %errorlevel% neq 0 (
 	exit /b %errorlevel%
 )
 
-echo Saving bitcoin executables to %BUILD_OUTPUT%
+echo Saving nexa executables to %BUILD_OUTPUT%
 REM Make sure output directory exists
 mkdir "%BUILD_OUTPUT%\"
 
-REM cd to src to copy bitcoin-tx.exe, bitcoin-cli.exe, and bitcoind.exe
-cd "%BITCOIN_GIT_ROOT%\src"
-copy bitcoin-tx.exe "%BUILD_OUTPUT%\bitcoin-tx.exe"
-copy bitcoin-cli.exe "%BUILD_OUTPUT%\bitcoin-cli.exe"
-copy bitcoind.exe "%BUILD_OUTPUT%\bitcoind.exe"
-copy bitcoin-miner.exe "%BUILD_OUTPUT%\bitcoin-miner.exe"
+REM cd to src to copy nexa-tx.exe, nexa-cli.exe, and nexad.exe
+cd "%NEXA_GIT_ROOT%\src"
+copy nexa-tx.exe "%BUILD_OUTPUT%\nexa-tx.exe"
+copy nexa-cli.exe "%BUILD_OUTPUT%\nexa-cli.exe"
+copy nexad.exe "%BUILD_OUTPUT%\nexad.exe"
+copy nexa-miner.exe "%BUILD_OUTPUT%\nexa-miner.exe"
 
-REM cd to src\qt to copy bitcoin-qt.exe
+REM cd to src\qt to copy nexa-qt.exe
 cd qt
-copy bitcoin-qt.exe "%BUILD_OUTPUT%\bitcoin-qt.exe"
+copy nexa-qt.exe "%BUILD_OUTPUT%\nexa-qt.exe"
 
 REM Go to the 64-bit build section (in case we are building both 32 and 64 bit)
 GOTO BUILD_START_64
