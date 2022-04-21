@@ -431,10 +431,7 @@ enum
     // make xthin requests
     NODE_XTHIN = (1 << 4),
 
-    // NODE_BITCOIN_CASH means the node supports the BCH chain.  This is intended to be just
-    // a temporary service bit until the fork actually happens.  Once the split between BTC
-    // and BCH chain is stable it can be removed.
-    NODE_BITCOIN_CASH = (1 << 5),
+    // 1<<5 was taken by NODE_BITCOIN_CASH which is not used anymore
 
     // NODE_GRAPHENE means the node supports Graphene blocks
     // If this is turned off then the node will not service graphene requests nor

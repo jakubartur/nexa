@@ -273,24 +273,13 @@ class NodeConn(asyncore.dispatcher):
         b"capdinfo": msg_capdinfo
     }, bumessagemap)
 
-    BTC_MAGIC_BYTES = {
-        "mainnet": b"\xf9\xbe\xb4\xd9",   # mainnet
-        "testnet3": b"\x0b\x11\x09\x07",  # testnet3
-        "regtest": b"\xfa\xbf\xb5\xda"    # regtest
+    MAGIC_BYTES = {
+        "nexa": b"\x72\x27\x12\x21",   # mainnet
+        "testnet3": b"\x72\x27\x12\x22",  # testnet3
+        "regtest": b"\xea\xe5\xef\xea"    # regtest
         }
 
-    CASH_MAGIC_BYTES = {
-        "mainnet": b"\xe3\xe1\xf3\xe8",
-        "testnet3": b"\xf4\xe5\xf3\xf4",
-        "regtest": b"\xda\xb5\xbf\xfa",
-    }
-
-    def __init__(self, dstaddr, dstport, rpc, callback, net="regtest", services=1, bitcoinCash=True, send_initial_version = True, extversion_service = False):
-        self.bitcoinCash = bitcoinCash
-        if self.bitcoinCash:
-            self.MAGIC_BYTES = self.CASH_MAGIC_BYTES
-        else:
-            self.MAGIC_BYTES = self.BTC_MAGIC_BYTES
+    def __init__(self, dstaddr, dstport, rpc, callback, net="regtest", services=1, send_initial_version = True, extversion_service = False):
         asyncore.dispatcher.__init__(self, map=mininode_socket_map)
         self.log = logging.getLogger("NodeConn(%s:%d)" % (dstaddr, dstport))
         self.dstaddr = dstaddr
@@ -399,7 +388,7 @@ class NodeConn(asyncore.dispatcher):
                 self.recvBufLen = nowLen
                 if nowLen < 4:
                     return
-                if (self.recvbuf[:4] != self.MAGIC_BYTES[self.network]) and (self.recvbuf[:4] != self.BTC_MAGIC_BYTES[self.network]):
+                if (self.recvbuf[:4] != self.MAGIC_BYTES[self.network]):
                     raise ValueError("got garbage %s" % repr(self.recvbuf))
                 if self.ver_recv < 209:
                     if len(self.recvbuf) < 4 + 12 + 4:

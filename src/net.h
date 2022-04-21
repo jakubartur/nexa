@@ -643,7 +643,7 @@ public:
             netOverride[3] = (netMagic.Value() >> 24) & 255;
             return netOverride;
         }
-        return params.CashMessageStart();
+        return params.MessageStart();
     }
 
     CNode *AddRef()
