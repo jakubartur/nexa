@@ -19,7 +19,6 @@ REQ_BLOCK = 8
 # Node services fields
 NODE_NETWORK = (1 << 0)
 NODE_EXTVERSION = (1 << 11)
-NODE_BITCOIN_CASH =  (1 << 5)
 
 class BUProtocolHandler(NodeConnCB):
     def __init__(self, extversion=None):
@@ -312,7 +311,7 @@ class BasicBUCashNode():
     def connect(self, id, ip, port, rpc=None, protohandler=None, send_initial_version = True, extversion_service = True):
         if not protohandler:
             protohandler = BUProtocolHandler()
-        conn = NodeConn(ip, port, rpc, protohandler, services=NODE_NETWORK | NODE_EXTVERSION | NODE_BITCOIN_CASH, bitcoinCash=True, send_initial_version = send_initial_version, extversion_service = extversion_service)
+        conn = NodeConn(ip, port, rpc, protohandler, services=NODE_NETWORK | NODE_EXTVERSION, send_initial_version = send_initial_version, extversion_service = extversion_service)
         protohandler.add_connection(conn)
         protohandler.add_parent(self)
         self.cnxns[id] = protohandler
@@ -340,7 +339,7 @@ class BasicBUNode:
     def connect(self, id, ip, port, rpc=None, protohandler=None):
         if not protohandler:
             protohandler = BUProtocolHandler()
-        conn = NodeConn(ip, port, rpc, protohandler, bitcoinCash = False)
+        conn = NodeConn(ip, port, rpc, protohandler)
         protohandler.add_connection(conn)
         protohandler.add_parent(self)
         self.cnxns[id] = protohandler

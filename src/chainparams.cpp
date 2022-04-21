@@ -217,6 +217,7 @@ class CLegacyParams : public CChainParams
 public:
     CLegacyParams()
     {
+        // this network is going to be deleted soon, still here to get some unit tests passing
         strNetworkID = "main"; // Do not use the const string because of ctor execution order issues
         consensus.nSubsidyHalvingInterval = 210000;
         // 00000000000000ce80a7e057163a4db1d5ad7b20fb6f598c9597b9665c8fb0d4 - April 1, 2012
@@ -256,10 +257,10 @@ public:
         pchMessageStart[1] = 0xbe;
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0xd9;
-        pchCashMessageStart[0] = 0xe3;
-        pchCashMessageStart[1] = 0xe1;
-        pchCashMessageStart[2] = 0xf3;
-        pchCashMessageStart[3] = 0xe8;
+        // pchCashMessageStart[0] = 0xe3;
+        // pchCashMessageStart[1] = 0xe1;
+        // pchCashMessageStart[2] = 0xf3;
+        // pchCashMessageStart[3] = 0xe8;
         nDefaultPort = DEFAULT_MAINNET_PORT;
         nPruneAfterHeight = 100000;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
@@ -350,14 +351,10 @@ public:
 
         consensus.nextForkActivationTime = NEXT_FORK_ACTIVATION_TIME;
 
-        pchMessageStart[0] = 0xfa;
-        pchMessageStart[1] = 0xbf;
-        pchMessageStart[2] = 0xb5;
-        pchMessageStart[3] = 0xda;
-        pchCashMessageStart[0] = 0xda;
-        pchCashMessageStart[1] = 0xb5;
-        pchCashMessageStart[2] = 0xbf;
-        pchCashMessageStart[3] = 0xfa;
+        pchMessageStart[0] = 0xea;
+        pchMessageStart[1] = 0xe5;
+        pchMessageStart[2] = 0xef;
+        pchMessageStart[3] = 0xea;
         nDefaultPort = DEFAULT_REGTESTNET_PORT;
         nPruneAfterHeight = 1000;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW_REGTEST;
@@ -453,14 +450,10 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0xf9;
-        pchMessageStart[1] = 0xbe;
-        pchMessageStart[2] = 0xb4;
-        pchMessageStart[3] = 0xd9;
-        pchCashMessageStart[0] = 0x72;
-        pchCashMessageStart[1] = 0x27;
-        pchCashMessageStart[2] = 0x12;
-        pchCashMessageStart[3] = 0x22;
+        pchMessageStart[0] = 0x72;
+        pchMessageStart[1] = 0x27;
+        pchMessageStart[2] = 0x12;
+        pchMessageStart[3] = 0x22;
         nDefaultPort = 7230;
         nPruneAfterHeight = 100000;
 
@@ -549,14 +542,10 @@ public:
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce
          * a large 32-bit integer with any alignment.
          */
-        pchMessageStart[0] = 0xf9;
-        pchMessageStart[1] = 0xbe;
-        pchMessageStart[2] = 0xb4;
-        pchMessageStart[3] = 0xd9;
-        pchCashMessageStart[0] = 0x72;
-        pchCashMessageStart[1] = 0x27;
-        pchCashMessageStart[2] = 0x12;
-        pchCashMessageStart[3] = 0x21;
+        pchMessageStart[0] = 0x72;
+        pchMessageStart[1] = 0x27;
+        pchMessageStart[2] = 0x12;
+        pchMessageStart[3] = 0x21;
         nDefaultPort = 7228;
         nPruneAfterHeight = 100000;
 

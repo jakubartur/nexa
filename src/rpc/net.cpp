@@ -48,8 +48,6 @@ UniValue GetServicesNames(uint64_t services)
         servicesNames.push_back("WITNESS");
     if (services & NODE_XTHIN)
         servicesNames.push_back("XTHIN");
-    if (services & NODE_BITCOIN_CASH)
-        servicesNames.push_back("CASH");
     if (services & NODE_GRAPHENE)
         servicesNames.push_back("GRAPHENE");
     if (services & NODE_WEAKBLOCKS)
