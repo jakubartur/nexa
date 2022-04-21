@@ -798,9 +798,9 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
         if (chain == CBaseChainParams::NEXTCHAIN)
-            optionFile << "Name=Bitcoin\n";
+            optionFile << "Name=Nexa\n";
         else
-            optionFile << strprintf("Name=Bitcoin (%s)\n", chain);
+            optionFile << strprintf("Name=Nexa (%s)\n", chain);
         optionFile << "Exec=" << pszExePath
                    << strprintf(" -min -testnet=%d -regtest=%d\n", GetBoolArg("-testnet", false),
                           GetBoolArg("-regtest", false));

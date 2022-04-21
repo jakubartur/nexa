@@ -410,7 +410,7 @@ public:
         strNetworkID = "testnet"; // Do not use the const string because of ctor execution order issues
 
         consensus.nSubsidyHalvingInterval = 210000 * 5; // 2 minute blocks rather than 10 min -> * 5
-        uint32_t tgtBits = 0x200fffff;
+        uint32_t tgtBits = 0x1e0fffff;
         bool fNegative;
         bool fOverflow;
         arith_uint256 tmp;
@@ -430,10 +430,11 @@ public:
 
         std::vector<unsigned char> nonce;
         std::vector<unsigned char> hardCodedNonce;
-        nonce = hardCodedNonce = ParseHex("30000000");
-        genesis = CreateGenesisBlock("this is testnet", CScript() << OP_1, 1630437560, nonce, tgtBits, 0 * COIN);
+        nonce = hardCodedNonce = ParseHex("132a25");
+        genesis = CreateGenesisBlock("this is nexa testnet", CScript() << OP_1, 1649953806, nonce, tgtBits, 0 * COIN);
+#if 0 // recalculate GB if needed
         ECC_Start();
-        bool worked = MineIt(genesis, 1000000, consensus);
+        bool worked = MineIt(genesis, 1<<23, consensus);
         assert(worked);
         ECC_Stop();
         consensus.hashGenesisBlock = genesis.GetHash();
@@ -442,12 +443,11 @@ public:
             printf("testnet nonce changed:  hex:%s\n", HexStr(genesis.nonce).c_str());
             printf("testnet GB hash %s\n", consensus.hashGenesisBlock.GetHex().c_str());
         }
-
-        // TODO confirm GB hash
-        // assert(
-        //    consensus.hashGenesisBlock ==
-        //    uint256S("a73e8992af2a3b498c5114a6144b03bc41de938b39643fd82030f9721c0f8f1e"));
-
+#else // check GB is what is expected
+        consensus.hashGenesisBlock = genesis.GetHash();
+        assert(
+            consensus.hashGenesisBlock == uint256S("508c843a4b98fb25f57cf9ebafb245a5c16468f06519cdd467059a91e7b79d52"));
+#endif
         /**
          * The message start string is designed to be unlikely to occur in normal data.
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce

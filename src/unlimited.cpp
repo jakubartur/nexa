@@ -440,7 +440,7 @@ extern UniValue getminercomment(const UniValue &params, bool fHelp)
     if (fHelp || params.size() != 0)
         throw runtime_error("getminercomment\n"
                             "\nReturn the comment that will be put into each mined block's coinbase\n transaction "
-                            "after the BCH Unlimited parameters."
+                            "after the standard parameters."
                             "\nResult\n"
                             "  minerComment (string) miner comment\n"
                             "\nExamples:\n" +
@@ -454,10 +454,10 @@ extern UniValue setminercomment(const UniValue &params, bool fHelp)
     if (fHelp || params.size() != 1)
         throw runtime_error("setminercomment\n"
                             "\nSet the comment that will be put into each mined block's coinbase\n transaction after "
-                            "the BCH Unlimited parameters.\n Comments that are too long will be truncated."
+                            "the standard parameters.\n Comments that are too long will be truncated."
                             "\nExamples:\n" +
-                            HelpExampleCli("setminercomment", "\"bitcoin is fundamentally emergent consensus\"") +
-                            HelpExampleRpc("setminercomment", "\"bitcoin is fundamentally emergent consensus\""));
+                            HelpExampleCli("setminercomment", "\"nakamoto consensus is emergent\"") +
+                            HelpExampleRpc("setminercomment", "\"nakamoto consensus is emergent\""));
 
     minerComment = params[0].getValStr();
     return NullUniValue;
@@ -1038,20 +1038,16 @@ static void RmOldMiningCandidates()
     LOCK(csMiningCandidates);
     unsigned int height = GetBlockchainHeight();
 
-    int64_t tdiff = GetTime() - (chainActive.Tip()->time() + minMiningCandidateInterval.Value());
-    if (tdiff >= 0)
+    // Clean out mining candidates that are the same height as a discovered block.
+    for (auto it = miningCandidatesMap.cbegin(); it != miningCandidatesMap.cend();)
     {
-        // Clean out mining candidates that are the same height as a discovered block.
-        for (auto it = miningCandidatesMap.cbegin(); it != miningCandidatesMap.cend();)
+        if ((it->second.block == nullptr) || (it->second.block->GetHeight() <= height))
         {
-            if ((it->second.block == nullptr) || (it->second.block->GetHeight() <= height))
-            {
-                it = miningCandidatesMap.erase(it);
-            }
-            else
-            {
-                ++it;
-            }
+            it = miningCandidatesMap.erase(it);
+        }
+        else
+        {
+            ++it;
         }
     }
 
@@ -1123,6 +1119,7 @@ static UniValue MkMiningCandidateJson(CMiningCandidate &candid)
 
     ret.pushKV("id", candid.id);
     ret.pushKV("headerCommitment", block.GetMiningHeaderCommitment().GetHex());
+    ret.pushKV("nBits", strprintf("%08x", block.nBits));
 
 #if 0 // Merkle path is no longer needed for mining.  Mining pool should provide us with its output script and we'll
       // make the coinbase tx.  However, leave this code for demonstration purposes.
@@ -1133,7 +1130,6 @@ static UniValue MkMiningCandidateJson(CMiningCandidate &candid)
         ret.pushKV("coinbase", EncodeHexTx(*tran));
     }
 
-    ret.pushKV("nBits", strprintf("%08x", block.nBits));
     ret.pushKV("time", block.GetBlockTime());
 
     // merkleProof:
@@ -1269,7 +1265,8 @@ UniValue submitminingsolution(const UniValue &params, bool fHelp)
             "\nArguments\n"
             "1. \"submitminingsolutiondata\"    (string, required) the mining solution (JSON encoded) data to submit\n"
             "\nResult:\n"
-            "\nNothing on success, error string if block was rejected.\n"
+            "\ndictionary of 'hash', 'height' and 'result' which is empty if accepted\n"
+            "and an error string if block was rejected.\n"
             "Identical to \"submitblock\".\n"
             "\nExamples:\n" +
             HelpExampleRpc("submitminingsolution", "\"mydata\""));
@@ -1288,7 +1285,7 @@ UniValue submitminingsolution(const UniValue &params, bool fHelp)
         }
         else
         {
-            return UniValue("id not found");
+            return UniValue("id not found (stale candidate)");
         }
     }
 
@@ -1303,40 +1300,6 @@ UniValue submitminingsolution(const UniValue &params, bool fHelp)
     {
         throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "nonce too large");
     }
-
-#if 0 // no longer needed
-    UniValue time = rcvd["time"];
-    if (!time.isNull())
-    {
-        block->header.time = (uint32_t)time.get_int64();
-    }
-
-    UniValue version = rcvd["version"];
-    if (!version.isNull())
-    {
-        block->nVersion = version.get_int(); // version signed 32 bit int
-    }
-
-    // Coinbase:
-    CTransaction coinbase;
-    UniValue cbhex = rcvd["coinbase"];
-    if (!cbhex.isNull())
-    {
-        if (DecodeHexTx(coinbase, cbhex.get_str()))
-            block->vtx[0] = MakeTransactionRef(std::move(coinbase));
-        else
-        {
-            throw JSONRPCError(RPC_DESERIALIZATION_ERROR, "coinbase decode failed");
-        }
-    }
-
-    // MerkleRoot:
-    {
-        std::vector<uint256> merkleProof = GetMerkleProofBranches(block.get());
-        uint256 t = block->vtx[0]->GetHash();
-        block->hashMerkleRoot = CalculateMerkleRoot(t, merkleProof);
-    }
-#endif
 
     UniValue uvsub = SubmitBlock(block); // returns string on failure
     RmOldMiningCandidates();
@@ -1835,7 +1798,7 @@ void dbgDumpStack(const Stack &stack)
                 printf("%u (top%d) Num: %ld Hex: %s Script: %s\n", i, (int)i - (int)sz, itemAsInt.getint64(),
                     item.hex().c_str(), ScriptToAsmStr(CScript(item), false).c_str());
             }
-            catch (scriptnum_error)
+            catch (scriptnum_error const &)
             {
                 printf("%u (top%d) Num: NaN Hex: %s Script: %s\n", i, (int)i - (int)sz, item.hex().c_str(),
                     ScriptToAsmStr(CScript(item), false).c_str());

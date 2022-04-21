@@ -59,7 +59,7 @@ class MiningTest (BitcoinTestFramework):
         c["id"] = 100000  # bad ID
         c["nonce"] = "00"
         ret = node.submitminingsolution(c)
-        assert ret == "id not found"
+        assert "id not found" in ret
 
         # didn't provide a nonce
         f = node.getminingcandidate()
@@ -85,7 +85,7 @@ class MiningTest (BitcoinTestFramework):
             del c["headerCommitment"]
             c["nonce"] = struct.pack("<i", nonce).hex()
             ret = node.submitminingsolution(c)
-            if ret is None:
+            if ret["result"] == None:  # block found
                 break
 
         assert_equal(101, node.getblockcount())
