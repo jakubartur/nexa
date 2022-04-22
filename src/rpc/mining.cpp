@@ -731,7 +731,7 @@ UniValue mkblocktemplate(const UniValue &params,
             // Everything checks out, proceed with the wallet-generated address. Note that we don't tell the wallet to
             // "KeepKey" this address -- which means future calls will return the same address from the wallet for
             // future mining candidates, which is fine and good (since these are, after all, mining *candidates*).
-            // This also means that the bitcoin-miner program will continue to mine to the same key for all blocks,
+            // This also means that the nexa-miner program will continue to mine to the same key for all blocks,
             // which is fine. If client code wants something more sophisticated, it can always specify coinbaseScript.
             coinbaseScript = tmpScriptPtr->reserveScript;
         }
