@@ -9,6 +9,10 @@ src/bitcoin-miner
 src/test/test_bitcoin
 src/test/test_bitcoin_fuzzy
 src/qt/test/test_bitcoin-qt
+src/nexad
+src/nexa-cli
+src/nexa-tx
+src/nexa-miner
 
 # autoreconf
 Makefile.in
@@ -84,10 +88,13 @@ Makefile.am.user
 Makefile
 bitcoin-qt
 Bitcoin-Qt.app
+nexa-qt
+Nexa-Qt.app
 
 # Unit-tests
 Makefile.test
 bitcoin-qt_test
+nexa-qt_test
 src/test/buildenv.py
 script_tests.json.gen
 
@@ -134,3 +141,4 @@ libnexaconsensus.pc
 # Visual Studio 2015/2017/2019 cache/options directory
 .vs/
 src/.vs/
+
