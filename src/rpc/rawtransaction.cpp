@@ -251,7 +251,7 @@ UniValue getrawtransaction(const UniValue &params, bool fHelp)
             "         \"reqSigs\" : n,            (numeric) The required sigs\n"
             "         \"type\" : \"pubkeyhash\",  (string) The type, eg 'pubkeyhash'\n"
             "         \"addresses\" : [           (json array of string)\n"
-            "           \"bitcoinaddress\"        (string) bitcoin address\n"
+            "           \"nexaaddress\"           (string) nexa address\n"
             "           ,...\n"
             "         ]\n"
             "       }\n"
@@ -417,7 +417,7 @@ UniValue getrawblocktransactions(const UniValue &params, bool fHelp)
             "           \"reqSigs\" : n,            (numeric) The required sigs\n"
             "           \"type\" : \"pubkeyhash\",  (string) The type, eg 'pubkeyhash'\n"
             "           \"addresses\" : [           (json array of string)\n"
-            "             \"bitcoinaddress\"        (string) bitcoin address\n"
+            "             \"nexaaddress\"           (string) nexa address\n"
             "             ,...\n"
             "           ]\n"
             "         }\n"
@@ -571,7 +571,7 @@ UniValue getrawtransactionssince(const UniValue &params, bool fHelp)
             "             \"reqSigs\" : n,            (numeric) The required sigs\n"
             "             \"type\" : \"pubkeyhash\",  (string) The type, eg 'pubkeyhash'\n"
             "             \"addresses\" : [           (json array of string)\n"
-            "               \"bitcoinaddress\"        (string) bitcoin address\n"
+            "               \"nexaaddress\"           (string) nexa address\n"
             "               ,...\n"
             "             ]\n"
             "           }\n"
@@ -924,7 +924,7 @@ UniValue createrawtransaction(const UniValue &params, bool fHelp)
             "     ]\n"
             "2. \"outputs\"             (string, required) a json object with outputs\n"
             "    {\n"
-            "      \"address\": x.xxx   (numeric or string, required) The key is the bitcoin address, the numeric "
+            "      \"address\": x.xxx   (numeric or string, required) The key is the nexa address, the numeric "
             "value (can be string) is the " +
             CURRENCY_UNIT +
             " amount\n"
@@ -1026,7 +1026,7 @@ UniValue createrawtransaction(const UniValue &params, bool fHelp)
             CTxDestination destination = DecodeDestination(name_);
             if (!IsValidDestination(destination))
             {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Bitcoin address: ") + name_);
+                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, std::string("Invalid Nexa address: ") + name_);
             }
 
             if (!destinations.insert(destination).second)
@@ -1086,7 +1086,7 @@ UniValue decoderawtransaction(const UniValue &params, bool fHelp)
                             "         \"reqSigs\" : n,            (numeric) The required sigs\n"
                             "         \"type\" : \"pubkeyhash\",  (string) The type, eg 'pubkeyhash'\n"
                             "         \"addresses\" : [           (json array of string)\n"
-                            "           \"12tvKAXCxZjSmdNbao16dKXC8tRWfcF5oc\"   (string) bitcoin address\n"
+                            "           \"12tvKAXCxZjSmdNbao16dKXC8tRWfcF5oc\"   (string) nexa address\n"
                             "           ,...\n"
                             "         ]\n"
                             "       }\n"
@@ -1127,7 +1127,7 @@ UniValue decodescript(const UniValue &params, bool fHelp)
                             "  \"type\":\"type\", (string) The output type\n"
                             "  \"reqSigs\": n,    (numeric) The required signatures\n"
                             "  \"addresses\": [   (json array of string)\n"
-                            "     \"address\"     (string) bitcoin address\n"
+                            "     \"address\"     (string) nexa address\n"
                             "     ,...\n"
                             "  ],\n"
                             "  \"p2sh\",\"address\" (string) script address\n"

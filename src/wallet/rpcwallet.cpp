@@ -681,7 +681,7 @@ UniValue signdata(const UniValue &params, bool fHelp)
         if (strMessage.size() != 2 * sizeof(uint256))
             throw JSONRPCError(RPC_TYPE_ERROR, "Message is not a hex hash");
         hash.SetHex(strMessage);
-        // bitcoind reads hashes backwards.  By reversing here, we ensure that
+        // nexad reads hashes backwards.  By reversing here, we ensure that
         // signdata(addr, "string", "foo") == signdata(addr, "hash", normalSHA256("foo"))
         hash.reverse();
     }

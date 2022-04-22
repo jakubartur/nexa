@@ -110,10 +110,10 @@ UniValue importprivkey(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 1 || params.size() > 3)
         throw runtime_error(
-            "importprivkey \"bitcoinprivkey\" ( \"label\" rescan )\n"
+            "importprivkey \"nexaprivkey\" ( \"label\" rescan )\n"
             "\nAdds a private key (as returned by dumpprivkey) to your wallet.\n"
             "\nArguments:\n"
-            "1. \"bitcoinprivkey\"   (string, required) The private key (see dumpprivkey)\n"
+            "1. \"nexaprivkey\"   (string, required) The private key (see dumpprivkey)\n"
             "2. \"label\"            (string, optional, default=\"\") An optional label\n"
             "3. rescan               (boolean, optional, default=true) Scan the blockchain for transactions\n"
             "\nNote: This call can take hours to complete if rescan is true.  To import multiple private keys\n"
@@ -190,11 +190,11 @@ UniValue importprivatekeys(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 1)
         throw runtime_error(
-            "importprivatekeys [rescan | no-rescan] \"bitcoinprivatekey\"...\n"
+            "importprivatekeys [rescan | no-rescan] \"nexaprivatekey\"...\n"
             "\nAdds private keys (as returned by dumpprivkey) to your wallet.\n"
             "\nArguments:\n"
             "1. \"rescan | no-rescan\" (string, optional default rescan) If \"no-rescan\", skip wallet rescan\n"
-            "2. \"bitcoinprivatekey\"   (string, at least 1 required) The private keys (see dumpprivkey)\n"
+            "2. \"nexaprivatekey\"   (string, at least 1 required) The private keys (see dumpprivkey)\n"
             "\nNote: This command will return before the rescan (may take hours) is complete.\n"
             "\nExamples:\n"
             "\nDump a private key\n" +
@@ -364,7 +364,7 @@ UniValue importaddress(const UniValue &params, bool fHelp)
     }
     else
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address or script");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Nexa address or script");
     }
 
     if (fRescanLocal)
@@ -437,7 +437,7 @@ UniValue importaddresses(const UniValue &params, bool fHelp)
         }
         else
         {
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address or script");
+            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Nexa address or script");
         }
     }
 
@@ -734,11 +734,11 @@ UniValue dumpprivkey(const UniValue &params, bool fHelp)
         return NullUniValue;
 
     if (fHelp || params.size() != 1)
-        throw runtime_error("dumpprivkey \"bitcoinaddress\"\n"
-                            "\nReveals the private key corresponding to 'bitcoinaddress'.\n"
+        throw runtime_error("dumpprivkey \"nexaaddress\"\n"
+                            "\nReveals the private key corresponding to 'nexaaddress'.\n"
                             "Then the importprivkey can be used with this output\n"
                             "\nArguments:\n"
-                            "1. \"bitcoinaddress\"   (string, required) The bitcoin address for the private key\n"
+                            "1. \"nexaaddress\"   (string, required) The nexa address for the private key\n"
                             "\nResult:\n"
                             "\"key\"                (string) The private key\n"
                             "\nExamples:\n" +
@@ -754,7 +754,7 @@ UniValue dumpprivkey(const UniValue &params, bool fHelp)
     CTxDestination dest = DecodeDestination(strAddress);
     if (!IsValidDestination(dest))
     {
-        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Bitcoin address");
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid Nexa address");
     }
     CKey vchSecret;
     if (!pwalletMain->GetKey(dest, vchSecret))
@@ -774,7 +774,7 @@ UniValue dumpwallet(const UniValue &params, bool fHelp)
             "\nDumps all wallet keys in a human-readable format to a server-side file. This does not allow overwriting "
             "existing files.\n"
             "\nArguments:\n"
-            "1. \"filename\"    (string, required) The filename with path (either absolute or relative to bitcoind)\n"
+            "1. \"filename\"    (string, required) The filename with path (either absolute or relative to nexad)\n"
             "\nResult:\n"
             "{                           (json object)\n"
             "  \"filename\" : {        (string) The filename with full absolute path\n"
@@ -820,7 +820,7 @@ UniValue dumpwallet(const UniValue &params, bool fHelp)
     std::sort(vKeyBirth.begin(), vKeyBirth.end());
 
     // produce output
-    file << strprintf("# Wallet dump created by Bitcoin %s (%s)\n", CLIENT_BUILD, CLIENT_DATE);
+    file << strprintf("# Wallet dump created by Nexa %s (%s)\n", CLIENT_BUILD, CLIENT_DATE);
     file << strprintf("# * Created on %s\n", EncodeDumpTime(GetTime()));
     file << strprintf("# * Best block at time of backup was %i (%s),\n", chainActive.Height(),
         chainActive.Tip()->GetBlockHash().ToString());
