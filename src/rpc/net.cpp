@@ -44,8 +44,6 @@ UniValue GetServicesNames(uint64_t services)
         servicesNames.push_back("GETUTXO");
     if (services & NODE_BLOOM)
         servicesNames.push_back("BLOOM");
-    if (services & NODE_WITNESS)
-        servicesNames.push_back("WITNESS");
     if (services & NODE_XTHIN)
         servicesNames.push_back("XTHIN");
     if (services & NODE_GRAPHENE)
