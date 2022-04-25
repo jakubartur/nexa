@@ -14,9 +14,6 @@
 #include "script/standard.h"
 #include "sync.h"
 
-#include <boost/signals2/signal.hpp>
-#include <boost/variant.hpp>
-
 class BaseSignatureCreator;
 
 /** A virtual base class defining how to spend some output.
@@ -74,7 +71,7 @@ public:
     virtual bool HaveWatchOnly(const CScript &dest) const = 0;
     virtual bool HaveWatchOnly() const = 0;
 
-    class CheckTxDestination : public boost::static_visitor<bool>
+    class CheckTxDestination
     {
         const CKeyStore *keystore;
 
@@ -90,10 +87,7 @@ public:
         }
     };
 
-    virtual bool HaveTxDestination(const CTxDestination &addr)
-    {
-        return boost::apply_visitor(CheckTxDestination(this), addr);
-    }
+    virtual bool HaveTxDestination(const CTxDestination &addr) { return std::visit(CheckTxDestination(this), addr); }
 };
 
 /** How to spend any pay-to-public-key-template output */

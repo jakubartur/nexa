@@ -4,24 +4,24 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "bandb.h"
+#include "fs.h"
 #include "test/test_bitcoin.h"
 
 #include <string>
 
-#include <boost/filesystem.hpp>
 #include <boost/test/unit_test.hpp>
 
 
 BOOST_FIXTURE_TEST_SUITE(bandb_tests, TestingSetup)
 
-bool RemoveLocalDatabase(const boost::filesystem::path &path)
+bool RemoveLocalDatabase(const fs::path &path)
 {
     try
     {
-        if (boost::filesystem::exists(path))
+        if (fs::exists(path))
         {
             // if the file already exists, remove it
-            boost::filesystem::remove(path);
+            fs::remove(path);
         }
 
         // if we get here, we either successfully deleted the file, or it didn't exist

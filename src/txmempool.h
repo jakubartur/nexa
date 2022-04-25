@@ -836,6 +836,7 @@ private:
     std::unique_ptr<DoubleSpendProofStorage> m_dspStorage;
 };
 
+#ifndef ANDROID // limit dependencies (CCoinsView)
 /**
  * CCoinsView that brings transactions from a memorypool into view.
  * It does not check for spendings by memory pool transactions.
@@ -850,6 +851,7 @@ public:
     bool GetCoin(const COutPoint &outpoint, Coin &coin) const;
     bool HaveCoin(const COutPoint &outpoint) const;
 };
+#endif
 
 // We want to sort transactions by coin age priority
 typedef std::pair<double, CTxMemPool::TxIdIter> TxCoinAgePriority;

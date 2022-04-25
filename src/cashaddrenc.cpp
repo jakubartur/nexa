@@ -108,7 +108,7 @@ std::string EncodeCashAddr(const std::vector<uint8_t> &id, const CashAddrType ad
 
 std::string EncodeCashAddr(const CTxDestination &dst, const CChainParams &params)
 {
-    return boost::apply_visitor(CashAddrEncoder(params), dst);
+    return std::visit(CashAddrEncoder(params), dst);
 }
 
 CTxDestination DecodeCashAddr(const std::string &addr, const CChainParams &params)

@@ -20,6 +20,7 @@
 #include "script/scripttemplate.h"
 #include "uint256.h"
 #include "util.h"
+#include "consensus/grouptokens.h"
 
 const CScript p2pkt(CScript() << OP_FROMALTSTACK << OP_CHECKSIGVERIFY);
 const std::vector<unsigned char> p2pktId = { 1 };

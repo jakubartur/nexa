@@ -9,13 +9,13 @@
 
 #include "banentry.h" // for banmap_t
 
-#include <boost/filesystem.hpp>
+#include "fs.h"
 
 /** Access to the banlist database (banlist.dat) */
 class CBanDB
 {
 private:
-    boost::filesystem::path pathBanlist;
+    fs::path pathBanlist;
 
 public:
     CBanDB();
@@ -23,7 +23,7 @@ public:
     bool Read(banmap_t &banSet);
 
     // NOTE: Added for use in unit testing
-    boost::filesystem::path GetDatabasePath() const { return pathBanlist; }
+    fs::path GetDatabasePath() const { return pathBanlist; }
 };
 
 #endif // BITCOIN_BANDB_H

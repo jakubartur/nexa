@@ -22,7 +22,7 @@ BOOST_AUTO_TEST_CASE(this_process_path_test)
 #endif
 }
 
-static bool bin_exists(const std::string &path) { return boost::filesystem::exists(path); }
+static bool bin_exists(const std::string &path) { return fs::exists(path); }
 BOOST_AUTO_TEST_CASE(subprocess_return_code)
 {
 #if ((BOOST_OS_LINUX || BOOST_OS_MACOS) && (BOOST_VERSION >= 106500))

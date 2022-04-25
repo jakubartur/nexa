@@ -22,7 +22,8 @@
 
 #ifdef ANDROID // log sighash calculations
 #include <android/log.h>
-#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "bu.sig", __VA_ARGS__)
+//#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "bu.sig", __VA_ARGS__)
+#define p(...)
 #else
 #define p(...)
 // tinyformat::format(std::cout, __VA_ARGS__)
@@ -474,11 +475,11 @@ bool SignatureHashNexa(const CScript &scriptCode,
     ss << hashOutputs;
     // Locktime
     ss << txLockTime;
-    p("Locktime: %d\n", txTo.nLockTime);
+    p("Locktime: %d\n", txLockTime);
 
     // Sighash type -- if the sighashtype is all, you MUST use the empty vector representation here.
     ss << sigHashType;
-    p("sigHashType: %s %s\n", sigHashType.ToString(), HexStr(sigHashBytes).c_str());
+    p("sigHashType: %s\n", sigHashType.ToString().c_str());
 
     p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
     if (nHashedOut != nullptr)

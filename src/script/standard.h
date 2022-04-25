@@ -13,7 +13,7 @@
 #include "streams.h"
 #include "uint256.h"
 
-#include <boost/variant.hpp>
+#include <variant>
 
 #include <stdint.h>
 
@@ -157,7 +157,7 @@ public:
  *  * CScriptID: TX_SCRIPTHASH destination
  *  A CTxDestination is the internal data type encoded in a bitcoin address
  */
-typedef boost::variant<CNoDestination, CKeyID, CScriptID, ScriptTemplateDestination> CTxDestination;
+typedef std::variant<CNoDestination, CKeyID, CScriptID, ScriptTemplateDestination> CTxDestination;
 
 const char *GetTxnOutputType(txnouttype t);
 

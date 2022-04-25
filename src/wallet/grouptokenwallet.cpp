@@ -80,10 +80,7 @@ public:
     CGroupTokenID operator()(const ScriptTemplateDestination &id) const { return id.Group(); }
 };
 
-CGroupTokenID GetGroupToken(const CTxDestination &id)
-{
-    return boost::apply_visitor(CTxDestinationGroupTokenExtractor(), id);
-}
+CGroupTokenID GetGroupToken(const CTxDestination &id) { return std::visit(CTxDestinationGroupTokenExtractor(), id); }
 
 CTxDestination ControllingAddress(const CGroupTokenID &grp, txnouttype addrType)
 {
@@ -93,15 +90,6 @@ CTxDestination ControllingAddress(const CGroupTokenID &grp, txnouttype addrType)
     if (addrType == TX_SCRIPTHASH)
         return CTxDestination(CScriptID(uint160(data)));
     return CTxDestination(CKeyID(uint160(data)));
-}
-
-CGroupTokenID GetGroupToken(const std::string &addr, const CChainParams &params)
-{
-    CashAddrContent cac = DecodeCashAddrContent(addr, params);
-    if (cac.type == CashAddrType::GROUP_TYPE)
-        return CGroupTokenID(cac.hash);
-    // otherwise it becomes NoGroup (i.e. data is size 0)
-    return CGroupTokenID();
 }
 
 class CGroupScriptVisitor : public boost::static_visitor<bool>
@@ -215,7 +203,7 @@ CScript GetScriptForDestination(const CTxDestination &dest, const CGroupTokenID 
 {
     CScript script;
 
-    boost::apply_visitor(CGroupScriptVisitor(group, amount, &script), dest);
+    std::visit(CGroupScriptVisitor(group, amount, &script), dest);
     return script;
 }
 
@@ -265,7 +253,7 @@ static unsigned int ParseGroupAddrValue(const UniValue &params,
     CAmount &totalValue,
     bool groupedOutputs)
 {
-    grpID = GetGroupToken(params[curparam].get_str());
+    grpID = DecodeGroupToken(params[curparam].get_str());
     if (!grpID.isUserGroup())
     {
         throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
@@ -782,7 +770,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
         CGroupTokenID grpID;
         std::vector<unsigned char> postfix;
         // Get the group id from the command line
-        grpID = GetGroupToken(params[curparam].get_str());
+        grpID = DecodeGroupToken(params[curparam].get_str());
         if (!grpID.isUserGroup())
         {
             throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
@@ -805,10 +793,10 @@ extern UniValue token(const UniValue &params, bool fHelp)
             }
             try
             {
-                postfixNum = boost::lexical_cast<int64_t>(postfixStr);
+                postfixNum = std::stoull(postfixStr);
                 isNum = true;
             }
-            catch (const boost::bad_lexical_cast &)
+            catch (const std::invalid_argument &)
             {
                 for (unsigned int i = 0; i < postfixStr.size(); i++)
                     postfix.push_back(postfixStr[i]);
@@ -861,7 +849,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
             CGroupTokenID grpID;
             GroupAuthorityFlags auth = GroupAuthorityFlags();
             // Get the group id from the command line
-            grpID = GetGroupToken(params[curparam].get_str());
+            grpID = DecodeGroupToken(params[curparam].get_str());
             if (!grpID.isUserGroup())
             {
                 throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
@@ -1144,7 +1132,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
             }
             return ret;
         }
-        CGroupTokenID grpID = GetGroupToken(params[1].get_str());
+        CGroupTokenID grpID = DecodeGroupToken(params[1].get_str());
         if (!grpID.isUserGroup())
         {
             throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter 1: No group specified");
@@ -1181,7 +1169,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
         CGroupTokenID grpID;
         std::vector<CRecipient> outputs;
 
-        grpID = GetGroupToken(params[1].get_str());
+        grpID = DecodeGroupToken(params[1].get_str());
         if (!grpID.isUserGroup())
         {
             throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
@@ -1403,7 +1391,7 @@ UniValue groupedlisttransactions(const UniValue &params, bool fHelp)
     {
         throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
     }
-    CGroupTokenID grpID = GetGroupToken(params[1].get_str());
+    CGroupTokenID grpID = DecodeGroupToken(params[1].get_str());
     if (!grpID.isUserGroup())
     {
         throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
@@ -1541,7 +1529,7 @@ UniValue groupedlistsinceblock(const UniValue &params, bool fHelp)
     {
         throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
     }
-    CGroupTokenID grpID = GetGroupToken(params[1].get_str());
+    CGroupTokenID grpID = DecodeGroupToken(params[1].get_str());
     if (!grpID.isUserGroup())
     {
         throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: No group specified");
@@ -1559,7 +1547,7 @@ UniValue groupedlistsinceblock(const UniValue &params, bool fHelp)
 
     if (params.size() > 3)
     {
-        target_confirms = boost::lexical_cast<unsigned int>(params[3].get_str());
+        target_confirms = std::stoul(params[3].get_str());
 
         if (target_confirms < 1)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter");

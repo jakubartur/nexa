@@ -21,6 +21,7 @@
 #include "utiltime.h"
 
 #include <condition_variable>
+#include <fstream>
 #include <iomanip>
 #include <mutex>
 #include <sstream>
@@ -97,8 +98,6 @@
 #include <set>
 #include <thread>
 #include <vector>
-// std::scopted_lock not available until c++17, use boost for now
-#include <boost/thread/mutex.hpp>
 
 std::vector<std::string> splitByCommasAndRemoveSpaces(const std::vector<std::string> &args,
     bool removeDuplicates /* false */)
@@ -355,21 +354,21 @@ std::once_flag debugPrintInitFlag;
  * tested, explicit destruction of these objects can be implemented.
  */
 static FILE *fileout = nullptr;
-static boost::mutex *mutexDebugLog = nullptr;
+static std::mutex *mutexDebugLog = nullptr;
 static std::list<std::string> *vMsgsBeforeOpenLog;
 
 static int FileWriteStr(const std::string &str, FILE *fp) { return fwrite(str.data(), 1, str.size(), fp); }
 static void DebugPrintInit()
 {
     assert(mutexDebugLog == nullptr);
-    mutexDebugLog = new boost::mutex();
+    mutexDebugLog = new std::mutex();
     vMsgsBeforeOpenLog = new std::list<std::string>;
 }
 
 void OpenDebugLog()
 {
     std::call_once(debugPrintInitFlag, &DebugPrintInit);
-    boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
+    std::scoped_lock scoped_lock(*mutexDebugLog);
 
     assert(fileout == nullptr);
     assert(vMsgsBeforeOpenLog);
@@ -430,7 +429,7 @@ static void MonitorLogfile()
     existcounter++;
     if (existcounter % 63 == 0) // Check every 64 log msgs
     {
-        bool exists = boost::filesystem::exists(fileName);
+        bool exists = fs::exists(fileName);
         if (!exists)
             fReopenDebugLog = true;
     }
@@ -462,7 +461,7 @@ int LogPrintStr(const std::string &str)
     if (fPrintToDebugLog)
     {
         std::call_once(debugPrintInitFlag, &DebugPrintInit);
-        boost::mutex::scoped_lock scoped_lock(*mutexDebugLog);
+        std::scoped_lock scoped_lock(*mutexDebugLog);
 
         // buffer if we haven't opened the log yet
         if (fileout == nullptr)
@@ -674,7 +673,7 @@ const fs::path &GetDataDir(bool fNetSpecific)
 
     if (mapArgs.count("-datadir"))
     {
-        path = fs::system_complete(mapArgs["-datadir"]);
+        path = fs::absolute(mapArgs["-datadir"]);
         if (!fs::exists(path) || !fs::is_directory(path))
         {
             std::stringstream err;
@@ -712,7 +711,7 @@ void ClearDatadirCache()
 fs::path GetConfigFile(const std::string &confPath)
 {
     fs::path pathConfigFile(confPath);
-    if (!pathConfigFile.is_complete())
+    if (pathConfigFile.is_relative())
         pathConfigFile = GetDataDir(false) / pathConfigFile;
 
     return pathConfigFile;
@@ -725,7 +724,7 @@ fs::path GetConfigFile(const std::string &confPath)
 fs::path GetForksCsvFile()
 {
     fs::path pathCsvFile(GetArg("-forks", FORKS_CSV_FILENAME));
-    if (!pathCsvFile.is_complete())
+    if (pathCsvFile.is_relative())
         pathCsvFile = GetDataDir(false) / pathCsvFile;
 
     return pathCsvFile;
@@ -735,7 +734,7 @@ void ReadConfigFile(std::map<std::string, std::string> &mapSettingsRet,
     std::map<std::string, std::vector<std::string> > &mapMultiSettingsRet,
     const AllowedArgs::AllowedArgs &allowedArgs)
 {
-    fs::ifstream streamConfig(GetConfigFile(GetArg("-conf", CONF_FILENAME)));
+    fs_ifstream streamConfig(GetConfigFile(GetArg("-conf", CONF_FILENAME)));
     if (!streamConfig.good())
         return; // No bitcoin.conf file is OK
 
@@ -761,7 +760,7 @@ void ReadConfigFile(std::map<std::string, std::string> &mapSettingsRet,
 fs::path GetPidFile()
 {
     fs::path pathPidFile(GetArg("-pid", PID_FILENAME));
-    if (!pathPidFile.is_complete())
+    if (pathPidFile.is_relative())
         pathPidFile = GetDataDir() / pathPidFile;
     return pathPidFile;
 }
@@ -975,24 +974,22 @@ void RenameThread(const char *name)
 
 void SetupEnvironment()
 {
-// On most POSIX systems (e.g. Linux, but not BSD) the environment's locale
-// may be invalid, in which case the "C" locale is used as fallback.
-#if !defined(WIN32) && !defined(MAC_OSX) && !defined(__FreeBSD__) && !defined(__OpenBSD__)
+    // On most POSIX systems (e.g. Linux, but not BSD) the environment's locale
+    // may be invalid, in which case the "C.UTF-8" locale is used as fallback.
+#if !defined(WIN32) && !defined(MAC_OSX) && !defined(__FreeBSD__) && !defined(__OpenBSD__) && !defined(__NetBSD__)
     try
     {
         std::locale(""); // Raises a runtime error if current locale is invalid
     }
     catch (const std::runtime_error &)
     {
-        setenv("LC_ALL", "C", 1);
+        setenv("LC_ALL", "C.UTF-8", 1);
     }
+#elif defined(WIN32)
+    // Set the default input/output charset is utf-8
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
 #endif
-    // The path locale is lazy initialized and to avoid deinitialization errors
-    // in multithreading environments, it is set explicitly by the main thread.
-    // A dummy locale is used to extract the internal default locale, used by
-    // fs::path, which is then used to explicitly imbue the path.
-    std::locale loc = fs::path::imbue(std::locale::classic());
-    fs::path::imbue(loc);
 }
 
 bool SetupNetworking()

@@ -41,7 +41,7 @@ std::vector<uint8_t> insecure_GetRandomByteArray(FastRandomContext &rand, size_t
     return out;
 }
 
-class DstTypeChecker : public boost::static_visitor<void>
+class DstTypeChecker
 {
 public:
     void operator()(const CKeyID &id) { isKey = true; }
@@ -51,14 +51,14 @@ public:
     static bool IsScriptDst(const CTxDestination &d)
     {
         DstTypeChecker checker;
-        boost::apply_visitor(checker, d);
+        std::visit(checker, d);
         return checker.isScript;
     }
 
     static bool IsKeyDst(const CTxDestination &d)
     {
         DstTypeChecker checker;
-        boost::apply_visitor(checker, d);
+        std::visit(checker, d);
         return checker.isKey;
     }
 
@@ -281,27 +281,61 @@ BOOST_AUTO_TEST_CASE(check_size)
 
 BOOST_AUTO_TEST_CASE(test_addresses)
 {
-    const CChainParams params = Params(CBaseChainParams::LEGACY_UNIT_TESTS);
-
-    std::vector<std::vector<uint8_t> > hash{
-        {118, 160, 64, 83, 189, 160, 168, 139, 218, 81, 119, 184, 106, 21, 195, 178, 159, 85, 152, 115},
-        {203, 72, 18, 50, 41, 156, 213, 116, 49, 81, 172, 75, 45, 99, 174, 25, 142, 123, 176, 169},
-        {1, 31, 40, 228, 115, 201, 95, 64, 19, 215, 213, 62, 197, 251, 195, 180, 45, 248, 237, 16}};
-
-    std::vector<std::string> pubkey = {"bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
-        "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy",
-        "bitcoincash:qqq3728yw0y47sqn6l2na30mcw6zm78dzqre909m2r"};
-    std::vector<std::string> script = {"bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq",
-        "bitcoincash:pr95sy3j9xwd2ap32xkykttr4cvcu7as4yc93ky28e",
-        "bitcoincash:pqq3728yw0y47sqn6l2na30mcw6zm78dzq5ucqzc37"};
-
-    for (size_t i = 0; i < hash.size(); ++i)
     {
-        const CTxDestination dstKey = CKeyID(uint160(hash[i]));
-        BOOST_CHECK_EQUAL(pubkey[i], EncodeCashAddr(dstKey, params));
+        const CChainParams params = Params(CBaseChainParams::LEGACY_UNIT_TESTS);
 
-        const CTxDestination dstScript = CScriptID(uint160(hash[i]));
-        BOOST_CHECK_EQUAL(script[i], EncodeCashAddr(dstScript, params));
+        std::vector<std::vector<uint8_t> > hash{
+            {118, 160, 64, 83, 189, 160, 168, 139, 218, 81, 119, 184, 106, 21, 195, 178, 159, 85, 152, 115},
+            {203, 72, 18, 50, 41, 156, 213, 116, 49, 81, 172, 75, 45, 99, 174, 25, 142, 123, 176, 169},
+            {1, 31, 40, 228, 115, 201, 95, 64, 19, 215, 213, 62, 197, 251, 195, 180, 45, 248, 237, 16}};
+
+        std::vector<std::string> pubkey = {"bitcoincash:qpm2qsznhks23z7629mms6s4cwef74vcwvy22gdx6a",
+            "bitcoincash:qr95sy3j9xwd2ap32xkykttr4cvcu7as4y0qverfuy",
+            "bitcoincash:qqq3728yw0y47sqn6l2na30mcw6zm78dzqre909m2r"};
+        std::vector<std::string> script = {"bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq",
+            "bitcoincash:pr95sy3j9xwd2ap32xkykttr4cvcu7as4yc93ky28e",
+            "bitcoincash:pqq3728yw0y47sqn6l2na30mcw6zm78dzq5ucqzc37"};
+
+        for (size_t i = 0; i < hash.size(); ++i)
+        {
+            const CTxDestination dstKey = CKeyID(uint160(hash[i]));
+            BOOST_CHECK_EQUAL(pubkey[i], EncodeCashAddr(dstKey, params));
+
+            const CTxDestination dstScript = CScriptID(uint160(hash[i]));
+            BOOST_CHECK_EQUAL(script[i], EncodeCashAddr(dstScript, params));
+        }
+    }
+
+    {
+        std::vector<std::vector<uint8_t> > hash{ParseHex("deabc3430515c6585e4db9b51eed7881972057fa")};
+        const CChainParams params = Params(CBaseChainParams::REGTEST);
+        std::vector<std::string> pubkey = {"nexareg:qr02hs6rq52uvkz7fkum28hd0zqewgzhlgeakv8hkz"};
+        for (size_t i = 0; i < hash.size(); ++i)
+        {
+            const CTxDestination dstKey = CKeyID(uint160(hash[i]));
+            std::string encoded = EncodeCashAddr(dstKey, params);
+            BOOST_CHECK_EQUAL(pubkey[i], encoded);
+
+            const CTxDestination decoded = DecodeCashAddr(pubkey[i], params);
+            CKeyID k = *std::get_if<CKeyID>(&decoded);
+            assert(k == CKeyID(uint160(hash[i])));
+        }
+    }
+
+    {
+        std::vector<std::vector<uint8_t> > hash{ParseHex("775ebf6694518d925139b2ae42147fc57539ca00")};
+        const CChainParams params = Params(CBaseChainParams::TESTNET);
+        std::vector<std::string> pubkey = {"testnet:qpm4a0mxj3gcmyj38xe2uss50lzh2ww2qqrln97dje"};
+        for (size_t i = 0; i < hash.size(); ++i)
+        {
+            const CTxDestination dstKey = CKeyID(uint160(hash[i]));
+            std::string encoded = EncodeCashAddr(dstKey, params);
+            BOOST_CHECK_EQUAL(pubkey[i], encoded);
+
+            const CTxDestination decoded = DecodeCashAddr(pubkey[i], params);
+            CKeyID k = *std::get_if<CKeyID>(&decoded);
+            assert(k == CKeyID(uint160(hash[i])));
+        }
     }
 }
 

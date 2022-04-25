@@ -6,7 +6,7 @@
 
 #ifndef BITCOIN_COINS_H
 #define BITCOIN_COINS_H
-
+#ifndef ANDROID // limit dependencies
 #include "compressor.h"
 #include "core_memusage.h"
 #include "hashwrapper.h"
@@ -17,9 +17,6 @@
 
 #include <assert.h>
 #include <stdint.h>
-
-#include <boost/thread/locks.hpp>
-#include <boost/thread/shared_mutex.hpp>
 
 #include <unordered_map>
 
@@ -429,5 +426,5 @@ SpendCoins(...); AddCoins(...);
 */
 void UpdateCoins(const CTransaction &tx, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight);
 void UpdateCoins(const CTransaction &tx, CCoinsViewCache &inputs, int nHeight);
-
+#endif
 #endif // BITCOIN_COINS_H

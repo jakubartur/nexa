@@ -309,7 +309,7 @@ bool CBitcoinSecret::SetString(const char *pszSecret) { return CBase58Data::SetS
 bool CBitcoinSecret::SetString(const std::string &strSecret) { return SetString(strSecret.c_str()); }
 std::string EncodeLegacyAddr(const CTxDestination &dest, const CChainParams &params)
 {
-    return boost::apply_visitor(DestinationEncoder(params), dest);
+    return std::visit(DestinationEncoder(params), dest);
 }
 
 CTxDestination DecodeLegacyAddr(const std::string &str, const CChainParams &params)

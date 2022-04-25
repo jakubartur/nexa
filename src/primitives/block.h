@@ -94,11 +94,13 @@ public:
         READWRITE(hashAncestor);
         READWRITE(hashMerkleRoot);
         READWRITE(hashTxFilter);
+
         READWRITE(nTime);
         READWRITE(VARINT(height));
         READWRITE(chainWork);
         READWRITE(size); // Can't be a varint or it relies on itself.  Does not include the nonce size
         READWRITE(VARINT(txCount));
+
         READWRITE(VARINT(feePoolAmt));
         READWRITE(utxoCommitment);
         READWRITE(minerData);

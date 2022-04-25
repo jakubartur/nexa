@@ -13,7 +13,7 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 add_definitions(-Wno-tautological-constant-compare -DBOOST_SYSTEM_NO_DEPRECATED)
 
 add_library( # Sets the name of the library.
-             bitcoincashandroid
+             nexandroid
 
              # Sets the library as a shared library.
              SHARED
@@ -64,6 +64,8 @@ add_library( # Sets the name of the library.
              ../chainparams.cpp
              ../chainparams.h
              ../consensus/merkle.cpp
+             ../consensus/grouptokens.cpp
+             ../consensus/grouptokens.h
              ../arith_uint256.cpp
              ../arith_uint256.h
              ../bloom.cpp
@@ -96,8 +98,8 @@ SET_SOURCE_FILES_PROPERTIES(../secp256k1/src/secp256k1.c PROPERTIES COMPILE_FLAG
 #)
 
 # We expect that you have built boost in the cashlib subdirectory.  Run the ./buildBoostAndroid.sh script in the cashlib directory to do this.
-set( Boost_LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/boost_1_70_0/stage/lib)
-set( Boost_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/boost_1_70_0)
+set( Boost_LIB_DIR ${CMAKE_CURRENT_LIST_DIR}/boost/stage/lib)
+set( Boost_INCLUDE_DIRS ${CMAKE_CURRENT_LIST_DIR}/boost)
 
 # No boost libraries are currently needed (just the headers)
 # file(GLOB F1 ${Boost_LIB_DIR}/libboost_thread-clang-mt-*-1_70.a)
@@ -120,12 +122,13 @@ include_directories( .
 # can link multiple libraries, such as libraries you define in this
 # build script, prebuilt third-party libraries, or system libraries.
 
-set_target_properties(bitcoincashandroid PROPERTIES LINK_FLAGS -L/fast/bitcoin/boostAndroid/build/out/${ANDROID_ABI}/lib)
+# if you need boost libraries again someday
+# set_target_properties(nexandroid PROPERTIES LINK_FLAGS -L/fast/bitcoin/boostAndroid/build/out/${ANDROID_ABI}/lib)
 
 target_link_libraries( # Specifies the target library.
-                       bitcoincashandroid
+                       nexandroid
                        # Links the target library to these libraries
                        android  # base android library
                        log  # android log library
-                       ${Boost_LIBRARIES}
+                       # ${Boost_LIBRARIES}
                        )

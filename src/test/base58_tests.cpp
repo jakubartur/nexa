@@ -77,7 +77,7 @@ BOOST_AUTO_TEST_CASE(base58_DecodeBase58)
 }
 
 // Visitor to check address type
-class TestAddrTypeVisitor : public boost::static_visitor<bool>
+class TestAddrTypeVisitor
 {
 private:
     std::string exp_addrType;
@@ -91,7 +91,7 @@ public:
 };
 
 // Visitor to check address payload
-class TestPayloadVisitor : public boost::static_visitor<bool>
+class TestPayloadVisitor
 {
 private:
     std::vector<unsigned char> exp_payload;
@@ -167,10 +167,10 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
                 printf("invalid\n");
             }
             BOOST_CHECK_MESSAGE(IsValidDestination(destination), "!IsValid:" + strTest);
-            BOOST_CHECK_MESSAGE((boost::get<CScriptID>(&destination) != nullptr) == (exp_addrType == "script"),
+            BOOST_CHECK_MESSAGE((std::get_if<CScriptID>(&destination) != nullptr) == (exp_addrType == "script"),
                 "isScript mismatch" + strTest);
             BOOST_CHECK_MESSAGE(
-                boost::apply_visitor(TestAddrTypeVisitor(exp_addrType), destination), "addrType mismatch" + strTest);
+                std::visit(TestAddrTypeVisitor(exp_addrType), destination), "addrType mismatch" + strTest);
 
             // Public key must be invalid private key
             secret.SetString(exp_base58string);

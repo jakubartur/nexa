@@ -9,12 +9,16 @@
 #include <stdio.h>
 #include <string>
 
+//std:: #include <filesystem>
+//namespace fs = std::filesystem;
+
 #include <boost/filesystem.hpp>
 #include <boost/filesystem/fstream.hpp>
 #include <boost/filesystem/detail/utf8_codecvt_facet.hpp>
-
-/** Filesystem operations and types */
 namespace fs = boost::filesystem;
+typedef fs::fstream fstream;  // Because when we convert to std, it will be std::fstream
+typedef fs::ifstream fs_ifstream;  // Because when we convert to std, it will be std::fstream
+typedef fs::ofstream fs_ofstream;  // Because when we convert to std, it will be std::fstream
 
 /** Bridge operations to C stdio */
 namespace fsbridge {

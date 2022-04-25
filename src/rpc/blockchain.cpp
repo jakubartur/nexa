@@ -2565,7 +2565,7 @@ UniValue scantokens(const UniValue &params, bool fHelp)
             throw JSONRPCError(RPC_INVALID_PARAMETER, "No token group ID specified");
         }
 
-        CGroupTokenID needle = GetGroupToken(params[1].get_str());
+        CGroupTokenID needle = DecodeGroupToken(params[1].get_str());
         if (!needle.isUserGroup())
         {
             throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Invalid group specified");

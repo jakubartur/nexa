@@ -4,8 +4,10 @@
 #include "grouptokens.h"
 #include "base58.h"
 #include "cashaddrenc.h"
+#ifndef ANDROID // limit dependencies
 #include "coincontrol.h"
 #include "coins.h"
+#endif
 #include "consensus/validation.h"
 #include "dstencode.h"
 #include "primitives/transaction.h"
@@ -19,7 +21,6 @@
 #include "streams.h"
 #include "unlimited.h"
 #include "utilmoneystr.h"
-#include "wallet/wallet.h"
 #include <algorithm>
 
 bool IsAnyTxOutputGrouped(const CTransaction &tx)
@@ -112,6 +113,7 @@ CGroupTokenInfo::CGroupTokenInfo(const CTxOut &output)
     IsScriptGrouped(output.scriptPubKey, nullptr, this);
 }
 
+#ifndef ANDROID // limit dependencies (CCoinsViewCache)
 bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCoinsViewCache &view)
 {
     GroupBalanceMapRef gBalanceState = MakeGroupBalanceMapRef();
@@ -367,7 +369,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
     state.groupState = gBalanceState;
     return true;
 }
-
+#endif
 
 bool CGroupTokenID::isUserGroup(void) const { return (!data.empty()); }
 bool CGroupTokenID::isSubgroup(void) const { return (data.size() > PARENT_GROUP_ID_SIZE); }
@@ -388,4 +390,13 @@ bool CGroupTokenID::hasFlag(GroupTokenIdFlags flag) const
 std::string EncodeGroupToken(const CGroupTokenID &grp, const CChainParams &params)
 {
     return EncodeCashAddr(grp.bytes(), CashAddrType::GROUP_TYPE, params);
+}
+
+CGroupTokenID DecodeGroupToken(const std::string &addr, const CChainParams &params)
+{
+    CashAddrContent cac = DecodeCashAddrContent(addr, params);
+    if (cac.type == CashAddrType::GROUP_TYPE)
+        return CGroupTokenID(cac.hash);
+    // otherwise it becomes NoGroup (i.e. data is size 0)
+    return CGroupTokenID();
 }

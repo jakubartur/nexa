@@ -469,7 +469,7 @@ CScript GetScriptForDestination(const CTxDestination &dest)
 {
     CScript script;
 
-    boost::apply_visitor(CScriptVisitor(&script), dest);
+    std::visit(CScriptVisitor(&script), dest);
     return script;
 }
 
@@ -520,4 +520,4 @@ CScript GetScriptLabelPublic(const string &labelPublic)
     return scriptDataPublic;
 }
 
-bool IsValidDestination(const CTxDestination &dest) { return dest.which() != 0; }
+bool IsValidDestination(const CTxDestination &dest) { return dest.index() != 0; }

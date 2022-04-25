@@ -1067,7 +1067,7 @@ void RelayTransaction(const CTransactionRef ptx);
 class CAddrDB
 {
 private:
-    boost::filesystem::path pathAddr;
+    fs::path pathAddr;
 
 public:
     CAddrDB();

@@ -9,9 +9,9 @@
 #include "tinyformat.h"
 #include "util.h"
 #include "utilstrencodings.h"
-
 #include <assert.h>
 #include <stdexcept>
+#include <string>
 
 #include <boost/assign/list_of.hpp>
 
@@ -60,7 +60,7 @@ UniValue genesis(const UniValue &params, bool fHelp)
     std::string chainName = params[0].getValStr();
     std::string genesisComment = params[1].getValStr();
     std::string genesisDiffs = params[2].getValStr();
-    int genesisDiff = boost::lexical_cast<int>(genesisDiffs);
+    int genesisDiff = std::stoi(genesisDiffs);
     const CChainParams &chp = Params(chainName);
 
     const CScript genesisOutputScript = CScript() << OP_1;

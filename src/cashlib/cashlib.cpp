@@ -123,22 +123,36 @@ struct ForkDeploymentInfo
 };
 struct ForkDeploymentInfo VersionBitsDeploymentInfo[Consensus::MAX_VERSION_BITS_DEPLOYMENTS];
 
-// Must match the equivalent object in calling language code
+// Must match the equivalent object in calling language code (e.g. PayAddressType)
 typedef enum
 {
-    AddrBlockchainNextChain = 1,
-    AddrBlockchainBCHtestnet = 2,
-    AddrBlockchainBCHregtest = 3,
+    PayAddressTypeNONE = 0,
+    PayAddressTypeP2PUBKEY = 1,
+    PayAddressTypeP2PKH = 2,
+    PayAddressTypeP2SH = 3,
+    PayAddressTypeTEMPLATE = 4, // Generalized pay to script template
+    PayAddressTypeP2PKT = 5 // Pay to well-known script template 1 (pay-to-pub-key-template)
+} PayAddressType;
+
+// Must match the equivalent object in calling language code (e.g. ChainSelector)
+typedef enum
+{
+    AddrBlockchainNexa = 1,
+    AddrBlockchainTestnet = 2,
+    AddrBlockchainRegtest = 3,
+    AddrBlockchainBCH = 4
 } ChainSelector;
 
 CChainParams *GetChainParams(ChainSelector chainSelector)
 {
-    if (chainSelector == AddrBlockchainNextChain)
+    if (chainSelector == AddrBlockchainNexa)
         return &Params(CBaseChainParams::NEXTCHAIN);
-    else if (chainSelector == AddrBlockchainBCHtestnet)
+    else if (chainSelector == AddrBlockchainTestnet)
         return &Params(CBaseChainParams::TESTNET);
-    else if (chainSelector == AddrBlockchainBCHregtest)
+    else if (chainSelector == AddrBlockchainRegtest)
         return &Params(CBaseChainParams::REGTEST);
+    else if (chainSelector == AddrBlockchainBCH)
+        return &Params(CBaseChainParams::LEGACY_UNIT_TESTS);
     else
         return nullptr;
 }
@@ -369,13 +383,13 @@ SLAPI int SignBchTxSchnorr(unsigned char *txData,
     size_t nHashedOut = 0;
     uint256 sighash = SignatureHashBitcoinCash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
     std::vector<unsigned char> sig;
-    CPubKey pub = key.GetPubKey();
     if (!key.SignSchnorr(sighash, sig))
     {
         return 0;
     }
-    p("Sign BCH Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig), HexStr(pub.begin(), pub.end()),
-        sighash.GetHex());
+    // CPubKey pub = key.GetPubKey();
+    // p("Sign BCH Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig).c_str(),
+    //    HexStr(pub.begin(), pub.end()).c_str(), sighash.GetHex().c_str());
     sig.push_back(sigHashType);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
@@ -406,7 +420,7 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     result[0] = 0;
 
     std::vector<uint8_t> sigHashVec(hashType, hashType + hashTypeLen);
-    SigHashType sigHashType;
+    SigHashType sigHashType(sigHashVec);
 
     CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
     try
@@ -431,7 +445,8 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     {
         return 0;
     }
-    p("Sign Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig), HexStr(pub.begin(), pub.end()), sighash.GetHex());
+    // p("Sign Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig).c_str(), HexStr(pub.begin(), pub.end()).c_str(),
+    // sighash.GetHex().c_str());
     sigHashType.appendToSig(sig);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
@@ -469,7 +484,7 @@ SLAPI int SignHashSchnorr(const unsigned char *hash,
     return sigSize;
 }
 
-
+#ifndef ANDROID
 /*
 Since the ScriptMachine is often going to be initialized, called and destructed within a single stack frame, it
 does not make copies of the data it is using.  But higher-level language and debugging interaction use the
@@ -764,6 +779,7 @@ SLAPI unsigned int SmGetError(void *smId)
     ScriptMachineData *smd = (ScriptMachineData *)smId;
     return (unsigned int)smd->sm->getError();
 }
+#endif
 
 // result must be 32 bytes
 SLAPI void sha256(const unsigned char *data, unsigned int len, unsigned char *result)
@@ -1041,7 +1057,8 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
     JNIEnv *env,
     jobject ths,
     jbyteArray txData,
-    jint sigHashType,
+    unsigned char *hashType,
+    unsigned int hashTypeLen,
     jlong inputIdx,
     jlong inputAmount,
     jbyteArray prevoutScript,
@@ -1054,8 +1071,8 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
         return jbyteArray();
 
     unsigned char result[MAX_SIG_LEN];
-    uint32_t resultLen = SignTxSchnorr(tx.data, tx.size, inputIdx, inputAmount, prevout.data, prevout.size, sigHashType,
-        privkey.data, result, MAX_SIG_LEN);
+    uint32_t resultLen = SignTxSchnorr(tx.data, tx.size, inputIdx, inputAmount, prevout.data, prevout.size, hashType,
+        hashTypeLen, privkey.data, result, MAX_SIG_LEN);
 
     if (resultLen == 0)
         return jbyteArray();
@@ -1178,9 +1195,14 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Key
         triggerJavaIllegalStateException(env, "signDataUsingSchnorr: Cannot sign data of 0 length.");
         return nullptr;
     }
+    if (data.size != 32)
+    {
+        triggerJavaIllegalStateException(env, "signDataUsingSchnorr: Must sign a 32 byte hash.");
+        return nullptr;
+    }
 
     unsigned char result[MAX_SIG_LEN];
-    uint32_t resultLen = SignData(data.data, data.size, privkey.data, result, MAX_SIG_LEN);
+    uint32_t resultLen = SignHashSchnorr(data.data, privkey.data, result, MAX_SIG_LEN);
 
     if (resultLen == 0)
     {
@@ -1208,11 +1230,11 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_PayAdd
     uint160 tmp((const uint8_t *)data);
 
     CTxDestination dst = CNoDestination();
-    if (typ == 2 /* P2PKH */)
+    if (typ == PayAddressTypeP2PKH)
     {
         dst = CKeyID(tmp);
     }
-    else if (typ == 3 /* P2PSH */)
+    else if (typ == PayAddressTypeP2SH)
     {
         dst = CScriptID(tmp);
     }
@@ -1235,7 +1257,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_PayAdd
     return env->NewStringUTF(addrAsStr.c_str());
 }
 
-class PubkeyExtractor : public boost::static_visitor<void>
+class PubkeyExtractor
 {
 protected:
     const CChainParams &params;
@@ -1245,23 +1267,81 @@ public:
     PubkeyExtractor(jbyte *destination, const CChainParams &p) : params(p), dest(destination) {}
     void operator()(const CKeyID &id) const
     {
-        dest[0] = 2;
+        dest[0] = PayAddressTypeP2PKH;
         memcpy(dest + 1, id.begin(), 20); // pubkey is 20 bytes
     }
     void operator()(const CScriptID &id) const
     {
-        dest[0] = 3;
+        dest[0] = PayAddressTypeP2SH;
         memcpy(dest + 1, id.begin(), 20); // pubkey is 20 bytes
     }
     void operator()(const CNoDestination &) const
     {
         memset(dest, 0, 21); // not a good address
+        dest[0] = PayAddressTypeNONE;
     }
-    std::string operator()(const ScriptTemplateDestination &id) const
+    void operator()(const ScriptTemplateDestination &id) const
     {
-        memset(dest, 0, 21); // not meaningful
+        memset(dest, 0, 21); // TODO extract pubkey from known types?
+        // TODO if (its equal to p2pkt (pay-to-pubkey-template)) dest[0] = 5; else
+        dest[0] = PayAddressTypeTEMPLATE;
     }
 };
+
+extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_GroupId_ToAddr(JNIEnv *env,
+    jobject ths,
+    jbyte chainSelector,
+    jbyteArray arg)
+{
+    size_t len = env->GetArrayLength(arg);
+    if (len < 32)
+    {
+        triggerJavaIllegalStateException(env, "bad address argument length");
+        return env->NewStringUTF("bad address argument length");
+    }
+    jbyte *data = env->GetByteArrayElements(arg, 0);
+
+    CGroupTokenID grp((uint8_t *)data, len);
+
+    env->ReleaseByteArrayElements(arg, data, 0);
+
+    const CChainParams *cp = GetChainParams((ChainSelector)chainSelector);
+    if (cp == nullptr)
+    {
+        triggerJavaIllegalStateException(env, "Unknown blockchain selection");
+        return nullptr;
+    }
+    std::string addrAsStr(EncodeGroupToken(grp));
+    return env->NewStringUTF(addrAsStr.c_str());
+}
+
+
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_GroupId_FromAddr(JNIEnv *env,
+    jobject ths,
+    jbyte chainSelector,
+    jstring addrstr)
+{
+    const CChainParams *cp = GetChainParams((ChainSelector)chainSelector);
+    if (cp == nullptr)
+    {
+        triggerJavaIllegalStateException(env, "Unknown blockchain selection");
+        return nullptr;
+    }
+    auto addr = toString(env, addrstr);
+    CGroupTokenID gid = DecodeGroupToken(addr, *cp);
+    size_t size = gid.bytes().size();
+    if (size < 32) // min group id size
+    {
+        triggerJavaIllegalStateException(env, "Address is not a group");
+        return nullptr;
+    }
+
+    jbyteArray bArray = env->NewByteArray(size);
+    jbyte *data = env->GetByteArrayElements(bArray, 0);
+    memcpy((uint8_t *)data, &gid.bytes().front(), size);
+    env->ReleaseByteArrayElements(bArray, data, 0);
+    return bArray;
+}
 
 
 extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_PayAddress_DecodeCashAddr(JNIEnv *env,
@@ -1280,7 +1360,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Pay
 
     jbyteArray bArray = env->NewByteArray(21);
     jbyte *data = env->GetByteArrayElements(bArray, 0);
-    boost::apply_visitor(PubkeyExtractor(data, *cp), dst);
+    std::visit(PubkeyExtractor(data, *cp), dst);
     env->ReleaseByteArrayElements(bArray, data, 0);
     return bArray;
 }

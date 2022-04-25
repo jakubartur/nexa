@@ -47,7 +47,7 @@ void InitializeBlockStorage(const int64_t &_nBlockTreeDBCache,
     else if (BLOCK_DB_MODE == LEVELDB_BLOCK_STORAGE) // BLOCK_DB_MODE 1
     {
         pblocktree = new CBlockTreeDB(_nBlockTreeDBCache, "blockdb", false, fReindex);
-        if (boost::filesystem::exists(GetDataDir() / "blockdb" / "blocks"))
+        if (fs::exists(GetDataDir() / "blockdb" / "blocks"))
         {
             for (fs::recursive_directory_iterator it(GetDataDir() / "blockdb" / "blocks");
                  it != fs::recursive_directory_iterator(); ++it)

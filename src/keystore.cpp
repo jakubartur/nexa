@@ -4,6 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include <variant>
+
 #include "keystore.h"
 
 #include "key.h"
@@ -178,12 +180,12 @@ bool CBasicKeyStore::GetPubKey(const ScriptTemplateDestination &address, CPubKey
 
 bool CBasicKeyStore::GetKey(const CTxDestination &dest, CKey &keyOut) const
 {
-    const CKeyID *keyID = boost::get<CKeyID>(&dest);
+    const CKeyID *keyID = std::get_if<CKeyID>(&dest);
     if (keyID)
     {
         return GetKey(*keyID, keyOut);
     }
-    const ScriptTemplateDestination *st = boost::get<ScriptTemplateDestination>(&dest);
+    const ScriptTemplateDestination *st = std::get_if<ScriptTemplateDestination>(&dest);
     if (st)
     {
         CPubKey pub;

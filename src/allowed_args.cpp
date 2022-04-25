@@ -353,9 +353,8 @@ static void addConnectionOptions(AllowedArgs &allowedArgs)
             strprintf("Enforce minimum protocol version to limit use of bloom filters (default: %u)", 0))
         .addArg("port=<port>", requiredInt,
             strprintf(_("Listen for connections on <port> (default: %u, "
-                        "testnet: %u, testnet4: %u, scalenet: %u, nol: %u, regtest: %u)"),
-                DEFAULT_MAINNET_PORT, DEFAULT_TESTNET_PORT, DEFAULT_TESTNET4_PORT, DEFAULT_SCALENET_PORT,
-                DEFAULT_NOLNET_PORT, DEFAULT_REGTESTNET_PORT))
+                        "testnet: %u, regtest: %u)"),
+                NEXA_PORT, NEXA_TESTNET_PORT, DEFAULT_REGTESTNET_PORT))
         .addArg("proxy=<ip:port>", requiredStr, _("Connect through SOCKS5 proxy"))
         .addArg("proxyrandomize", optionalBool,
             strprintf(

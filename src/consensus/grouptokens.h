@@ -111,6 +111,8 @@ public:
         // Token group IDs must be able to be pushed onto the stack, but this check interferes with consensus tests
         // DbgAssert(id.size() <= MAX_SCRIPT_ELEMENT_SIZE, );
     }
+    //* Assign the groupID from a buffer (copies the buffer)
+    CGroupTokenID(const uint8_t *ptr, size_t len) : data(ptr, ptr + len) {}
 
     void NoGroup(void) { data.resize(0); }
     bool operator==(const CGroupTokenID &id) const { return data == id.data; }
@@ -145,6 +147,8 @@ public:
 
 /** Convert a groupID to a string */
 std::string EncodeGroupToken(const CGroupTokenID &grp, const CChainParams &params = Params());
+/** Convert a string to a groupID */
+CGroupTokenID DecodeGroupToken(const std::string &addr, const CChainParams &params = Params());
 
 namespace std
 {
