@@ -882,9 +882,9 @@ bool BackupWallet(const CWallet &wallet, const string &strDest)
                 bitdb.mapFileUseCount.erase(wallet.strWalletFile);
 
                 // Copy wallet.dat
-                boost::filesystem::path pathSrc = GetDataDir() / wallet.strWalletFile;
-                boost::filesystem::path pathDest(strDest);
-                if (boost::filesystem::is_directory(pathDest))
+                fs::path pathSrc = GetDataDir() / wallet.strWalletFile;
+                fs::path pathDest(strDest);
+                if (fs::is_directory(pathDest))
                     pathDest /= wallet.strWalletFile;
 
                 // BU copy_file does not work with c++11, due to a link error in many versions of boost.  Return this

@@ -1146,9 +1146,9 @@ bool AppInit2(Config &config)
     // check for fork deployment CSV file, read it
     string ForksCsvFile = GetForksCsvFile().string();
 
-    if (boost::filesystem::exists(ForksCsvFile))
+    if (fs::exists(ForksCsvFile))
     {
-        ifstream csvFile;
+        fs_ifstream csvFile;
         bool CsvReadOk = true;
         try
         {

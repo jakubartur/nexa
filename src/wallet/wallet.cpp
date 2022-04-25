@@ -36,6 +36,7 @@
 
 #include <algorithm>
 #include <assert.h>
+#include <functional>
 #include <numeric>
 
 #include <boost/algorithm/string/replace.hpp>
@@ -522,21 +523,21 @@ bool CWallet::Verify()
     uiInterface.InitMessage(_("Verifying wallet..."));
 
     // Wallet file must be a plain filename without a directory
-    if (walletFile != boost::filesystem::basename(walletFile) + boost::filesystem::extension(walletFile))
+    if (fs::path(walletFile).filename() != walletFile)
         return InitError(
             strprintf(_("Wallet %s resides outside data directory %s"), walletFile, GetDataDir().string()));
 
     if (!bitdb.Open(GetDataDir()))
     {
         // try moving the database env out of the way
-        boost::filesystem::path pathDatabase = GetDataDir() / "database";
-        boost::filesystem::path pathDatabaseBak = GetDataDir() / strprintf("database.%d.bak", GetTime());
+        fs::path pathDatabase = GetDataDir() / "database";
+        fs::path pathDatabaseBak = GetDataDir() / strprintf("database.%d.bak", GetTime());
         try
         {
-            boost::filesystem::rename(pathDatabase, pathDatabaseBak);
+            fs::rename(pathDatabase, pathDatabaseBak);
             LOGA("Moved old %s to %s. Retrying.\n", pathDatabase.string(), pathDatabaseBak.string());
         }
-        catch (const boost::filesystem::filesystem_error &)
+        catch (const fs::filesystem_error &)
         {
             // failure is ok (well, not really, but it's not worse than what we started with)
         }
@@ -556,7 +557,7 @@ bool CWallet::Verify()
             return false;
     }
 
-    if (boost::filesystem::exists(GetDataDir() / walletFile))
+    if (fs::exists(GetDataDir() / walletFile))
     {
         CDBEnv::VerifyResult r = bitdb.Verify(walletFile, CWalletDB::Recover);
         if (r == CDBEnv::RECOVER_OK)
@@ -988,7 +989,8 @@ bool CWallet::AddToWallet(CWalletTxRef wtx, bool fFromLoadWallet, CWalletDB *pwa
         if (!strCmd.empty())
         {
             boost::replace_all(strCmd, "%s", wtx->GetIdem().GetHex());
-            boost::thread t(runCommand, strCmd); // thread runs free
+            std::thread t(runCommand, strCmd);
+            t.detach(); // thread runs free
         }
     }
     assert(wtx->nOrderPos != -1);
@@ -3037,7 +3039,7 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                         CScript scriptChange;
 
                         // coin control: send change to custom address
-                        if (coinControl && !boost::get<CNoDestination>(&coinControl->destChange))
+                        if (coinControl && !std::get_if<CNoDestination>(&coinControl->destChange))
                             scriptChange = GetScriptForDestination(coinControl->destChange);
 
                         // no coin control: send change to newly generated address
@@ -3996,7 +3998,7 @@ void CWallet::ListLockedCoins(std::vector<COutPoint> &vOutpts)
 
 /** @} */ // end of Actions
 
-class CAffectedKeysVisitor : public boost::static_visitor<void>
+class CAffectedKeysVisitor
 {
 private:
     const CKeyStore &keystore;
@@ -4017,7 +4019,7 @@ public:
         {
             for (const CTxDestination &dest : vDest)
             {
-                boost::apply_visitor(*this, dest);
+                std::visit(*this, dest);
             }
         }
     }
@@ -4117,7 +4119,7 @@ void CWallet::GetKeyBirthTimes(std::map<CKeyID, int64_t> &mapKeyBirth) const
 
 bool CWallet::AddDestData(const CTxDestination &dest, const std::string &key, const std::string &value)
 {
-    if (boost::get<CNoDestination>(&dest))
+    if (std::get_if<CNoDestination>(&dest))
         return false;
 
     mapAddressBook[dest].destdata.insert(std::make_pair(key, value));
@@ -4464,6 +4466,6 @@ void ThreadRescan()
 void StartWalletRescanThread()
 {
     statusStrings.Set("rescanning");
-    boost::thread rescanThread(boost::bind(&TraceThread<void (*)()>, "rescan", &ThreadRescan));
+    std::thread rescanThread(std::bind(&TraceThread<void (*)()>, "rescan", &ThreadRescan));
     rescanThread.detach();
 }

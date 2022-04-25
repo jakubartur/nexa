@@ -23,9 +23,7 @@
 #include <string>
 #include <vector>
 
-// TODO : replace with std::optional in C++17
-#include <boost/optional.hpp>
-// #include <optional>
+#include <optional>
 
 /* Notes on the limits of the script template system:
 
@@ -336,8 +334,7 @@ public:
     static constexpr size_t MAXIMUM_ELEMENT_SIZE_32_BIT = 4;
     static constexpr size_t MAXIMUM_ELEMENT_SIZE_64_BIT = 8;
 
-    // Todo : replace this typedef with std::optional in C++17
-    typedef boost::optional<CScriptNum> ScriptNumResult;
+    typedef std::optional<CScriptNum> ScriptNumResult;
 
 private:
     static int64_t set_vch(const std::vector<uint8_t> &vch)
@@ -394,7 +391,7 @@ public:
     {
         if (!valid64BitRange(x))
         {
-            return boost::none;
+            return std::nullopt;
         }
         return CScriptNum(x);
     }
@@ -426,7 +423,7 @@ public:
         const bool overflow = __builtin_add_overflow(_value, x, &x);
         if (overflow)
         {
-            return boost::none;
+            return std::nullopt;
         }
         return fromInt(x);
     }
@@ -438,7 +435,7 @@ public:
         const bool overflow = __builtin_sub_overflow(_value, x, &x);
         if (overflow)
         {
-            return boost::none;
+            return std::nullopt;
         }
         return fromInt(x);
     }
@@ -450,7 +447,7 @@ public:
         const bool overflow = __builtin_mul_overflow(_value, x, &x);
         if (overflow)
         {
-            return boost::none;
+            return std::nullopt;
         }
         return fromInt(x);
     }

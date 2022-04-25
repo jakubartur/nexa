@@ -141,7 +141,7 @@ public:
 
     virtual bool HaveTxDestination(const CTxDestination &addr)
     {
-        return boost::apply_visitor(CKeyStore::CheckTxDestination(this), addr);
+        return std::visit(CKeyStore::CheckTxDestination(this), addr);
     }
 };
 

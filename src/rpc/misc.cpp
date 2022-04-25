@@ -264,7 +264,7 @@ UniValue validateaddress(const UniValue &params, bool fHelp)
         isminetype mine = pwalletMain ? IsMine(*pwalletMain, dest, chainActive.Tip()) : ISMINE_NO;
         ret.pushKV("ismine", (mine & ISMINE_SPENDABLE) ? true : false);
         ret.pushKV("iswatchonly", (mine & ISMINE_WATCH_ONLY) ? true : false);
-        UniValue detail = boost::apply_visitor(DescribeAddressVisitor(), dest);
+        UniValue detail = std::visit(DescribeAddressVisitor(), dest);
         ret.pushKVs(detail);
         if (pwalletMain && pwalletMain->mapAddressBook.count(dest))
             ret.pushKV("account", pwalletMain->mapAddressBook[dest].name);
@@ -301,7 +301,7 @@ CScript _createmultisig_redeemScript(const UniValue &params)
         CTxDestination dest = DecodeDestination(ks);
         if (pwalletMain && IsValidDestination(dest))
         {
-            const CKeyID *keyID = boost::get<CKeyID>(&dest);
+            const CKeyID *keyID = std::get_if<CKeyID>(&dest);
             if (!keyID)
             {
                 throw std::runtime_error(strprintf("%s does not refer to a key", ks));
@@ -419,7 +419,7 @@ UniValue verifymessage(const UniValue &params, bool fHelp)
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid address");
     }
 
-    const CKeyID *keyID = boost::get<CKeyID>(&destination);
+    const CKeyID *keyID = std::get_if<CKeyID>(&destination);
     if (!keyID)
     {
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");

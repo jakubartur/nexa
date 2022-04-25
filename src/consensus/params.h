@@ -14,8 +14,6 @@
 #include <map>
 #include <string>
 
-#include <boost/optional.hpp>
-
 namespace Consensus
 {
 enum DeploymentPos

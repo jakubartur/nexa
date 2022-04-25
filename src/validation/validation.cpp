@@ -480,7 +480,7 @@ bool LoadBlockIndexDB()
     std::copy(fs::directory_iterator(path_index), fs::directory_iterator(), std::back_inserter(vIndexFiles));
     for (const auto path_file : vIndexFiles)
     {
-        if (fs::extension(path_file) == ".ldb")
+        if (path_file.extension() == ".ldb")
         {
             FILE *file = fsbridge::fopen(path_file, "rb");
             const unsigned int nBuffSize = 65536;
@@ -533,7 +533,7 @@ bool LoadBlockIndexDB()
             fs::remove_all(GetDataDir() / "blocks");
         }
     }
-    catch (boost::filesystem::filesystem_error const &e)
+    catch (fs::filesystem_error const &e)
     {
         LOG(PRUNE, "%s \n", e.code().message());
     }
@@ -621,8 +621,7 @@ bool LoadBlockIndexDB()
             fs::path path = GetBlockPosFilename(pos, "blk");
             if (!fs::exists(path))
             {
-                fs::file_status s = fs::status(path);
-                LOGA("missing path = %s which has status of %u \n", path.string().c_str(), s.type());
+                LOGA("missing path = %s\n", path.string().c_str());
                 return false;
             }
         }

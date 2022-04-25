@@ -889,7 +889,7 @@ BOOST_AUTO_TEST_CASE(grouptoken_basicfunctions)
 
         CTxDestination resultDest;
         bool worked = ExtractDestination(script, resultDest);
-        ScriptTemplateDestination resultAddr = *(boost::get<ScriptTemplateDestination>(&resultDest));
+        ScriptTemplateDestination resultAddr = *(std::get_if<ScriptTemplateDestination>(&resultDest));
         BOOST_CHECK(worked && (resultAddr == addr));
 
         // Verify that the script passes standard checks, especially the data coding

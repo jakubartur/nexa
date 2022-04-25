@@ -6,16 +6,16 @@
 #ifndef BITCOIN_THREAD_DEADLOCK_H
 #define BITCOIN_THREAD_DEADLOCK_H
 
-#include <boost/lexical_cast.hpp>
-#include <boost/thread.hpp>
+#include "lockorder.h"
+
+#ifdef DEBUG_LOCKORDER // this ifdef covers the rest of the file
+#include <atomic>
 #include <memory>
 #include <mutex>
 #include <thread>
 
-#include "lockorder.h"
 #include "utilstrencodings.h"
 
-#ifdef DEBUG_LOCKORDER // this ifdef covers the rest of the file
 #ifdef __linux__
 // clang-format off
 #include <unistd.h>

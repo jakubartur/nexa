@@ -283,12 +283,12 @@ bool CCryptoKeyStore::GetKey(const CKeyID &address, CKey &keyOut) const
 
 bool CCryptoKeyStore::GetKey(const CTxDestination &dest, CKey &keyOut) const
 {
-    const CKeyID *keyID = boost::get<CKeyID>(&dest);
+    const CKeyID *keyID = std::get_if<CKeyID>(&dest);
     if (keyID)
     {
         return CCryptoKeyStore::GetKey(*keyID, keyOut);
     }
-    const ScriptTemplateDestination *st = boost::get<ScriptTemplateDestination>(&dest);
+    const ScriptTemplateDestination *st = std::get_if<ScriptTemplateDestination>(&dest);
     if (st)
     {
         CPubKey pub;

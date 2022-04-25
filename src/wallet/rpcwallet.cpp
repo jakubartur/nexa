@@ -594,7 +594,7 @@ UniValue signmessage(const UniValue &params, bool fHelp)
     if (!IsValidDestination(dest))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid coin address");
 
-    const CKeyID *keyID = boost::get<CKeyID>(&dest);
+    const CKeyID *keyID = std::get_if<CKeyID>(&dest);
     if (!keyID)
         throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
 
@@ -2936,7 +2936,7 @@ UniValue listunspent(const UniValue &params, bool fHelp)
             CTxDestination address2;
             if (ExtractDestination(pk, address2))
             {
-                const CScriptID &hash = boost::get<CScriptID>(address2);
+                const CScriptID &hash = std::get<CScriptID>(address2);
                 CScript redeemScript;
                 if (pwalletMain->GetCScript(hash, redeemScript))
                     entry.pushKV("redeemScript", HexStr(redeemScript.begin(), redeemScript.end()));

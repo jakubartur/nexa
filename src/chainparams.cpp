@@ -261,7 +261,7 @@ public:
         // pchCashMessageStart[1] = 0xe1;
         // pchCashMessageStart[2] = 0xf3;
         // pchCashMessageStart[3] = 0xe8;
-        nDefaultPort = DEFAULT_MAINNET_PORT;
+        nDefaultPort = BTCBCH_DEFAULT_MAINNET_PORT;
         nPruneAfterHeight = 100000;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
         consensus.nLongBlockWindow = LONG_BLOCK_WINDOW;
@@ -365,6 +365,8 @@ public:
         nonce.resize(1);
         nonce[0] = 5;
         genesis = CreateGenesisBlock("This is regtest", CScript() << OP_1, 1626275623, nonce, 0x207fffff, 0 * COIN);
+#if 0 // recalculate GB if needed (note that this code will not work with the java nexa shared library because it
+      // must start before the random numbers (initialized in ECC_Start are hooked up).
         ECC_Start();
         bool worked = MineIt(genesis, 255, consensus);
         ECC_Stop();
@@ -374,8 +376,11 @@ public:
             printf("regtest GB nonce changed! hash %s\n", consensus.hashGenesisBlock.GetHex().c_str());
             printf("regtest soln %d hex:%s\n", worked, HexStr(genesis.nonce).c_str());
         }
-        // assert(consensus.hashGenesisBlock ==
-        //       uint256S("0xeeeb56071143bd7db69f92eef5217260755b616167eacc32153d4b3f5a4b2fbf"));
+#else
+        consensus.hashGenesisBlock = genesis.GetHash();
+        assert(
+            consensus.hashGenesisBlock == uint256S("d71ee431e307d12dfef31a6b21e071f1d5652c0eb6155c04e3222612c9d0b371"));
+#endif
 
         vFixedSeeds.clear(); //! Regtest mode doesn't have any fixed seeds.
         vSeeds.clear(); //! Regtest mode doesn't have any DNS seeds.
@@ -429,7 +434,8 @@ public:
         std::vector<unsigned char> hardCodedNonce;
         nonce = hardCodedNonce = ParseHex("132a25");
         genesis = CreateGenesisBlock("this is nexa testnet", CScript() << OP_1, 1649953806, nonce, tgtBits, 0 * COIN);
-#if 0 // recalculate GB if needed
+#if 0 // recalculate GB if needed (note that this code will not work with the java nexa shared library because it
+      // must start before the random numbers (initialized in ECC_Start are hooked up).
         ECC_Start();
         bool worked = MineIt(genesis, 1<<23, consensus);
         assert(worked);
@@ -454,7 +460,7 @@ public:
         pchMessageStart[1] = 0x27;
         pchMessageStart[2] = 0x12;
         pchMessageStart[3] = 0x22;
-        nDefaultPort = 7230;
+        nDefaultPort = NEXA_TESTNET_PORT;
         nPruneAfterHeight = 100000;
 
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW_TESTNET;
@@ -497,7 +503,7 @@ public:
         strNetworkID = "nexa"; // Do not use the const string because of ctor execution order issues
 
         consensus.nSubsidyHalvingInterval = 210000 * 5; // 2 minute blocks rather than 10 min -> * 5
-        uint32_t tgtBits = 0x1e0fffff; // largest powLimit to provide enough bits for ASERT
+        uint32_t tgtBits = 0x1e04ffff;
         bool fNegative;
         bool fOverflow;
         arith_uint256 tmp;
@@ -517,10 +523,12 @@ public:
 
         std::vector<unsigned char> nonce; // TODO make this difficulty higher and hard code solution
         std::vector<unsigned char> hardCodedNonce;
-        nonce = hardCodedNonce = ParseHex("4f1c7c00");
+        nonce = hardCodedNonce = ParseHex("a1103d00");
         genesis = CreateGenesisBlock(
             "Innovations enabling viral uses create a virtuous adoption cycle that overwhelms legacy systems",
             CScript() << OP_1, 1630437560, nonce, tgtBits, 0 * COIN);
+#if 0 // recalculate GB if needed (note that this code will not work with the java nexa shared library because it
+      // must start before the random numbers (initialized in ECC_Start are hooked up).
         ECC_Start();
         bool worked = MineIt(genesis, 10000000UL, consensus);
         assert(worked);
@@ -528,15 +536,14 @@ public:
         consensus.hashGenesisBlock = genesis.GetHash();
         if (genesis.nonce != hardCodedNonce)
         {
-            printf("nextchain soln %d hex:%s\n", worked, HexStr(genesis.nonce).c_str());
-            printf("nextchain GB hash %s\n", consensus.hashGenesisBlock.GetHex().c_str());
+            printf("nexa soln %d hex:%s\n", worked, HexStr(genesis.nonce).c_str());
+            printf("nexa GB hash %s\n", consensus.hashGenesisBlock.GetHex().c_str());
         }
-
-        // TODO confirm GB hash
-        // assert(
-        //    consensus.hashGenesisBlock ==
-        //    uint256S("4131557eb1c7be885ac84442d187869b90a2d416713a6767ebc9c09479487212"));
-
+#else
+        consensus.hashGenesisBlock = genesis.GetHash();
+        assert(
+            consensus.hashGenesisBlock == uint256S("4664461cc431873fd25559286065680b729be51877afe9657ec61f344eced50e"));
+#endif
         /**
          * The message start string is designed to be unlikely to occur in normal data.
          * The characters are rarely used upper ASCII, not valid as UTF-8, and produce

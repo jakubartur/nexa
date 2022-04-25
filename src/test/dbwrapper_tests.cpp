@@ -12,7 +12,13 @@
 #include <boost/test/unit_test.hpp>
 
 using namespace std;
-using namespace boost::filesystem;
+
+std::string randString()
+{
+    unsigned char seed[32];
+    GetRandBytes(seed, 32);
+    return GetHex(seed, 32);
+}
 
 // Test if a string consists entirely of null characters
 bool is_null_key(const vector<unsigned char> &key)
@@ -33,7 +39,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper)
     for (int i = 0; i < 2; i++)
     {
         bool obfuscate = (bool)i;
-        fs::path ph = fs::temp_directory_path() / fs::unique_path();
+        fs::path ph = fs::temp_directory_path() / randString();
         CDBWrapper dbw(ph, (1 << 20), true, false, obfuscate);
         char key = 'k';
         uint256 in = InsecureRand256();
@@ -55,7 +61,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_batch)
     for (int i = 0; i < 2; i++)
     {
         bool obfuscate = (bool)i;
-        fs::path ph = fs::temp_directory_path() / fs::unique_path();
+        fs::path ph = fs::temp_directory_path() / randString();
         CDBWrapper dbw(ph, (1 << 20), true, false, obfuscate);
 
         char key = 'i';
@@ -93,7 +99,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_iterator)
     for (int i = 0; i < 2; i++)
     {
         bool obfuscate = (bool)i;
-        fs::path ph = fs::temp_directory_path() / fs::unique_path();
+        fs::path ph = fs::temp_directory_path() / randString();
         CDBWrapper dbw(ph, (1 << 20), true, false, obfuscate);
 
         // The two keys are intentionally chosen for ordering
@@ -133,7 +139,7 @@ BOOST_AUTO_TEST_CASE(dbwrapper_iterator)
 BOOST_AUTO_TEST_CASE(existing_data_no_obfuscate)
 {
     // We're going to share this fs::path between two wrappers
-    fs::path ph = fs::temp_directory_path() / fs::unique_path();
+    fs::path ph = fs::temp_directory_path() / randString();
     create_directories(ph);
 
     // Set up a non-obfuscated wrapper to write some initial data.
@@ -175,7 +181,7 @@ BOOST_AUTO_TEST_CASE(existing_data_no_obfuscate)
 BOOST_AUTO_TEST_CASE(existing_data_reindex)
 {
     // We're going to share this fs::path between two wrappers
-    fs::path ph = fs::temp_directory_path() / fs::unique_path();
+    fs::path ph = fs::temp_directory_path() / randString();
     create_directories(ph);
 
     // Set up a non-obfuscated wrapper to write some initial data.
@@ -211,7 +217,7 @@ BOOST_AUTO_TEST_CASE(existing_data_reindex)
 
 BOOST_AUTO_TEST_CASE(iterator_ordering)
 {
-    fs::path ph = fs::temp_directory_path() / fs::unique_path();
+    fs::path ph = fs::temp_directory_path() / randString();
     CDBWrapper dbw(ph, (1 << 20), true, false, false);
     for (unsigned int x = 0x00; x < 256; ++x)
     {
@@ -293,7 +299,7 @@ BOOST_AUTO_TEST_CASE(iterator_string_ordering)
 {
     char buf[10];
 
-    fs::path ph = fs::temp_directory_path() / fs::unique_path();
+    fs::path ph = fs::temp_directory_path() / randString();
     CDBWrapper dbw(ph, (1 << 20), true, false, false);
     for (int x = 0x00; x < 10; ++x)
     {
