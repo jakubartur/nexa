@@ -220,6 +220,12 @@ AC_ARG_WITH([system-univalue],
   [system_univalue=no]
 )
 
+AC_ARG_WITH([sodium],
+  [AS_HELP_STRING([--with-sodium],
+  [enable if zmq was compiled with sodium (default is no)])],
+  [use_sodium=yes],
+  [use_sodium=no])
+
 AC_ARG_ENABLE([zmq],
   [AS_HELP_STRING([--disable-zmq],
   [disable ZMQ notifications])],
@@ -979,10 +985,29 @@ else
        [AC_MSG_WARN([zmq.h not found, disabling zmq support])
         use_zmq=no
         AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])])
-     AC_CHECK_LIB([zmq],[zmq_ctx_shutdown],ZMQ_LIBS=-lzmq,
-       [AC_MSG_WARN([libzmq >= 4.0 not found, disabling zmq support])
-        use_zmq=no
-        AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])])
+     if test "x$use_zmq" = xyes; then
+        AC_CHECK_LIB([zmq],[zmq_ctx_shutdown],ZMQ_LIBS=-lzmq,
+          [AC_MSG_WARN([libzmq >= 4.0 not found, disabling zmq support])
+           use_zmq=no
+           AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])])
+     fi
+
+     dnl Add sodium libs if they're present and zmq and sodium are enabled
+     if test "x$use_zmq" = xyes; then
+       if test "x$use_sodium" = xyes; then
+         AC_CHECK_HEADER([sodium.h],
+           [AC_DEFINE([ENABLE_ZMQ],[1],[Define to 1 to enable ZMQ functions])],
+           [AC_MSG_WARN([sodium.h not found, disabling zmq support])
+            use_zmq=no
+            AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])])
+         if test "x$use_zmq" = xyes; then
+            AC_CHECK_LIB([sodium],[sodium_init],ZMQ_LIBS="$ZMQ_LIBS -lsodium",
+              [AC_MSG_WARN([libsodium not found, disabling zmq support])
+               use_zmq=no
+               AC_DEFINE([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])])
+         fi
+       fi
+     fi
   else
     AC_DEFINE_UNQUOTED([ENABLE_ZMQ],[0],[Define to 1 to enable ZMQ functions])
   fi

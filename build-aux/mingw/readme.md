@@ -20,6 +20,7 @@ Quick Summary
    install paths.
 6. Execute `/build-aux/mingw/config-mingw.bat` to install the initial development
    environment.
+7. Optional: Install ZMQ for mingw64 if desired and update make-nexa.sh
 
 
 #### (Re)Build Nexa
@@ -196,4 +197,27 @@ The initial configuration process is also set up to build the Nexa client
 upon completion of the development environment setup.  All build outputs will
 be placed under `/build-output` with 32-bit binaries under the x86 sub-folder
 and 64-bit binaries under the x64 sub-folder.
+
+#### 7. Optional: Manually install ZMQ
+
+1.  Install msys2 if you have not already done so from https://www.msys2.org/
+
+Mysy2 is a package repository for windows and mingw builds which uses pacman
+as a tool for finding and downloading compiled packages. Once installed lauch
+the msys2 command window and enter the search string:  "pacman -Ss zero".  This
+will give you the list of avaiable packages for zeromq. Choose the one appropriate
+to your platform.  This would be one of the mingw libraries but with no pthon
+bindings. Most likely you will choose something like: "mingw-w64-clang-x86_64_zeromq".
+To install this enter: "pacman -S mingw-w64-clang-x86_64_zeromq".
+
+You now have the package installed however you need to add the path to the lib and include
+folders to the make-nexa.sh script.
+
+    Example:
+
+	-I/d/msys64/mingw64/include \
+
+	-L/d/msys64/mingw64/lib \
+
+Now you are ready to run the rebuild-nexa.bat script to build the nexa binaries.
 
