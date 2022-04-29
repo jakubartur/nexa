@@ -22,11 +22,11 @@ The following recipe puts the output files in the appropriate locations for this
 
 ```bash
 cp *.xpm ../../share/pixmaps
-cp bitcoin*.png ../../share/pixmaps/
-cp bitcoin.ico ../../share/pixmaps/bitcoin.ico 
-cp bitcoin.ico ../../src/qt/res/icons
-cp bitcoin.icns ../../src/qt/res/icons
-cp bitcoin512.png ../../src/qt/res/icons/bitcoin.png
+cp nexa*.png ../../share/pixmaps/
+cp nexa.ico ../../share/pixmaps/nexa.ico 
+cp nexa.ico ../../src/qt/res/icons
+cp nexa.icns ../../src/qt/res/icons
+cp nexa512.png ../../src/qt/res/icons/nexa.png
 
-rm bitcoin*.png
+rm nexa*.png
 ```

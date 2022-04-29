@@ -16,14 +16,14 @@ BEGIN
     BEGIN
         BLOCK "040904E4" // U.S. English - multilingual (hex)
         BEGIN
-            VALUE "CompanyName",        "Bitcoin"
-            VALUE "FileDescription",    "bitcoin-miner"
+            VALUE "CompanyName",        "Nexa"
+            VALUE "FileDescription",    "nexad (Nexa node with a JSON-RPC server)"
             VALUE "FileVersion",        VER_FILEVERSION_STR
-            VALUE "InternalName",       "bitcoin-miner"
+            VALUE "InternalName",       "nexad"
             VALUE "LegalCopyright",     COPYRIGHT_STR
             VALUE "LegalTrademarks1",   "Distributed under the MIT software license, see the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.php."
-            VALUE "OriginalFilename",   "bitcoin-miner.exe"
-            VALUE "ProductName",        "bitcoin-miner"
+            VALUE "OriginalFilename",   "nexad.exe"
+            VALUE "ProductName",        "nexad"
             VALUE "ProductVersion",     VER_PRODUCTVERSION_STR
         END
     END
