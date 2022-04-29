@@ -144,8 +144,8 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
             bool isCompressed = find_value(metadata, "isCompressed").get_bool();
             // Must be valid private key
             // Note: CBitcoinSecret::SetString tests isValid, whereas CBitcoinAddress does not!
-            BOOST_CHECK_MESSAGE(secret.SetString(exp_base58string), "!SetString:" + strTest);
-            BOOST_CHECK_MESSAGE(secret.IsValid(), "!IsValid:" + strTest);
+            BOOST_CHECK_MESSAGE(secret.SetString(Params(), exp_base58string), "!SetString:" + strTest);
+            BOOST_CHECK_MESSAGE(secret.IsValid(Params()), "!IsValid:" + strTest);
             CKey privkey = secret.GetKey();
             BOOST_CHECK_MESSAGE(privkey.IsCompressed() == isCompressed, "compressed mismatch:" + strTest);
             BOOST_CHECK_MESSAGE(
@@ -173,8 +173,8 @@ BOOST_AUTO_TEST_CASE(base58_keys_valid_parse)
                 std::visit(TestAddrTypeVisitor(exp_addrType), destination), "addrType mismatch" + strTest);
 
             // Public key must be invalid private key
-            secret.SetString(exp_base58string);
-            BOOST_CHECK_MESSAGE(!secret.IsValid(), "IsValid pubkey as privkey:" + strTest);
+            secret.SetString(Params(), exp_base58string);
+            BOOST_CHECK_MESSAGE(!secret.IsValid(Params()), "IsValid pubkey as privkey:" + strTest);
         }
     }
 }
@@ -265,8 +265,8 @@ BOOST_AUTO_TEST_CASE(base58_keys_invalid)
         // must be invalid as public and as private key
         destination = DecodeLegacyAddr(exp_base58string, Params());
         BOOST_CHECK_MESSAGE(!IsValidDestination(destination), "IsValid pubkey:" + strTest);
-        secret.SetString(exp_base58string);
-        BOOST_CHECK_MESSAGE(!secret.IsValid(), "IsValid privkey:" + strTest);
+        secret.SetString(Params(), exp_base58string);
+        BOOST_CHECK_MESSAGE(!secret.IsValid(Params()), "IsValid privkey:" + strTest);
     }
 }
 

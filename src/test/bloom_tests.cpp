@@ -118,7 +118,7 @@ BOOST_AUTO_TEST_CASE(bloom_create_insert_key)
 {
     string strSecret = string("6EMSbgeLVqYap1cACuMCAhjaoReZh8U94bXRnoURQD63TYEfT1Bx");
     CBitcoinSecret vchSecret;
-    BOOST_CHECK(vchSecret.SetString(strSecret));
+    BOOST_CHECK(vchSecret.SetString(Params(), strSecret));
 
     CKey key = vchSecret.GetKey();
     CPubKey pubkey = key.GetPubKey();
