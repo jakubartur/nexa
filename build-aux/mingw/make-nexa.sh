@@ -138,6 +138,7 @@ if [ -z "$SKIP_CONFIGURE" ]; then
 	./configure \
 	$ENABLE_DEBUG \
 	--disable-upnp-default \
+        --with-sodium \
 	$DISABLE_TESTS \
 	--with-qt-incdir="$PATH_DEPS/Qt-5.9.9/5.9.9/include" \
 	--with-qt-libdir="$PATH_DEPS/Qt-5.9.9/5.9.9/lib" \
