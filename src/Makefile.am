@@ -272,7 +272,7 @@ obj/build.h: FORCE
 	  $(abs_top_srcdir)
 libnexa_util_a-clientversion.$(OBJEXT): obj/build.h
 
-# server: shared between bitcoind and bitcoin-qt
+# server: shared between nexad and nexa-qt
 libnexa_server_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(MINIUPNPC_CPPFLAGS) $(EVENT_CFLAGS) $(EVENT_PTHREADS_CFLAGS)
 libnexa_server_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libnexa_server_a_SOURCES = \
@@ -372,7 +372,7 @@ libnexa_zmq_a_SOURCES = \
 endif
 
 
-# wallet: shared between bitcoind and bitcoin-qt, but only linked
+# wallet: shared between nexad and nexa-qt, but only linked
 # when wallet enabled
 libnexa_wallet_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
 libnexa_wallet_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
@@ -556,7 +556,7 @@ libnexa_consensus_a_SOURCES = \
   utilstrencodings.h \
   version.h
 
-# common: shared between bitcoind, and bitcoin-qt and non-server tools
+# common: shared between nexad, and nexa-qt and non-server tools
 libnexa_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
 libnexa_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libnexa_common_a_SOURCES = \
@@ -615,7 +615,7 @@ libnexa_util_a_SOURCES += compat/glibc_compat.cpp
 AM_LDFLAGS += $(COMPAT_LDFLAGS)
 endif
 
-# cli: shared between bitcoin-cli and bitcoin-qt
+# cli: shared between nexa-cli and nexa-qt
 libnexa_cli_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(EVENT_CFLAGS)
 libnexa_cli_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 libnexa_cli_a_SOURCES = \
@@ -625,14 +625,14 @@ libnexa_cli_a_SOURCES = \
 nodist_libnexa_util_a_SOURCES = $(srcdir)/obj/build.h
 #
 
-# bitcoind binary #
+# nexad binary #
 nexad_SOURCES = nexad.cpp
 nexad_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
 nexad_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 nexad_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-nexad_SOURCES += bitcoind-res.rc
+nexad_SOURCES += nexad-res.rc
 endif
 
 nexad_LDADD = \
@@ -655,14 +655,14 @@ nexad_LDADD = \
 
 nexad_LDADD += $(BOOST_LIBS) $(BDB_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(MINIUPNPC_LIBS) $(EVENT_PTHREADS_LIBS) $(EVENT_LIBS) $(ZMQ_LIBS)
 
-# bitcoin-cli binary #
+# nexa-cli binary #
 nexa_cli_SOURCES = nexa-cli.cpp
 nexa_cli_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(EVENT_CFLAGS)
 nexa_cli_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 nexa_cli_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-nexa_cli_SOURCES += bitcoin-cli-res.rc
+nexa_cli_SOURCES += nexa-cli-res.rc
 endif
 
 nexa_cli_LDADD = \
@@ -677,14 +677,14 @@ nexa_cli_LDADD = \
 nexa_cli_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# bitcoin-tx binary #
+# nexa tx binary #
 nexa_tx_SOURCES = nexa-tx.cpp
 nexa_tx_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
 nexa_tx_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 nexa_tx_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-nexa_tx_SOURCES += bitcoin-tx-res.rc
+nexa_tx_SOURCES += nexa-tx-res.rc
 endif
 
 nexa_tx_LDADD = \
@@ -701,7 +701,7 @@ nexa_tx_LDADD = \
 nexa_tx_LDADD += $(BOOST_LIBS) $(CRYPTO_LIBS)
 #
 
-# bitcoin-miner binary #
+# nexa-miner binary #
 nexa_miner_SOURCES = nexa-miner.cpp \
   pow.cpp \
   arith_uint256.cpp \
@@ -717,7 +717,7 @@ nexa_miner_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
 nexa_miner_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
 if TARGET_WINDOWS
-nexa_miner_SOURCES += bitcoin-miner-res.rc
+nexa_miner_SOURCES += nexa-miner-res.rc
 endif
 
 nexa_miner_LDADD = \
