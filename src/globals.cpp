@@ -286,8 +286,8 @@ CTweak<uint32_t> randomlyDontInv("net.randomlyDontInv",
     0);
 
 CTweakRef<uint64_t> capdPoolSize("cache.maxCapdPool",
-    strprintf("Set the counterparty and protocol discovery message pool size.\nDefault is %d, 0 disables.\n"
-              "Note that enabling CAPD will only happen for new node connections, and\n"
+    strprintf("Set the counterparty and protocol discovery message pool size (default: %d, 0 disables). "
+              "Note that enabling CAPD will only happen for new node connections, and "
               "disabling will make this node silently drop incoming CAPD messages.",
         CapdMsgPool::DEFAULT_MSG_POOL_MAX_SIZE),
     &msgpoolMaxSize,
