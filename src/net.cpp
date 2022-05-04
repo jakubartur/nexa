@@ -2080,8 +2080,7 @@ void ThreadOpenConnections()
         // Only connect out to one peer per network group (/16 for IPv4).
         // Do this here so we don't have to critsect vNodes inside mapAddresses critsect.
         // And also must do this before the semaphore grant so that we don't have to block
-        // if the grants are all taken and we want to disconnect a node in the event that
-        // we don't have enough connections to XTHIN capable nodes yet.
+        // if the grants are all taken and we want to disconnect a node.
         int nOutbound = 0;
         set<vector<unsigned char> > setConnected;
         CNode *pNonNodeNetwork = nullptr;
@@ -2100,8 +2099,6 @@ void ThreadOpenConnections()
                         pNonNodeNetwork = pnode;
                 }
             }
-            // Disconnect a node that is not XTHIN capable if all outbound slots are full and we
-            // have not yet connected to enough XTHIN nodes.
             if (!fReindex)
             {
                 if (IsInitialBlockDownload())
@@ -2144,9 +2141,7 @@ void ThreadOpenConnections()
             }
         }
 
-        // During IBD we do not actively disconnect and search for XTHIN capable nodes therefore
-        // we need to check occasionally whether IBD is complete, meaning IsChainNearlySynd() returns true.
-        // Therefore we do a try_wait() rather than wait() when aquiring the semaphore. A try_wait() is
+        // Do a try_wait() rather than wait() when aquiring the semaphore. A try_wait() is
         // indicated by passing "true" to CSemaphore grant().
         CSemaphoreGrant grant(*semOutbound, true);
         if (!grant)
@@ -2244,7 +2239,27 @@ void ThreadOpenConnections()
             if (addr.GetPort() != Params().GetDefaultPort() && nTries < 50)
                 continue;
 
+            // Check that this addr is not already in vAddedNodes otherwise, in rare conditions, we could
+            // end up connecting to the same peer twice.  This is because vAddedNodes connections are connected
+            // via a separate thread.
+            {
+                LOCK(cs_vAddedNodes);
+                bool fMatch = false;
+                for (const std::string &strAddNode : vAddedNodes)
+                {
+                    std::size_t found = addr.ToString().find(strAddNode);
+                    if (found != std::string::npos)
+                    {
+                        fMatch = true;
+                        break;
+                    }
+                }
+                if (fMatch)
+                    continue;
+            }
+
             addrConnect = addr;
+
             break;
         }
 
