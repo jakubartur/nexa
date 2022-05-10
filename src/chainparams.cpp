@@ -553,7 +553,7 @@ public:
         pchMessageStart[1] = 0x27;
         pchMessageStart[2] = 0x12;
         pchMessageStart[3] = 0x21;
-        nDefaultPort = 7228;
+        nDefaultPort = NEXA_PORT;
         nPruneAfterHeight = 100000;
 
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
