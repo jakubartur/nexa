@@ -433,9 +433,9 @@ class NodeConn(asyncore.dispatcher):
         except Exception as e:
             print('got_data:', repr(e))
             self.exceptions.append(e)
-            #import traceback
-            #traceback.print_tb(sys.exc_info()[2])
-            #pdb.post_mortem(e.__traceback__)
+            import traceback
+            traceback.print_tb(sys.exc_info()[2])
+            pdb.post_mortem(e.__traceback__)
 
     def send_message(self, message, pushbuf=False):
         if self.state != "connected" and not pushbuf:

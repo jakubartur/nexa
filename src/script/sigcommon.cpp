@@ -22,8 +22,7 @@
 
 #ifdef ANDROID // log sighash calculations
 #include <android/log.h>
-//#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "bu.sig", __VA_ARGS__)
-#define p(...)
+#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "BU.sig", __VA_ARGS__)
 #else
 #define p(...)
 // tinyformat::format(std::cout, __VA_ARGS__)
@@ -339,7 +338,7 @@ uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     ss << nHashType;
     p("sigHashType: %x\n", nHashType);
 
-    p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
+    p("Num bytes hashed: %d\n", (int)ss.GetNumBytesHashed());
     uint256 sighash = ss.GetHash();
     p("Final sighash is: %s\n", sighash.GetHex().c_str());
     return sighash;
@@ -481,7 +480,7 @@ bool SignatureHashNexa(const CScript &scriptCode,
     ss << sigHashType;
     p("sigHashType: %s\n", sigHashType.ToString().c_str());
 
-    p("Num bytes hashed: %d\n", ss.GetNumBytesHashed());
+    p("Num bytes hashed: %d\n", (int)ss.GetNumBytesHashed());
     if (nHashedOut != nullptr)
         *nHashedOut = ss.GetNumBytesHashed();
     result = ss.GetHash();
@@ -524,17 +523,25 @@ void RemoveSigHashType(std::vector<unsigned char> &vchSig)
 
 SigHashType &SigHashType::fromSig(const std::vector<unsigned char> &sig)
 {
-    invalidate(); // Start clean
     size_t sigsz = sig.size();
-    if (sigsz == 64) // No bytes is ALL/ALL
+    if (sigsz < 64)
+        return *this; // invalid
+    return fromBytes(sig, 64);
+}
+
+SigHashType &SigHashType::fromBytes(const std::vector<unsigned char> &byteArray, int start)
+{
+    invalidate(); // Start clean
+
+    size_t sigsz = byteArray.size();
+    if (sigsz - start == 0) // No bytes is ALL/ALL
     {
         valid = true;
         return *this;
     }
-    if (sigsz < 65)
-        return *this; // invalid
+    size_t curPos = start;
 
-    uint8_t io = sig[64];
+    uint8_t io = byteArray[curPos];
     out = static_cast<SigHashType::Output>(io & 0xf);
     inp = static_cast<SigHashType::Input>(io >> 4);
 
@@ -543,14 +550,14 @@ SigHashType &SigHashType::fromSig(const std::vector<unsigned char> &sig)
     if (inp > Input::LAST_VALID)
         return invalidate();
 
-    size_t curPos = 65;
+    curPos++;
     // Grab any extra bytes needed
     if (inp == Input::FIRSTN)
     {
         if (sigsz <= curPos)
             return invalidate(); // invalid
         inpData.resize(1);
-        inpData[0] = sig[curPos];
+        inpData[0] = byteArray[curPos];
         curPos++;
     }
 
@@ -559,7 +566,7 @@ SigHashType &SigHashType::fromSig(const std::vector<unsigned char> &sig)
         if (sigsz <= curPos)
             return invalidate(); // invalid
         outData.resize(1);
-        outData[0] = sig[curPos];
+        outData[0] = byteArray[curPos];
         curPos++;
     }
     else if (out == Output::TWO)
@@ -567,8 +574,8 @@ SigHashType &SigHashType::fromSig(const std::vector<unsigned char> &sig)
         if (sigsz <= curPos + 1)
             return invalidate(); // invalid
         outData.resize(2);
-        outData[0] = sig[curPos];
-        outData[1] = sig[curPos + 1];
+        outData[0] = byteArray[curPos];
+        outData[1] = byteArray[curPos + 1];
         curPos += 2;
     }
 

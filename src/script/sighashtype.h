@@ -68,6 +68,10 @@ public:
         @return this object  */
     SigHashType &fromSig(const std::vector<unsigned char> &sig);
 
+    /** Extract a sighashtype from some offset in a raw array and set this object to that type
+        @return this object  */
+    SigHashType &fromBytes(const std::vector<unsigned char> &byteArray, int start = 0);
+
     /** Anyone can pay signs only the current input, so other entities can add addtl inputs to complete the partial tx
      */
     SigHashType &withAnyoneCanPay()
