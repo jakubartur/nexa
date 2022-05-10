@@ -2235,14 +2235,14 @@ class msg_headers(object):
         self.headers = [] if headers is None else headers
 
     def deserialize(self, f):
-        # comment in bitcoind indicates these should be deserialized as blocks
-        blocks = deser_vector(f, CBlock)
-        for x in blocks:
-            self.headers.append(CBlockHeader(x))
+        # In BCH/BTC these are serialized/deserialized as blocks with 0 transactions (regardless of the actual # tx)
+        # In Nexa these are serialized/deserialized as block headers
+        self.headers = deser_vector(f, CBlockHeader)
 
     def serialize(self, stype=SER_DEFAULT):
-        blocks = [CBlock(x) for x in self.headers]
-        return ser_vector(blocks, stype)
+        for x in self.headers:
+            assert type(x) is CBlockHeader
+        return ser_vector(self.headers, stype)
 
     def __repr__(self):
         return "msg_headers(headers=%s)" % repr(self.headers)

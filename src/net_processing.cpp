@@ -1119,7 +1119,7 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
                 return true;
         }
 
-        std::vector<CBlock> vHeaders;
+        std::vector<CBlockHeader> vHeaders;
         {
             LOCK(cs_main); // for chainActive
             if (!locator.IsNull())
@@ -1130,7 +1130,6 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
                     pindex = chainActive.Next(pindex);
             }
 
-            // we must use CBlocks, as CBlockHeaders won't include the 0x00 nTx count at the end
             int nLimit = MAX_HEADERS_RESULTS;
             LOG(NET, "getheaders height %d for block %s from peer %s\n", (pindex ? pindex->height() : -1),
                 hashStop.ToString(), pfrom->GetLogName());
@@ -1213,7 +1212,6 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
         for (unsigned int n = 0; n < nCount; n++)
         {
             vRecv >> headers[n];
-            ReadCompactSize(vRecv); // ignore tx count; assume it is 0.
         }
 
         // Nothing interesting. Stop asking this peers for more headers.
@@ -2652,7 +2650,7 @@ bool SendMessages(CNode *pto)
                 vBlocksToAnnounce.swap(pto->vBlockHashesToAnnounce);
             }
 
-            std::vector<CBlock> vHeaders;
+            std::vector<CBlockHeader> vHeaders;
             bool fRevertToInv = (!state->fPreferHeaders || vBlocksToAnnounce.size() > MAX_BLOCKS_TO_ANNOUNCE);
             CBlockIndex *pBestIndex = nullptr; // last header queued for delivery
 

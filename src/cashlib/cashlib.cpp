@@ -25,7 +25,10 @@
 #include "uint256.h"
 #include "util.h"
 #include "utilstrencodings.h"
-#define MAX_SIG_LEN 100 // DER-encoded ECDSA is more like 72 but better to be safe
+
+// DER-encoded ECDSA is more like 72 but better to be safe
+// Schnorr is only 64, but this must also include a few extra bytes for the sighashtype
+#define MAX_SIG_LEN 100
 
 #ifdef DEBUG_LOCKORDER // Not debugging the lockorder in cashlib even if its defined
 void AssertLockHeldInternal(const char *pszName, const char *pszFile, unsigned int nLine, void *cs) {}
@@ -94,7 +97,7 @@ extern "C" void DbgResume() { dbgPauseCond.notify_all(); }
 #endif
 #ifdef ANDROID // log sighash calculations
 #include <android/log.h>
-#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "bu.sig", __VA_ARGS__)
+#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "BU.sig", __VA_ARGS__)
 #else
 #define p(...)
 // tinyformat::format(std::cout, __VA_ARGS__)
@@ -186,24 +189,24 @@ CKey LoadKey(unsigned char *src)
 // languages that handle binary data poorly, since it allows transaction information to be communicated via hex strings
 
 // From core_read.cpp #include "core_io.h"
-bool DecodeHexTx(CTransaction &tx, const std::string &strHexTx)
-{
-    if (!IsHex(strHexTx))
-        return false;
-
-    std::vector<unsigned char> txData(ParseHex(strHexTx));
-    CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
-    try
+    bool DecodeHexTx(CTransaction &tx, const std::string &strHexTx)
     {
-        ssData >> tx;
-    }
-    catch (const std::exception &)
-    {
-        return false;
-    }
+        if (!IsHex(strHexTx))
+            return false;
 
-    return true;
-}
+        std::vector<unsigned char> txData(ParseHex(strHexTx));
+        CDataStream ssData(txData, SER_NETWORK, PROTOCOL_VERSION);
+        try
+        {
+            ssData >> tx;
+        }
+        catch (const std::exception &)
+        {
+            return false;
+        }
+
+        return true;
+    }
 #endif
 } // namespace
 
@@ -420,7 +423,10 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     result[0] = 0;
 
     std::vector<uint8_t> sigHashVec(hashType, hashType + hashTypeLen);
-    SigHashType sigHashType(sigHashVec);
+    SigHashType sigHashType;
+    sigHashType.fromBytes(sigHashVec);
+    // p("SigHashType vec size: %d, %d, %s(%s): invalid: %d\n", sigHashVec.size(), hashTypeLen,
+    //    sigHashType.ToString().c_str(), sigHashType.HexStr().c_str(), sigHashType.isInvalid());
 
     CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
     try
@@ -439,14 +445,17 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     CKey key = LoadKey(keyData);
 
     size_t nHashedOut = 0;
-    uint256 sighash = SignatureHash(priorScript, tx, inputIdx, sigHashType, inputAmount, &nHashedOut);
+    uint256 sighash;
+    if (!SignatureHashNexa(priorScript, tx, inputIdx, sigHashType, sighash, &nHashedOut))
+        return 0;
     std::vector<unsigned char> sig;
     if (!key.SignSchnorr(sighash, sig))
     {
         return 0;
     }
+    // CPubKey pub = key.GetPubKey();
     // p("Sign Schnorr: sig: %s, pubkey: %s sighash: %s\n", HexStr(sig).c_str(), HexStr(pub.begin(), pub.end()).c_str(),
-    // sighash.GetHex().c_str());
+    //    sighash.GetHex().c_str());
     sigHashType.appendToSig(sig);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
@@ -1057,8 +1066,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
     JNIEnv *env,
     jobject ths,
     jbyteArray txData,
-    unsigned char *hashType,
-    unsigned int hashTypeLen,
+    jbyteArray hashType,
     jlong inputIdx,
     jlong inputAmount,
     jbyteArray prevoutScript,
@@ -1067,15 +1075,19 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
     ByteArrayAccessor tx(env, txData);
     ByteArrayAccessor prevout(env, prevoutScript);
     ByteArrayAccessor privkey(env, secret);
+    ByteArrayAccessor sigHashType(env, hashType);
     if (privkey.size != 32)
         return jbyteArray();
 
     unsigned char result[MAX_SIG_LEN];
-    uint32_t resultLen = SignTxSchnorr(tx.data, tx.size, inputIdx, inputAmount, prevout.data, prevout.size, hashType,
-        hashTypeLen, privkey.data, result, MAX_SIG_LEN);
+    uint32_t resultLen = SignTxSchnorr(tx.data, tx.size, inputIdx, inputAmount, prevout.data, prevout.size,
+        sigHashType.data, sigHashType.size, privkey.data, result, MAX_SIG_LEN);
 
     if (resultLen == 0)
+    {
+        triggerJavaIllegalStateException(env, "signing operation failed");
         return jbyteArray();
+    }
     return makeJByteArray(env, result, resultLen);
 }
 
@@ -1219,24 +1231,34 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_PayAdd
     jbyte typ,
     jbyteArray arg)
 {
-    size_t len = env->GetArrayLength(arg);
-    if (len != 20)
-    {
-        triggerJavaIllegalStateException(env, "bad address argument length");
-        return env->NewStringUTF("bad address argument length");
-    }
     jbyte *data = env->GetByteArrayElements(arg, 0);
-
-    uint160 tmp((const uint8_t *)data);
-
+    size_t len = env->GetArrayLength(arg);
     CTxDestination dst = CNoDestination();
-    if (typ == PayAddressTypeP2PKH)
+
+    if ((typ == PayAddressTypeP2PKH) || (typ == PayAddressTypeP2SH))
     {
-        dst = CKeyID(tmp);
+        if (len != 20)
+        {
+            triggerJavaIllegalStateException(env, "bad address argument length");
+            return nullptr;
+        }
+        uint160 tmp((const uint8_t *)data);
+        if (typ == PayAddressTypeP2PKH)
+        {
+            dst = CKeyID(tmp);
+        }
+        else if (typ == PayAddressTypeP2SH)
+        {
+            dst = CScriptID(tmp);
+        }
     }
-    else if (typ == PayAddressTypeP2SH)
+    else if ((typ == PayAddressTypeTEMPLATE) || (typ == PayAddressTypeP2PKT))
     {
-        dst = CScriptID(tmp);
+        ScriptTemplateDestination st;
+        std::vector<unsigned char> vec(data, data + len);
+        CDataStream ssData(vec, SER_NETWORK, PROTOCOL_VERSION);
+        ssData >> st;
+        dst = st;
     }
     else
     {
@@ -1261,30 +1283,33 @@ class PubkeyExtractor
 {
 protected:
     const CChainParams &params;
-    jbyte *dest;
+    std::vector<unsigned char> &dest;
 
 public:
-    PubkeyExtractor(jbyte *destination, const CChainParams &p) : params(p), dest(destination) {}
+    PubkeyExtractor(std::vector<unsigned char> &destination, const CChainParams &p) : params(p), dest(destination) {}
     void operator()(const CKeyID &id) const
     {
+        dest.resize(21);
         dest[0] = PayAddressTypeP2PKH;
-        memcpy(dest + 1, id.begin(), 20); // pubkey is 20 bytes
+        memcpy(&dest[1], id.begin(), 20); // pubkey is 20 bytes
     }
     void operator()(const CScriptID &id) const
     {
+        dest.resize(21);
         dest[0] = PayAddressTypeP2SH;
-        memcpy(dest + 1, id.begin(), 20); // pubkey is 20 bytes
+        memcpy(&dest[1], id.begin(), 20); // pubkey is 20 bytes
     }
     void operator()(const CNoDestination &) const
     {
-        memset(dest, 0, 21); // not a good address
+        dest.resize(1);
         dest[0] = PayAddressTypeNONE;
     }
     void operator()(const ScriptTemplateDestination &id) const
     {
-        memset(dest, 0, 21); // TODO extract pubkey from known types?
-        // TODO if (its equal to p2pkt (pay-to-pubkey-template)) dest[0] = 5; else
+        // There may be no pubkey here or we can't find it anyway... extract and return the script
+        dest.resize(1);
         dest[0] = PayAddressTypeTEMPLATE;
+        dest = id.appendTo(dest);
     }
 };
 
@@ -1357,10 +1382,11 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Pay
     }
 
     CTxDestination dst = DecodeCashAddr(toString(env, addrstr), *cp);
-
-    jbyteArray bArray = env->NewByteArray(21);
+    std::vector<unsigned char> result;
+    std::visit(PubkeyExtractor(result, *cp), dst);
+    jbyteArray bArray = env->NewByteArray(result.size());
     jbyte *data = env->GetByteArrayElements(bArray, 0);
-    std::visit(PubkeyExtractor(data, *cp), dst);
+    memcpy(data, &result[0], result.size());
     env->ReleaseByteArrayElements(bArray, data, 0);
     return bArray;
 }
@@ -1476,6 +1502,65 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Has
     env->ReleaseByteArrayElements(bArray, dest, 0);
     return bArray;
 }
+
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_BlockHeader_blockHash(JNIEnv *env,
+    jobject ths,
+    jbyteArray arg)
+{
+    size_t len = env->GetArrayLength(arg);
+    jbyte *data = env->GetByteArrayElements(arg, 0);
+
+    jbyteArray bArray = env->NewByteArray(32);
+    jbyte *dest = env->GetByteArrayElements(bArray, 0);
+
+    CDataStream dataStrm((char *)data, (char *)data + len, SER_NETWORK, PROTOCOL_VERSION);
+    CBlockHeader blkHeader;
+    dataStrm >> blkHeader;
+
+    uint256 hash = blkHeader.GetHash();
+    memcpy(dest, hash.begin(), 256 / 8);
+    // unpins the java objects
+    env->ReleaseByteArrayElements(arg, data, 0);
+    env->ReleaseByteArrayElements(bArray, dest, 0);
+    return bArray;
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Transaction_txid(JNIEnv *env,
+    jobject ths,
+    jbyteArray arg)
+{
+    size_t len = env->GetArrayLength(arg);
+    jbyte *data = env->GetByteArrayElements(arg, 0);
+
+    jbyteArray bArray = env->NewByteArray(32);
+    jbyte *dest = env->GetByteArrayElements(bArray, 0);
+
+    txid((unsigned char *)data, len, (unsigned char *)dest);
+
+    // unpins the java objects
+    env->ReleaseByteArrayElements(arg, data, 0);
+    env->ReleaseByteArrayElements(bArray, dest, 0);
+    return bArray;
+}
+
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Transaction_txidem(JNIEnv *env,
+    jobject ths,
+    jbyteArray arg)
+{
+    size_t len = env->GetArrayLength(arg);
+    jbyte *data = env->GetByteArrayElements(arg, 0);
+
+    jbyteArray bArray = env->NewByteArray(32);
+    jbyte *dest = env->GetByteArrayElements(bArray, 0);
+
+    txidem((unsigned char *)data, len, (unsigned char *)dest);
+
+    // unpins the java objects
+    env->ReleaseByteArrayElements(arg, data, 0);
+    env->ReleaseByteArrayElements(bArray, dest, 0);
+    return bArray;
+}
+
 
 class CDecodablePartialMerkleTree : public CPartialMerkleTree
 {

@@ -1081,7 +1081,6 @@ bool CheckInputs(const CTransactionRef &tx,
             {
                 debugger->SetInputCheckResult(false);
                 debugger->AddInputCheckError(state.GetRejectReason());
-                debugger->FinishCheckInputSession();
             }
             else
             {
@@ -1092,6 +1091,12 @@ bool CheckInputs(const CTransactionRef &tx,
         // MUST NOT have any grouped outputs (see CheckTransaction(...)).
         if (!CheckGroupTokens(*tx, state, inputs))
         {
+            if (debugger)
+            {
+                debugger->SetInputCheckResult(false);
+                debugger->AddInputCheckError(state.GetRejectReason());
+                debugger->FinishCheckInputSession();
+            }
             return state.DoS(0, false, REJECT_MALFORMED, "group-token-imbalance", false,
                 strprintf("Group token inputs and outputs do not balance"));
         }
