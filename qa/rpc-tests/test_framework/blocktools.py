@@ -10,7 +10,7 @@ import copy
 
 from .mininode import *
 from .script import CScript, OP_TRUE, OP_CHECKSIG, OP_DROP, OP_DUP, OP_HASH160, OP_EQUALVERIFY, OP_CHECKSIG, OP_RETURN, OP_NOP
-from .util import BTC, COINBASE_REWARD, uint256ToRpcHex
+from .util import BTC, COINBASE_REWARD, uint256ToRpcHex, rpcHexToUint256
 import test_framework.cashaddr as cashaddr
 
 # Minimum size a transaction can have.
@@ -19,8 +19,18 @@ MIN_TX_SIZE = 100
 # Maximum bytes in a TxOut pubkey script
 MAX_TXOUT_PUBKEY_SCRIPT = 10000
 
+def getAncHash(height, node):
+    return rpcHexToUint256(node.getblockheader(ancestorHeight(height))["hash"])
+
+def ancestorHeight(height):
+    assert height != 0  # ancestor height of GB is undefined (hash is all 0s)
+    if height & 1 == 0:
+        return height & (height - 1)
+    else:
+        return max(0, height - 5040)
+
 # Create a block (with regtest difficulty)
-def create_block(hashprev, height, chainwork, coinbase, nTime=None, txns=None, ctor=True):
+def create_block(hashprev, height, chainwork, coinbase, hashAncestor, nTime=None, txns=None, ctor=True):
     block = CBlock()
     if nTime is None:
         import time
@@ -34,6 +44,7 @@ def create_block(hashprev, height, chainwork, coinbase, nTime=None, txns=None, c
     block.chainWork = chainwork
     block.height = height
     block.hashPrevBlock = hashprev
+    block.hashAncestor = hashAncestor
     block.nBits = 0x207fffff # Will break after a difficulty adjustment... which never happens in regtest
     if coinbase:
         block.vtx.append(coinbase)

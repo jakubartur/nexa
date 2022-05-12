@@ -6,7 +6,7 @@ import test_framework.loginit
 from test_framework.mininode import *
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
-from test_framework.blocktools import create_block, create_coinbase
+from test_framework.blocktools import create_block, create_coinbase, getAncHash, ancestorHeight
 
 '''
 SendHeadersTest -- test behavior of headers messages to announce blocks.
@@ -367,7 +367,7 @@ class SendHeadersTest(BitcoinTestFramework):
                 last_time = tipblock['time']
                 last_work = int(tipblock["chainwork"], 16)
                 block_time = last_time + 1
-                new_block = create_block(tip, height+1, last_work + 2, create_coinbase(height+1), block_time)
+                new_block = create_block(tip, height+1, last_work + 2, create_coinbase(height+1), getAncHash(height+1, self.nodes[0]), block_time)
                 new_block.solve()
                 test_node.send_header_for_blocks([new_block])
                 test_node.wait_for_getdata([new_block.gethash()], timeout=5)
@@ -403,7 +403,7 @@ class SendHeadersTest(BitcoinTestFramework):
             for j in range(2):
                 blocks = []
                 for b in range(1):
-                    blocks.append(create_block(tip, height, work, create_coinbase(height), block_time))
+                    blocks.append(create_block(tip, height, work, create_coinbase(height), getAncHash(height, self.nodes[0]), block_time))
                     blocks[-1].solve()
                     tip = blocks[-1].gethash()
                     block_time += 1
@@ -525,7 +525,7 @@ class SendHeadersTest(BitcoinTestFramework):
         # Create 2 blocks.  Send the blocks, then send the headers.
         blocks = []
         for b in range(2):
-            blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+            blocks.append(create_block(tip, height, block_work, create_coinbase(height), getAncHash(height, self.nodes[0]), block_time))
             blocks[-1].solve()
             tip = blocks[-1].gethash()
             block_time += 1
@@ -548,8 +548,11 @@ class SendHeadersTest(BitcoinTestFramework):
 
         # This time, direct fetch should work
         blocks = []
+        startHeight = height
         for b in range(3):
-            blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+            ancHeight = ancestorHeight(height)
+            ancHash = blocks[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+            blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
             blocks[-1].solve()
             tip = blocks[-1].gethash()
             block_time += 1
@@ -571,9 +574,14 @@ class SendHeadersTest(BitcoinTestFramework):
         blocks = []
 
         # Create extra blocks for later
+        startHeight = height
+        ancestors = []
         for b in range(20):
-            blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+            ancHeight = ancestorHeight(height)
+            ancHash = ancestors[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+            blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
             blocks[-1].solve()
+            ancestors.append(blocks[-1])
             tip = blocks[-1].gethash()
             block_time += 1
             block_work += 2
@@ -625,8 +633,11 @@ class SendHeadersTest(BitcoinTestFramework):
             blocks = []
             # Create two more blocks.
             for j in range(2):
-                blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+                ancHeight = ancestorHeight(height)
+                ancHash = ancestors[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+                blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
                 blocks[-1].solve()
+                ancestors.append(blocks[-1])
                 tip = blocks[-1].gethash()
                 block_time += 1
                 block_work += 2
@@ -657,8 +668,11 @@ class SendHeadersTest(BitcoinTestFramework):
             blocks = []
             # Create two more blocks.
             for j in range(2):
-                blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+                ancHeight = ancestorHeight(height)
+                ancHash = ancestors[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+                blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
                 blocks[-1].solve()
+                ancestors.append(blocks[-1])
                 tip = blocks[-1].gethash()
                 block_time += 1
                 block_work += 2
@@ -689,8 +703,11 @@ class SendHeadersTest(BitcoinTestFramework):
             blocks = []
             # Create two more blocks.
             for j in range(5):
-                blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+                ancHeight = ancestorHeight(height)
+                ancHash = ancestors[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+                blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
                 blocks[-1].solve()
+                ancestors.append(blocks[-1])
                 tip = blocks[-1].gethash()
                 block_time += 1
                 block_work += 2
@@ -737,8 +754,11 @@ class SendHeadersTest(BitcoinTestFramework):
             blocks = []
             # Create two more blocks.
             for j in range(5):
-                blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+                ancHeight = ancestorHeight(height)
+                ancHash = ancestors[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+                blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
                 blocks[-1].solve()
+                ancestors.append(blocks[-1])
                 tip = blocks[-1].gethash()
                 block_time += 1
                 block_work += 2
@@ -786,8 +806,9 @@ class SendHeadersTest(BitcoinTestFramework):
             blocks = []
             # Create two more blocks.
             for j in range(2):
-                blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+                blocks.append(create_block(tip, height, block_work, create_coinbase(height), getAncHash(height, self.nodes[0]), block_time))
                 blocks[-1].solve()
+                ancestors.append(blocks[-1])
                 tip = blocks[-1].gethash()
                 block_time += 1
                 block_work += 2
@@ -820,8 +841,11 @@ class SendHeadersTest(BitcoinTestFramework):
             blocks = []
             # Create two more blocks.
             for j in range(3):
-                blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+                ancHeight = ancestorHeight(height)
+                ancHash = ancestors[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+                blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
                 blocks[-1].solve()
+                ancestors.append(blocks[-1])
                 tip = blocks[-1].gethash()
                 block_time += 1
                 block_work += 2
@@ -872,8 +896,11 @@ class SendHeadersTest(BitcoinTestFramework):
         blocks = []
         # Create two more blocks
         for j in range(2):
-            blocks.append(create_block(tip, height, block_work, create_coinbase(height), block_time))
+            ancHeight = ancestorHeight(height)
+            ancHash = ancestors[ancHeight - startHeight].gethash() if ancHeight >= startHeight else getAncHash(height, self.nodes[0])
+            blocks.append(create_block(tip, height, block_work, create_coinbase(height), ancHash, block_time))
             blocks[-1].solve()
+            ancestors.append(blocks[-1])
             tip = blocks[-1].gethash()
             block_time += 1
             block_work += 2

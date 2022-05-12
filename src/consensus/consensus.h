@@ -44,6 +44,12 @@ static const unsigned int MIN_TX_SIZE = 65;
 static const unsigned int MAX_TX_NUM_VOUT = 256;
 static const unsigned int MAX_TX_NUM_VIN = 256;
 
+/* If the current height is odd, the ancestor block is the current height minus this constant.
+   This a a week of blocks at 2 minutes per block.  But since this gap is arbitrary, it is simpler to just define
+   the "odd" ancestor to be this constant, regardless of block discovery rate, rather than make it a chain parameter.
+*/
+static const int64_t ANCESTOR_HASH_IF_ODD = 5040;
+
 /** This is the default max bloom filter size allowed on the bitcoin network.  In Bitcoin Unlimited we have the ability
  *  to communicate to our peer what max bloom filter size we will accept but still observe this value as a default.
  */

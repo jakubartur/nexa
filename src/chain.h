@@ -357,6 +357,15 @@ public:
     CBlockIndex *GetAncestor(int height);
     const CBlockIndex *GetAncestor(int height) const;
 
+    //! Get the ancestor whose hash should be put into the block headers ancestorHash field.
+    //  (this function uses the height and searches backwards.  Does not use ancestorHash)
+    // const CBlockIndex *GetConsensusAncestor() const;
+
+    //! Get the ancestor whose hash should be put into a child's ancestorHash field.
+    //  Since an unsolved child is not part of CBlockIndex, we cannot make a member function of the child, so
+    //  this slightly awkward function is needed
+    const CBlockIndex *GetChildsConsensusAncestor() const;
+
     //! Find the next maximum block size allowed
     uint64_t GetNextMaxBlockSize() const
     {
@@ -534,5 +543,8 @@ public:
     /** Find the last common block between this chain and a block index entry. */
     const CBlockIndex *FindFork(const CBlockIndex *pindex) const;
 };
+
+/** Return the height of the ancestor whose hash must be placed in the block header */
+int64_t GetConsensusAncestorHeight(int64_t height);
 
 #endif // BITCOIN_CHAIN_H

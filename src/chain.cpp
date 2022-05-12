@@ -92,6 +92,42 @@ int static inline GetSkipHeight(int height)
     return (height & 1) ? InvertLowestOne(InvertLowestOne(height - 1)) + 1 : InvertLowestOne(height);
 }
 
+/** Compute what height to jump back to for the ancestor hash in blocks.  This implements both a linear and
+    exponential backup.
+
+    If the height is even, drop the least significant bit that is set to 1 (easily calculated by n & (n-1)) and
+    use that as the height. This tends to "funnel" ancestor hops into blocks whose height is a power of 2.
+
+    If the current height is odd, the above algorithm would result in the same block as hashPrevBlock.  So instead go
+    back 5040 blocks (or to the genesis block).
+
+    Header-validating nodes therefore do not need to keep the full history of old headers.
+ */
+int64_t GetConsensusAncestorHeight(int64_t height)
+{
+    if (height < 2)
+        return 0;
+
+    return (height & 1) ? max((int64_t)0, height - ANCESTOR_HASH_IF_ODD) : InvertLowestOne(height);
+}
+
+/* This API is currently unused
+CBlockIndex *CBlockIndex::GetConsensusAncestor()
+{
+    int myHeight = height();
+    // Ancestor of the genesis block is nothing
+    if (myHeight == 0)
+        return nullptr;
+    return GetAncestor(GetConsensusAncestorHeight(myHeight));
+}
+*/
+
+const CBlockIndex *CBlockIndex::GetChildsConsensusAncestor() const
+{
+    int childHeight = height() + 1;
+    return GetAncestor(GetConsensusAncestorHeight(childHeight));
+}
+
 CBlockIndex *CBlockIndex::GetAncestor(int ansHeight)
 {
     if (ansHeight > height() || ansHeight < 0)

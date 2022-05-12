@@ -18,6 +18,8 @@ from test_framework.blocktools import (
     create_transaction,
     make_conform_to_ctor,
     pad_tx,
+    getAncHash,
+    ancestorHeight
 )
 from test_framework.nodemessages import (
     CBlock,
@@ -58,6 +60,7 @@ class MinimaldataTest(BitcoinTestFramework):
     def __init__(self):
         super().__init__()
         self.set_test_params()
+        self.block_hashes = {}
 
     def set_test_params(self):
         self.num_nodes = 1
@@ -91,13 +94,17 @@ class MinimaldataTest(BitcoinTestFramework):
         block_height = self.block_heights[parent.gethash()] + 1
         block_time = (parent.nTime + 1) if nTime is None else nTime
 
+        ancHeight = ancestorHeight(block_height)
+        ancHash = self.block_hashes.get(ancHeight, None)
+        if ancHash is None: ancHash = getAncHash(block_height, self.nodes[0])
         block = create_block(
-            parent.gethash(), block_height, parent.chainWork + 2,create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), block_time)
+            parent.gethash(), block_height, parent.chainWork + 2,create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), ancHash, block_time)
         block.vtx.extend(transactions)
         make_conform_to_ctor(block)
         block.update_fields()
         block.solve()
         self.block_heights[block.gethash()] = block_height
+        self.block_hashes[block_height] = block.gethash()
         return block
 
     def check_for_ban_on_rejected_tx(self, tx, reject_reason=None):

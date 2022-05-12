@@ -7,7 +7,7 @@ import time
 from test_framework.mininode import *
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.util import *
-from test_framework.blocktools import create_block, create_coinbase
+from test_framework.blocktools import create_block, create_coinbase, getAncHash
 from test_framework.siphash import siphash256
 from test_framework.script import CScript, OP_TRUE, OP_RETURN
 
@@ -179,7 +179,7 @@ class CompactBlocksTest(BitcoinTestFramework):
         tipHdr = self.nodes[0].getblockheader(tip)
         mtp = tipHdr['mediantime']
         chainwork = int(tipHdr["chainwork"], 16)
-        block = create_block(uint256_from_bigendian(tip), height+1, chainwork+2, create_coinbase(height + 1), mtp + 1)
+        block = create_block(uint256_from_bigendian(tip), height+1, chainwork+2, create_coinbase(height + 1), getAncHash(height+1, self.nodes[0]), mtp + 1)
         block.solve()
         return block
 

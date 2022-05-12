@@ -194,10 +194,24 @@ bool ContextualCheckBlockHeader(const CChainParams &chainparams,
     {
         return state.DoS(100, error("%s: premature fee pool use", __func__), REJECT_INVALID, "bad-fee-pool");
     }
-    if (block.hashAncestor != uint256())
+
+    const CBlockIndex *ancestor = pindexPrev->GetChildsConsensusAncestor();
+    if (ancestor == nullptr)
     {
-        return state.DoS(100, error("%s: premature ancestor block use", __func__), REJECT_INVALID, "bad-ancestorblock");
+        if (block.height != 0)
+            return state.DoS(100, error("%s: ancestor is null", __func__), REJECT_INVALID, "bad-ancestor-hash");
+        if (block.hashAncestor != uint256())
+            return state.DoS(
+                100, error("%s: genesis ancestor hash must be 0", __func__), REJECT_INVALID, "bad-ancestor-hash");
     }
+    else
+    {
+        if (block.hashAncestor != ancestor->GetBlockHash())
+        {
+            return state.DoS(100, error("%s: incorrect ancestor hash", __func__), REJECT_INVALID, "bad-ancestor-hash");
+        }
+    }
+
     if (block.hashTxFilter != uint256())
     {
         return state.DoS(100, error("%s: premature transaction filter use", __func__), REJECT_INVALID, "bad-txfilter");
@@ -1154,7 +1168,7 @@ bool CheckInputs(const CTransactionRef &tx,
                 bool inputVerified = true;
                 if (debugger)
                 {
-                    debugger->AddInputCheckMetadata("outpoint", prevout.ToString());
+                    debugger->AddInputCheckMetadata("outpoint", prevout.GetHex());
                     debugger->AddInputCheckMetadata("constraintType", std::to_string((uint8_t)scriptPubKey.type));
                     debugger->AddInputCheckMetadata("constraint", HexStr(scriptPubKey.begin(), scriptPubKey.end()));
                     debugger->AddInputCheckMetadata("satisfier", HexStr(scriptSig.begin(), scriptSig.end()));
