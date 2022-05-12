@@ -16,6 +16,7 @@ from test_framework.blocktools import (
     create_coinbase,
     create_transaction,
     make_conform_to_ctor,
+    getAncHash
 )
 from test_framework.key import CECKey
 from test_framework.nodemessages import (
@@ -108,7 +109,7 @@ class SchnorrMultisigTest(BitcoinTestFramework):
         block_time = (parent.nTime + 1) if nTime is None else nTime
 
         block = create_block(
-            parent.gethash(), block_height, work, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), block_time)
+            parent.gethash(), block_height, work, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), getAncHash(block_height, self.nodes[0]), block_time)
         block.vtx.extend(transactions)
         make_conform_to_ctor(block)
         block.update_fields()
@@ -144,7 +145,7 @@ class SchnorrMultisigTest(BitcoinTestFramework):
         for _ in range(10):
             tip = self.build_block(tip)
             blocks.append(tip)
-        self.p2p.send_blocks_and_test(blocks, node, success=True)
+            self.p2p.send_blocks_and_test([blocks[-1]], node, success=True)
         spendable_outputs = [block.vtx[0] for block in blocks]
 
         logging.info("Mature the blocks and get out of IBD.")

@@ -257,12 +257,11 @@ std::unique_ptr<CBlockTemplate> BlockAssembler::CreateNewBlock(const CScript &sc
 
         // Fill in header
         pblock->hashPrevBlock = pindexPrev->GetBlockHash();
+        pblock->hashAncestor = pindexPrev->GetChildsConsensusAncestor()->GetBlockHash();
         UpdateTime(pblock.get(), chainparams.GetConsensus(), pindexPrev);
         pblock->nBits = GetNextWorkRequired(pindexPrev, pblock.get(), chainparams.GetConsensus());
         pblock->chainWork = ArithToUint256(pindexPrev->chainWork() + GetWorkForDifficultyBits(pblock->nBits));
         pblock->feePoolAmt = 0; // to be used later
-        pblock->hashAncestor.SetNull(); // to be used later
-
         pblocktemplate->vTxSigOps[0] = 0;
     }
 

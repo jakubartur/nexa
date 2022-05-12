@@ -16,6 +16,7 @@ from test_framework.blocktools import (
     make_conform_to_ctor,
     create_tx_with_script,
     pad_tx,
+    getAncHash
 )
 from test_framework.key import CECKey
 
@@ -96,7 +97,7 @@ class OpReversebytesActivationTest(BitcoinTestFramework):
         # the script in create_coinbase differs for BU and ABC
         # you need to let coinbase script be CScript([OP_TRUE])
         block = create_block(
-            parent.hashNum, block_height, parent.chainWork+2, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), block_time)
+            parent.hashNum, block_height, parent.chainWork+2, create_coinbase(block_height, scriptPubKey = CScript([OP_TRUE])), getAncHash(block_height, self.nodes[0]), block_time)
         block.vtx.extend(transactions)
         block.txCount = len(block.vtx)
         block.nonce = bytearray(12)
@@ -140,7 +141,7 @@ class OpReversebytesActivationTest(BitcoinTestFramework):
         for _ in range(10):
             tip = self.build_block(tip)
             blocks.append(tip)
-        self.p2p.send_blocks_and_test(blocks, node, success=True)
+            self.p2p.send_blocks_and_test([blocks[-1]], node, success=True)
         spendable_outputs = [block.vtx[0] for block in blocks]
 
         logging.info("Mature the blocks and get out of IBD.")

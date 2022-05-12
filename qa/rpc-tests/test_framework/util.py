@@ -117,7 +117,12 @@ def uint256ToRpcHex(b):
     """RPC (nexad) hex is reversed"""
     if type(b) is int:
         b = ser_uint256(b)
-    return b[::-1].hex();
+    return b[::-1].hex()
+
+def rpcHexToUint256(h):
+    """RPC (nexad) hex is reversed"""
+    b = bytes.fromhex(h)
+    return deser_uint256(b[::-1])
 
 class TimeoutException(Exception):
     pass
