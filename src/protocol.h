@@ -119,7 +119,6 @@ extern const char *GETBLOCKS;
 /**
  * The getheaders message requests a headers message that provides block
  * headers starting from a particular point in the block chain.
- * @since protocol version 31800.
  * @see https://bitcoin.org/en/developer-reference#getheaders
  */
 extern const char *GETHEADERS;
@@ -131,7 +130,6 @@ extern const char *TX;
 /**
  * The headers message sends one or more block headers to a node which
  * previously requested certain headers with a getheaders message.
- * @since protocol version 31800.
  * @see https://bitcoin.org/en/developer-reference#headers
  */
 extern const char *HEADERS;
@@ -474,7 +472,7 @@ public:
         int nVersion = s.GetVersion();
         if (s.GetType() & SER_DISK)
             READWRITE(nVersion);
-        if ((s.GetType() & SER_DISK) || (nVersion >= CADDR_TIME_VERSION && !(s.GetType() & SER_GETHASH)))
+        if (s.GetType() & SER_DISK)
             READWRITE(nTime);
         READWRITE(nServices);
         READWRITE(*(CService *)this);

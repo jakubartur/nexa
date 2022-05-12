@@ -387,14 +387,13 @@ static void enableSendHeaders(CNode *pfrom)
     // We send this to non-NODE NETWORK peers as well, because even
     // non-NODE NETWORK peers can announce blocks (such as pruning
     // nodes)
-    if (pfrom->nVersion >= SENDHEADERS_VERSION)
-        pfrom->PushMessage(NetMsgType::SENDHEADERS);
+    pfrom->PushMessage(NetMsgType::SENDHEADERS);
 }
 
 static void enableCompactBlocks(CNode *pfrom)
 {
     // Tell our peer that we support compact blocks
-    if (IsCompactBlocksEnabled() && (pfrom->nVersion >= COMPACTBLOCKS_VERSION))
+    if (IsCompactBlocksEnabled())
     {
         bool fHighBandwidth = false;
         uint64_t nVersion = 1;
@@ -419,17 +418,9 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
         (strCommand == NetMsgType::FILTERLOAD || strCommand == NetMsgType::FILTERADD ||
             strCommand == NetMsgType::FILTERCLEAR))
     {
-        if (pfrom->nVersion >= NO_BLOOM_VERSION)
-        {
-            dosMan.Misbehaving(pfrom, 100);
-            return false;
-        }
-        else
-        {
-            LOG(NET, "Inconsistent bloom filter settings peer %s\n", pfrom->GetLogName());
-            pfrom->fDisconnect = true;
-            return false;
-        }
+        LOG(NET, "Inconsistent bloom filter settings peer %s\n", pfrom->GetLogName());
+        pfrom->fDisconnect = true;
+        return false;
     }
 
     bool grapheneVersionCompatible = true;
@@ -869,7 +860,7 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
     }
 
     // Ignore this message if sent from a node advertising a version earlier than the first CB release (70014)
-    else if (strCommand == NetMsgType::SENDCMPCT && pfrom->nVersion >= COMPACTBLOCKS_VERSION)
+    else if (strCommand == NetMsgType::SENDCMPCT)
     {
         bool fHighBandwidth = false;
         uint64_t nVersion = 0;
