@@ -23,7 +23,6 @@ static int xpeditedBlkSendPos = 0;
 
 bool CheckAndRequestExpeditedBlocks(CNode *pfrom)
 {
-    if (pfrom->nVersion >= EXPEDITED_VERSION)
     {
         // take a copy of this string since we may modify it
         for (std::string strAddr : mapMultiArgs["-expeditedblock"])

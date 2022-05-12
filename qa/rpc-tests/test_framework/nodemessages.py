@@ -15,7 +15,7 @@ from test_framework.siphash import siphash256
 import test_framework.util as util
 from test_framework.constants import *
 
-MY_VERSION = 70014 # past bip-252 for compactblocks
+MY_VERSION = 80003 # past bip-152 for compactblocks
 
 # Serialization Types
 SER_DEFAULT = 0
@@ -1863,8 +1863,6 @@ class msg_version(object):
 
     def deserialize(self, f):
         self.nVersion = struct.unpack("<i", f.read(4))[0]
-        if self.nVersion == 10300:
-            self.nVersion = 300
         self.nServices = struct.unpack("<Q", f.read(8))[0]
         self.nTime = struct.unpack("<q", f.read(8))[0]
         self.addrTo = CAddressInVersion()
