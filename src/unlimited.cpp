@@ -1097,7 +1097,7 @@ static CMiningCandidate *FindRecentMiningCandidate(CScript *coinbaseScript)
     if (it == miningCandidatesMap.end())
         return nullptr; // latest candidate has been removed
     CMiningCandidate &candid = it->second;
-    if (candid.creationTime + minMiningCandidateInterval.Value() < (uint64_t)GetTime())
+    if (candid.creationTime + minMiningCandidateInterval.Value() <= (uint64_t)GetTime())
         return nullptr; // Too old
 
     // I don't care what the coinbase script is (probably because its anything from this wallet)
