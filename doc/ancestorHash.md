@@ -11,13 +11,17 @@ By requiring that miners commit to ancestor headers, light clients (clients that
 
 The ancestor hash field of the genesis block is 0.  The ancestor hash field of block at height "blockHeight" (>0) MUST contain the hash of the ancestor block at the height specified by the following algorithm:
 
+```c++
 if (blockHeight is even) return ZeroLeastSignificantSetBit(blockHeight)
 if (blockHeight is odd) return max(0, height - 5040)
+```
 
 where:
 
+```
 ZeroLeastSignificantSetBit(blockHeight) = blockHeight & (blockHeight - 1)
-
+```
+    
 ### Rationale
 
  * First line:  By zeroing the least significant set bit, the height jumps backwards by a variable and exponentially increasing amount.  Additionally, ancestors of ancestors (recursively) of arbitrary blocks "funnel" to the same ancestor set.  This allows light clients to only keep the headers of a very few old blocks, yet still have the entire ancestor tree.
