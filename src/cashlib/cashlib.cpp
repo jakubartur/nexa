@@ -1254,6 +1254,10 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_PayAdd
     }
     else if ((typ == PayAddressTypeTEMPLATE) || (typ == PayAddressTypeP2PKT))
     {
+        // A PayAddress contains a serialized script
+        // Really the "right" way to do this is to just encode the exact bytes without stripping off
+        // the serialization and putting it back on but that does not work with the "Destination" code.
+        // As it is, any additional parts (currently none are defined) to the PayAddress will be removed
         ScriptTemplateDestination st;
         std::vector<unsigned char> vec(data, data + len);
         CDataStream ssData(vec, SER_NETWORK, PROTOCOL_VERSION);
@@ -1265,7 +1269,6 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_PayAdd
         triggerJavaIllegalStateException(env, "Address type cannot be encoded to cashaddr");
         return nullptr;
     }
-
 
     env->ReleaseByteArrayElements(arg, data, 0);
 

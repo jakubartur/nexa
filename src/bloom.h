@@ -20,6 +20,9 @@ typedef std::shared_ptr<const CTransaction> CTransactionRef;
 //! 20,000 items with fp rate < 0.1% or 10,000 items and <0.0001%
 static const unsigned int MAX_HASH_FUNCS = 50;
 
+//! Don't insert any script data in the bloom filter whose size is less than this
+static const unsigned int MIN_BLOOM_DATA_SIZE = 16;
+
 /**
  * First two bits of nFlags control how much IsRelevantAndUpdate actually updates
  * The remaining bits are reserved

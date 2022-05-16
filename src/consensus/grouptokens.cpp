@@ -131,7 +131,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
             firstOpReturn = outp.scriptPubKey; // Used later if this is a group creation transaction
         }
         if (tokenGrp.invalid)
-            return state.Invalid(false, REJECT_INVALID, "bad OP_GROUP");
+            return state.Invalid(false, REJECT_INVALID, "bad GROUP");
         if (tokenGrp.associatedGroup != NoGroup)
         {
             gBalance[tokenGrp.associatedGroup].numOutputs += 1;
@@ -161,7 +161,7 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
                 }
                 else if (tokenGrp.quantity == 0)
                 {
-                    return state.Invalid(false, REJECT_INVALID, "OP_GROUP quantity is zero");
+                    return state.Invalid(false, REJECT_INVALID, "GROUP quantity is zero");
                 }
             }
         }

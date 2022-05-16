@@ -210,7 +210,7 @@ bool CBloomFilter::MatchAndInsertOutputs(const CTransactionRef &tx)
             opcodetype opcode;
             if (!txout.scriptPubKey.GetOp(pc, opcode, data))
                 break;
-            if (data.size() != 0 && contains(data))
+            if (data.size() >= MIN_BLOOM_DATA_SIZE && contains(data))
             {
                 fFound = true;
                 if ((nFlags & BLOOM_UPDATE_MASK) == BLOOM_UPDATE_ALL)
@@ -254,7 +254,7 @@ bool CBloomFilter::MatchInputs(const CTransactionRef &tx)
             opcodetype opcode;
             if (!txin.scriptSig.GetOp(pc, opcode, data))
                 break;
-            if (data.size() != 0 && contains(data))
+            if (data.size() >= MIN_BLOOM_DATA_SIZE && contains(data))
                 return true;
         }
     }

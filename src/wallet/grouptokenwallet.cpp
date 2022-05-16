@@ -268,6 +268,11 @@ static unsigned int ParseGroupAddrValue(const UniValue &params,
         {
             throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: destination address");
         }
+        if (!std::get_if<ScriptTemplateDestination>(&dst))
+        {
+            throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: destination address must be script template");
+        }
+
         CAmount amount = AmountFromIntegralValue(params[curparam + 1]);
         if (amount <= 0)
             throw JSONRPCError(RPC_TYPE_ERROR, "Invalid parameter: amount");
@@ -862,10 +867,15 @@ extern UniValue token(const UniValue &params, bool fHelp)
             {
                 throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter: destination address");
             }
+            if (!std::get_if<ScriptTemplateDestination>(&dst))
+            {
+                throw JSONRPCError(
+                    RPC_INVALID_PARAMS, "Invalid parameter: destination address must be script template");
+            }
 
             // Get what authority permissions the user wants from the command line
             curparam++;
-            if (curparam < params.size()) // If flags are not specified, we dup existing flags.
+            if (curparam < params.size()) // If flags are not specified, error.
             {
                 auth = ParseAuthorityParams(params, curparam);
                 if (curparam < params.size())
@@ -874,6 +884,11 @@ extern UniValue token(const UniValue &params, bool fHelp)
                     strError = strprintf("Invalid parameter: flag %s", params[curparam].get_str());
                     throw JSONRPCError(RPC_INVALID_PARAMS, strError);
                 }
+            }
+
+            if (auth == GroupAuthorityFlags())
+            {
+                throw JSONRPCError(RPC_INVALID_PARAMS, "no authority flags specified");
             }
 
             // Now find a compatible authority
