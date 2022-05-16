@@ -54,6 +54,9 @@ uint256 g_headerCommitment;
 uint32_t g_nBits = 0;
 UniValue g_id;
 
+CCriticalSection cs_blockhash;
+uint256 bestBlockHash;
+
 using namespace std;
 
 class Secp256k1Init
@@ -397,6 +400,78 @@ static UniValue RPCSubmitSolution(const UniValue &solution, int &nblocks)
     return reply;
 }
 
+static bool FoundNewBlock(bool fWait)
+{
+    string strPrint;
+    UniValue result;
+
+    try
+    {
+        UniValue params(UniValue::VARR);
+        UniValue replyAttempt = CallRPC("getbestblockhash", params);
+
+        // Parse reply
+        result = find_value(replyAttempt, "result");
+        const UniValue &error = find_value(replyAttempt, "error");
+
+        if (!error.isNull())
+        {
+            // Error
+            int code = error["code"].get_int();
+            if (fWait && code == RPC_IN_WARMUP)
+                throw CConnectionFailed("server in warmup");
+            strPrint = "error: " + error.write();
+            if (error.isObject())
+            {
+                UniValue errCode = find_value(error, "code");
+                UniValue errMsg = find_value(error, "message");
+                strPrint = errCode.isNull() ? "" : "error code: " + errCode.getValStr() + "\n";
+
+                if (errMsg.isStr())
+                    strPrint += "error message:\n" + errMsg.get_str();
+            }
+
+            if (strPrint != "")
+            {
+                fprintf(stderr, "%s\n", strPrint.c_str());
+                MilliSleep(1000);
+            }
+        }
+        else
+        {
+            if (result.isStr() && !result.isNull())
+            {
+                // If the bestblockhash has changed then store it, and return true
+                string tmpstr;
+                tmpstr = result.get_str();
+                std::vector<unsigned char> vec = ParseHex(tmpstr);
+                std::reverse(vec.begin(), vec.end()); // sent reversed
+                {
+                    LOCK(cs_blockhash);
+                    uint256 hash = uint256(vec);
+                    if (hash != bestBlockHash)
+                    {
+                        bestBlockHash = hash;
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    catch (const CConnectionFailed &c)
+    {
+        if (fWait)
+        {
+            printf("Warning: %s\n", c.what());
+            MilliSleep(1000);
+        }
+        else
+            throw;
+    }
+
+    return false;
+}
+
 static bool CheckForNewMiningCandidate(bool fWait)
 {
     int coinbasesize = GetArg("-coinbasesize", 0);
@@ -623,6 +698,9 @@ int CpuMiner(void)
                         }
                         else
                         {
+                            // Update the new best block hash.
+                            FoundNewBlock(fWait);
+
                             // Block submission was successfull so retrieve the new mining candidate
                             printf("Getting new Candidate after successful block submission\n");
                             fWait = CheckForNewMiningCandidate(fWait);
@@ -734,10 +812,17 @@ int main(int argc, char *argv[])
     try
     {
         bool fWait = true;
+        uint64_t nStartTime = 0;
         do
         {
-            fWait = CheckForNewMiningCandidate(fWait);
-            MilliSleep(1000);
+            // only check for new candidates every 2 seconds, or if the bestblockhash has changed.
+            if ((GetTimeMillis() - nStartTime > 2000) || FoundNewBlock(fWait))
+            {
+                nStartTime = GetTimeMillis();
+                fWait = CheckForNewMiningCandidate(fWait);
+            }
+            MilliSleep(100);
+
         } while (fWait);
     }
     catch (const std::exception &e)
