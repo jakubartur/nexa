@@ -279,12 +279,12 @@ public:
         // printf("fakemainnet GB hash %s\n", consensus.hashGenesisBlock.GetHex().c_str());
 
         // List of Bitcoin Cash compatible seeders
-        // vSeeds.push_back(CDNSSeedData("bitcoinunlimited.info", "btccash-seeder.bitcoinunlimited.info", true));
-        // vSeeds.push_back(CDNSSeedData("bitcoinforks.org", "seed-bch.bitcoinforks.org", true));
-        // vSeeds.push_back(CDNSSeedData("bchd.cash", "seed.bchd.cash", true));
-        // vSeeds.push_back(CDNSSeedData("bch.loping.net", "seed.bch.loping.net", true));
-        // vSeeds.push_back(CDNSSeedData("electroncash.de", "dnsseed.electroncash.de", true));
-        // vSeeds.push_back(CDNSSeedData("flowee.cash", "seed.flowee.cash", true));
+        vSeeds.push_back(CDNSSeedData("bitcoinunlimited.info", "btccash-seeder.bitcoinunlimited.info", true));
+        vSeeds.push_back(CDNSSeedData("bitcoinforks.org", "seed-bch.bitcoinforks.org", true));
+        vSeeds.push_back(CDNSSeedData("bchd.cash", "seed.bchd.cash", true));
+        vSeeds.push_back(CDNSSeedData("bch.loping.net", "seed.bch.loping.net", true));
+        vSeeds.push_back(CDNSSeedData("electroncash.de", "dnsseed.electroncash.de", true));
+        vSeeds.push_back(CDNSSeedData("flowee.cash", "seed.flowee.cash", true));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 0);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 5);
@@ -469,7 +469,8 @@ public:
 
         vFixedSeeds.clear();
         vSeeds.clear();
-        // TODO testnet seeder: vSeeds.push_back(CDNSSeedData("nextchain.cash", "seed.nextchain.cash", true));
+        vSeeds.push_back(CDNSSeedData("bitcoinunlimited.info", "nexa-testnet-seeder.bitcoinunlimited.info", true));
+        vSeeds.push_back(CDNSSeedData("nexa.org", "testnetseeder.nexa.org", true));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<uint8_t>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<uint8_t>(1, 196);
@@ -478,7 +479,7 @@ public:
         base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
         base58Prefixes[SCRIPT_TEMPLATE_ADDRESS] = std::vector<unsigned char>(1, 8);
 
-        cashaddrPrefix = strNetworkID;
+        cashaddrPrefix = "nexatest";
 
         vFixedSeeds = std::vector<SeedSpec6>();
 
@@ -563,6 +564,8 @@ public:
         vFixedSeeds.clear();
         vSeeds.clear();
         vSeeds.push_back(CDNSSeedData("nextchain.cash", "seed.nextchain.cash", true));
+        vSeeds.push_back(CDNSSeedData("nexa.org", "seeder.nexa.org", true));
+        vSeeds.push_back(CDNSSeedData("bitcoinunlimited.info", "nexa-seeder.bitcoinunlimited.info", true));
 
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<unsigned char>(1, 25); // P2PKH addresses begin with B
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<unsigned char>(1, 68); // P2SH  addresses begin with U

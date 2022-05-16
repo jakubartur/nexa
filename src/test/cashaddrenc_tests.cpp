@@ -325,7 +325,7 @@ BOOST_AUTO_TEST_CASE(test_addresses)
     {
         std::vector<std::vector<uint8_t> > hash{ParseHex("775ebf6694518d925139b2ae42147fc57539ca00")};
         const CChainParams params = Params(CBaseChainParams::TESTNET);
-        std::vector<std::string> pubkey = {"testnet:qpm4a0mxj3gcmyj38xe2uss50lzh2ww2qqrln97dje"};
+        std::vector<std::string> pubkey = {"nexatest:qpm4a0mxj3gcmyj38xe2uss50lzh2ww2qq36a79aj6"};
         for (size_t i = 0; i < hash.size(); ++i)
         {
             const CTxDestination dstKey = CKeyID(uint160(hash[i]));
