@@ -229,7 +229,6 @@ public:
         tmp.SetCompact(tgtBits, &fNegative, &fOverflow);
         // consensus.powLimit = ArithToUint256(tmp);  Better choice but breaks pow_tests.cpp
         consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;
@@ -257,10 +256,6 @@ public:
         pchMessageStart[1] = 0xbe;
         pchMessageStart[2] = 0xb4;
         pchMessageStart[3] = 0xd9;
-        // pchCashMessageStart[0] = 0xe3;
-        // pchCashMessageStart[1] = 0xe1;
-        // pchCashMessageStart[2] = 0xf3;
-        // pchCashMessageStart[3] = 0xe8;
         nDefaultPort = BTCBCH_DEFAULT_MAINNET_PORT;
         nPruneAfterHeight = 100000;
         consensus.nShortBlockWindow = SHORT_BLOCK_WINDOW;
@@ -333,7 +328,6 @@ public:
         strNetworkID = "regtest"; // Do not use the const string because of ctor execution order issues
         consensus.nSubsidyHalvingInterval = 150;
         consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // two weeks
         consensus.nPowTargetSpacing = 10 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = true;
@@ -419,7 +413,6 @@ public:
         tmp.SetCompact(tgtBits, &fNegative, &fOverflow);
         consensus.powLimit = ArithToUint256(tmp);
         // consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // (unused in nextchain)
         consensus.nPowTargetSpacing = 2 * 60;
         consensus.fPowAllowMinDifficultyBlocks = true;
         consensus.fPowNoRetargeting = false;
@@ -511,7 +504,6 @@ public:
         tmp.SetCompact(tgtBits, &fNegative, &fOverflow);
         consensus.powLimit = ArithToUint256(tmp);
         // consensus.powLimit = uint256S("00000fffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
-        consensus.nPowTargetTimespan = 14 * 24 * 60 * 60; // (unused in nextchain)
         consensus.nPowTargetSpacing = 2 * 60;
         consensus.fPowAllowMinDifficultyBlocks = false;
         consensus.fPowNoRetargeting = false;

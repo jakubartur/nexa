@@ -16,65 +16,6 @@ using namespace std;
 
 BOOST_FIXTURE_TEST_SUITE(pow_tests, BasicTestingSetup)
 
-/* Test calculation of next difficulty target with no constraints applying */
-BOOST_AUTO_TEST_CASE(get_next_work)
-{
-    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
-    const Consensus::Params &params = Params().GetConsensus();
-
-    int64_t nLastRetargetTime = 1261130161; // Block #30240
-    CBlockIndex pindexLast;
-    pindexLast.header.height = 32255;
-    pindexLast.header.nTime = 1262152739; // Block #32255
-    pindexLast.header.nBits = 0x1d00ffff;
-    BOOST_CHECK_EQUAL(
-        CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, params), static_cast<unsigned int>(0x1d00d86a));
-}
-
-/* Test the constraint on the upper bound for next work */
-BOOST_AUTO_TEST_CASE(get_next_work_pow_limit)
-{
-    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
-    const Consensus::Params &params = Params().GetConsensus();
-
-    int64_t nLastRetargetTime = 1231006505; // Block #0
-    CBlockIndex pindexLast;
-    pindexLast.header.height = 2015;
-    pindexLast.header.nTime = 1233061996; // Block #2015
-    pindexLast.header.nBits = 0x1d00ffff;
-    auto v = CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, params);
-    printf("%x\n", v);
-    BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, params), 0x1d00ffffU);
-}
-
-/* Test the constraint on the lower bound for actual time taken */
-BOOST_AUTO_TEST_CASE(get_next_work_lower_limit_actual)
-{
-    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
-    const Consensus::Params &params = Params().GetConsensus();
-
-    int64_t nLastRetargetTime = 1279008237; // Block #66528
-    CBlockIndex pindexLast;
-    pindexLast.header.height = 68543;
-    pindexLast.header.nTime = 1279297671; // Block #68543
-    pindexLast.header.nBits = 0x1c05a3f4;
-    BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, params), 0x1c0168fdU);
-}
-
-/* Test the constraint on the upper bound for actual time taken */
-BOOST_AUTO_TEST_CASE(get_next_work_upper_limit_actual)
-{
-    SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);
-    const Consensus::Params &params = Params().GetConsensus();
-
-    int64_t nLastRetargetTime = 1263163443; // NOTE: Not an actual block time
-    CBlockIndex pindexLast;
-    pindexLast.header.height = 46367;
-    pindexLast.header.nTime = 1269211443; // Block #46367
-    pindexLast.header.nBits = 0x1c387f6f;
-    BOOST_CHECK_EQUAL(CalculateNextWorkRequired(&pindexLast, nLastRetargetTime, params), 0x1d00e1fdU);
-}
-
 BOOST_AUTO_TEST_CASE(GetBlockProofEquivalentTime_test)
 {
     SelectParams(CBaseChainParams::LEGACY_UNIT_TESTS);

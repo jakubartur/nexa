@@ -138,12 +138,10 @@ struct Params
     bool fPowAllowMinDifficultyBlocks;
     bool fPowNoRetargeting;
     int64_t nPowTargetSpacing;
-    int64_t nPowTargetTimespan;
     // The half life for the ASERT DAA. For every (nASERTHalfLife) seconds behind schedule the blockchain gets,
     // difficulty is cut in half. Doubled if blocks are ahead of schedule.
     int64_t nASERTHalfLife;
 
-    int64_t DifficultyAdjustmentInterval() const { return nPowTargetTimespan / nPowTargetSpacing; }
     /** May 15, 2021 MTP activation time will be 12:00:00 UTC */
     uint64_t nextForkActivationTime;
 
