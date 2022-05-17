@@ -24,7 +24,7 @@ static std::string rpc_host() { return GetArg("-electrum.host", "0.0.0.0"); }
 static std::string rpc_port(const std::string &network)
 {
     std::map<std::string, std::string> portmap = {{"main", "50001"}, {"test", "60001"}, {"regtest", "60401"},
-        {"test4", "62001"}, {"scale", "63001"}, {CBaseChainParams::NEXTCHAIN, "7229"}};
+        {"test4", "62001"}, {"scale", "63001"}, {CBaseChainParams::NEXA, "7229"}};
 
     auto defaultPort = portmap.find(network);
     if (defaultPort == end(portmap))
@@ -40,7 +40,7 @@ static std::string ws_host() { return GetArg("-electrum.ws.host", "0.0.0.0"); }
 static std::string ws_port(const std::string &network)
 {
     const std::map<std::string, std::string> portmap = {{"main", "50003"}, {"test", "60003"}, {"regtest", "60403"},
-        {"test4", "62003"}, {"scale", "63003"}, {CBaseChainParams::NEXTCHAIN, "7230"}};
+        {"test4", "62003"}, {"scale", "63003"}, {CBaseChainParams::NEXA, "7230"}};
 
     auto defaultPort = portmap.find(network);
     if (defaultPort == end(portmap))
@@ -181,7 +181,7 @@ std::vector<std::string> electrs_args(int rpcport, const std::string &network)
 
     // Tell electrs what network we're on
     const std::map<std::string, std::string> netmapping = {{"main", "bitcoin"}, {"test", "testnet"},
-        {"regtest", "regtest"}, {"test4", "testnet4"}, {"scale", "scalenet"}, {CBaseChainParams::NEXTCHAIN, "testnet"}};
+        {"regtest", "regtest"}, {"test4", "testnet4"}, {"scale", "scalenet"}, {CBaseChainParams::NEXA, "testnet"}};
     if (!netmapping.count(network))
     {
         std::stringstream ss;
@@ -197,9 +197,9 @@ std::vector<std::string> electrs_args(int rpcport, const std::string &network)
     }
     else
     {
-        // This explicit code ought to work for any network, but it is only needed for nextchain because electrs
+        // This explicit code ought to work for any network, but it is only needed for NEXA because electrs
         // guesses "testnet3" since we told it testnet was being used.
-        if (network == CBaseChainParams::NEXTCHAIN)
+        if (network == CBaseChainParams::NEXA)
         {
             args.push_back("--cookie-file=" + (GetDataDir() / ".cookie").string());
         }

@@ -17,7 +17,7 @@ void URITests::uriTestsBase58()
 {
     SendCoinsRecipient rv;
     QString scheme =
-        QString::fromStdString(Params(CBaseChainParams::NEXTCHAIN).CashAddrPrefix());
+        QString::fromStdString(Params(CBaseChainParams::NEXA).CashAddrPrefix());
     QUrl uri;
     uri.setUrl(QString("175tWpb8K1S7NmH4Zx6rewF9WQrcZv245W?req-dontexist="));
     QVERIFY(!GUIUtil::parseBitcoinURI(scheme, uri, &rv));
@@ -77,7 +77,7 @@ void URITests::uriTestsCashAddr() {
     SendCoinsRecipient rv;
     QUrl uri;
     QString scheme =
-        QString::fromStdString(Params(CBaseChainParams::NEXTCHAIN).CashAddrPrefix());
+        QString::fromStdString(Params(CBaseChainParams::NEXA).CashAddrPrefix());
 
     uri.setUrl(QString("nexa:nqtsq5g5afx6leupc52th7k3gf9vc3dxl6zfev63wp0y86n9?"
                        "req-dontexist="));
@@ -161,7 +161,7 @@ namespace {
 class UriTestConfig : public DummyConfig {
 public:
     UriTestConfig(bool _useCashAddr)
-        : useCashAddr(_useCashAddr), net(CBaseChainParams::NEXTCHAIN) {}
+        : useCashAddr(_useCashAddr), net(CBaseChainParams::NEXA) {}
     bool UseCashAddrEncoding() const override { return useCashAddr; }
     const CChainParams &GetChainParams() const override { return Params(net); }
     void SetChainParams(const std::string &n) { net = n; }
@@ -199,7 +199,7 @@ void URITests::uriTestScheme() {
     {
         // cashaddr - scheme depends on selected chain params
         UriTestConfig config(true);
-        config.SetChainParams(CBaseChainParams::NEXTCHAIN);
+        config.SetChainParams(CBaseChainParams::NEXA);
         QVERIFY("nexa" == GUIUtil::bitcoinURIScheme(config));
         config.SetChainParams(CBaseChainParams::TESTNET);
         QVERIFY("testnet" == GUIUtil::bitcoinURIScheme(config));
@@ -209,7 +209,7 @@ void URITests::uriTestScheme() {
     {
         // legacy - scheme is "nex" regardless of chain params
         UriTestConfig config(false);
-        config.SetChainParams(CBaseChainParams::NEXTCHAIN);
+        config.SetChainParams(CBaseChainParams::NEXA);
         QVERIFY("nexa" == GUIUtil::bitcoinURIScheme(config));
         config.SetChainParams(CBaseChainParams::TESTNET);
         QVERIFY("nexa" == GUIUtil::bitcoinURIScheme(config));

@@ -267,7 +267,7 @@ public:
         nonce = hardCodedNonce = ParseHex("00000000");
         genesis = CreateGenesisBlock("This is a fake mainnet", CScript() << OP_1, 1626275623, nonce, tgtBits, 0 * COIN);
         // This creates a genesis block with invalid POW, but we don't care.  Mainnet is going away anyway to be
-        // replaced by nextchain
+        // replaced by nexa
 
         consensus.hashGenesisBlock = genesis.GetHash();
         // printf("fakemainnet soln %d hex:%s\n", worked, HexStr(genesis.nonce).c_str());
@@ -489,10 +489,10 @@ public:
 CTestNetParams testNetParams;
 
 
-class CNextChainParams : public CChainParams
+class CNexaParams : public CChainParams
 {
 public:
-    CNextChainParams()
+    CNexaParams()
     {
         strNetworkID = "nexa"; // Do not use the const string because of ctor execution order issues
 
@@ -584,7 +584,7 @@ public:
     }
 };
 
-CNextChainParams nextChainParams;
+CNexaParams nexaParams;
 
 CChainParams *pCurrentParams = 0;
 
@@ -604,8 +604,8 @@ CChainParams &Params(const std::string &chain)
         assert(0);
     else if (chain == CBaseChainParams::REGTEST)
         return regTestParams;
-    else if (chain == CBaseChainParams::NEXTCHAIN)
-        return nextChainParams;
+    else if (chain == CBaseChainParams::NEXA)
+        return nexaParams;
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }

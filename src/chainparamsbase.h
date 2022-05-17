@@ -10,8 +10,8 @@
 #include <vector>
 
 /**
- * CBaseChainParams defines the base parameters (shared between bitcoin-cli and bitcoind)
- * of a given instance of the Bitcoin system.
+ * CBaseChainParams defines the base parameters (shared between nexa-cli and nexad)
+ * of a given instance of the Nexa system.
  */
 class CBaseChainParams
 {
@@ -21,7 +21,7 @@ public:
     static const std::string TESTNET;
     static const std::string SCALENET;
     static const std::string REGTEST;
-    static const std::string NEXTCHAIN;
+    static const std::string NEXA;
 
     const std::string &DataDir() const { return strDataDir; }
     int RPCPort() const { return nRPCPort; }
@@ -49,7 +49,7 @@ void SelectBaseParams(const std::string &chain);
 
 /**
  * Looks for -regtest, -testnet and returns the appropriate BIP70 chain name.
- * @return CBaseChainParams::MAX_NETWORK_TYPES if an invalid combination is given. CBaseChainParams::NEXTCHAIN by
+ * @return CBaseChainParams::MAX_NETWORK_TYPES if an invalid combination is given. CBaseChainParams::NEXA by
  * default.
  */
 std::string ChainNameFromCommandLine();
