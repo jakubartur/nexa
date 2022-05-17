@@ -28,7 +28,7 @@ static std::vector<ScriptImportedState> createForAllInputs(CTransactionRef tx,
     // Figure out transaction validation state so we can provide the data to the script machine
     CValidationState state;
     {
-        if (!Consensus::CheckTxInputs(tx, state, coinsCache))
+        if (!Consensus::CheckTxInputs(tx, state, coinsCache, Params()))
         {
             assert(0); // If we can't eval the inputs correctly we can't build up the validation state data
         }

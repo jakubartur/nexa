@@ -39,7 +39,7 @@ void testScript(const CScript &s,
             prevouts.AddCoin(tx->vin[i].prevout, Coin(coins[i], 1, false), false);
         }
 
-        if (!Consensus::CheckTxInputs(txref, state, prevouts))
+        if (!Consensus::CheckTxInputs(txref, state, prevouts, Params()))
         {
             assert(0); // Test malfunction
         }

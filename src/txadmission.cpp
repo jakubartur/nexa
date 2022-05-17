@@ -902,7 +902,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
 
         // Check that input script constraints are satisfied
         unsigned char sighashType = 0;
-        if (!CheckInputs(tx, state, view, true, flags, true, &resourceTracker, nullptr, &sighashType, debugger))
+        if (!CheckInputs(
+                tx, state, view, true, flags, true, &resourceTracker, chainparams, nullptr, &sighashType, debugger))
         {
             if (debugger && debugger->InputsCheck1IsValid())
             {
@@ -1056,8 +1057,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
         // invalid blocks, however allowing such transactions into the mempool
         // can be exploited as a DoS attack.
         unsigned char sighashType2 = 0;
-        if (!CheckInputs(tx, state, view, true, MANDATORY_SCRIPT_VERIFY_FLAGS | featureFlags, true, nullptr, nullptr,
-                &sighashType2, debugger))
+        if (!CheckInputs(tx, state, view, true, MANDATORY_SCRIPT_VERIFY_FLAGS | featureFlags, true, nullptr,
+                chainparams, nullptr, &sighashType2, debugger))
         {
             if (debugger && debugger->InputsCheck1IsValid())
             {

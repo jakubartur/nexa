@@ -862,8 +862,8 @@ void CTxMemPool::removeForReorg(const CCoinsViewCache *pcoins, unsigned int nMem
                 CoinAccessor coin(*pcoins, txin.prevout);
                 if (nCheckFrequency != 0)
                     assert(!coin->IsSpent());
-                if (coin->IsSpent() ||
-                    (coin->IsCoinBase() && ((signed long)nMemPoolHeight) - coin->nHeight < COINBASE_MATURITY))
+                if (coin->IsSpent() || (coin->IsCoinBase() && ((signed long)nMemPoolHeight) - coin->nHeight <
+                                                                  Params().GetConsensus().coinbaseMaturity))
                 {
                     transactionsToRemove.push_back(*tx);
                     break;
@@ -1183,7 +1183,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
         {
             CValidationState state;
             // Use the largest maxOps since this code is not meant to validate that constraint
-            assert(CheckInputs(it->GetSharedTx(), state, mempoolDuplicate, false, 0, false, nullptr));
+            assert(CheckInputs(it->GetSharedTx(), state, mempoolDuplicate, false, 0, false, nullptr, Params()));
             UpdateCoins(tx, mempoolDuplicate, 1000000);
         }
     }
@@ -1202,7 +1202,7 @@ void CTxMemPool::check(const CCoinsViewCache *pcoins) const
         else
         {
             // Use the largest maxOps since this code is not meant to validate that constraint
-            assert(CheckInputs(entry->GetSharedTx(), state, mempoolDuplicate, false, 0, false, nullptr));
+            assert(CheckInputs(entry->GetSharedTx(), state, mempoolDuplicate, false, 0, false, nullptr, Params()));
             UpdateCoins(entry->GetTx(), mempoolDuplicate, 1000000);
             stepsSinceLastRemove = 0;
         }

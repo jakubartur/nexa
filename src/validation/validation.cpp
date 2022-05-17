@@ -1082,6 +1082,7 @@ bool CheckInputs(const CTransactionRef &tx,
     unsigned int flags,
     bool cacheStore,
     ValidationResourceTracker *resourceTracker,
+    const CChainParams &chainparams,
     std::vector<CScriptCheck> *pvChecks,
     unsigned char *sighashType,
     CValidationDebugger *debugger)
@@ -1089,7 +1090,7 @@ bool CheckInputs(const CTransactionRef &tx,
     bool allPassed = true;
     if (!tx->IsCoinBase())
     {
-        if (!Consensus::CheckTxInputs(tx, state, inputs))
+        if (!Consensus::CheckTxInputs(tx, state, inputs, chainparams))
         {
             if (debugger)
             {
@@ -2375,7 +2376,7 @@ bool ConnectBlockCanonicalOrdering(ConstCBlockRef pblock,
                         bool fCacheResults = fJustCheck; /* Don't cache results if we're actually connecting blocks
                                                             (still consult the cache, though) */
                         if (!CheckInputs(txref, state, view, fScriptChecks, flags, fCacheResults, &txResourceTracker[i],
-                                PV->ThreadCount() ? &vChecks : nullptr))
+                                chainparams, PV->ThreadCount() ? &vChecks : nullptr))
                         {
                             return error("%s: block %s CheckInputs on %s failed with %s", __func__,
                                 pblock->GetHash().ToString(), tx.GetId().ToString(), FormatStateMessage(state));
