@@ -128,7 +128,6 @@ merkleblock.cpp
 merkleblock.h
 miner.cpp
 miner.h
-nextchain.cpp
 netaddress.cpp
 netaddress.h
 netbase.cpp
@@ -471,6 +470,7 @@ rpc/electrum.cpp
 rpc/mining.cpp
 rpc/misc.cpp
 rpc/net.cpp
+rpc/nexa.cpp
 rpc/protocol.cpp
 rpc/protocol.h
 rpc/rawtransaction.cpp

@@ -320,7 +320,6 @@ libnexa_server_a_SOURCES = \
   miner.cpp \
   net.cpp \
   net_processing.cpp \
-  nextchain.cpp \
   nodestate.cpp \
   noui.cpp \
   policy/fees.cpp \
@@ -333,6 +332,7 @@ libnexa_server_a_SOURCES = \
   rpc/mining.cpp \
   rpc/misc.cpp \
   rpc/net.cpp \
+  rpc/nexa.cpp \
   rpc/rawtransaction.cpp \
   rpc/server.cpp \
   respend/respendlogger.cpp \

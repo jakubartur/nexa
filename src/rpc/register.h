@@ -25,7 +25,7 @@ void RegisterUnlimitedRPCCommands(CRPCTable &tableRPC);
 /** Register Electrum RPC commands */
 void RegisterElectrumRPC(CRPCTable &tableRPC);
 
-void RegisterNextChainRPCCommands(CRPCTable &table);
+void RegisterNexaRPCCommands(CRPCTable &table);
 
 /** Register CAPD RPC commands */
 void RegisterCapdRPCCommands(CRPCTable &table);
@@ -39,7 +39,7 @@ static inline void RegisterAllCoreRPCCommands(CRPCTable &tableRPC)
     RegisterRawTransactionRPCCommands(tableRPC);
     RegisterUnlimitedRPCCommands(tableRPC);
     RegisterElectrumRPC(tableRPC);
-    RegisterNextChainRPCCommands(tableRPC);
+    RegisterNexaRPCCommands(tableRPC);
     RegisterCapdRPCCommands(tableRPC);
 }
 
