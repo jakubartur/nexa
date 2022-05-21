@@ -133,7 +133,18 @@ public:
                     break;
                 }
                 // Added -- insert at the right position
-                QList<TransactionRecord> toInsert = TransactionRecord::decomposeTransaction(wallet, *wtx);
+                QList<TransactionRecord> tmp = TransactionRecord::decomposeTransaction(wallet, *wtx);
+                QList<TransactionRecord> toInsert;
+                int idx = 0;
+                Q_FOREACH (const TransactionRecord &rec, tmp)
+                {
+                    if (cachedWallet.contains(rec) || toInsert.contains(rec))
+                        continue;
+
+                    toInsert.insert(idx, rec);
+                    idx++;
+                }
+
                 if (!toInsert.isEmpty()) /* only if something to insert */
                 {
                     parent->beginInsertRows(QModelIndex(), lowerIndex, lowerIndex + toInsert.size() - 1);

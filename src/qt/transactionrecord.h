@@ -108,6 +108,8 @@ public:
     {
     }
 
+    bool operator==(const TransactionRecord &a) const { return a.hash == hash; }
+
     /** Decompose CWallet transaction to model transaction records.
      */
     static bool showTransaction(const CWalletTx &wtx);
