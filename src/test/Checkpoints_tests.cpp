@@ -24,7 +24,7 @@ BOOST_AUTO_TEST_CASE(sanity)
 #if 0 // TODO: Right now, no checkpoints defined
 
     // Test Get Total Block Estimate
-    const CCheckpointData &checkpoints = Params(CBaseChainParams::NEXTCHAIN).Checkpoints();
+    const CCheckpointData &checkpoints = Params(CBaseChainParams::NEXA).Checkpoints();
     BOOST_CHECK(Checkpoints::GetTotalBlocksEstimate(checkpoints) >= 134444);
 
 

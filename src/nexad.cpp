@@ -118,7 +118,7 @@ bool AppInit(int argc, char *argv[])
         ss << "\n" << FORKS_CSV_FILE_HEADER;
         ss << NetworkDeploymentInfoCSV(CBaseChainParams::TESTNET);
         ss << NetworkDeploymentInfoCSV(CBaseChainParams::REGTEST);
-        ss << NetworkDeploymentInfoCSV(CBaseChainParams::NEXTCHAIN);
+        ss << NetworkDeploymentInfoCSV(CBaseChainParams::NEXA);
         std::cout << ss.str();
         return true;
     }

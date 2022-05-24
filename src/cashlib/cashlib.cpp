@@ -149,7 +149,7 @@ typedef enum
 CChainParams *GetChainParams(ChainSelector chainSelector)
 {
     if (chainSelector == AddrBlockchainNexa)
-        return &Params(CBaseChainParams::NEXTCHAIN);
+        return &Params(CBaseChainParams::NEXA);
     else if (chainSelector == AddrBlockchainTestnet)
         return &Params(CBaseChainParams::TESTNET);
     else if (chainSelector == AddrBlockchainRegtest)

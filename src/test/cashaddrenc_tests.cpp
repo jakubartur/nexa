@@ -16,7 +16,7 @@ namespace
 {
 std::vector<std::string> GetNetworks()
 {
-    return {CBaseChainParams::NEXTCHAIN, CBaseChainParams::TESTNET, CBaseChainParams::REGTEST};
+    return {CBaseChainParams::NEXA, CBaseChainParams::TESTNET, CBaseChainParams::REGTEST};
 }
 
 uint160 insecure_GetRandUInt160(FastRandomContext &rand)
@@ -81,7 +81,7 @@ BOOST_FIXTURE_TEST_SUITE(cashaddrenc_tests, BasicTestingSetup)
 BOOST_AUTO_TEST_CASE(encode_decode_all_sizes)
 {
     FastRandomContext rand(true);
-    const CChainParams &params = Params(CBaseChainParams::NEXTCHAIN);
+    const CChainParams &params = Params(CBaseChainParams::NEXA);
 
     for (auto ps : valid_sizes)
     {
@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(random_dst)
     FastRandomContext rand(true);
 
     const size_t NUM_TESTS = 5000;
-    const CChainParams &params = Params(CBaseChainParams::NEXTCHAIN);
+    const CChainParams &params = Params(CBaseChainParams::NEXA);
 
     for (size_t i = 0; i < NUM_TESTS; ++i)
     {
@@ -196,7 +196,7 @@ BOOST_AUTO_TEST_CASE(check_padding)
     BOOST_CHECK_EQUAL(data.size(), 34UL);
 
     const CTxDestination nodst = CNoDestination{};
-    const CChainParams params = Params(CBaseChainParams::NEXTCHAIN);
+    const CChainParams params = Params(CBaseChainParams::NEXA);
 
     for (uint8_t i = 0; i < 32; i++)
     {
@@ -225,7 +225,7 @@ BOOST_AUTO_TEST_CASE(check_type)
     std::vector<uint8_t> data;
     data.resize(34);
 
-    const CChainParams params = Params(CBaseChainParams::NEXTCHAIN);
+    const CChainParams params = Params(CBaseChainParams::NEXA);
 
     for (uint8_t v = 0; v < 16; v++)
     {
@@ -243,7 +243,7 @@ BOOST_AUTO_TEST_CASE(check_type)
 BOOST_AUTO_TEST_CASE(check_size)
 {
     const CTxDestination nodst = CNoDestination{};
-    const CChainParams params = Params(CBaseChainParams::NEXTCHAIN);
+    const CChainParams params = Params(CBaseChainParams::NEXA);
 
     std::vector<uint8_t> data;
 

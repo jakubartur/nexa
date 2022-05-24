@@ -249,36 +249,6 @@ uint32_t GetNextWorkRequired(const CBlockIndex *pindexPrev, const CBlockHeader *
     return GetNextASERTWorkRequired(pindexPrev, pblock, params, panchorBlock);
 }
 
-uint32_t CalculateNextWorkRequired(const CBlockIndex *pindexLast,
-    int64_t nFirstBlockTime,
-    const Consensus::Params &params)
-{
-    if (params.fPowNoRetargeting)
-    {
-        return pindexLast->tgtBits();
-    }
-
-    // Limit adjustment step
-    int64_t nActualTimespan = pindexLast->GetBlockTime() - nFirstBlockTime;
-    if (nActualTimespan < params.nPowTargetTimespan / 4)
-        nActualTimespan = params.nPowTargetTimespan / 4;
-    if (nActualTimespan > params.nPowTargetTimespan * 4)
-        nActualTimespan = params.nPowTargetTimespan * 4;
-
-    // Retarget
-    const arith_uint256 bnPowLimit = UintToArith256(params.powLimit);
-    arith_uint256 bnNew;
-    arith_uint256 bnOld;
-    bnNew.SetCompact(pindexLast->tgtBits());
-    bnOld = bnNew;
-    bnNew *= nActualTimespan;
-    bnNew /= params.nPowTargetTimespan;
-
-    if (bnNew > bnPowLimit)
-        bnNew = bnPowLimit;
-
-    return bnNew.GetCompact();
-}
 
 static uint256 sha256(uint256 data)
 {
@@ -288,7 +258,6 @@ static uint256 sha256(uint256 data)
     sha.Finalize(ret.begin());
     return ret;
 }
-
 
 bool MineBlock(CBlockHeader &blockHeader, unsigned long int tries, const Consensus::Params &cparams)
 {
@@ -462,54 +431,4 @@ static const CBlockIndex *GetSuitableBlock(const CBlockIndex *pindex)
 
     // We should have our candidate in the middle now.
     return blocks[1];
-}
-
-/**
- * Compute the next required proof of work using a weighted average of the
- * estimated hashrate per block.
- *
- * Using a weighted average ensure that the timestamp parameter cancels out in
- * most of the calculation - except for the timestamp of the first and last
- * block. Because timestamps are the least trustworthy information we have as
- * input, this ensures the algorithm is more resistant to malicious inputs.
- */
-uint32_t GetNextCashWorkRequired(const CBlockIndex *pindexPrev,
-    const CBlockHeader *pblock,
-    const Consensus::Params &params)
-{
-    // This cannot handle the genesis block and early blocks in general.
-    assert(pindexPrev);
-
-    // Special difficulty rule for testnet:
-    // If the new block's timestamp is more than 2* 10 minutes then allow
-    // mining of a min-difficulty block.
-    if (params.fPowAllowMinDifficultyBlocks &&
-        (pblock->GetBlockTime() > pindexPrev->GetBlockTime() + 2 * params.nPowTargetSpacing))
-    {
-        return UintToArith256(params.powLimit).GetCompact();
-    }
-
-    // Compute the difficulty based on the full adjustement interval.
-    const uint32_t nHeight = pindexPrev->height();
-    assert(nHeight >= params.DifficultyAdjustmentInterval());
-
-    // Get the last suitable block of the difficulty interval.
-    const CBlockIndex *pindexLast = GetSuitableBlock(pindexPrev);
-    assert(pindexLast);
-
-    // Get the first suitable block of the difficulty interval.
-    uint32_t nHeightFirst = nHeight - 144;
-    const CBlockIndex *pindexFirst = GetSuitableBlock(pindexPrev->GetAncestor(nHeightFirst));
-    assert(pindexFirst);
-
-    // Compute the target based on time and work done during the interval.
-    const arith_uint256 nextTarget = ComputeTarget(pindexFirst, pindexLast, params);
-
-    const arith_uint256 powLimit = UintToArith256(params.powLimit);
-    if (nextTarget > powLimit)
-    {
-        return powLimit.GetCompact();
-    }
-
-    return nextTarget.GetCompact();
 }

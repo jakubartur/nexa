@@ -14,7 +14,7 @@
 namespace {
 struct WalletDBTestingSetup : public TestingSetup
 {
-    WalletDBTestingSetup(const std::string &chainName = CBaseChainParams::NEXTCHAIN)
+    WalletDBTestingSetup(const std::string &chainName = CBaseChainParams::NEXA)
     {
         bitdb.MakeMock();
     }

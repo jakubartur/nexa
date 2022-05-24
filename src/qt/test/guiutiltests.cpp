@@ -18,7 +18,7 @@ public:
     void SetCashAddrEncoding(bool b) override { useCashAddr = b; }
     bool UseCashAddrEncoding() const override { return useCashAddr; }
     const CChainParams &GetChainParams() const override {
-        return Params(CBaseChainParams::NEXTCHAIN);
+        return Params(CBaseChainParams::NEXA);
     }
 
 private:
@@ -28,7 +28,7 @@ private:
 } // anon ns
 
 void GUIUtilTests::dummyAddressTest() {
-    CChainParams &params = Params(CBaseChainParams::NEXTCHAIN);
+    CChainParams &params = Params(CBaseChainParams::NEXA);
     UtilCfgDummy cfg;
     std::string dummyaddr;
 

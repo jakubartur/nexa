@@ -15,7 +15,7 @@ const std::string CBaseChainParams::LEGACY_UNIT_TESTS = "main";
 const std::string CBaseChainParams::TESTNET = "test";
 const std::string CBaseChainParams::SCALENET = "scale";
 const std::string CBaseChainParams::REGTEST = "regtest";
-const std::string CBaseChainParams::NEXTCHAIN = "nexa";
+const std::string CBaseChainParams::NEXA = "nexa";
 
 /**
  * Main network
@@ -85,14 +85,14 @@ public:
 static CBaseRegTestParams regTestParams;
 
 /**
- * Nextchain
+ * Nexa
  */
-class CBaseNextchainParams : public CBaseChainParams
+class CBaseNexaParams : public CBaseChainParams
 {
 public:
-    CBaseNextchainParams() { nRPCPort = 7227; }
+    CBaseNexaParams() { nRPCPort = 7227; }
 };
-static CBaseNextchainParams nextChainParams;
+static CBaseNexaParams nexaParams;
 
 static CBaseChainParams *pCurrentBaseParams = 0;
 
@@ -112,8 +112,8 @@ CBaseChainParams &BaseParams(const std::string &chain)
         return scaleNetParams;
     else if (chain == CBaseChainParams::REGTEST)
         return regTestParams;
-    else if (chain == CBaseChainParams::NEXTCHAIN)
-        return nextChainParams;
+    else if (chain == CBaseChainParams::NEXA)
+        return nexaParams;
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
@@ -128,8 +128,8 @@ std::string ChainNameFromCommandLine()
     num_selected += fTestNet;
     bool fScaleNet = GetBoolArg("-scalenet", false);
     num_selected += fScaleNet;
-    bool fNextChain = GetBoolArg("-nexa", false);
-    num_selected += fNextChain;
+    bool fNexa = GetBoolArg("-nexa", false);
+    num_selected += fNexa;
 
     if (num_selected > 1)
         throw std::runtime_error("Invalid combination of -regtest, -testnet, -scalenet");
@@ -139,11 +139,11 @@ std::string ChainNameFromCommandLine()
         return CBaseChainParams::TESTNET;
     if (fScaleNet)
         return CBaseChainParams::SCALENET;
-    if (fNextChain)
-        return CBaseChainParams::NEXTCHAIN;
+    if (fNexa)
+        return CBaseChainParams::NEXA;
 
-    // default on this branch is nextchain
-    return CBaseChainParams::NEXTCHAIN;
+    // default on this branch is nexa
+    return CBaseChainParams::NEXA;
 }
 
 bool AreBaseParamsConfigured() { return pCurrentBaseParams != nullptr; }
