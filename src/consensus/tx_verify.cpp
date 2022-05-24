@@ -297,7 +297,10 @@ static int GetSpendHeight(const CCoinsViewCache &inputs)
     throw std::runtime_error("GetSpendHeight(): best block does not exist");
 }
 
-bool Consensus::CheckTxInputs(const CTransactionRef tx, CValidationState &state, const CCoinsViewCache &inputs)
+bool Consensus::CheckTxInputs(const CTransactionRef tx,
+    CValidationState &state,
+    const CCoinsViewCache &inputs,
+    const CChainParams &chainparams)
 {
     // This doesn't trigger the DoS code on purpose; if it did, it would make it easier
     // for an attacker to attempt to split the network.
@@ -327,7 +330,7 @@ bool Consensus::CheckTxInputs(const CTransactionRef tx, CValidationState &state,
                 {
                     nSpendHeight = GetSpendHeight(inputs);
                 }
-                if (nSpendHeight - nCoinHeight < COINBASE_MATURITY)
+                if (nSpendHeight - nCoinHeight < chainparams.GetConsensus().coinbaseMaturity)
                     return state.Invalid(false, REJECT_INVALID, "bad-txns-premature-spend-of-coinbase",
                         strprintf("tried to spend coinbase at depth %d", nSpendHeight - nCoinHeight));
 

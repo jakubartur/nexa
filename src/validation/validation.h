@@ -90,6 +90,7 @@ bool CheckInputs(const CTransactionRef &tx,
     unsigned int flags,
     bool cacheStore,
     ValidationResourceTracker *resourceTracker,
+    const CChainParams &chainparams,
     std::vector<CScriptCheck> *pvChecks = nullptr,
     unsigned char *sighashType = nullptr,
     CValidationDebugger *debugger = nullptr);

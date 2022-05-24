@@ -92,6 +92,8 @@ struct Params
     unsigned int powAlgorithm = 1;
     /** Initial subsidy */
     CAmount initialSubsidy;
+    /** Coinbase maturity */
+    int coinbaseMaturity = 0;
 
     uint256 hashGenesisBlock;
     int nSubsidyHalvingInterval;
