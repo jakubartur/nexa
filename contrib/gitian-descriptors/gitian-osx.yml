@@ -1,8 +1,8 @@
 ---
-name: "bch-unlimited-osx"
+name: "nexa-osx"
 enable_cache: true
 suites:
-- "bionic"
+- "focal"
 architectures:
 - "amd64"
 packages:
@@ -22,6 +22,7 @@ packages:
 - "libcap-dev"
 - "libz-dev"
 - "libbz2-dev"
+- "libtinfo5"
 - "python"
 - "python-dev"
 - "python-setuptools"
@@ -30,7 +31,7 @@ packages:
 reference_datetime: "2020-08-20 00:00:00"
 remotes:
 - "url": "https://github.com/BitcoinUnlimited/BitcoinUnlimited.git"
-  "dir": "bitcoin"
+  "dir": "nexa"
 files:
 - "MacOSX10.15.sdk.tar.xz"
 script: |
@@ -78,7 +79,7 @@ script: |
   done
   export PATH=${WRAP_DIR}:${PATH}
 
-  cd bitcoin
+  cd nexa
   BASEPREFIX=`pwd`/depends
 
   mkdir -p ${BASEPREFIX}/SDKs
@@ -86,21 +87,21 @@ script: |
 
   # Build dependencies for each host
   for i in $HOSTS; do
-    make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}"
+    make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}" NO_RUST=1
   done
 
   # Create the release tarball using (arbitrarily) the first host
   ./autogen.sh
   ./configure --prefix=${BASEPREFIX}/`echo "${HOSTS}" | awk '{print $1;}'`
   make dist
-  SOURCEDIST=`echo bch-unlimited-*.tar.gz`
+  SOURCEDIST=`echo nexa-*.tar.gz`
   DISTNAME=`echo ${SOURCEDIST} | sed 's/.tar.*//'`
 
   # Correct tar file order
   mkdir -p temp
   pushd temp
   tar xf ../$SOURCEDIST
-  find bch-unlimited* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
+  find nexa* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
   popd
 
   ORIGPATH="$PATH"

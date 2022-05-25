@@ -61,6 +61,7 @@ ELF_ALLOWED_LIBRARIES = {
 'libm.so.6', # math library
 'librt.so.1', # real-time (clock)
 'libatomic.so.1',
+'libgmp.so.10', # support for big int
 'ld-linux-x86-64.so.2', # 64-bit dynamic linker
 'ld-linux.so.2', # 32-bit dynamic linker
 'ld-linux-aarch64.so.1', # 64-bit ARM dynamic linker
@@ -97,6 +98,7 @@ pixie.EM_AARCH64:(2,17),
 MACHO_ALLOWED_LIBRARIES = {
 # bitcoind and bitcoin-qt
 'libc++.1.dylib', # C++ Standard Library
+'libgmp.10.dylib', # bignum library
 'libSystem.B.dylib', # libc, libm, libpthread, libinfo
 # bitcoin-qt only
 'AppKit', # user interface

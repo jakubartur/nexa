@@ -11,6 +11,11 @@ ifeq  ($(HOST),i686-pc-linux-gnu)
   $(package)_cflags+=-m32
 endif
 
+ifeq ($(HOST),x86_64-w64-mingw32)
+  # this fix "cannot determine suffix" configure error
+  XTRA_CFG_ENV:=CC_FOR_BUILD=gcc
+endif
+
 ifeq  ($(HOST),x86_64-apple-darwin19)
   XTRA_CFG:=--disable-assembly
   XTRA_CFG_ENV:=CC="$(darwin_CC)" CXX="$(darwin_CXX)"
