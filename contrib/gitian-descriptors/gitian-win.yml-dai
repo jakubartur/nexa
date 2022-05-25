@@ -31,7 +31,7 @@ script: |
   set -e -o pipefail
 
   WRAP_DIR=$HOME/wrapped
-  HOSTS="x86_64-w64-mingw32"
+  HOSTS="x86_64-w64-mingw32 i686-w64-mingw32"
   CONFIGFLAGS="--enable-reduce-exports --disable-bench --disable-gui-tests"
   FAKETIME_HOST_PROGS="ar ranlib nm windres strip"
   FAKETIME_PROGS="date makensis zip"
@@ -98,7 +98,7 @@ script: |
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
-    make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}" NO_RUST=1
+    make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}"
   done
 
   # Create the release tarball using (arbitrarily) the first host

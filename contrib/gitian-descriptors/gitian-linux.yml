@@ -1,15 +1,17 @@
 ---
-name: "bch-unlimited-linux"
+name: "nexa-linux"
 enable_cache: true
 suites:
-- "bionic"
+- "focal"
 architectures:
 - "amd64"
 packages:
 - "curl"
 - "binutils"
-- "g++-7-multilib"
-- "gcc-7-multilib"
+- "g++8"
+- "gcc-8"
+- "g++-8-multilib"
+- "gcc-8-multilib"
 - "binutils-gold"
 - "git"
 - "pkg-config"
@@ -28,7 +30,7 @@ packages:
 reference_datetime: "2020-08-20 00:00:00"
 remotes:
 - "url": "https://github.com/BitcoinUnlimited/BitcoinUnlimited.git"
-  "dir": "bitcoin"
+  "dir": "nexa"
 files: []
 script: |
   set -e -o pipefail
@@ -100,7 +102,7 @@ script: |
   rm -f ${WRAP_DIR}/${prog}
   cat << EOF > ${WRAP_DIR}/${prog}
   #!/bin/bash
-  REAL="`which -a ${prog} | grep -v ${WRAP_DIR}/${prog} | head -1`"
+  REAL="`which -a ${prog}-8 | grep -v ${WRAP_DIR}/${prog} | head -1`"
   for var in "\$@"
   do
     if [ "\$var" = "-m32" ]; then
@@ -114,7 +116,7 @@ script: |
   chmod +x ${WRAP_DIR}/${prog}
   done
 
-  cd bitcoin
+  cd nexa
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
@@ -140,13 +142,13 @@ script: |
   ./autogen.sh
   CONFIG_SITE=${BASEPREFIX}/`echo "${HOSTS}" | awk '{print $1;}'`/share/config.site ./configure --prefix=/
   make dist
-  SOURCEDIST=`echo bch-unlimited-*.tar.gz`
+  SOURCEDIST=`echo nexa-*.tar.gz`
   DISTNAME=`echo ${SOURCEDIST} | sed 's/.tar.*//'`
   # Correct tar file order
   mkdir -p temp
   pushd temp
   tar xf ../$SOURCEDIST
-  find bch-unlimited* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
+  find nexa* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
   popd
 
   ORIGPATH="$PATH"
@@ -168,16 +170,19 @@ script: |
     make ${MAKEOPTS} -C src check-security
     make ${MAKEOPTS} -C src check-symbols
     make install DESTDIR=${INSTALLPATH}
+    # FIXME: electrscash is goin to be rename to Rotrsum
+    # and also need to be changed to be compatible with
+    # nexa blockchan
     if [ -f src/electrscash ]; then
         cp src/electrscash ${OUTDIR}/electrscash-${i}.debug
         strip src/electrscash
         cp src/electrscash ${INSTALLPATH}/bin/electrscash
     fi
     # BU save the executables with debug symbols
-    cp -f src/bitcoind ${OUTDIR}/bitcoind-${i}.debug
-    if [ -f src/qt/bitcoin-qt ]
+    cp -f src/nexad ${OUTDIR}/nexad-${i}.debug
+    if [ -f src/qt/nexa-qt ]
     then
-      cp -f src/qt/bitcoin-qt ${OUTDIR}/bitcoin-qt-${i}.debug
+      cp -f src/qt/nexa-qt ${OUTDIR}/nexa-qt-${i}.debug
     fi
 
     make install-strip DESTDIR=${INSTALLPATH}

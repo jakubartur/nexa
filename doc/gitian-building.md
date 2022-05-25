@@ -17,7 +17,7 @@ cd ~/src
 git clone https://github.com/BitcoinUnlimited/BitcoinUnlimited.git
 git clone https://github.com/devrandom/gitian-builder.git
 cd gitian-builder
-bin/make-base-vm --suite bionic --arch amd64 --docker
+bin/make-base-vm --suite focal --arch amd64 --docker
 ```
 
 Build the binaries
@@ -28,7 +28,7 @@ These are the commands to actually produce the linux 32/64 bit executables :
 ```bash
 cd ~/src/gitian-builder
 export USE_DOCKER=1
-bin/gbuild -j 4 -m 10000 --url bitcoin=https://github.com/BitcoinUnlimited/BitcoinUnlimited.git --commit bitcoin=dev ../BitcoinUnlimited/contrib/gitian-descriptors/gitian-linux.yml
+bin/gbuild -j 4 -m 10000 --url nexa=https://github.com/BitcoinUnlimited/BitcoinUnlimited.git --commit nexa=dev ../BitcoinUnlimited/contrib/gitian-descriptors/gitian-linux.yml
 ```
 
 Your binaries will be ready to be used in `build/out/` folder.
@@ -41,5 +41,5 @@ Then issue the following command to have the binaries for osx produced and store
 ```bash
 cd ~/src/gitian-builder
 export USE_DOCKER=1
-bin/gbuild -j 4 -m 10000 --url bitcoin=https://github.com/BitcoinUnlimited/BitcoinUnlimited.git --commit bitcoin=dev ../BitcoinUnlimited/contrib/gitian-descriptors/gitian-osx.yml
+bin/gbuild -j 4 -m 10000 --url nexa=https://github.com/BitcoinUnlimited/BitcoinUnlimited.git --commit nexa=dev ../BitcoinUnlimited/contrib/gitian-descriptors/gitian-osx.yml
 ```

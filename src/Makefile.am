@@ -414,6 +414,8 @@ libnexa_a_SOURCES = \
   primitives/block.h \
   primitives/transaction.cpp \
   primitives/transaction.h \
+  primitives/satoshiTransaction.h \
+  primitives/satoshiblock.h \
   pubkey.cpp \
   pubkey.h \
   random.cpp \
@@ -425,7 +427,7 @@ libnexa_a_SOURCES = \
   script/interpreter.cpp \
   script/interpreter.h \
   script/bignum.cpp \
-  script/bignun.h \
+  script/bignum.h \
   script/standard.cpp \
   script/standard.h \
   script/stackitem.cpp \
@@ -513,7 +515,7 @@ libnexa_consensus_a_SOURCES = \
   arith_uint256.cpp \
   arith_uint256.h \
   consensus/adaptive_blocksize.cpp \
-  consensus/adapative_blocksize.h \
+  consensus/adaptive_blocksize.h \
   consensus/merkle.cpp \
   consensus/merkle.h \
   consensus/params.h \
@@ -527,6 +529,8 @@ libnexa_consensus_a_SOURCES = \
   primitives/block.h \
   primitives/transaction.cpp \
   primitives/transaction.h \
+  primitives/satoshiTransaction.h \
+  primitives/satoshiblock.h \
   pubkey.cpp \
   pubkey.h \
   script/scriptattributes.cpp \

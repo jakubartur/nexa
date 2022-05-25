@@ -1,5 +1,5 @@
 ---
-name: "bch-unlimited-arm"
+name: "nexa-arm"
 enable_cache: true
 suites:
 - "bionic"
@@ -8,15 +8,15 @@ architectures:
 packages:
 - "curl"
 - "g++-aarch64-linux-gnu"
-- "g++-7-aarch64-linux-gnu"
-- "gcc-7-aarch64-linux-gnu"
+- "g++-8-aarch64-linux-gnu"
+- "gcc-8-aarch64-linux-gnu"
 - "binutils-aarch64-linux-gnu"
 - "g++-arm-linux-gnueabihf"
-- "g++-7-arm-linux-gnueabihf"
-- "gcc-7-arm-linux-gnueabihf"
+- "g++-8-arm-linux-gnueabihf"
+- "gcc-8-arm-linux-gnueabihf"
 - "binutils-arm-linux-gnueabihf"
-- "g++-7-multilib"
-- "gcc-7-multilib"
+- "g++-8-multilib"
+- "gcc-8-multilib"
 - "binutils-gold"
 - "git-core"
 - "pkg-config"
@@ -32,7 +32,7 @@ packages:
 reference_datetime: "2020-08-20 00:00:00"
 remotes:
 - "url": "https://github.com/BitcoinUnlimited/BitcoinUnlimited.git"
-  "dir": "bitcoin"
+  "dir": "nexa"
 files: []
 script: |
   set -e -o pipefail
@@ -118,7 +118,7 @@ script: |
   chmod +x ${WRAP_DIR}/${prog}
   done
 
-  cd bitcoin
+  cd nexa
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
@@ -126,7 +126,7 @@ script: |
     if [ -d "$EXTRA_INCLUDES" ]; then
       export HOST_ID_SALT="$EXTRA_INCLUDES"
     fi
-    make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}"
+    make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}" CC=${i}-gcc-8 CXX=${i}-g++-8 NO_RUST=1
     unset HOST_ID_SALT
   done
 
@@ -141,13 +141,13 @@ script: |
   ./configure --prefix=${BASEPREFIX}/`echo "${HOSTS}" | awk '{print $1;}'`
   CONFIG_SITE=${BASEPREFIX}/`echo "${HOSTS}" | awk '{print $1;}'`/share/config.site ./configure --prefix=/
   make dist
-  SOURCEDIST=`echo bch-unlimited-*.tar.gz`
+  SOURCEDIST=`echo nexa-*.tar.gz`
   DISTNAME=`echo ${SOURCEDIST} | sed 's/.tar.*//'`
   # Correct tar file order
   mkdir -p temp
   pushd temp
   tar xf ../$SOURCEDIST
-  find bch-unlimited* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
+  find nexa* | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ../$SOURCEDIST
   popd
 
   ORIGPATH="$PATH"
@@ -159,7 +159,7 @@ script: |
     INSTALLPATH=`pwd`/installed/${DISTNAME}
     mkdir -p ${INSTALLPATH}
     tar --strip-components=1 -xf ../$SOURCEDIST
-    CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}" LDFLAGS="${HOST_LDFLAGS}"
+    CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}" LDFLAGS="${HOST_LDFLAGS}" CC=${i}-gcc-8 CXX=${i}-g++-8
     make ${MAKEOPTS}
     make ${MAKEOPTS} -C src check-security
     case $i in
@@ -172,7 +172,7 @@ script: |
     esac
 
     # BU save the executables with debug symbols
-    cp -f src/bitcoind ${OUTDIR}/bitcoind-${i}.debug
+    cp -f src/nexad ${OUTDIR}/nexad-${i}.debug
     #BU clean and tar up the output files
     cd installed
     find . -name "lib*.la" -delete
