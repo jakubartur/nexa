@@ -1649,6 +1649,21 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_Initia
     {
         triggerJavaIllegalStateException(env, "unknown blockchain selection");
     }
+    switch ((ChainSelector)chainSelector)
+    {
+    case AddrBlockchainNexa:
+        SelectParams("nexa");
+        break;
+    case AddrBlockchainTestnet:
+        SelectParams("test");
+        break;
+    case AddrBlockchainRegtest:
+        SelectParams("regtest");
+        break;
+    case AddrBlockchainBCH:
+        SelectParams("main");
+        break;
+    }
 
 #ifdef ANDROID
     // initialize the env globals and hook up the random number generator
