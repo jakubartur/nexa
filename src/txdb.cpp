@@ -20,7 +20,6 @@ CCoinsViewDB *pcoinsdbview = nullptr;
 using namespace std;
 
 static const char DB_COIN = 'C';
-static const char DB_COINS = 'c';
 static const char DB_BLOCK_FILES = 'f';
 static const char DB_TXINDEX = 't';
 static const char DB_TXIDEM_INDEX = 'i';
@@ -561,71 +560,6 @@ public:
     }
 };
 } // namespace
-
-/** Upgrade the database from older formats.
- *
- * Currently implemented: from the per-tx utxo model (0.8..0.14.x) to per-txout.
- */
-bool CCoinsViewDB::Upgrade()
-{
-    std::unique_ptr<CDBIterator> pcursor(db.NewIterator());
-    pcursor->Seek(std::make_pair(DB_COINS, uint256()));
-    if (!pcursor->Valid())
-    {
-        return true;
-    }
-
-    LOGA("Upgrading database...\n");
-    uiInterface.InitMessage(_("Upgrading database...this may take a while"));
-    size_t batch_size = 1 << 24;
-    CDBBatch batch(db);
-
-    std::pair<unsigned char, uint256> key;
-    std::pair<unsigned char, uint256> prev_key = {DB_COINS, uint256()};
-    while (pcursor->Valid())
-    {
-        if (shutdown_threads.load() == true)
-        {
-            return false;
-        }
-
-        if (pcursor->GetKey(key) && key.first == DB_COINS)
-        {
-            CCoins old_coins;
-            if (!pcursor->GetValue(old_coins))
-            {
-                return error("%s: cannot parse CCoins record", __func__);
-            }
-            for (size_t i = 0; i < old_coins.vout.size(); ++i)
-            {
-                if (!old_coins.vout[i].IsNull() && !old_coins.vout[i].scriptPubKey.IsUnspendable())
-                {
-                    Coin newcoin(std::move(old_coins.vout[i]), old_coins.nHeight, old_coins.fCoinBase);
-                    COutPoint outpoint(key.second, i); // FUTURE: Handle script hash outputs
-                    CoinEntry entry(&outpoint);
-                    batch.Write(entry, newcoin);
-                }
-            }
-            batch.Erase(key);
-            if (batch.SizeEstimate() > batch_size)
-            {
-                db.WriteBatch(batch);
-                batch.Clear();
-                db.CompactRange(prev_key, key);
-                prev_key = key;
-            }
-            pcursor->Next();
-        }
-        else
-        {
-            break;
-        }
-    }
-    db.WriteBatch(batch);
-    db.CompactRange({DB_COINS, uint256()}, key);
-
-    return true;
-}
 
 // For Windows we can use the current total available memory, however for other systems we can only use the
 // the physical RAM in our calculations.

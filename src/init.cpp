@@ -1344,15 +1344,6 @@ bool AppInit2(Config &config)
                     if (fPruneMode)
                         CleanupBlockRevFiles();
                 }
-                else
-                {
-                    // If necessary, upgrade from older database format.
-                    if (!pcoinsdbview->Upgrade())
-                    {
-                        strLoadError = _("Error upgrading chainstate database");
-                        break;
-                    }
-                }
 
                 uiInterface.InitMessage(_("Loading block index..."));
                 if (!LoadBlockIndex())
