@@ -149,20 +149,49 @@ BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
     CMutableTransaction tx;
     CTransactionRef txref;
     CScript simpleConstraint = CScript() << OP_1;
+    CScript simpleBigConstraint =
+        CScript() << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1
+                  << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1 << OP_DROP << OP_1;
 
     // Check vout rules in a coinbase
 
+    // Check that a coinbase with no inputs and no outputs fails
+    CValidationState state;
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "coinbase no vouts");
+    BOOST_CHECK(!state.IsValid());
+
+    state = CValidationState();
+    // Check that a coinbase without OP_RETURN fails
+    tx.vout.push_back(CTxOut(1, simpleBigConstraint));
+    txref = MakeTransactionRef(tx);
+    BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "coinbase no op_return");
+    BOOST_CHECK(!state.IsValid());
+
+    state = CValidationState();
     // Fill out the maximum vouts
-    for (unsigned int i = 0; i < MAX_TX_NUM_VOUT; i++)
+    for (unsigned int i = 0; i < MAX_TX_NUM_VOUT - 2; i++)
     {
         tx.vout.push_back(CTxOut(1, simpleConstraint));
     }
+    tx.vout.push_back(CTxOut(0, CScript() << OP_RETURN));
     // tx should be ok
-    CValidationState state;
     txref = MakeTransactionRef(tx);
     BOOST_CHECK_MESSAGE(CheckTransaction(txref, state), "at max vouts");
     BOOST_CHECK(state.IsValid());
 
+    state = CValidationState();
     // check that version greater than current version fails
     tx.nVersion = CTransaction::CURRENT_VERSION + 1;
     txref = MakeTransactionRef(tx);
@@ -173,7 +202,7 @@ BOOST_AUTO_TEST_CASE(dynamic_tx_validity)
     state = CValidationState();
 
     // Check that 1 more vout causes a tx failure
-    tx.vout.push_back(CTxOut(1, simpleConstraint));
+    tx.vout.push_back(CTxOut(1, CScript() << OP_RETURN));
     txref = MakeTransactionRef(tx);
     BOOST_CHECK_MESSAGE(!CheckTransaction(txref, state), "max vouts exceeded");
     BOOST_CHECK(!state.IsValid());

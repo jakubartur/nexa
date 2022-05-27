@@ -74,7 +74,10 @@ static const uint32_t MANDATORY_SCRIPT_VERIFY_FLAGS = SCRIPT_VERIFY_P2SH |
                                                       SCRIPT_ENABLE_SIGHASH_FORKID |
                                                       SCRIPT_VERIFY_LOW_S |
                                                       SCRIPT_VERIFY_NULLFAIL |
-                                                      SCRIPT_VERIFY_MINIMALDATA;
+                                                      SCRIPT_VERIFY_MINIMALDATA |
+                                                      SCRIPT_ALLOW_64_BIT_INTEGERS |
+                                                      SCRIPT_ALLOW_NATIVE_INTROSPECTION;
+
 /* clang-format on */
 
 /** Number of sigops to reserve for coinbase transaction */

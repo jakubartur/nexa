@@ -41,9 +41,7 @@ const char *ScriptErrorString(const ScriptError serror)
     case SCRIPT_ERR_INVALID_OPERAND_SIZE:
         return "Invalid operand size";
     case SCRIPT_ERR_INVALID_NUMBER_RANGE:
-        return "Given operand is not a number within the valid range [-2^31 + 1, 2^31 - 1]";
-    case SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT:
-        return "Given operand is not a number within the valid range [-2^63 + 1, 2^63 - 1]";
+        return "Given operand is not a number within the valid range";
     case SCRIPT_ERR_IMPOSSIBLE_ENCODING:
         return "The requested encoding is impossible to satisfy";
     case SCRIPT_ERR_INVALID_SPLIT_RANGE:
