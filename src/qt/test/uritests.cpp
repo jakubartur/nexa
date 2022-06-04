@@ -202,7 +202,7 @@ void URITests::uriTestScheme() {
         config.SetChainParams(CBaseChainParams::NEXA);
         QVERIFY("nexa" == GUIUtil::bitcoinURIScheme(config));
         config.SetChainParams(CBaseChainParams::TESTNET);
-        QVERIFY("testnet" == GUIUtil::bitcoinURIScheme(config));
+        QVERIFY("nexatest" == GUIUtil::bitcoinURIScheme(config));
         config.SetChainParams(CBaseChainParams::REGTEST);
         QVERIFY("nexareg" == GUIUtil::bitcoinURIScheme(config));
     }

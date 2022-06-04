@@ -28,8 +28,6 @@ stages:
     - static_checks
     - build_depends
     - build
-    - build_tests
-    - qa_tests
     - benchmark_tests
 
 cache: &global_cache_settings
@@ -56,12 +54,6 @@ check-formatting:
     extends: .cache-linting
     needs: []
     script:
-        - apt-get install -y libgmp-dev
-        - apt-get install -y wget gpg-agent
-        - wget https://apt.llvm.org/llvm.sh
-        - chmod +x llvm.sh
-        - ./llvm.sh 12 all #temp fix see https://github.com/llvm/llvm-project/issues/53234 for more info
-        - apt-get install clang-format-12
         - ./autogen.sh
         - ./configure --with-incompatible-bdb --enable-glibc-back-compat --enable-reduce-exports
         - make check-formatting
@@ -78,13 +70,14 @@ build-debian-nodeps:
     extends: .cache-debian-nodeps
     needs: []
     script:
-        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
         - make -j `nproc`
         - ccache --show-stats
+        - make check
     artifacts:
+        when: always
         paths:
             - ./build/src/nexad
             - ./build/src/nexa-cli
@@ -92,13 +85,15 @@ build-debian-nodeps:
             - ./build/src/nexa-tx
             - ./build/src/test/test_bitcoin
             - ./build/src/bench/bench_bitcoin
+            - ./build/src/test/*.log
+            - ./src/test/*.log
+            - ./src/test-suite.log
 
 build-debian-nodeps-qt:
     stage: build
     extends: .cache-debian-nodeps
     needs: []
     script:
-        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-tests
@@ -110,15 +105,6 @@ build-debian-nodeps-qt:
             - ./build/src/nexa-cli
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
-
-build-debian-tests-nodeps:
-    stage: build_tests
-    extends: .cache-debian-nodeps
-    needs: ["build-debian-nodeps"]
-    script:
-        - (cd build/src; ./test/test_bitcoin)
-    dependencies:
-        - build-debian-nodeps
 
 # Linux 64 bit, source deps
 .cache-debian:
@@ -152,19 +138,27 @@ build-debian:
         - mkdir build; cd build
         - ../configure --enable-shared --enable-debug --enable-zmq --enable-glibc-back-compat --enable-reduce-exports --cache-file=config.cache --prefix=$PWD/../depends/x86_64-unknown-linux-gnu CPPFLAGS=-DDEBUG_LOCKORDER
         - make -j `nproc`
+        - make -j `nproc` check
         - ccache --show-stats
+        - mkdir -p $CI_PROJECT_DIR/cores
+        - mkdir -p $CI_PROJECT_DIR/saved-cores
+        - echo $CI_PROJECT_DIR/cores/core.%e.%p.%h.%t | tee /proc/sys/kernel/core_pattern
+        - ./qa/pull-tester/rpc-tests.py --coverage --no-ipv6-rpc-listen --gitlab
     dependencies:
         - build-debian-deps
     artifacts:
+        when: on_failure
         paths:
             - ./build/src/nexad
             - ./build/src/nexa-cli
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
+            - ./build/src/test/
             - ./build/src/test/test_bitcoin
             - ./build/src/bench/bench_bitcoin
-            - ./build/qa/*
-            - ./qa/*
+            - ./build/src/test/*.log
+            - ./src/test/*.log
+            - ./src/test-suite.log
 
 build-debian-electrscash:
     stage: build
@@ -204,35 +198,6 @@ build-debian-electrscash:
         paths:
             - ./build/src/electrscash
 
-build-debian-tests:
-    stage: build_tests
-    extends: .cache-debian
-    needs: ["build-debian"]
-    script:
-        - (cd build/src; ./test/test_bitcoin)
-    dependencies:
-        - build-debian
-
-test-debian-qa:
-    stage: qa_tests
-    #extends: .cache-debian
-    needs: ["build-debian"]
-    script:
-        - mkdir -p $CI_PROJECT_DIR/cores
-        - mkdir -p $CI_PROJECT_DIR/saved-cores
-        - echo $CI_PROJECT_DIR/cores/core.%e.%p.%h.%t | tee /proc/sys/kernel/core_pattern
-        - cd build;
-        - ./qa/pull-tester/rpc-tests.py --coverage --no-ipv6-rpc-listen --gitlab
-    dependencies:
-        - build-debian
-    artifacts:
-        when: on_failure
-        paths:
-            - ./qa/qa_tests/
-            - $CI_PROJECT_DIR/saved-cores
-            - ./build/src/nexad
-            - ./build/ctorout.txt
-
 test-debian-benchmarks:
     stage: benchmark_tests
     #extends: .cache-debian
@@ -260,32 +225,23 @@ build-debian-clang:
     extends: .debian-clang-env
     needs: []
     script:
-        - apt-get install -y libgmp-dev
         - ./autogen.sh
         - mkdir build; cd build
         - ../configure --cache-file=config.cache --enable-zmq --with-gui=qt5 --with-incompatible-bdb CPPFLAGS=-DDEBUG_LOCKORDER
         - make -j `nproc`
         - ccache --show-stats
+        - make check
     artifacts:
         paths:
             - ./build/src/nexad
             - ./build/src/nexa-cli
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
-            - ./build/src/test/test_bitcoin
-
-build-debian-tests-clang:
-    stage: build_tests
-    extends: .debian-clang-env
-    needs: ["build-debian-clang"]
-    script:
-        - (cd build/src; ./test/test_bitcoin)
-    artifacts:
-        when: on_failure
-        paths:
             - ./build/src/test/
-    dependencies:
-        - build-debian-clang
+            - ./build/src/test/test_bitcoin
+            - ./build/src/test/*.log
+            - ./src/test/*.log
+            - ./src/test-suite.log
 
 # ARM64
 .cache-arm-64:
