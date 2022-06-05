@@ -147,8 +147,6 @@ public:
         size_t &nChildCachedCoinsUsage) override;
     CCoinsViewCursor *Cursor() const override;
 
-    //! Attempt to update from an older database format. Returns whether an error occurred.
-    bool Upgrade();
     size_t EstimateSize() const override;
 
     //! Return the current memory allocated for the write buffers
