@@ -5,8 +5,8 @@
 
 #include "guiutil.h"
 
-#include "bitcoinaddressvalidator.h"
-#include "bitcoinunits.h"
+#include "nexaaddressvalidator.h"
+#include "nexaunits.h"
 #include "qvalidatedlineedit.h"
 #include "walletmodel.h"
 

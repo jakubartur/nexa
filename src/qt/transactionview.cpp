@@ -6,10 +6,10 @@
 #include "transactionview.h"
 
 #include "addresstablemodel.h"
-#include "bitcoinunits.h"
 #include "csvmodelwriter.h"
 #include "editaddressdialog.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 #include "optionsmodel.h"
 #include "platformstyle.h"
 #include "transactiondescdialog.h"

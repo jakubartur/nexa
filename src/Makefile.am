@@ -739,7 +739,7 @@ nexa_miner_LDADD = \
 nexa_miner_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 #
 
-# bitcoincash library #
+# nexa library #
 if BUILD_NEXA_LIBS
 if TARGET_LINUX
 libnexa_la_SOURCES = $(libnexa_a_SOURCES) $(crypto_libnexa_crypto_a_SOURCES)
@@ -756,7 +756,7 @@ endif
 endif
 #
 
-# bitcoinconsensus library #
+# nexa consensus library #
 if BUILD_NEXA_LIBS
 include_HEADERS = script/bitcoinconsensus.h
 libnexaconsensus_la_SOURCES = $(crypto_libnexa_crypto_a_SOURCES) $(libnexa_consensus_a_SOURCES)

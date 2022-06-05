@@ -9,8 +9,8 @@
 #include "unlimiteddialog.h"
 #include "unlimitedmodel.h"
 
-#include "bitcoinunits.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 
 #include "main.h" // for DEFAULT_SCRIPTCHECK_THREADS and MAX_SCRIPTCHECK_THREADS
 #include "net.h" // for access to the network traffic shapers

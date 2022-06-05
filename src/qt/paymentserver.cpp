@@ -5,8 +5,8 @@
 
 #include "paymentserver.h"
 
-#include "bitcoinunits.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 #include "optionsmodel.h"
 
 #include "chainparams.h"

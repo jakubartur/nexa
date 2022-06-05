@@ -7,7 +7,6 @@
 #include "bitcoin-config.h"
 #endif
 
-#include "bitcoingui.h"
 #include "chainparams.h"
 #include "clientmodel.h"
 #include "config.h"
@@ -16,6 +15,7 @@
 #include "guiutil.h"
 #include "intro.h"
 #include "networkstyle.h"
+#include "nexagui.h"
 #include "optionsmodel.h"
 #include "platformstyle.h"
 #include "splashscreen.h"
@@ -128,11 +128,11 @@ static void initTranslations(QTranslator &qtTranslatorBase,
     if (qtTranslator.load("qt_" + lang_territory, QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
         QApplication::installTranslator(&qtTranslator);
 
-    // Load e.g. bitcoin_de.qm (shortcut "de" needs to be defined in bitcoin.qrc)
+    // Load e.g. bitcoin_de.qm (shortcut "de" needs to be defined in nexa.qrc)
     if (translatorBase.load(lang, ":/translations/"))
         QApplication::installTranslator(&translatorBase);
 
-    // Load e.g. bitcoin_de_DE.qm (shortcut "de_DE" needs to be defined in bitcoin.qrc)
+    // Load e.g. bitcoin_de_DE.qm (shortcut "de_DE" needs to be defined in nexa.qrc)
     if (translator.load(lang_territory, ":/translations/"))
         QApplication::installTranslator(&translator);
 }
@@ -146,14 +146,14 @@ void DebugMessageHandler(QtMsgType type, const QMessageLogContext &context, cons
     LOG(category, "GUI: %s\n", msg.toStdString());
 }
 
-/** Class encapsulating Bitcoin startup and shutdown.
+/** Class encapsulating Nexa startup and shutdown.
  * Allows running startup and shutdown in a different thread from the UI thread.
  */
-class BitcoinCore : public QObject
+class Nexa : public QObject
 {
     Q_OBJECT
 public:
-    explicit BitcoinCore();
+    explicit Nexa();
 
 public Q_SLOTS:
     void initialize(Config *config);
@@ -169,13 +169,13 @@ private:
     void handleRunawayException(const std::exception *e);
 };
 
-/** Main Bitcoin application object */
-class BitcoinApplication : public QApplication
+/** Main Nexa application object */
+class NexaApplication : public QApplication
 {
     Q_OBJECT
 public:
-    explicit BitcoinApplication(int &argc, char **argv);
-    ~BitcoinApplication();
+    explicit NexaApplication(int &argc, char **argv);
+    ~NexaApplication();
 
 #ifdef ENABLE_WALLET
     /// Create payment server
@@ -231,16 +231,16 @@ private:
     void startThread();
 };
 
-#include "bitcoin.moc"
+#include "nexa.moc"
 
-BitcoinCore::BitcoinCore() : QObject() {}
-void BitcoinCore::handleRunawayException(const std::exception *e)
+Nexa::Nexa() : QObject() {}
+void Nexa::handleRunawayException(const std::exception *e)
 {
     PrintExceptionContinue(e, "Runaway exception");
     Q_EMIT runawayException(QString::fromStdString(strMiscWarning));
 }
 
-void BitcoinCore::initialize(Config *cfg)
+void Nexa::initialize(Config *cfg)
 {
     Config &config(*cfg);
     try
@@ -259,7 +259,7 @@ void BitcoinCore::initialize(Config *cfg)
     }
 }
 
-void BitcoinCore::shutdown()
+void Nexa::shutdown()
 {
     try
     {
@@ -281,7 +281,7 @@ void BitcoinCore::shutdown()
     }
 }
 
-BitcoinApplication::BitcoinApplication(int &argc, char **argv)
+NexaApplication::NexaApplication(int &argc, char **argv)
     : QApplication(argc, argv), coreThread(0), optionsModel(0), unlimitedModel(0), clientModel(0), window(0),
       pollShutdownTimer(0),
 #ifdef ENABLE_WALLET
@@ -292,7 +292,7 @@ BitcoinApplication::BitcoinApplication(int &argc, char **argv)
     setQuitOnLastWindowClosed(false);
 }
 
-BitcoinApplication::~BitcoinApplication()
+NexaApplication::~NexaApplication()
 {
     if (coreThread)
     {
@@ -317,10 +317,10 @@ BitcoinApplication::~BitcoinApplication()
 }
 
 #ifdef ENABLE_WALLET
-void BitcoinApplication::createPaymentServer() { paymentServer = new PaymentServer(this); }
+void NexaApplication::createPaymentServer() { paymentServer = new PaymentServer(this); }
 #endif
 
-void BitcoinApplication::createPlatformStyle()
+void NexaApplication::createPlatformStyle()
 {
     std::string platformName;
     platformName = GetArg("-uiplatform", DEFAULT_UIPLATFORM);
@@ -330,13 +330,13 @@ void BitcoinApplication::createPlatformStyle()
     assert(platformStyle);
 }
 
-void BitcoinApplication::createOptionsModel(bool resetSettings)
+void NexaApplication::createOptionsModel(bool resetSettings)
 {
     optionsModel = new OptionsModel(nullptr, resetSettings);
     unlimitedModel = new UnlimitedModel(); // BU
 }
 
-void BitcoinApplication::createWindow(const Config *config, const NetworkStyle *networkStyle)
+void NexaApplication::createWindow(const Config *config, const NetworkStyle *networkStyle)
 {
     window = new BitcoinGUI(config, platformStyle, networkStyle, 0);
 
@@ -345,7 +345,7 @@ void BitcoinApplication::createWindow(const Config *config, const NetworkStyle *
     pollShutdownTimer->start(200);
 }
 
-void BitcoinApplication::createSplashScreen(const NetworkStyle *networkStyle)
+void NexaApplication::createSplashScreen(const NetworkStyle *networkStyle)
 {
     SplashScreen *splash = new SplashScreen(0, networkStyle);
     // We don't hold a direct pointer to the splash screen after creation, but the splash
@@ -354,12 +354,12 @@ void BitcoinApplication::createSplashScreen(const NetworkStyle *networkStyle)
     connect(this, SIGNAL(splashFinished(QWidget *)), splash, SLOT(slotFinish(QWidget *)));
 }
 
-void BitcoinApplication::startThread()
+void NexaApplication::startThread()
 {
     if (coreThread)
         return;
     coreThread = new QThread(this);
-    BitcoinCore *executor = new BitcoinCore();
+    Nexa *executor = new Nexa();
     executor->moveToThread(coreThread);
 
     /*  communication to and from thread */
@@ -375,20 +375,20 @@ void BitcoinApplication::startThread()
     coreThread->start();
 }
 
-void BitcoinApplication::parameterSetup()
+void NexaApplication::parameterSetup()
 {
     InitLogging();
     InitParameterInteraction();
 }
 
-void BitcoinApplication::requestInitialize(Config &config)
+void NexaApplication::requestInitialize(Config &config)
 {
     qDebug() << __func__ << ": Requesting initialize";
     startThread();
     Q_EMIT requestedInitialize(&config);
 }
 
-void BitcoinApplication::requestShutdown()
+void NexaApplication::requestShutdown()
 {
     qDebug() << __func__ << ": Requesting shutdown";
     startThread();
@@ -412,7 +412,7 @@ void BitcoinApplication::requestShutdown()
     Q_EMIT requestedShutdown();
 }
 
-void BitcoinApplication::initializeResult(int retval)
+void NexaApplication::initializeResult(int retval)
 {
     qDebug() << __func__ << ": Initialization result: " << retval;
     // Set exit result: 0 if successful, 1 if failure
@@ -455,7 +455,7 @@ void BitcoinApplication::initializeResult(int retval)
 
 #ifdef ENABLE_WALLET
         // Now that initialization/startup is done, process any command-line
-        // bitcoincash: URIs or payment requests:
+        // nexa: URIs or payment requests:
         connect(paymentServer, SIGNAL(receivedPaymentRequest(SendCoinsRecipient)), window,
             SLOT(handlePaymentRequest(SendCoinsRecipient)));
         connect(window, SIGNAL(receivedURI(QString)), paymentServer, SLOT(handleURIOrFile(QString)));
@@ -470,21 +470,21 @@ void BitcoinApplication::initializeResult(int retval)
     }
 }
 
-void BitcoinApplication::shutdownResult(int retval)
+void NexaApplication::shutdownResult(int retval)
 {
     qDebug() << __func__ << ": Shutdown result: " << retval;
     quit(); // Exit main loop after shutdown finished
 }
 
-void BitcoinApplication::handleRunawayException(const QString &message)
+void NexaApplication::handleRunawayException(const QString &message)
 {
     QMessageBox::critical(0, "Runaway exception",
-        BitcoinGUI::tr("A fatal error occurred. Bitcoin can no longer continue safely and will quit.") +
-            QString("\n\n") + message);
+        BitcoinGUI::tr("A fatal error occurred. Nexa can no longer continue safely and will quit.") + QString("\n\n") +
+            message);
     ::exit(EXIT_FAILURE);
 }
 
-WId BitcoinApplication::getMainWinId() const
+WId NexaApplication::getMainWinId() const
 {
     if (!window)
         return 0;
@@ -620,7 +620,7 @@ bool TryMigrateQtAppSettings(const QString &oldOrg, const QString &oldApp, const
     return true;
 }
 
-#ifndef BITCOIN_QT_TEST
+#ifndef NEXA_QT_TEST
 int main(int argc, char *argv[])
 {
     SetupEnvironment();
@@ -633,7 +633,7 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(bitcoin_locale);
 
     QGuiApplication::setAttribute(Qt::AA_EnableHighDpiScaling);
-    BitcoinApplication app(argc, argv);
+    NexaApplication app(argc, argv);
 #ifdef Q_OS_MAC
     QApplication::setAttribute(Qt::AA_DontShowIconsInMenus);
 #endif
@@ -653,7 +653,7 @@ int main(int argc, char *argv[])
     qRegisterMetaType<Config *>();
 
     /// 2. Parse command-line options. Command-line options take precedence:
-    AllowedArgs::BitcoinQt allowedArgs(&tweaks);
+    AllowedArgs::NexaQt allowedArgs(&tweaks);
     try
     {
         ParseParameters(argc, argv, allowedArgs);
@@ -661,7 +661,7 @@ int main(int argc, char *argv[])
     catch (const std::exception &e)
     {
         QMessageBox::critical(
-            0, QObject::tr("Bitcoin"), QObject::tr("Error: Cannot parse program options: %1.").arg(e.what()));
+            0, QObject::tr("Nexa"), QObject::tr("Error: Cannot parse program options: %1.").arg(e.what()));
         return EXIT_FAILURE;
     }
 
@@ -708,7 +708,7 @@ int main(int argc, char *argv[])
     if (!Intro::pickDataDirectory())
         return EXIT_FAILURE;
 
-    /// 7. Determine availability of data directory and parse bitcoin.conf
+    /// 7. Determine availability of data directory and parse nexa.conf
     /// - Do not call GetDataDir(true) before this step finishes
     fs::path dataDir;
     std::string msg;
@@ -782,7 +782,7 @@ int main(int argc, char *argv[])
         exit(EXIT_SUCCESS);
 
     // Start up the payment server early, too, so impatient users that click on
-    // bitcoincash: links repeatedly have their payment requests routed to this
+    // nexa: links repeatedly have their payment requests routed to this
     // process:
     app.createPaymentServer();
 #endif
@@ -836,4 +836,4 @@ int main(int argc, char *argv[])
 
     return app.getReturnValue();
 }
-#endif // BITCOIN_QT_TEST
+#endif // NEXA_QT_TEST

@@ -8,9 +8,9 @@
 
 #include "addressbookpage.h"
 #include "addresstablemodel.h"
-#include "bitcoinunits.h"
 #include "config.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 #include "optionsmodel.h"
 #include "platformstyle.h"
 #include "receivefreezedialog.h"

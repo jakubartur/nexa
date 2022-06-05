@@ -84,7 +84,7 @@ build-debian-nodeps:
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
             - ./build/src/test/test_bitcoin
-            - ./build/src/bench/bench_bitcoin
+            - ./build/src/bench/bench_nexa
             - ./build/src/test/*.log
             - ./src/test/*.log
             - ./src/test-suite.log
@@ -155,7 +155,7 @@ build-debian:
             - ./build/src/nexa-tx
             - ./build/src/test/
             - ./build/src/test/test_bitcoin
-            - ./build/src/bench/bench_bitcoin
+            - ./build/src/bench/bench_nexa
             - ./build/src/test/*.log
             - ./src/test/*.log
             - ./src/test-suite.log
@@ -203,7 +203,7 @@ test-debian-benchmarks:
     #extends: .cache-debian
     needs: ["build-debian-nodeps"]
     script:
-        - (./build/src/bench/bench_bitcoin -evals=1)
+        - (./build/src/bench/bench_nexa -evals=1)
     dependencies:
         - build-debian-nodeps
 

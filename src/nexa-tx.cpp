@@ -50,7 +50,7 @@ static int AppInitRawTx(int argc, char *argv[])
     //
     // Parameters
     //
-    AllowedArgs::BitcoinTx allowedArgs;
+    AllowedArgs::NexaTx allowedArgs;
     try
     {
         ParseParameters(argc, argv, allowedArgs);
@@ -78,16 +78,16 @@ static int AppInitRawTx(int argc, char *argv[])
     {
         // First part of help message is specific to this utility
         std::string strUsage =
-            strprintf(_("%s bitcoin-tx utility version"), _(PACKAGE_NAME)) + " " + FormatFullVersion() + "\n";
+            strprintf(_("%s nexa-tx utility version"), _(PACKAGE_NAME)) + " " + FormatFullVersion() + "\n";
 
         fprintf(stdout, "%s", strUsage.c_str());
 
         if (mapArgs.count("-version"))
             return false;
 
-        strUsage = "\n" + _("Usage:") + "\n" + "  bitcoin-tx [options] <hex-tx> [commands]  " +
-                   _("Update hex-encoded bitcoin transaction") + "\n" + "  bitcoin-tx [options] -create [commands]   " +
-                   _("Create hex-encoded bitcoin transaction") + "\n" + "\n";
+        strUsage = "\n" + _("Usage:") + "\n" + "  nexa-tx [options] <hex-tx> [commands]  " +
+                   _("Update hex-encoded nexa transaction") + "\n" + "  nexa-tx [options] -create [commands]   " +
+                   _("Create hex-encoded nexa transaction") + "\n" + "\n";
 
         fprintf(stdout, "%s", strUsage.c_str());
 
@@ -263,8 +263,7 @@ static void MutateTxAddOutAddr(CMutableTransaction &tx, const string &strInput)
         throw runtime_error("TX output missing or too many separators");
     if (vStrInputParts.size() == 3)
     {
-        if (vStrInputParts[1] != "bchreg" && vStrInputParts[1] != "bitcoincash" && vStrInputParts[1] != "bchnol" &&
-            vStrInputParts[1] != "bchtest" && vStrInputParts[1] != "nexa" && vStrInputParts[1] != "nexareg")
+        if (vStrInputParts[1] != "nexatest" && vStrInputParts[1] != "nexa" && vStrInputParts[1] != "nexareg")
         {
             throw runtime_error(tfm::format("TX output unknown destination address type %s.", vStrInputParts[1]));
         }
@@ -681,7 +680,7 @@ static int CommandLineRawTx(int argc, char *argv[])
             if (argc < 2)
                 throw runtime_error("too few parameters");
 
-            // param: hex-encoded bitcoin transaction
+            // param: hex-encoded nexa transaction
             string strHexTx(argv[1]);
             if (strHexTx == "-") // "-" implies standard input
                 strHexTx = readStdin();

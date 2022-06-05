@@ -16,12 +16,12 @@ BOOST_FIXTURE_TEST_SUITE(getarg_tests, BasicTestingSetup)
 
 enum Kind
 {
-    BITCOIND = 0,
+    NEXAD = 0,
     CONFIGFILE = 1,
-    BITCOIN_CLI = 2
+    NEXA_CLI = 2
 };
 
-static void ResetArgs(const std::string &strArg, Kind kind = BITCOIND)
+static void ResetArgs(const std::string &strArg, Kind kind = NEXAD)
 {
     std::vector<std::string> vecArg;
     if (strArg.size())
@@ -37,10 +37,10 @@ static void ResetArgs(const std::string &strArg, Kind kind = BITCOIND)
 
     if (kind == CONFIGFILE)
         ParseParameters(vecChar.size(), &vecChar[0], AllowedArgs::ConfigFile(&tweaks));
-    else if (kind == BITCOIND)
-        ParseParameters(vecChar.size(), &vecChar[0], AllowedArgs::Bitcoind(&tweaks));
+    else if (kind == NEXAD)
+        ParseParameters(vecChar.size(), &vecChar[0], AllowedArgs::Nexad(&tweaks));
     else
-        ParseParameters(vecChar.size(), &vecChar[0], AllowedArgs::BitcoinCli());
+        ParseParameters(vecChar.size(), &vecChar[0], AllowedArgs::NexaCli());
 }
 
 BOOST_AUTO_TEST_CASE(boolarg)
@@ -199,7 +199,7 @@ BOOST_AUTO_TEST_CASE(tweakArgs)
     BOOST_CHECK_THROW(ResetArgs("-some.tweak=something", CONFIGFILE), std::runtime_error);
 
     // Test bitcoin-cli accepts unknown tweaks
-    ResetArgs("-some.tweak=something", BITCOIN_CLI);
+    ResetArgs("-some.tweak=something", NEXA_CLI);
     BOOST_CHECK_EQUAL(GetArg("-some.tweak", "default"), "something");
 }
 

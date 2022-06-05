@@ -223,13 +223,13 @@ BOOST_AUTO_TEST_CASE(util_ParseParameters)
     const char *argv_test[] = {
         "-ignored", "-reindex", "-txindex", "-connect=argument", "-connect=multiple", "f", "-d=e"};
 
-    ParseParameters(0, (char **)argv_test, AllowedArgs::Bitcoind());
+    ParseParameters(0, (char **)argv_test, AllowedArgs::Nexad());
     BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty());
 
-    ParseParameters(1, (char **)argv_test, AllowedArgs::Bitcoind());
+    ParseParameters(1, (char **)argv_test, AllowedArgs::Nexad());
     BOOST_CHECK(mapArgs.empty() && mapMultiArgs.empty());
 
-    ParseParameters(5, (char **)argv_test, AllowedArgs::Bitcoind());
+    ParseParameters(5, (char **)argv_test, AllowedArgs::Nexad());
     // expectation: -ignored is ignored (program name argument),
     // -reindex, -txindex and -connect end up in map, -d ignored because it is after
     // a non-option argument (non-GNU option parsing)
@@ -593,16 +593,16 @@ BOOST_AUTO_TEST_CASE(test_FormatSubVersion)
     BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, comments2),
         std::string("/Test:0.9.99(comment1; Comment2; .,_?@-; ; " + arch + ")/"));
 
-    const char *argv_test[] = {"bitcoind", "-uacomment=comment1", "-uacomment=Comment2", "-uacomment=Comment3"};
-    ParseParameters(4, (char **)argv_test, AllowedArgs::Bitcoind());
+    const char *argv_test[] = {"nexad", "-uacomment=comment1", "-uacomment=Comment2", "-uacomment=Comment3"};
+    ParseParameters(4, (char **)argv_test, AllowedArgs::Nexad());
     BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, BUComments),
         std::string("/Test:0.9.99(" + arch + "; comment1; Comment2; Comment3)/"));
 
-    const char *argv_test2[] = {"bitcoind", "-uacomment=Commenttttttttttttttttttttttttttttttttttttttttt1",
+    const char *argv_test2[] = {"nexad", "-uacomment=Commenttttttttttttttttttttttttttttttttttttttttt1",
         "-uacomment=Commenttttttttttttttttttttttttttttttttttttttttttttttttttttt2",
         "-uacomment=Commenttttttttttttttttttttttttttttttttttttttttttttttttttttt3",
         "-uacomment=Commenttttttttttttttttttttttttttttttttttttttttttttttttttttt4"};
-    ParseParameters(5, (char **)argv_test2, AllowedArgs::Bitcoind());
+    ParseParameters(5, (char **)argv_test2, AllowedArgs::Nexad());
     BOOST_CHECK_EQUAL(FormatSubVersion("Test", 99900, BUComments),
         std::string("/Test:0.9.99(" + arch +
                     "; Commenttttttttttttttttttttttttttttttttttttttttt1; "
@@ -615,8 +615,8 @@ BOOST_AUTO_TEST_CASE(test_FormatSubVersion)
 
     // Check if displayArchInSubver Tweak is working
     fDisplayArchInSubver = false;
-    const char *argv_test3[] = {"bitcoind", "-uacomment=comment1", "-uacomment=Comment2", "-uacomment=Comment3"};
-    ParseParameters(4, (char **)argv_test3, AllowedArgs::Bitcoind());
+    const char *argv_test3[] = {"nexad", "-uacomment=comment1", "-uacomment=Comment2", "-uacomment=Comment3"};
+    ParseParameters(4, (char **)argv_test3, AllowedArgs::Nexad());
     BOOST_CHECK_EQUAL(
         FormatSubVersion("Test", 99900, BUComments), std::string("/Test:0.9.99(comment1; Comment2; Comment3)/"));
 

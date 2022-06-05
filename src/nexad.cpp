@@ -34,9 +34,9 @@
  * \section intro_sec Introduction
  *
  * This is the developer documentation of Bitcoin Unlimited
- * (https://www.bitcoinunlimited.info/). Bitcoin Unlimited is a client for the
- * digital currency called Bitcoin Cash, which enables instant payments to anyone,
- * anywhere in the world. Bitcoin Cash uses peer-to-peer technology to operate
+ * (https://www.bitcoinunlimited.info/). nexad or nexa-qt are clients for the
+ * digital currency called Nexa, which enables instant payments to anyone,
+ * anywhere in the world. Nexa uses peer-to-peer technology to operate
  * with no central authority: managing transactions and issuing money are
  * carried out collectively by the network.
  *
@@ -75,8 +75,8 @@ bool AppInit(int argc, char *argv[])
     //
     // Parameters
     //
-    // If Qt is used, parameters/nexa.conf are parsed in qt/bitcoin.cpp's main()
-    AllowedArgs::Bitcoind allowedArgs(&tweaks);
+    // If Qt is used, parameters/nexa.conf are parsed in qt/nexa.cpp's main()
+    AllowedArgs::Nexad allowedArgs(&tweaks);
     try
     {
         ParseParameters(argc, argv, allowedArgs);
@@ -99,7 +99,7 @@ bool AppInit(int argc, char *argv[])
         }
         else
         {
-            strUsage += "\n" + _("Usage:") + "\n" + "  bitcoind [options]                     " +
+            strUsage += "\n" + _("Usage:") + "\n" + "  nexad [options]                     " +
                         strprintf(_("Start %s Daemon"), _(PACKAGE_NAME)) + "\n";
 
             strUsage += "\n" + allowedArgs.helpMessage();
@@ -155,8 +155,8 @@ bool AppInit(int argc, char *argv[])
         bool fCommandLine = false;
         for (int i = 1; i < argc; i++)
         {
-            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "bitcoin:") &&
-                !boost::algorithm::istarts_with(argv[i], "bitcoincash:"))
+            if (!IsSwitchChar(argv[i][0]) && !boost::algorithm::istarts_with(argv[i], "nexa:") &&
+                !boost::algorithm::istarts_with(argv[i], "nexa:"))
             {
                 fCommandLine = true;
                 break;
@@ -165,7 +165,7 @@ bool AppInit(int argc, char *argv[])
 
         if (fCommandLine)
         {
-            fprintf(stderr, "Error: There is no RPC client functionality in bitcoind anymore. Use the bitcoin-cli "
+            fprintf(stderr, "Error: There is no RPC client functionality in nexad anymore. Use the nexa-cli "
                             "utility instead.\n");
             return false;
         }
@@ -273,7 +273,7 @@ int main(int argc, char *argv[])
 {
     SetupEnvironment();
 
-    // Connect bitcoind signal handlers
+    // Connect nexad signal handlers
     noui_connect();
 
     return (AppInit(argc, argv) ? EXIT_SUCCESS : EXIT_FAILURE);

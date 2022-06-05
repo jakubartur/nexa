@@ -33,12 +33,12 @@
 #include "wallet/wallet.h"
 #endif
 
-// These globals are needed here so bitcoin-cli can link
+// These globals are needed here so nexa-cli can link
 const std::string CURRENCY_UNIT = "NEX";
 const std::string DEFAULT_TOR_CONTROL = "127.0.0.1:9051";
 const char DEFAULT_RPCCONNECT[] = "127.0.0.1";
 
-// Variables for traffic shaping.  Needed here so bitcoin-cli can link
+// Variables for traffic shaping.  Needed here so nexa-cli can link
 /** Default value for the maximum amount of data that can be received in a burst */
 const int64_t DEFAULT_MAX_RECV_BURST = std::numeric_limits<int64_t>::max();
 /** Default value for the maximum amount of data that can be sent in a burst */
@@ -70,8 +70,8 @@ bool upnpParamOptional = true;
 
 enum HelpMessageMode
 {
-    HMM_BITCOIND,
-    HMM_BITCOIN_QT
+    HMM_NEXAD,
+    HMM_NEXA_QT
 };
 
 static const int screenWidth = 79;
@@ -148,7 +148,7 @@ void AllowedArgs::checkArg(const std::string &strArg, const std::string &strValu
     if (m_optional.count(strArg) && m_optional.at(strArg))
     {
         // Put a warning to stdout and in debug.log to notify the user that this parameter has no effect
-        // on the current session. TODO: use a warning dialog if running bitcoin-qt
+        // on the current session. TODO: use a warning dialog if running nexa-qt
         std::string str =
             strprintf(_("Option %s is not in effect due to missing feature disabled a compile time."), strArg);
         LOGA(str);
@@ -280,7 +280,7 @@ static void addGeneralOptions(AllowedArgs &allowedArgs, HelpMessageMode mode)
         .addDebugArg("dumpforks", optionalBool, _("Dump built-in fork deployment data in CSV format and exit"));
 
 #ifndef WIN32
-    if (mode == HMM_BITCOIND)
+    if (mode == HMM_NEXAD)
         allowedArgs.addArg("daemon", optionalBool, _("Run in the background as a daemon and accept commands"));
 #endif
 
@@ -443,7 +443,7 @@ static void addWalletOptions(AllowedArgs &allowedArgs)
                 _("(1 = keep tx meta data e.g. account owner and payment request information, 2 = drop tx meta data)"),
             walletParamOptional)
         .addArg("usecashaddr", optionalBool,
-            _("Use Bitcoin Cash Address for destination encoding (Activates by default Jan 14, 2017)"),
+            _("Use Nexa Cash Address for destination encoding (Activates by default Jan 14, 2017)"),
             walletParamOptional);
 }
 #endif
@@ -469,7 +469,7 @@ static void addDebuggingOptions(AllowedArgs &allowedArgs, HelpMessageMode mode)
                                   "libevent, mempool, mempoolrej, miner, net, parallel, partitioncheck, "
                                   "proxy, prune, rand, reindex, req, rpc, selectcoins, thin, tor, wallet, zmq, "
                                   "graphene, respend, weakblocks";
-    if (mode == HMM_BITCOIN_QT)
+    if (mode == HMM_NEXA_QT)
         debugCategories += ", qt";
 
     allowedArgs.addHeader(_("Debugging/Testing options:"))
@@ -611,7 +611,7 @@ static void addRpcServerOptions(AllowedArgs &allowedArgs)
             strprintf("Set the depth of the work queue to service RPC calls (default: %d)", DEFAULT_HTTP_WORKQUEUE))
         .addDebugArg("rpcservertimeout=<n>", requiredInt,
             strprintf("Timeout during HTTP requests (default: %d)", DEFAULT_HTTP_SERVER_TIMEOUT))
-        // Although a node does not use rpcconnect it must be allowed because BitcoinCli also uses the same config file
+        // Although a node does not use rpcconnect it must be allowed because NexaCli also uses the same config file
         .addDebugArg("rpcconnect=<ip>", requiredStr,
             strprintf(_("Send commands to node running on <ip> (default: %s)"), DEFAULT_RPCCONNECT));
 }
@@ -638,7 +638,7 @@ static void addElectrumOptions(AllowedArgs &allowedArgs)
         .addDebugArg("electrum.exec", requiredStr, "Path to electrum daemon executable")
         .addDebugArg("electrum.monitoring.port", requiredStr, "Port to bind monitoring service")
         .addDebugArg("electrum.monitoring.host", requiredStr, "Host to bind monitoring service")
-        .addDebugArg("electrum.daemon.host", requiredStr, "Host for bitcoind rpc");
+        .addDebugArg("electrum.daemon.host", requiredStr, "Host for nexad rpc");
 }
 
 static void addUiOptions(AllowedArgs &allowedArgs)
@@ -709,12 +709,12 @@ static void addAllNodeOptions(AllowedArgs &allowedArgs, HelpMessageMode mode, CT
     addElectrumOptions(allowedArgs);
     if (pTweaks)
         addTweaks(allowedArgs, pTweaks);
-    if (mode == HMM_BITCOIN_QT)
+    if (mode == HMM_NEXA_QT)
         addUiOptions(allowedArgs);
 }
 
-// bitcoin-cli does not know about tweaks so we have to silently ignore unknown options
-BitcoinCli::BitcoinCli() : AllowedArgs(true)
+// nexa-cli does not know about tweaks so we have to silently ignore unknown options
+NexaCli::NexaCli() : AllowedArgs(true)
 {
     addHelpOptions(*this);
     addChainSelectionOptions(*this);
@@ -737,11 +737,11 @@ BitcoinCli::BitcoinCli() : AllowedArgs(true)
               "(recommended for sensitive information such as passphrases)"));
 }
 
-BitcoinBench::BitcoinBench() : AllowedArgs(true)
+NexaBench::NexaBench() : AllowedArgs(true)
 {
     addHelpOptions(*this);
 
-    addHeader("Bitcoin Bench options:")
+    addHeader("Nexa Bench options:")
         .addArg("-list", ::AllowedArgs::optionalStr,
             "List benchmarks without executing them. Can be combined with -scaling and -filter")
         .addArg("-evals=<n>", ::AllowedArgs::requiredInt,
@@ -762,9 +762,9 @@ BitcoinBench::BitcoinBench() : AllowedArgs(true)
             strprintf("Plot height in pixel (default: %u)", DEFAULT_PLOT_HEIGHT));
 };
 
-Bitcoind::Bitcoind(CTweakMap *pTweaks) : AllowedArgs(false) { addAllNodeOptions(*this, HMM_BITCOIND, pTweaks); }
-BitcoinQt::BitcoinQt(CTweakMap *pTweaks) : AllowedArgs(false) { addAllNodeOptions(*this, HMM_BITCOIN_QT, pTweaks); }
-BitcoinTx::BitcoinTx() : AllowedArgs(false)
+Nexad::Nexad(CTweakMap *pTweaks) : AllowedArgs(false) { addAllNodeOptions(*this, HMM_NEXAD, pTweaks); }
+NexaQt::NexaQt(CTweakMap *pTweaks) : AllowedArgs(false) { addAllNodeOptions(*this, HMM_NEXA_QT, pTweaks); }
+NexaTx::NexaTx() : AllowedArgs(false)
 {
     addHelpOptions(*this);
     addChainSelectionOptions(*this);
@@ -773,23 +773,23 @@ BitcoinTx::BitcoinTx() : AllowedArgs(false)
         .addArg("create", optionalBool, _("Create new, empty TX."))
         .addArg("json", optionalBool, _("Select JSON output"))
         .addArg("txid", optionalBool, _("Output only the hex-encoded transaction id of the resultant transaction."))
-        .addDebugArg("", optionalBool, "Read hex-encoded bitcoin transaction from stdin.");
+        .addDebugArg("", optionalBool, "Read hex-encoded Nexa transaction from stdin.");
 }
 
 ConfigFile::ConfigFile(CTweakMap *pTweaks) : AllowedArgs(false)
 {
-    // Merges all allowed args from BitcoinCli, Bitcoind, and BitcoinQt.
-    // Excludes args from BitcoinTx, because bitcoin-tx does not read
+    // Merges all allowed args from NexaCli, Nexad, and NexaQt.
+    // Excludes args from NexaTx, because nexa-tx does not read
     // from the config file. Does not set a help message, because the
     // program does not output a config file help message anywhere.
 
-    BitcoinCli bitcoinCli;
-    Bitcoind bitcoind(pTweaks);
-    BitcoinQt bitcoinQt;
+    NexaCli nexaCli;
+    Nexad nexad(pTweaks);
+    NexaQt nexaQt;
 
-    m_args.insert(bitcoinCli.getArgs().begin(), bitcoinCli.getArgs().end());
-    m_args.insert(bitcoind.getArgs().begin(), bitcoind.getArgs().end());
-    m_args.insert(bitcoinQt.getArgs().begin(), bitcoinQt.getArgs().end());
+    m_args.insert(nexaCli.getArgs().begin(), nexaCli.getArgs().end());
+    m_args.insert(nexad.getArgs().begin(), nexad.getArgs().end());
+    m_args.insert(nexaQt.getArgs().begin(), nexaQt.getArgs().end());
 }
 
 } // namespace AllowedArgs

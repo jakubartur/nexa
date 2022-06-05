@@ -149,13 +149,13 @@ int main(int argc, char *argv[])
 
     try
     {
-        std::string appname("bitcoin-cli");
+        std::string appname("nexa-cli");
         std::string usage = "\n" + _("Usage:") + "\n" + "  " + appname + " [options] " +
                             strprintf(_("Send command to %s"), _(PACKAGE_NAME)) + "\n" + "  " + appname +
                             " [options] help                " + _("List commands") + "\n" + "  " + appname +
                             " [options] help <command>      " + _("Get help for a command") + "\n";
 
-        int ret = AppInitRPC(usage, AllowedArgs::BitcoinCli(), argc, argv);
+        int ret = AppInitRPC(usage, AllowedArgs::NexaCli(), argc, argv);
         if (ret != CONTINUE_EXECUTION)
             return ret;
     }

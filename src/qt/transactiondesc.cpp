@@ -5,8 +5,8 @@
 
 #include "transactiondesc.h"
 
-#include "bitcoinunits.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 #include "paymentserver.h"
 #include "transactionrecord.h"
 

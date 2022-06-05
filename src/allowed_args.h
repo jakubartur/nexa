@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_ALLOWED_ARGS_H
-#define BITCOIN_ALLOWED_ARGS_H
+#ifndef NEXA_ALLOWED_ARGS_H
+#define NEXA_ALLOWED_ARGS_H
 
 #include "tweak.h"
 #include <functional>
@@ -120,28 +120,28 @@ public:
     std::string helpMessage() const;
 };
 
-class BitcoinCli : public AllowedArgs
+class NexaCli : public AllowedArgs
 {
 public:
-    BitcoinCli();
+    NexaCli();
 };
 
-class Bitcoind : public AllowedArgs
+class Nexad : public AllowedArgs
 {
 public:
-    Bitcoind(CTweakMap *pTweaks = nullptr);
+    Nexad(CTweakMap *pTweaks = nullptr);
 };
 
-class BitcoinQt : public AllowedArgs
+class NexaQt : public AllowedArgs
 {
 public:
-    BitcoinQt(CTweakMap *pTweaks = nullptr);
+    NexaQt(CTweakMap *pTweaks = nullptr);
 };
 
-class BitcoinTx : public AllowedArgs
+class NexaTx : public AllowedArgs
 {
 public:
-    BitcoinTx();
+    NexaTx();
 };
 
 class ConfigFile : public AllowedArgs
@@ -150,10 +150,10 @@ public:
     ConfigFile(CTweakMap *pTweaks);
 };
 
-class BitcoinBench : public AllowedArgs
+class NexaBench : public AllowedArgs
 {
 public:
-    BitcoinBench();
+    NexaBench();
 };
 
 
@@ -168,4 +168,4 @@ bool requiredAmount(const std::string &str);
 
 } // namespace AllowedArgs
 
-#endif // BITCOIN_ALLOWED_ARGS_H
+#endif // NEXA_ALLOWED_ARGS_H

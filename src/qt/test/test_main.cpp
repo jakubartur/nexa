@@ -7,7 +7,7 @@
 #include "bitcoin-config.h"
 #endif
 
-#include "bitcoinaddressvalidatortests.h"
+#include "nexaaddressvalidatortests.h"
 #include "util.h"
 #include "uritests.h"
 #include "compattests.h"
