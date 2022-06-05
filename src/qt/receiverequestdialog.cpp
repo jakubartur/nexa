@@ -7,11 +7,11 @@
 #include "receiverequestdialog.h"
 #include "ui_receiverequestdialog.h"
 
-#include "bitcoinunits.h"
 #include "config.h"
 #include "dstencode.h"
 #include "guiconstants.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 #include "optionsmodel.h"
 #include "walletmodel.h"
 

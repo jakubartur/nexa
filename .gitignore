@@ -9,10 +9,12 @@ src/bitcoin-miner
 src/test/test_bitcoin
 src/test/test_bitcoin_fuzzy
 src/qt/test/test_bitcoin-qt
+src/qt/test/test_nexa-qt
 src/nexad
 src/nexa-cli
 src/nexa-tx
 src/nexa-miner
+src/bench/bench_nexa
 
 # autoreconf
 Makefile.in

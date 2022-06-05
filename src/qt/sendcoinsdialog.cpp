@@ -7,10 +7,10 @@
 #include "ui_sendcoinsdialog.h"
 
 #include "addresstablemodel.h"
-#include "bitcoinunits.h"
 #include "clientmodel.h"
 #include "coincontroldialog.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 #include "optionsmodel.h"
 #include "platformstyle.h"
 #include "sendcoinsentry.h"

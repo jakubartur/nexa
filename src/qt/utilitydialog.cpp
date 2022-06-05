@@ -11,11 +11,11 @@
 
 #include "ui_helpmessagedialog.h"
 
-#include "bitcoingui.h"
 #include "clientmodel.h"
 #include "guiconstants.h"
 #include "guiutil.h"
 #include "intro.h"
+#include "nexagui.h"
 #include "paymentrequestplus.h"
 
 #include "clientversion.h"
@@ -71,14 +71,14 @@ HelpMessageDialog::HelpMessageDialog(QWidget *parent, bool about) : QDialog(pare
     {
         setWindowTitle(tr("Command-line options"));
         QString header =
-            tr("Usage:") + "\n" + "  bitcoin-qt [" + tr("command-line options") + "]                     " + "\n";
+            tr("Usage:") + "\n" + "  nexa-qt [" + tr("command-line options") + "]                     " + "\n";
         QTextCursor cursor(ui->helpMessage->document());
         cursor.insertText(version);
         cursor.insertBlock();
         cursor.insertText(header);
         cursor.insertBlock();
 
-        std::string strUsage = AllowedArgs::BitcoinQt(&tweaks).helpMessage();
+        std::string strUsage = AllowedArgs::NexaQt(&tweaks).helpMessage();
         QString coreOptions = QString::fromStdString(strUsage);
         text = version + "\n" + header + "\n" + coreOptions;
 

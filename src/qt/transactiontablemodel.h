@@ -6,7 +6,7 @@
 #ifndef BITCOIN_QT_TRANSACTIONTABLEMODEL_H
 #define BITCOIN_QT_TRANSACTIONTABLEMODEL_H
 
-#include "bitcoinunits.h"
+#include "nexaunits.h"
 #ifdef ENABLE_WALLET
 #include "transactionrecord.h"
 #endif

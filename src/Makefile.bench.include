@@ -1,23 +1,24 @@
 # Copyright (c) 2015-2016 The Bitcoin Core developers
+# Copyright (c) 2016-2022 The Bitcoin Unlimited developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-bin_PROGRAMS += bench/bench_bitcoin
+bin_PROGRAMS += bench/bench_nexa
 BENCH_SRCDIR = bench
-BENCH_BINARY = bench/bench_bitcoin$(EXEEXT)
+BENCH_BINARY = bench/bench_nexa$(EXEEXT)
 
 RAW_BENCH_FILES = \
   bench/data/block413567.raw
 GENERATED_BENCH_FILES = $(RAW_BENCH_FILES:.raw=.raw.h)
 
-bench_bench_bitcoin_SOURCES = \
+bench_bench_nexa_SOURCES = \
   test/test_bitcoin.h \
   test/test_bitcoin.cpp \
   test/testutil.h \
   test/testutil.cpp \
   $(RAW_BENCH_FILES) \
   bench/bench_constants.h \
-  bench/bench_bitcoin.cpp \
+  bench/bench_nexa.cpp \
   bench/bench.cpp \
   bench/bench.h \
   bench/block_assemble.cpp \
@@ -39,11 +40,11 @@ bench_bench_bitcoin_SOURCES = \
   bench/verify_script.cpp \
   bench/base58.cpp
 
-nodist_bench_bench_bitcoin_SOURCES = $(GENERATED_BENCH_FILES)
+nodist_bench_bench_nexa_SOURCES = $(GENERATED_BENCH_FILES)
 
-bench_bench_bitcoin_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(EVENT_CLFAGS) $(EVENT_PTHREADS_CFLAGS) -I$(builddir)/bench/
-bench_bench_bitcoin_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-bench_bench_bitcoin_LDADD = \
+bench_bench_nexa_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(EVENT_CLFAGS) $(EVENT_PTHREADS_CFLAGS) -I$(builddir)/bench/
+bench_bench_nexa_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+bench_bench_nexa_LDADD = \
   $(LIBNEXA_SERVER) \
   $(LIBNEXA_CLI) \
   $(LIBNEXA_WALLET) \
@@ -63,14 +64,14 @@ bench_bench_bitcoin_LDADD = \
   $(LIBRSM)
 
 if ENABLE_ZMQ
-bench_bench_bitcoin_LDADD += $(LIBNEXA_ZMQ) $(ZMQ_LIBS)
+bench_bench_nexa_LDADD += $(LIBNEXA_ZMQ) $(ZMQ_LIBS)
 endif
 
 if ENABLE_WALLET
-bench_bench_bitcoin_SOURCES += bench/coin_selection.cpp
+bench_bench_nexa_SOURCES += bench/coin_selection.cpp
 endif
 
-bench_bench_bitcoin_LDADD += \
+bench_bench_nexa_LDADD += \
   $(BDB_LIBS) \
   $(SSL_LIBS) \
   $(CRYPTO_LIBS) \
@@ -78,21 +79,21 @@ bench_bench_bitcoin_LDADD += \
   $(EVENT_PTHREADS_LIBS) \
   $(EVENT_LIBS)
 
-bench_bench_bitcoin_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
+bench_bench_nexa_LDFLAGS = $(RELDFLAGS) $(AM_LDFLAGS) $(LIBTOOL_APP_LDFLAGS) $(PTHREAD_FLAGS)
 
-CLEAN_BITCOIN_BENCH = bench/*.gcda bench/*.gcno $(GENERATED_BENCH_FILES)
+CLEAN_NEXA_BENCH = bench/*.gcda bench/*.gcno $(GENERATED_BENCH_FILES)
 
-CLEANFILES += $(CLEAN_BITCOIN_BENCH)
+CLEANFILES += $(CLEAN_NEXA_BENCH)
 
 bench/data.cpp: bench/data/block413567.raw.h
 
-bitcoin_bench: $(BENCH_BINARY)
+nexa_bench: $(BENCH_BINARY)
 
 bench: $(BENCH_BINARY) FORCE
 	$(BENCH_BINARY)
 
-bitcoin_bench_clean : FORCE
-	rm -f $(CLEAN_BITCOIN_BENCH) $(bench_bench_bitcoin_OBJECTS) $(BENCH_BINARY)
+nexa_bench_clean : FORCE
+	rm -f $(CLEAN_NEXA_BENCH) $(bench_bench_nexa_OBJECTS) $(BENCH_BINARY)
 
 %.raw.h: %.raw
 	@$(MKDIR_P) $(@D)

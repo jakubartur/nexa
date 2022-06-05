@@ -5,8 +5,8 @@
 
 #include "recentrequeststablemodel.h"
 
-#include "bitcoinunits.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 #include "optionsmodel.h"
 
 #include "clientversion.h"

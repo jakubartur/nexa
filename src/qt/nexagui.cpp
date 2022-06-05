@@ -7,14 +7,14 @@
 #include "bitcoin-config.h"
 #endif
 
-#include "bitcoingui.h"
+#include "nexagui.h"
 
-#include "bitcoinunits.h"
 #include "clientmodel.h"
 #include "guiconstants.h"
 #include "guiutil.h"
 #include "modaloverlay.h"
 #include "networkstyle.h"
+#include "nexaunits.h"
 #include "notificator.h"
 #include "openuridialog.h"
 #include "optionsdialog.h"

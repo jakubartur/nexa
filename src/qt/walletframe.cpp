@@ -5,7 +5,7 @@
 
 #include "walletframe.h"
 
-#include "bitcoingui.h"
+#include "nexagui.h"
 #include "walletview.h"
 
 #include <cstdio>

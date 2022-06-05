@@ -12,8 +12,8 @@
 
 #include "unlimitedmodel.h"
 
-#include "bitcoinunits.h"
 #include "guiutil.h"
+#include "nexaunits.h"
 
 #include "amount.h"
 #include "init.h"

@@ -5,8 +5,8 @@
 
 #include "qvalidatedlineedit.h"
 
-#include "bitcoinaddressvalidator.h"
 #include "guiconstants.h"
+#include "nexaaddressvalidator.h"
 
 QValidatedLineEdit::QValidatedLineEdit(QWidget *parent) : QLineEdit(parent), valid(true), checkValidator(0)
 {

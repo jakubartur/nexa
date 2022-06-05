@@ -5,7 +5,7 @@
 bin_PROGRAMS += qt/nexa-qt
 EXTRA_LIBRARIES += qt/libnexaqt.a
 
-# bitcoin qt core #
+# nexa qt core #
 QT_TS = \
   qt/locale/bitcoin_af.ts \
   qt/locale/bitcoin_af_ZA.ts \
@@ -117,10 +117,6 @@ QT_MOC_CPP = \
   qt/moc_addresstablemodel.cpp \
   qt/moc_askpassphrasedialog.cpp \
   qt/moc_bantablemodel.cpp \
-  qt/moc_bitcoinaddressvalidator.cpp \
-  qt/moc_bitcoinamountfield.cpp \
-  qt/moc_bitcoingui.cpp \
-  qt/moc_bitcoinunits.cpp \
   qt/moc_clientmodel.cpp \
   qt/moc_coincontroldialog.cpp \
   qt/moc_coincontroltreewidget.cpp \
@@ -131,6 +127,10 @@ QT_MOC_CPP = \
   qt/moc_macdockiconhandler.cpp \
   qt/moc_macnotificationhandler.cpp \
   qt/moc_modaloverlay.cpp \
+  qt/moc_nexaaddressvalidator.cpp \
+  qt/moc_nexagui.cpp \
+  qt/moc_nexaamountfield.cpp \
+  qt/moc_nexaunits.cpp \
   qt/moc_notificator.cpp \
   qt/moc_openuridialog.cpp \
   qt/moc_optionsdialog.cpp \
@@ -163,19 +163,19 @@ QT_MOC_CPP = \
   qt/moc_walletmodel.cpp \
   qt/moc_walletview.cpp
 
-BITCOIN_MM = \
+NEXA_MM = \
   qt/macdockiconhandler.mm \
   qt/macnotificationhandler.mm
 
 QT_MOC = \
-  qt/bitcoin.moc \
-  qt/bitcoinamountfield.moc \
+  qt/nexa.moc \
   qt/intro.moc \
+  qt/nexaamountfield.moc \
   qt/overviewpage.moc \
   qt/rpcconsole.moc
 
-QT_QRC_CPP = qt/qrc_bitcoin.cpp
-QT_QRC = qt/bitcoin.qrc
+QT_QRC_CPP = qt/qrc_nexa.cpp
+QT_QRC = qt/nexa.qrc
 QT_QRC_LOCALE_CPP = qt/qrc_bitcoin_locale.cpp
 QT_QRC_LOCALE = qt/bitcoin_locale.qrc
 
@@ -183,15 +183,11 @@ PROTOBUF_CC = qt/paymentrequest.pb.cc
 PROTOBUF_H = qt/paymentrequest.pb.h
 PROTOBUF_PROTO = qt/paymentrequest.proto
 
-BITCOIN_QT_H = \
+NEXA_QT_H = \
   qt/addressbookpage.h \
   qt/addresstablemodel.h \
   qt/askpassphrasedialog.h \
   qt/bantablemodel.h \
-  qt/bitcoinaddressvalidator.h \
-  qt/bitcoinamountfield.h \
-  qt/bitcoingui.h \
-  qt/bitcoinunits.h \
   qt/clientmodel.h \
   qt/coincontroldialog.h \
   qt/coincontroltreewidget.h \
@@ -203,6 +199,10 @@ BITCOIN_QT_H = \
   qt/macdockiconhandler.h \
   qt/macnotificationhandler.h \
   qt/modaloverlay.h \
+  qt/nexaaddressvalidator.h \
+  qt/nexagui.h \
+  qt/nexaamountfield.h \
+  qt/nexaunits.h \
   qt/networkstyle.h \
   qt/notificator.h \
   qt/openuridialog.h \
@@ -295,18 +295,18 @@ RES_ICONS = \
   qt/res/icons/warning.png \
   qt/res/icons/verify.png
 
-BITCOIN_QT_CPP = \
+NEXA_QT_CPP = \
   qt/bantablemodel.cpp \
-  qt/bitcoinaddressvalidator.cpp \
-  qt/bitcoinamountfield.cpp \
-  qt/bitcoingui.cpp \
-  qt/bitcoinunits.cpp \
   qt/clientmodel.cpp \
   qt/csvmodelwriter.cpp \
   qt/guiutil.cpp \
   qt/intro.cpp \
   qt/modaloverlay.cpp \
   qt/networkstyle.cpp \
+  qt/nexaaddressvalidator.cpp \
+  qt/nexagui.cpp \
+  qt/nexaamountfield.cpp \
+  qt/nexaunits.cpp \
   qt/notificator.cpp \
   qt/unlimiteddialog.cpp \
   qt/unlimitedmodel.cpp \
@@ -323,11 +323,11 @@ BITCOIN_QT_CPP = \
   qt/utilitydialog.cpp
 
 if TARGET_WINDOWS
-BITCOIN_QT_CPP += qt/winshutdownmonitor.cpp
+NEXA_QT_CPP += qt/winshutdownmonitor.cpp
 endif
 
 if ENABLE_WALLET
-BITCOIN_QT_CPP += \
+NEXA_QT_CPP += \
   qt/addressbookpage.cpp \
   qt/addresstablemodel.cpp \
   qt/askpassphrasedialog.cpp \
@@ -364,14 +364,14 @@ RES_MOVIES = $(wildcard qt/res/movies/spinner-*.png)
 
 BITCOIN_RC = qt/res/nexa-qt-res.rc
 
-BITCOIN_QT_INCLUDES = -I$(builddir)/qt -I$(srcdir)/qt -I$(srcdir)/qt/forms \
+NEXA_QT_INCLUDES = -I$(builddir)/qt -I$(srcdir)/qt -I$(srcdir)/qt/forms \
   -I$(builddir)/qt/forms -DQT_NO_KEYWORDS
 
-qt_libnexaqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(BITCOIN_QT_INCLUDES) \
+qt_libnexaqt_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(NEXA_QT_INCLUDES) \
   $(QT_INCLUDES) $(QT_DBUS_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
 qt_libnexaqt_a_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 
-qt_libnexaqt_a_SOURCES = $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(QT_FORMS_UI) \
+qt_libnexaqt_a_SOURCES = $(NEXA_QT_CPP) $(NEXA_QT_H) $(QT_FORMS_UI) \
   $(QT_QRC) $(QT_QRC_LOCALE) $(QT_TS) $(PROTOBUF_PROTO) $(RES_ICONS) $(RES_IMAGES) $(RES_MOVIES)
 
 nodist_qt_libnexaqt_a_SOURCES = $(QT_MOC_CPP) $(QT_MOC) $(PROTOBUF_CC) \
@@ -390,14 +390,14 @@ $(qt_libnexaqt_a_OBJECTS) $(qt_nexa_qt_OBJECTS) : | $(QT_MOC)
 $(QT_MOC): $(PROTOBUF_H)
 $(QT_MOC_CPP): $(PROTOBUF_H)
 
-# bitcoin-qt binary #
-qt_nexa_qt_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(BITCOIN_QT_INCLUDES) \
+# nexa-qt binary #
+qt_nexa_qt_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) $(NEXA_QT_INCLUDES) \
   $(QT_INCLUDES) $(PROTOBUF_CFLAGS) $(QR_CFLAGS)
 qt_nexa_qt_CXXFLAGS = $(AM_CXXFLAGS) $(QT_PIE_FLAGS)
 
-qt_nexa_qt_SOURCES = qt/bitcoin.cpp
+qt_nexa_qt_SOURCES = qt/nexa.cpp
 if TARGET_DARWIN
-  qt_nexa_qt_SOURCES += $(BITCOIN_MM)
+  qt_nexa_qt_SOURCES += $(NEXA_MM)
 endif
 if TARGET_WINDOWS
   qt_nexa_qt_SOURCES += $(BITCOIN_RC)
@@ -420,11 +420,11 @@ QT_QM=$(QT_TS:.ts=.qm)
 
 SECONDARY: $(QT_QM)
 
-qt/bitcoinstrings.cpp: $(libnexa_server_a_SOURCES) $(libnexa_wallet_a_SOURCES)
+qt/nexastrings.cpp: $(libnexa_server_a_SOURCES) $(libnexa_wallet_a_SOURCES)
 	@test -n $(XGETTEXT) || echo "xgettext is required for updating translations"
 	$(AM_V_GEN) cd $(srcdir); XGETTEXT=$(XGETTEXT) PACKAGE_NAME="$(PACKAGE_NAME)" COPYRIGHT_HOLDERS="$(COPYRIGHT_HOLDERS)" COPYRIGHT_HOLDERS_SUBSTITUTION="$(COPYRIGHT_HOLDERS_SUBSTITUTION)" $(PYTHON) ../share/qt/extract_strings_qt.py $^
 
-translate: qt/bitcoinstrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(BITCOIN_QT_CPP) $(BITCOIN_QT_H) $(BITCOIN_MM)
+translate: qt/nexastrings.cpp $(QT_FORMS_UI) $(QT_FORMS_UI) $(NEXA_QT_CPP) $(NEXA_QT_H) $(NEXA_MM)
 	@test -n $(LUPDATE) || echo "lupdate is required for updating translations"
 	$(AM_V_GEN) QT_SELECT=$(QT_SELECT) $(LUPDATE) $^ -locations relative -no-obsolete -ts qt/locale/bitcoin_en.ts
 
@@ -444,10 +444,10 @@ CLEAN_QT = $(nodist_qt_libnexaqt_a_SOURCES) $(QT_QM) $(QT_FORMS_H) qt/*.gcda qt/
 
 CLEANFILES += $(CLEAN_QT)
 
-bitcoin_qt_clean: FORCE
-	rm -f $(CLEAN_QT) $(qt_libnexaqt_a_OBJECTS) $(qt_nexa_qt_OBJECTS) qt/bitcoin-qt$(EXEEXT) $(LIBNEXAQT)
+nexa_qt_clean: FORCE
+	rm -f $(CLEAN_QT) $(qt_libnexaqt_a_OBJECTS) $(qt_nexa_qt_OBJECTS) qt/nexa-qt$(EXEEXT) $(LIBNEXAQT)
 
-bitcoin_qt : qt/bitcoin-qt$(EXEEXT)
+nexa_qt : qt/nexa-qt$(EXEEXT)
 
 ui_%.h: %.ui
 	@test -f $(UIC)

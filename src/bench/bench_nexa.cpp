@@ -21,9 +21,9 @@ int main(int argc, char *argv[])
 {
     try
     {
-        std::string appname("bench_bitcoin");
+        std::string appname("bench_nexa");
         std::string usage = "\n" + std::string("Usage:") + "\n" + "  " + appname + " [options] " + "\n";
-        int ret = AppInitRPC(usage, AllowedArgs::BitcoinBench(), argc, argv);
+        int ret = AppInitRPC(usage, AllowedArgs::NexaBench(), argc, argv);
         if (ret != CONTINUE_EXECUTION)
             return ret;
     }
