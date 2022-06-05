@@ -851,7 +851,7 @@ void InitLogging()
     LOGA(PACKAGE_NAME " version %s (%s)\n", version_string, CLIENT_DATE);
 }
 
-/** Initialize bitcoin.
+/** Initialize nexa.
  *  @pre Parameters should be parsed and config file should be read.
  */
 bool AppInit2(Config &config)
