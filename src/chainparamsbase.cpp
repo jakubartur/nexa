@@ -23,23 +23,10 @@ const std::string CBaseChainParams::NEXA = "nexa";
 class CBaseMainParams : public CBaseChainParams
 {
 public:
-    CBaseMainParams() { nRPCPort = 8332; }
+    CBaseMainParams() { nRPCPort = 7227; }
 };
 static CBaseMainParams mainParams;
 
-/**
- * Unl network
- */
-class CBaseUnlParams : public CBaseChainParams
-{
-public:
-    CBaseUnlParams()
-    {
-        nRPCPort = 9332;
-        strDataDir = "nol";
-    }
-};
-static CBaseUnlParams unlParams;
 
 /**
  * Testnet (v3)
@@ -49,8 +36,8 @@ class CBaseTestNetParams : public CBaseChainParams
 public:
     CBaseTestNetParams()
     {
-        nRPCPort = 18332;
-        strDataDir = "testnet3";
+        nRPCPort = 7229;
+        strDataDir = "testnet";
     }
 };
 static CBaseTestNetParams testNetParams;

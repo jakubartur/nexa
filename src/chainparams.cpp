@@ -483,7 +483,7 @@ public:
         fDefaultConsistencyChecks = false;
         fRequireStandard = true;
         fMineBlocksOnDemand = false;
-        fTestnetToBeDeprecatedFieldRPC = false;
+        fTestnetToBeDeprecatedFieldRPC = true;
 
         checkpointData = CCheckpointData();
     }
