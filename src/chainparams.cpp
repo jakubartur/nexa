@@ -612,6 +612,7 @@ CChainParams &Params(const std::string &chain)
         return nexaParams;
     else
         throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
+    return nexaParams; // will never execute, but eliminates a warning in some compilers
 }
 
 void SelectParams(const std::string &network)

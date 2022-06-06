@@ -80,9 +80,6 @@ typedef enum ScriptError_t
     SCRIPT_ERR_NUMBER_BAD_ENCODING,
     SCRIPT_ERR_SIGCHECKS_LIMIT_EXCEEDED,
 
-    /* Operands checks Bigger Integers (64-bit) */
-    SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT,
-
     /* TX introspection */
     SCRIPT_ERR_DATA_REQUIRED,
     SCRIPT_ERR_INVALID_TX_INPUT_INDEX,

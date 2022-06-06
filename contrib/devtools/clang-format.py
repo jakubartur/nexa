@@ -30,9 +30,9 @@ def check_clang_format_version(clang_format_exe):
         for ver in tested_versions:
             if ver in output.decode('utf8'):
                 return
-        raise RuntimeError("Untested version: " + output)
+        raise RuntimeError("Untested version: " + str(output))
     except Exception as e:
-        print('Could not verify version of ' + clang_format_exe + '.')
+        print('Could not verify version of ' + str(clang_format_exe) + '.')
         raise e
 
 def check_command_line_args(argv):

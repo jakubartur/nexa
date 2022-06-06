@@ -46,7 +46,16 @@ public:
         mpz_set_str(n, str, base);
     }
 
-    BigNum(long int i = 0) { mpz_init_set_si(n, i); }
+    BigNum(int64_t i = 0)
+    {
+        bool neg = (i < 0);
+        if (neg)
+            i = -i; // So that the top bit is 0
+        mpz_init(n);
+        mpz_import(n, 1, 1, sizeof(int64_t), 0, 0, &i);
+        if (neg)
+            mpz_neg(n, n);
+    }
 
     BigNum(const BigNum &b) { mpz_init_set(n, b.n); }
 
@@ -185,8 +194,13 @@ is therefore 1 byte longer (for the sign). */
         More efficient but touches (modifies then restores) the passed buffer */
     BigNum &deserializeTouches(unsigned char *buf, int bufsize)
     {
+        // If an empty buffer is passed, assume that is the number 0 (like OP_0)
+        if (bufsize == 0 || buf == nullptr)
+        {
+            mpz_set_ui(n, 0);
+        }
         // CScriptNum uses a slightly different format which allows the sign bit to be packed into the mag bytes
-        if (buf[bufsize - 1] >= 0x80)
+        else if (buf[bufsize - 1] >= 0x80)
         {
             auto tmp = buf[bufsize - 1];
             buf[bufsize - 1] &= 0x7f;
@@ -206,16 +220,25 @@ is therefore 1 byte longer (for the sign). */
     }
 
     /** Return this bignum's magnitude (the sign is ignored) as an unsigned 64 bit integer.
-        If this BigNum is too large, the least significant 64 bits are returned.
+        If this BigNum is too large, an exception is raised
     */
-    uint64_t asUint64() const { return mpz_get_ui(n); }
+    uint64_t asUint64() const
+    {
+        uint64_t ret;
+        size_t space = mpz_sizeinbase(n, 2);
+        if (space > sizeof(uint64_t) * 8)
+            throw OutOfBounds("Number out of range");
+        mpz_export(&ret, nullptr, 1, sizeof(uint64_t), 0, 0, n);
+        return ret;
+    }
     /** Return this bignum's magnitude (the sign is ignored) as a signed 64 bit integer.
-        If this BigNum is too large, the least significant 63 magnitude bits are returned, and the appropriate sign
-        is applied.
+        If this BigNum is too large, an exception is raised
     */
     int64_t asInt64() const
     {
-        int64_t ret = (mpz_get_ui(n) & 0x7FFFFFFFFFFFFFFFULL);
+        uint64_t ret = asUint64();
+        if (ret & 0x8000000000000000ULL)
+            throw OutOfBounds("Number out of range");
         return (mpz_sgn(n) == -1) ? -ret : ret;
     }
 
@@ -230,7 +253,7 @@ is therefore 1 byte longer (for the sign). */
     bool operator==(const long int p) const { return (mpz_cmp_si(n, p) == 0); }
 #else
 public:
-    BigNum(long int i = 0) {}
+    BigNum(uint64_t i = 0) {}
     BigNum(const std::string &str, int base = 10) {}
     BigNum(const char *str, int base = 10) {}
     std::vector<unsigned char> serialize(size_t padTo) const
@@ -241,6 +264,8 @@ public:
 
     int serialize(unsigned char *buf, size_t padTo, int sz = 0) const
     {
+        if (buf == nullptr)
+            return 0;
         buf[0] = 0;
         return 0;
     }

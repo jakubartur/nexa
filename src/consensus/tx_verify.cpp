@@ -215,6 +215,13 @@ bool CheckTransaction(const CTransactionRef tx, CValidationState &state)
         // Coinbase tx can't have group outputs because it has no group inputs or mintable outputs
         if (IsAnyTxOutputGrouped(*tx))
             return state.DoS(100, false, REJECT_INVALID, "coinbase-has-group-outputs");
+        // That the coinbase last vout is OP_RETURN, and that it has the proper height is validated in
+        // ContextualCheckBlock.  We validate what we can here as well (cannot validate height)
+        if (tx->vout.size() < 1)
+            return state.DoS(100, false, REJECT_INVALID, "coinbase-last-vout-op-return");
+        const CScript &script = tx->vout[tx->vout.size() - 1].scriptPubKey;
+        if (script[0] != OP_RETURN)
+            return state.DoS(100, false, REJECT_INVALID, "coinbase-last-vout-op-return");
     }
     else
     {

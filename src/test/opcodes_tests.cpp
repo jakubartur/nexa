@@ -580,10 +580,10 @@ BOOST_AUTO_TEST_CASE(type_conversion_test)
     // NUM2BIN require 2 elements on the stack.
     CheckNum2BinError({{0x00}}, SCRIPT_ERR_INVALID_STACK_OPERATION);
 
-    // Values that do not fit in 4 bytes are considered out of range for
+    // Values that do not fit in 8 bytes are considered out of range for
     // BIN2NUM.
-    CheckBin2NumError({{0xab, 0xcd, 0xef, 0xc2, 0x80}}, SCRIPT_ERR_INVALID_NUMBER_RANGE);
-    CheckBin2NumError({{0x00, 0x00, 0x00, 0x80, 0x80}}, SCRIPT_ERR_INVALID_NUMBER_RANGE);
+    CheckBin2NumError({{0xab, 0xcd, 0xef, 0xc2, 0x80, 0x01, 0x02, 0x03, 0x4}}, SCRIPT_ERR_INVALID_NUMBER_RANGE);
+    CheckBin2NumError({{0x00, 0x00, 0x00, 0x80, 0x80, 0x01, 0x02, 0x80, 0x4}}, SCRIPT_ERR_INVALID_NUMBER_RANGE);
 
     // NUM2BIN must not generate oversized push.
     valtype largezero(VchStack, MAX_SCRIPT_ELEMENT_SIZE, 0);
@@ -677,9 +677,10 @@ static void div_and_mod_opcode_helper(size_t maxIntegerSize)
     CheckDivModError({{}}, SCRIPT_ERR_INVALID_STACK_OPERATION);
 
     // CheckOps not valid numbers
-    CheckDivModError({{0x01, 0x02, 0x03, 0x04, 0x05}, {0x01, 0x02, 0x03, 0x04, 0x05}}, SCRIPT_ERR_NUMBER_OVERFLOW);
-    CheckDivModError({{0x01, 0x02, 0x03, 0x04, 0x05}, {0x01}}, SCRIPT_ERR_NUMBER_OVERFLOW);
-    CheckDivModError({{0x01, 0x05}, {0x01, 0x02, 0x03, 0x04, 0x05}}, SCRIPT_ERR_NUMBER_OVERFLOW);
+    CheckDivModError(
+        {{0x01, 0x02, 0x03, 0x04, 5, 6, 7, 8, 9}, {0x01, 0x02, 0x03, 0x04, 5, 6, 7, 8, 9}}, SCRIPT_ERR_NUMBER_OVERFLOW);
+    CheckDivModError({{0x01, 0x02, 0x03, 0x04, 5, 6, 7, 8, 9}, {0x01}}, SCRIPT_ERR_NUMBER_OVERFLOW);
+    CheckDivModError({{0x01, 0x05}, {0x01, 0x02, 0x03, 0x04, 0x05, 6, 7, 8, 9}}, SCRIPT_ERR_NUMBER_OVERFLOW);
 
     // 0x185377af / 0x85f41b01 = -4
     // 0x185377af % 0x85f41b01 = 0x00830bab

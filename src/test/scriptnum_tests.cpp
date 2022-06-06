@@ -3,6 +3,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#include "consensus/consensus.h"
 #include "script/bignum.h"
 #include "script/interpreter.h"
 #include "script/script.h"
@@ -623,6 +624,7 @@ BOOST_AUTO_TEST_CASE(bignum_test)
     // check multiplication and constructor equivalence
     BOOST_CHECK(m1 * BigNum(12345) == m1 * 12345_BN);
     BOOST_CHECK(m1 * BigNum(-12345) == m1 * -12345_BN);
+    BOOST_CHECK(BigNum(-12345) < 0_BN);
 
     BOOST_CHECK(m1 * 3_BN == m1 + m1 + m1);
     BOOST_CHECK(m1 * 3_BN - m1 == m1 + m1);
@@ -715,7 +717,7 @@ BOOST_AUTO_TEST_CASE(bignum_test)
 std::vector<unsigned char> bns(long int i, size_t pad = 8) { return BigNum(i).serialize(pad); }
 void testScript(const CScript &s, bool expectedRet, bool expectedStackTF, ScriptError expectedError)
 {
-    ScriptMachine sm(0, ScriptImportedState(), 0xffffffff, 0xffffffff);
+    ScriptMachine sm(MANDATORY_SCRIPT_VERIFY_FLAGS, ScriptImportedState(), 0xffffffff, 0xffffffff);
     bool ret = sm.Eval(s);
     BOOST_CHECK(ret == expectedRet);
     if (expectedRet)
@@ -735,6 +737,15 @@ void testScript(const CScript &s, ScriptError expectedError) { testScript(s, fal
 BOOST_AUTO_TEST_CASE(bignumscript_test)
 {
     CScript s;
+
+    // check 64 bit scriptnums
+    testScript(CScript() << bns(0x7fff00000000ULL) << OP_BIN2BIGNUM << *(CScriptNum::fromInt(0x7fff00000000LL))
+                         << OP_BIN2NUM << OP_BIN2BIGNUM << OP_EQUAL,
+        true);
+    testScript(CScript() << bns(0x7fff00000000ULL) << OP_BIN2BIGNUM << 8 << OP_NUM2BIN << OP_BIN2NUM
+                         << 0x7fff00000000ULL << OP_BIN2NUM << OP_EQUAL,
+        true);
+
     // Should wrap due to mod
     testScript(CScript() << 0x1000 << OP_SETBMD << bns(0xfff) << OP_BIN2BIGNUM << OP_1 << OP_ADD, false);
     // Should not wrap
@@ -742,9 +753,21 @@ BOOST_AUTO_TEST_CASE(bignumscript_test)
 
     // Check equality
     testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << bns(0xffeff) << OP_BIN2BIGNUM << OP_EQUAL, true);
-
     testScript(CScript() << bns(0xffeff) << bns(0xefeff) << OP_BIN2BIGNUM << OP_EQUAL, false);
 
+    testScript(CScript() << bns(0xffeff) << OP_DUP << OP_BIN2BIGNUM << OP_8 << OP_NUM2BIN << OP_EQUAL, true);
+    // Different types are not equal
+    testScript(CScript() << OP_0 << OP_BIN2BIGNUM << OP_0 << OP_EQUAL, false);
+    testScript(CScript() << OP_0 << OP_BIN2BIGNUM << OP_0 << OP_BIN2BIGNUM << OP_EQUAL, true);
+
+    testScript(CScript() << OP_0 << OP_BIN2BIGNUM << 0 << OP_EQUAL, false);
+    testScript(CScript() << OP_0 << OP_BIN2BIGNUM << 0 << OP_BIN2BIGNUM << OP_EQUAL, true);
+
+    testScript(CScript() << OP_0 << OP_BIN2BIGNUM << 0 << OP_BIN2NUM << OP_EQUAL, false);
+    testScript(CScript() << OP_0 << OP_BIN2BIGNUM << 0 << OP_BIN2NUM << OP_BIN2BIGNUM << OP_EQUAL, true);
+
+
+    // Check shift
     testScript(
         CScript() << bns(0xffeff) << OP_BIN2BIGNUM << OP_4 << OP_RSHIFT << bns(0xffef) << OP_BIN2BIGNUM << OP_EQUAL,
         true);
@@ -761,13 +784,36 @@ BOOST_AUTO_TEST_CASE(bignumscript_test)
 
     // Can't shift by negative numbers
     testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << -20 << OP_RSHIFT, SCRIPT_ERR_BAD_OPERATION_ON_TYPE);
+    testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << -1 << OP_LSHIFT, SCRIPT_ERR_BAD_OPERATION_ON_TYPE);
     testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << bns(-20) << OP_BIN2BIGNUM << OP_LSHIFT,
         SCRIPT_ERR_BAD_OPERATION_ON_TYPE);
+    testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << bns(-1) << OP_BIN2BIGNUM << OP_RSHIFT,
+        SCRIPT_ERR_BAD_OPERATION_ON_TYPE);
+
+    // shift by 0 should have no effect
+    testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << OP_DUP << OP_0 << OP_RSHIFT << OP_EQUAL, true);
+    testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << OP_DUP << OP_0 << OP_LSHIFT << OP_EQUAL, true);
+
 
     // Shift too big
     testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << 10000 << OP_LSHIFT, SCRIPT_ERR_INVALID_NUMBER_RANGE);
     testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << 10000 << OP_BIN2BIGNUM << OP_LSHIFT,
         SCRIPT_ERR_INVALID_NUMBER_RANGE);
+
+    testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << (MAX_BIGNUM_BITSHIFT_SIZE + 1) << OP_LSHIFT,
+        SCRIPT_ERR_INVALID_NUMBER_RANGE);
+    testScript(
+        CScript() << bns(0xffeff) << OP_BIN2BIGNUM << (MAX_BIGNUM_BITSHIFT_SIZE + 1) << OP_BIN2BIGNUM << OP_LSHIFT,
+        SCRIPT_ERR_INVALID_NUMBER_RANGE);
+
+    // Shift exactly on the limit
+    // EQUAL because shift is far beyond the BMD which is a power of 2
+    testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << MAX_BIGNUM_BITSHIFT_SIZE << OP_LSHIFT << 0 << OP_BIN2BIGNUM
+                         << OP_EQUAL,
+        true);
+    testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << MAX_BIGNUM_BITSHIFT_SIZE << OP_BIN2BIGNUM << OP_LSHIFT << 0
+                         << OP_BIN2BIGNUM << OP_EQUAL,
+        true);
 
     // Big right shift becomes 0
     testScript(CScript() << bns(0xffeff) << OP_BIN2BIGNUM << 10000 << OP_BIN2BIGNUM << OP_RSHIFT, false);

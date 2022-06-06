@@ -343,9 +343,7 @@ bool ScriptMachine::Step()
     const size_t maxIntegerSize =
         integers64Bit ? CScriptNum::MAXIMUM_ELEMENT_SIZE_64_BIT : CScriptNum::MAXIMUM_ELEMENT_SIZE_32_BIT;
 
-    const ScriptError_t invalidNumberRangeError = integers64Bit ?
-                                                      ScriptError_t::SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT :
-                                                      ScriptError_t::SCRIPT_ERR_INVALID_NUMBER_RANGE;
+    const ScriptError_t invalidNumberRangeError = ScriptError_t::SCRIPT_ERR_INVALID_NUMBER_RANGE;
 
     opcodetype opcode;
     StackItem vchPushValue;
@@ -501,7 +499,7 @@ bool ScriptMachine::Step()
                     {
                         // Defensive programming: It is impossible for the following exception to be
                         // thrown unless the current values of the operands are changed.
-                        return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                        return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                     }
                     if (*res != 0)
                     {
@@ -540,18 +538,29 @@ bool ScriptMachine::Step()
 
                     StackItem &a = stackItemAt(-1); // Shift amount
                     StackItem &b = stackItemAt(-2); // number
+                    BigNum ret;
+                    if (a.isBigNum())
+                    {
+                        if (a.num() < 0_BN)
+                            throw BadOpOnType("Negative shift");
+                        if (a.num() > BigNum(MAX_BIGNUM_BITSHIFT_SIZE))
+                        {
+                            return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
+                        }
+                    }
+
                     if (b.isBigNum())
                     {
-                        BigNum ret = b.num() << a.asUint64(fRequireMinimal);
+                        ret = b.num() << a.asUint64(fRequireMinimal);
                         ret = ret.tdiv(bigNumModulo);
-                        popstack(stack);
-                        popstack(stack);
-                        stack.push_back(StackItem(ret));
                     }
                     else
                     {
                         return set_error(serror, SCRIPT_ERR_DISABLED_OPCODE);
                     }
+                    popstack(stack);
+                    popstack(stack);
+                    stack.push_back(StackItem(ret));
                 }
                 break;
                 case OP_RSHIFT:
@@ -568,7 +577,7 @@ bool ScriptMachine::Step()
                         {
                             if (a.num() < 0_BN)
                                 throw BadOpOnType("Negative shift");
-                            if (a.num() > MAX_BIGNUM_BITSHIFT_SIZE)
+                            if (a.num() > BigNum(MAX_BIGNUM_BITSHIFT_SIZE))
                                 ret = bnZero;
                             else
                                 ret = b.num() >> a.asUint64(fRequireMinimal);
@@ -1117,7 +1126,7 @@ bool ScriptMachine::Step()
                         auto res = bn.safeAdd(1);
                         if (!res)
                         {
-                            return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                            return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                         }
                         bn = *res;
                         break;
@@ -1127,7 +1136,7 @@ bool ScriptMachine::Step()
                         auto res = bn.safeSub(1);
                         if (!res)
                         {
-                            return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                            return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                         }
                         bn = *res;
                         break;
@@ -1202,7 +1211,7 @@ bool ScriptMachine::Step()
                             auto res = bn1.safeAdd(bn2);
                             if (!res)
                             {
-                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                             }
                             bn = *res;
                             break;
@@ -1213,7 +1222,7 @@ bool ScriptMachine::Step()
                             auto res = bn1.safeSub(bn2);
                             if (!res)
                             {
-                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                             }
                             bn = *res;
                             break;
@@ -1224,7 +1233,7 @@ bool ScriptMachine::Step()
                             auto res = bn1.safeMul(bn2);
                             if (!res)
                             {
-                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                             }
                             bn = *res;
                             break;
@@ -1826,7 +1835,7 @@ bool ScriptMachine::Step()
                             // This is only false if nVaue is -2^63, should not be possible
                             if (!bn)
                             {
-                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                             }
                             stack.push_back(bn->getvch());
                         }
@@ -1886,7 +1895,7 @@ bool ScriptMachine::Step()
                             // This is only false if nVaue is -2^63, should not be possible
                             if (!bn)
                             {
-                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE_64_BIT);
+                                return set_error(serror, SCRIPT_ERR_INVALID_NUMBER_RANGE);
                             }
                             stack.push_back(bn->getvch());
                         }

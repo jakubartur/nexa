@@ -75,7 +75,7 @@ public:
     /** miner-specific data -- this is not a free-for all field.  It must follow documented conventions */
     std::vector<unsigned char> minerData; // MUST be len 0 for now
     /** mining nonce */
-    // nonce length must be < 16 bytes.  This means the header hash + nonce fit in 1 sha256 round (with spare room)
+    // nonce length must be <= 16 bytes.  This means the header hash + nonce fit in 1 sha256 round (with spare room)
     std::vector<unsigned char> nonce;
 
     /** Convenience function to get the chain work as an arith_uint256 */
