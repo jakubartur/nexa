@@ -83,7 +83,7 @@ build-debian-nodeps:
             - ./build/src/nexa-cli
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
-            - ./build/src/test/test_bitcoin
+            - ./build/src/test/test_nexa
             - ./build/src/bench/bench_nexa
             - ./build/src/test/*.log
             - ./src/test/*.log
@@ -154,7 +154,7 @@ build-debian:
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
             - ./build/src/test/
-            - ./build/src/test/test_bitcoin
+            - ./build/src/test/test_nexa
             - ./build/src/bench/bench_nexa
             - ./build/src/test/*.log
             - ./src/test/*.log
@@ -238,7 +238,7 @@ build-debian-clang:
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
             - ./build/src/test/
-            - ./build/src/test/test_bitcoin
+            - ./build/src/test/test_nexa
             - ./build/src/test/*.log
             - ./src/test/*.log
             - ./src/test-suite.log

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Copyright (c) 2015-2018 The Bitcoin Unlimited developers
+# Copyright (c) 2015-2022 The Bitcoin Unlimited developers
 # Distributed under the MIT software license, see the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 import test_framework.loginit
@@ -23,8 +23,9 @@ CAPD_MSG_TYPE = 72
 CAPD_QUERY_MAX_MSGS = 200
 CAPD_QUERY_MAX_INVS = 2000
 
-
 CAPD_XVERSION_STR = '000000020000000e'
+
+TIMEOUT = 20;
 
 def hashToHex(x):
     return x[::-1].hex()
@@ -247,11 +248,11 @@ class MyTest (BitcoinTestFramework):
             worked[0] += 1
         # try a query asking for the message hash
         hdlr.sendHandleQuery(msg_capdquery(1234,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"th"), lambda c,msg: qReply(c,msg, True, 1234,1, firstMsgHash))
-        waitFor(10, lambda: len(hdlr.todo)>0)
+        waitFor(TIMEOUT, lambda: len(hdlr.todo)>0)
         hdlr.doJobs()
 
         hdlr.send_message(msg_capdgetinfo())
-        waitFor(10, lambda: hdlr.capdinfo != None)
+        waitFor(TIMEOUT, lambda: hdlr.capdinfo != None)
         # we know these values because only 1 message inserted
         assert hdlr.capdinfo.localPriority == 1.0
         assert hdlr.capdinfo.relayPriority == 2.0
@@ -259,7 +260,7 @@ class MyTest (BitcoinTestFramework):
 
         # try a query asking for the message
         hdlr.sendHandleQuery(msg_capdquery(1234,CAPD_QUERY_TYPE_MSG,0,10,b"th"), lambda c,msg: qReply(c,msg, False, 1234,1, m))
-        waitFor(10, lambda: len(hdlr.todo)>0)
+        waitFor(TIMEOUT, lambda: len(hdlr.todo)>0)
         hdlr.doJobs()
 
         # Verify propagation
@@ -273,18 +274,18 @@ class MyTest (BitcoinTestFramework):
             check(len(msg.msgs) == 1)
             workedNotify[0] += 1
         hdlr.sendHandleQuery(msg_capdquery(2234,CAPD_QUERY_TYPE_MSG_HASH | CAPD_QUERY_TYPE_NOTIFICATION,0,10,b"th"), tnotify)
-        waitFor(10, lambda: len(hdlr.todo)>0)   # We should get an immediate notify for anything currently in the msgpool
+        waitFor(TIMEOUT, lambda: len(hdlr.todo)>0)   # We should get an immediate notify for anything currently in the msgpool
         hdlr.doJobs()
-        waitFor(10, lambda: workedNotify[0] == 1)
+        waitFor(TIMEOUT, lambda: workedNotify[0] == 1)
 
         # See if it notifies us asynchronously: just sending a message should hand us a notification, no query required
         m1 = CapdMsg(b"this is another test..")
         m1.solve(4)
         msgHashes.append(m1.calcHash())
         hdlr.send_message(msg_capdmsg([m1]))
-        waitFor(10, lambda: len(hdlr.todo)>0)
+        waitFor(TIMEOUT, lambda: len(hdlr.todo)>0)
         hdlr.doJobs()
-        waitFor(10, lambda: workedNotify[0] == 2)  # We should get another notify
+        waitFor(TIMEOUT, lambda: workedNotify[0] == 2)  # We should get another notify
 
         # we shouldn't get an async notify because wrong pattern
         m1 = CapdMsg(b"his is another test..")
@@ -316,28 +317,28 @@ class MyTest (BitcoinTestFramework):
             # logging.info("Received None reply")
             worked[0] += 1
         hdlr.sendHandleQuery(msg_capdquery(1235,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"ab"), expectNone)
-        waitFor(10, lambda: worked[0] == 1)
+        waitFor(TIMEOUT, lambda: worked[0] == 1)
 
         # 4 bytes
         hdlr.sendHandleQuery(msg_capdquery(1236,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"this"), qReply)
-        waitFor(10, lambda: worked[0] == 2)
+        waitFor(TIMEOUT, lambda: worked[0] == 2)
         # should be a bad match
         hdlr.sendHandleQuery(msg_capdquery(1237,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"abcd"), expectNone)
-        waitFor(10, lambda: worked[0] == 3)
+        waitFor(TIMEOUT, lambda: worked[0] == 3)
 
         # 8 bytes
         hdlr.sendHandleQuery(msg_capdquery(1238,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"this is "), qReply)
-        waitFor(10, lambda: worked[0] == 4)
+        waitFor(TIMEOUT, lambda: worked[0] == 4)
         # should be a bad match
         hdlr.sendHandleQuery(msg_capdquery(1239,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"abcdefgh"), expectNone)
-        waitFor(10, lambda: worked[0] == 5)
+        waitFor(TIMEOUT, lambda: worked[0] == 5)
 
         # 16 bytes
         hdlr.sendHandleQuery(msg_capdquery(1240,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"this is a test.."), qReply)
-        waitFor(10, lambda: worked[0] == 6)
+        waitFor(TIMEOUT, lambda: worked[0] == 6)
         # should be a bad match
         hdlr.sendHandleQuery(msg_capdquery(1241,CAPD_QUERY_TYPE_MSG_HASH,0,10,b"abcdefghhijklmno"), expectNone)
-        waitFor(10, lambda: worked[0] == 7)
+        waitFor(TIMEOUT, lambda: worked[0] == 7)
 
 
         l0 = self.nodes[0].capd("list")
@@ -358,7 +359,7 @@ class MyTest (BitcoinTestFramework):
 
         # Wait for all the messages to be loaded into the node
         # Nothing will be aged out because lots of room in the buffer
-        waitFor(15, lambda: self.nodes[0].capd()["count"] >= beginCount + EXP_MSGS)
+        waitFor(TIMEOUT, lambda: self.nodes[0].capd()["count"] >= beginCount + EXP_MSGS)
 
         # Lets see if a query returns a subset of them
         worked = [0]
@@ -368,11 +369,11 @@ class MyTest (BitcoinTestFramework):
             replies.append(set([x.data for x in msg.msgs]))
             w[0] += 1
         hdlr.sendHandleQuery(msg_capdquery(9876,CAPD_QUERY_TYPE_MSG,0,20,b"m0"), t3)
-        waitFor(10, lambda: worked[0] == 1)
+        waitFor(TIMEOUT, lambda: worked[0] == 1)
         hdlr.sendHandleQuery(msg_capdquery(9877,CAPD_QUERY_TYPE_MSG,0,20,b"m1"), t3)
-        waitFor(10, lambda: worked[0] == 2)
+        waitFor(TIMEOUT, lambda: worked[0] == 2)
         hdlr.sendHandleQuery(msg_capdquery(9878,CAPD_QUERY_TYPE_MSG,0,20,b"m2"), t3)
-        waitFor(10, lambda: worked[0] == 3)
+        waitFor(TIMEOUT, lambda: worked[0] == 3)
 
         assert len(replies) == 3
         # each set should be disjoint because I had different search queries
@@ -381,7 +382,7 @@ class MyTest (BitcoinTestFramework):
         assert len(replies[1].intersection(replies[2])) == 0
 
         try:
-            waitFor(5, lambda: sorted(self.nodes[0].capd("list")) == sorted(self.nodes[1].capd("list")))
+            waitFor(TIMEOUT, lambda: sorted(self.nodes[0].capd("list")) == sorted(self.nodes[1].capd("list")))
         except TimeoutException:
             print ("not equal")
 
@@ -422,8 +423,8 @@ class MyTest (BitcoinTestFramework):
             logging.info(str(m) + " " + str(m1))
 
         # check that propagation occurred between the 2 nodes
-        waitFor(10, lambda: len(self.nodes[0].capd("list")) == 2*ISSUED)
-        waitFor(10, lambda: len(self.nodes[1].capd("list")) == 2*ISSUED)
+        waitFor(TIMEOUT, lambda: len(self.nodes[0].capd("list")) == 2*ISSUED)
+        waitFor(TIMEOUT, lambda: len(self.nodes[1].capd("list")) == 2*ISSUED)
         l0 = self.nodes[0].capd("list")
         l1 = self.nodes[1].capd("list")
         for n in n0:
@@ -477,7 +478,7 @@ class MyTest (BitcoinTestFramework):
             assert len(msg.msgs) == 1, "Expecting 1 messages, got %d, full msg %s" % (len(msg.msgs), str(msg))
             w[0] += 1
         hdlr.sendHandleQuery(msg_capdquery(8765,CAPD_QUERY_TYPE_MSG,0,20,i.to_bytes(2,"big")), t4)
-        waitFor(10, lambda: worked[0] == 1)
+        waitFor(TIMEOUT, lambda: worked[0] == 1)
 
         epoch_time = int(time.time())
         epoch_time += 300
