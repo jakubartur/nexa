@@ -20,7 +20,7 @@ class CompactBlock;
 class CGrapheneBlock;
 namespace Consensus
 {
-class Params;
+struct Params;
 }
 
 /** Get the work equivalent for the supplied nBits of difficulty */

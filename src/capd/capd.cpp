@@ -692,7 +692,7 @@ bool CapdProtocol::HandleCapdMessage(CNode *pfrom,
         std::vector<CapdMsgRef> goodMsgs;
         vRecv >> msgs;
         LOG(CAPD, "Capd: Received %d messages", msgs.size());
-        for (const auto msg : msgs)
+        for (const CapdMsg &msg : msgs)
         {
             auto msgRef = MakeMsgRef(CapdMsg(msg));
             uint256 hash = msgRef->GetHash();
@@ -734,7 +734,7 @@ bool CapdProtocol::HandleCapdMessage(CNode *pfrom,
         }
 
         // Now see if we need to relay this message to a query peer
-        for (const auto msgRef : goodMsgs)
+        for (const CapdMsgRef &msgRef : goodMsgs)
         {
             for (CNode *pnode : capdNodes)
             {
