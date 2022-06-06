@@ -1214,8 +1214,7 @@ bool CheckInputs(const CTransactionRef &tx,
                         // This differs from MANDATORY_SCRIPT_VERIFY_FLAGS as it contains
                         // additional upgrade flags (see ParallelAcceptToMemoryPool variable
                         // featureFlags).
-                        uint32_t mandatoryFlags =
-                            (flags & ~(STANDARD_NOT_MANDATORY_VERIFY_FLAGS | SCRIPT_VERIFY_INPUT_SIGCHECKS));
+                        uint32_t mandatoryFlags = (flags & ~(STANDARD_NOT_MANDATORY_VERIFY_FLAGS));
                         if (flags != mandatoryFlags)
                         {
                             // Check whether the failure was caused by a
