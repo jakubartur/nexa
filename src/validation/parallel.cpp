@@ -61,11 +61,10 @@ bool CScriptCheck::operator()()
         resourceTracker->Update(sis.tx->GetId(), checker.GetNumSigops(), checker.GetBytesHashed());
         resourceTracker->UpdateConsensusSigChecks(smRes.consensusSigCheckCount);
     }
-    if (nFlags & SCRIPT_VERIFY_INPUT_SIGCHECKS)
+    // input standardness rule
+    // if < 2 scriptsig len is allowed to be 0 (len formula goes negative)
     {
         auto lenScriptSig = scriptSig.size();
-        // May 2020 transaction input standardness rule
-        // if < 2 scriptsig len is allowed to be 0 (len formula goes negative)
         if ((smRes.consensusSigCheckCount > 1) && ((smRes.consensusSigCheckCount * 43) - 60 > lenScriptSig))
         {
             error = SCRIPT_ERR_SIGCHECKS_LIMIT_EXCEEDED;

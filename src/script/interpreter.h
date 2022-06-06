@@ -111,9 +111,6 @@ enum
     //
     SCRIPT_ENABLE_CHECKDATASIG = (1U << 18),
 
-    // May2020: Require the number of sigchecks in an input to not exceed (the scriptSig length + 60) // 43
-    SCRIPT_VERIFY_INPUT_SIGCHECKS = (1U << 22),
-
     // Flag which determines if the script interpreter should allow
     // 64-bit integer arithmetic and the return of OP_MUL or use the previous
     // semantics.

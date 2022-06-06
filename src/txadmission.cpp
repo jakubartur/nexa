@@ -694,7 +694,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
     }
 
     uint32_t featureFlags = 0;
-    featureFlags |= SCRIPT_VERIFY_INPUT_SIGCHECKS;
+    // featureFlags is used in some instances to make a hardfork easier to implement
+    // Example: featureFlags |= SCRIPT_VERIFY_INPUT_SIGCHECKS;
     uint32_t flags = STANDARD_SCRIPT_VERIFY_FLAGS | featureFlags;
 
     // Only accept nLockTime-using transactions that can be mined in the next
