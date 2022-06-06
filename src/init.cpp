@@ -435,7 +435,7 @@ void CleanupBlockRevFiles()
     // keeping a separate counter.  Once we hit a gap (or if 0 doesn't exist)
     // start removing block files.
     int nContigCounter = 0;
-    for (const PAIRTYPE(std::string, fs::path) & item : mapBlockFiles)
+    for (const std::pair<const std::string, fs::path> &item : mapBlockFiles)
     {
         if (atoi(item.first) == nContigCounter)
         {

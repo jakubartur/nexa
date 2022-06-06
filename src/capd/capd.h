@@ -193,7 +193,7 @@ class CapdMsg
 protected:
     enum Fields : uint8_t
     {
-        NONE = 0,
+        NOOP = 0,
         EXPIRATION = 1,
         RESCINDHASH = 2,
     };
@@ -278,8 +278,8 @@ public:
             uint8_t fields = 0;
             if (!ser_action.ForRead())
             {
-                fields |= (expiration != std::numeric_limits<uint16_t>::max()) ? Fields::EXPIRATION : Fields::NONE;
-                fields |= (rescindHash != uint160()) ? Fields::RESCINDHASH : Fields::NONE;
+                fields |= (expiration != std::numeric_limits<uint16_t>::max()) ? Fields::EXPIRATION : Fields::NOOP;
+                fields |= (rescindHash != uint160()) ? Fields::RESCINDHASH : Fields::NOOP;
             }
 
             READWRITE(fields);
