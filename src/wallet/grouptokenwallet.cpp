@@ -423,11 +423,11 @@ void ConstructTx(CWalletTx &wtxNew,
             approxSize += ::GetSerializeSize(txout, SER_DISK, CLIENT_VERSION);
         }
 
-        // Add another input for the bitcoin used for the fee
+        // Add another input for the coin used for the fee
         // this ignores the additional change output
         approxSize += inpSize;
 
-        // Now add bitcoin fee
+        // Now add the fee
         CAmount fee = wallet->GetRequiredFee(approxSize) + TOKEN_EXTRA_FEE;
 
         if (totalAvailable < totalNeeded + fee) // need to find a fee input
@@ -1066,7 +1066,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
             totalBchNeeded += out.nAmount;
 
         CCoinControl coinControl;
-        coinControl.fAllowOtherInputs = true; // Allow a normal bitcoin input for change
+        coinControl.fAllowOtherInputs = true; // Allow a normal nexa input for change
         std::string strError;
 
         // Now find a mint authority
@@ -1337,7 +1337,7 @@ UniValue groupedlisttransactions(const UniValue &params, bool fHelp)
             "    \"account\":\"accountname\",       (string) DEPRECATED. The account name associated with the "
             "transaction. \n"
             "                                                It will be \"\" for the default account.\n"
-            "    \"address\":\"bitcoinaddress\",    (string) The bitcoin address of the transaction. Not present for \n"
+            "    \"address\":\"nexaaddress\",       (string) The nexa address of the transaction. Not present for \n"
             "                                                move transactions (category = move).\n"
             "    \"category\":\"send|receive|move\", (string) The transaction category. 'move' is a local (off "
             "blockchain)\n"
@@ -1495,7 +1495,7 @@ UniValue groupedlistsinceblock(const UniValue &params, bool fHelp)
             "  \"transactions\": [\n"
             "    \"account\":\"accountname\",       (string) DEPRECATED. The account name associated with the "
             "transaction. Will be \"\" for the default account.\n"
-            "    \"address\":\"bitcoinaddress\",    (string) The bitcoin address of the transaction. Not present for "
+            "    \"address\":\"nexaaddress\",       (string) The nexa address of the transaction. Not present for "
             "move transactions (category = move).\n"
             "    \"category\":\"send|receive\",     (string) The transaction category. 'send' has negative amounts, "
             "'receive' has positive amounts.\n"

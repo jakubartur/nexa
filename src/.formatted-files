@@ -384,7 +384,7 @@ test/skiplist_tests.cpp
 test/stat_tests.cpp
 test/streams_tests.cpp
 test/test_bitcoin.cpp
-test/test_bitcoin_fuzzy.cpp
+test/test_nexa_fuzzy.cpp
 test/test_bitcoin.h
 test/testutil.cpp
 test/testutil.h
