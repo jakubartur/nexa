@@ -240,7 +240,7 @@ bool CapdMsg::Solve(long int time)
 void CapdMsgPool::add(const CapdMsg &msg)
 {
     CapdMsgRef m = std::make_shared<CapdMsg>(msg);
-    add(msg);
+    add(m);
 }
 
 void CapdMsgPool::add(const CapdMsgRef &msg)

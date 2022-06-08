@@ -27,6 +27,9 @@ static const int64_t values[] = {0, 1, -2, 127, 128, -255, 256, (1LL << 15) - 1,
 
 static const int64_t offsets[] = {1, 0x79, 0x80, 0x81, 0xFF, 0x7FFF, 0x8000, 0xFFFF, 0x10000};
 
+// uncomment to create a file of all the test scripts
+static FILE *DumpScriptHex = nullptr; // fopen("./scripts.hex","wt");
+
 static bool verify(const CScriptNum10 &bignum, const CScriptNum &scriptnum)
 {
     return bignum.getvch() == scriptnum.getvch() && bignum.getint() == scriptnum.getint32();
@@ -718,7 +721,16 @@ std::vector<unsigned char> bns(long int i, size_t pad = 8) { return BigNum(i).se
 void testScript(const CScript &s, bool expectedRet, bool expectedStackTF, ScriptError expectedError)
 {
     ScriptMachine sm(MANDATORY_SCRIPT_VERIFY_FLAGS, ScriptImportedState(), 0xffffffff, 0xffffffff);
+    if (DumpScriptHex)
+    {
+        fprintf(DumpScriptHex, "%s\n", s.GetHex().c_str());
+    }
     bool ret = sm.Eval(s);
+    if (ret != expectedRet)
+    {
+        ScriptMachine sm2(MANDATORY_SCRIPT_VERIFY_FLAGS, ScriptImportedState(), 0xffffffff, 0xffffffff);
+        bool ret2 = sm2.Eval(s);
+    }
     BOOST_CHECK(ret == expectedRet);
     if (expectedRet)
     {

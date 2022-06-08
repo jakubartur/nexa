@@ -163,7 +163,10 @@ BOOST_FIXTURE_TEST_CASE(cache_configuration, TestChain100Setup)
 BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
 {
     int64_t nStartTime = GetTime();
-    orphanpool.SetLastOrphanCheck(nStartTime);
+    {
+        WRITELOCK(orphanpool.cs_orphanpool);
+        orphanpool._SetLastOrphanCheck(nStartTime);
+    }
     SetMockTime(nStartTime); // Overrides future calls to GetTime()
 
     mempool.clear();
@@ -518,7 +521,10 @@ BOOST_FIXTURE_TEST_CASE(long_unconfirmed_chains, TestChain100Setup)
 BOOST_FIXTURE_TEST_CASE(limitfreerelay, TestChain100Setup)
 {
     int64_t nStartTime = GetTime();
-    orphanpool.SetLastOrphanCheck(nStartTime);
+    {
+        WRITELOCK(orphanpool.cs_orphanpool);
+        orphanpool._SetLastOrphanCheck(nStartTime);
+    }
     SetMockTime(nStartTime); // Overrides future calls to GetTime()
 
     mempool.clear();

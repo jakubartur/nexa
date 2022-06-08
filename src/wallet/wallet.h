@@ -1052,7 +1052,7 @@ public:
 
     bool DelAddressBook(const CTxDestination &address);
 
-    void UpdatedTransaction(const COutPoint &outpt);
+    void UpdatedTransactionByOutpoint(const COutPoint &outpt);
 
     void Inventory(const uint256 &hash)
     {

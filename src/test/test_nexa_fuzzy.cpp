@@ -348,12 +348,16 @@ protected:
     void run(const bool produce_output)
     {
         std::vector<std::vector<unsigned char> > stack;
-        std::vector<unsigned char> scriptsig_raw, scriptpubkey_raw;
+        std::vector<unsigned char> scriptsig_raw, scriptpubkey_raw, tx_raw, coins_raw;
         unsigned int flags;
+        unsigned int inputIdx;
 
         *ds >> flags;
+        *ds >> inputIdx;
         *ds >> scriptsig_raw;
         *ds >> scriptpubkey_raw;
+        *ds >> tx_raw;
+        *ds >> coins_raw;
 
         if ((flags & SCRIPT_VERIFY_CLEANSTACK) != 0)
             flags |= SCRIPT_VERIFY_P2SH;
@@ -362,14 +366,45 @@ protected:
         ScriptMachineResourceTracker stats;
         CScript script_sig(scriptsig_raw.begin(), scriptsig_raw.end());
         CScript script_pubkey(scriptpubkey_raw.begin(), scriptpubkey_raw.end());
-        const bool result = VerifyScript(script_sig, script_pubkey, flags, ScriptImportedState(), &error, &stats);
+        CDataStream txStrm(tx_raw, SER_NETWORK, INIT_PROTO_VERSION);
+
+        bool result;
+
+        // allow some scripts to not have any state for eval because if the state is irrelevant, it will be a tighter
+        // randomized search to not have extraneous data.
+        if (tx_raw.size() != 0)
+        {
+            CTransaction tx;
+            txStrm >> tx;
+            std::vector<CTxOut> spentCoins;
+            CDataStream coinStrm(coins_raw, SER_NETWORK, INIT_PROTO_VERSION);
+            ::Unserialize(coinStrm, *const_cast<std::vector<CTxOut> *>(&spentCoins));
+            CValidationState state;
+
+            // The script infrastructure checks this condition right at the top, so rather than allow many malleations
+            // to fail, force this to be true.
+            spentCoins.resize(tx.vin.size());
+
+            ScriptImportedState sis(nullptr, MakeTransactionRef(tx), state, spentCoins, inputIdx);
+
+            result = VerifyScript(script_sig, script_pubkey, flags, sis, &error, &stats);
+        }
+        else
+        {
+            result = VerifyScript(script_sig, script_pubkey, flags, ScriptImportedState(), &error, &stats);
+        }
 
         if (produce_output)
         {
             CDataStream out(output, SER_NETWORK, INIT_PROTO_VERSION);
             out << result;
+            out << flags;
+            out << inputIdx;
+            out << result;
             out << scriptsig_raw;
             out << scriptpubkey_raw;
+            out << tx_raw;
+            out << coins_raw;
             output.insert(output.begin(), out.begin(), out.end());
         }
     }
@@ -586,6 +621,7 @@ protected:
 int main(int argc, char **argv)
 {
     ECCVerifyHandle globalVerifyHandle;
+    SelectParams(CBaseChainParams::REGTEST);
 
     FuzzDeserNet<CBlock> fuzz_cblock("cblock");
     FuzzDeserNet<CTransaction> fuzz_ctransaction("ctransaction");

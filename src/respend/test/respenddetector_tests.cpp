@@ -326,7 +326,9 @@ BOOST_AUTO_TEST_CASE(dsproof_orphan_handling)
             TransactionSignatureChecker checker1(
                 &spend2, 0, STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID);
             CValidationState empty;
-            ScriptImportedState sis1(&checker1, MakeTransactionRef(spend2), empty, std::vector<CTxOut>(), 0);
+            std::vector<CTxOut> fakeprevouts;
+            fakeprevouts.resize(spend2.vin.size());
+            ScriptImportedState sis1(&checker1, MakeTransactionRef(spend2), empty, fakeprevouts, 0);
             ScriptError_t error;
             if (!VerifyScript(scriptSigRes, scriptPubKey, STANDARD_SCRIPT_VERIFY_FLAGS | SCRIPT_ENABLE_SIGHASH_FORKID,
                     sis1, &error))

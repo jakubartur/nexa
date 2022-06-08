@@ -69,7 +69,11 @@ public:
     //! Set the last orphan check time (used primarily in testing)
     // FIXME SetLastOrphanCheck seems to be used only in unit tests
     // DoS_tests.cpp and txvalidationcache_tests.cpp
-    void SetLastOrphanCheck(int64_t nTime) { nLastOrphanCheck = nTime; }
+    void _SetLastOrphanCheck(int64_t nTime)
+    {
+        AssertLockHeld(cs_orphanpool);
+        nLastOrphanCheck = nTime;
+    }
     //! Orphan pool current number of transactions
     uint64_t GetOrphanPoolSize()
     {

@@ -152,9 +152,6 @@ extern std::atomic<CBlockIndex *> pindexBestHeader;
 /** Best Invalid header we've seen so far. */
 extern std::atomic<CBlockIndex *> pindexBestInvalid;
 
-/** Used to determine whether it is time to check the orphan pool for any txns that can be evicted. */
-extern int64_t nLastOrphanCheck;
-
 /** Minimum disk space required - used in CheckDiskSpace() */
 static const uint64_t nMinDiskSpace = 100000000;
 

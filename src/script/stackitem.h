@@ -159,10 +159,10 @@ public:
     int64_t asInt64(bool requireMinimal) const;
 
     // Returns 0xhexnum if this is a BigNum, or the straight hex if its a vch
-    std::string hex()
+    std::string hex() const
     {
         if (type == StackElementType::BIGNUM)
-            return n.str();
+            return n.str(16);
         if (type == StackElementType::VCH)
             return HexStr(vch);
 
