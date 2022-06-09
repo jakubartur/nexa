@@ -320,7 +320,6 @@ protected:
     unsigned int flags;
     Stack stack;
     Stack altstack;
-    BigNum bigNumModulo = 0x10000000000000000_BN; // 64 bit magnitude
     const CScript *script;
     ScriptError error;
 
@@ -420,6 +419,9 @@ public:
     /** All the external information that this virtual machine is allowed to access */
     const ScriptImportedState &sis;
 
+    /** Bignum modulo (every bignum operation is modulo this number */
+    BigNum bigNumModulo = 0x10000000000000000_BN; // 64 bit magnitude
+
     /** The maximum script size executable in the virtual machine */
     uint64_t maxScriptSize = MAX_SCRIPT_SIZE;
 
@@ -454,12 +456,18 @@ public:
     bool BeginStep(const CScript &_script);
     // Execute the next instruction of a script (you must have previously BeginStep()ed).
     bool Step();
+    // Keep stepping until finished, problem or n steps. EndStep() (finish script eval) is NOT called.
+    bool Continue(size_t nSteps = 0x1000000000000UL);
+    // Modifies the script in-place, by overriding its const designator. Only use during script debugging
+    bool ModifyScript(int position, uint8_t *data, size_t dataLength);
     // Do final checks once the script is complete.
     bool EndStep();
     // Return true if there are more steps in this script
     bool isMoreSteps() { return (pc < pend); }
     // Return the current offset from the beginning of the script. -1 if ended
     int getPos();
+    // Moves the instruction pointer
+    int setPos(size_t offset);
 
     // Returns info about the next instruction to be run:
     // first bool is true if the instruction will be executed (false if this is passing across a not-taken branch)
