@@ -405,8 +405,8 @@
     </message>
     <message>
         <location line="-436"/>
-        <source>Send coins to a Bitcoin address</source>
-        <translation>Send coins to a Bitcoin address</translation>
+        <source>Send coins to a Nexa address</source>
+        <translation>Send coins to a Nexa address</translation>
     </message>
     <message>
         <location line="+65"/>
@@ -435,8 +435,8 @@
     </message>
     <message>
         <location line="+459"/>
-        <source>Bitcoin</source>
-        <translation>Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <location line="-669"/>
@@ -475,13 +475,13 @@
     </message>
     <message>
         <location line="+7"/>
-        <source>Sign messages with your Bitcoin addresses to prove you own them</source>
-        <translation>Sign messages with your Bitcoin addresses to prove you own them</translation>
+        <source>Sign messages with your Nexa addresses to prove you own them</source>
+        <translation>Sign messages with your Nexa addresses to prove you own them</translation>
     </message>
     <message>
         <location line="+2"/>
-        <source>Verify messages to ensure they were signed with specified Bitcoin addresses</source>
-        <translation>Verify messages to ensure they were signed with specified Bitcoin addresses</translation>
+        <source>Verify messages to ensure they were signed with specified Nexa addresses</source>
+        <translation>Verify messages to ensure they were signed with specified Nexa addresses</translation>
     </message>
     <message>
         <location line="+56"/>
@@ -545,15 +545,15 @@
     </message>
     <message>
         <location line="+2"/>
-        <source>Show the Bitcoin help message to get a list with possible Bitcoin command-line options</source>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <location line="+329"/>
-        <source>%n active connection(s) to Bitcoin network</source>
+        <source>%n active connection(s) to Nexa network</source>
         <translation>
-            <numerusform>%n active connection to Bitcoin network</numerusform>
-            <numerusform>%n active connections to Bitcoin network</numerusform>
+            <numerusform>%n active connection to Nexa network</numerusform>
+            <numerusform>%n active connections to Nexa network</numerusform>
         </translation>
     </message>
     <message>
@@ -1041,8 +1041,8 @@
     </message>
     <message>
         <location line="-5"/>
-        <source>The entered address &quot;%1&quot; is not a valid Bitcoin address.</source>
-        <translation>The entered address &quot;%1&quot; is not a valid Bitcoin address.</translation>
+        <source>The entered address &quot;%1&quot; is not a valid Nexa address.</source>
+        <translation>The entered address &quot;%1&quot; is not a valid Nexa address.</translation>
     </message>
     <message>
         <location line="+10"/>
