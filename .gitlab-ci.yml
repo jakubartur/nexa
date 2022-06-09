@@ -217,8 +217,8 @@ test-debian-benchmarks:
 .debian-clang-env:
     extends: .cache-debian-clang
     variables:
-        CC: clang-10
-        CXX: clang++-10
+        CC: clang-12
+        CXX: clang++-12
 
 build-debian-clang:
     stage: build
