@@ -3,6 +3,9 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
+#ifndef NEXA_CAPD_H
+#define NEXA_CAPD_H
+
 // Counterparty and protocol discovery
 #include <limits>
 #include <queue>
@@ -88,7 +91,6 @@ inline uint256 PriorityToPowTarget(PriorityType priority, size_t msgContentSize)
 {
     return ArithToUint256(aPriorityToPowTarget(priority, msgContentSize));
 }
-
 
 //! Indicate a section of a vector, without copying the vector.  You can then serialize the section.
 template <typename T, class A = std::allocator<T> >
@@ -585,10 +587,20 @@ public:
     /** Delete every message in the message pool */
     void clear();
 
-    /** Return the current size of the msg pool */
-    uint64_t Size() { return size; }
-    /** Return the current size of the msg pool */
-    uint64_t Count() { return msgs.size(); }
+    /** Return the current size of the message pool */
+    uint64_t Size()
+    {
+        READLOCK(csMsgPool);
+        return size;
+    }
+
+    /** Return the current number of messages in message pool */
+    uint64_t Count()
+    {
+        READLOCK(csMsgPool);
+        return msgs.size();
+    }
+
     /** Returns a reference to the message whose id is hash, or a null pointer */
     CapdMsgRef find(const uint256 &hash) const;
 
@@ -609,6 +621,12 @@ public:
         return true;
     }
 
+
+    /** Dump the msgpool to disk. */
+    bool DumpMsgPool();
+
+    /** Load the msgpool from disk. */
+    bool LoadMsgPool();
 
     /** Content search */
     std::vector<CapdMsgRef> find(const std::vector<unsigned char> &c) const;
@@ -741,3 +759,5 @@ extern std::string CapdMsgPoolSizeValidator(const uint64_t &value, uint64_t *ite
 extern uint64_t msgpoolMaxSize;
 extern CapdMsgPool msgpool;
 extern CapdProtocol capdProtocol;
+
+#endif // NEXA_CAPD_H

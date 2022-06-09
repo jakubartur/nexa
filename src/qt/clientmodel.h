@@ -67,6 +67,9 @@ public:
     //! Return number of transactions in the orphan pool
     long getOrphanPoolSize() const;
 
+    //! Return number of messages in the CAPD pool
+    long getCapdMessagePoolSize() const;
+
     //! Return the dynamic memory usage of the mempool
     size_t getMempoolDynamicUsage() const;
 
@@ -117,6 +120,7 @@ Q_SIGNALS:
     void timeSinceLastBlockChanged(qint64 lastBlockTime);
     void mempoolSizeChanged(long count, size_t mempoolSizeInBytes);
     void orphanPoolSizeChanged(long count);
+    void messagePoolSizeChanged(long count);
     void alertsChanged(const QString &warnings);
     void bytesChanged(quint64 totalBytesIn, quint64 totalBytesOut);
     void transactionsPerSecondChanged(double smoothedTps, double instantaneousTps, double peakTps);

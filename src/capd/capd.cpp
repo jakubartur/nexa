@@ -12,6 +12,7 @@
 #include "capd.h"
 #include "clientversion.h"
 #include "dosman.h"
+#include "init.h"
 #include "net.h"
 #include "serialize.h"
 #include "streams.h"
@@ -249,12 +250,12 @@ void CapdMsgPool::add(const CapdMsgRef &msg)
 
     {
         WRITELOCK(csMsgPool);
-
         if (!msg->DoesPowMeetTarget())
         {
             LOG(CAPD, "Message POW inconsistent");
             throw CapdMsgPoolException("Message POW inconsistent");
         }
+
         if (msg->Priority() < _GetLocalPriority())
         {
             LOG(CAPD, "message priority %f below local priority %f", msg->Priority(), _GetLocalPriority());
@@ -522,6 +523,102 @@ std::vector<CapdMsgRef> CapdMsgPool::find(const std::vector<unsigned char> &v) c
     return std::vector<CapdMsgRef>();
 }
 
+static const uint64_t MSGPOOL_DUMP_VERSION = 1;
+bool CapdMsgPool::LoadMsgPool(void)
+{
+    FILE *fileMsgpool = fopen((GetDataDir() / "msgpool.dat").string().c_str(), "rb");
+    if (!fileMsgpool)
+    {
+        LOGA("Failed to open msgpool file from disk. Continuing anyway.\n");
+        return false;
+    }
+    CAutoFile file(fileMsgpool, SER_DISK, CLIENT_VERSION);
+    if (file.IsNull())
+    {
+        LOGA("Failed to open msgpool file from disk. Continuing anyway.\n");
+        return false;
+    }
+
+    int64_t count = 0;
+    try
+    {
+        uint64_t version;
+        file >> version;
+        if (version != MSGPOOL_DUMP_VERSION)
+        {
+            return false;
+        }
+        uint64_t num;
+        file >> num;
+        WRITELOCK(csMsgPool);
+        while (num--)
+        {
+            CapdMsg msg;
+            file >> msg;
+            CapdMsgRef ref = std::make_shared<CapdMsg>(msg);
+            {
+                msgs.insert(ref);
+                size += ref->RamSize();
+                ++count;
+            }
+
+            if (ShutdownRequested())
+                return false;
+        }
+    }
+    catch (const std::exception &e)
+    {
+        LOGA("Failed to deserialize msgpool data on disk: %s. Continuing anyway.\n", e.what());
+        return false;
+    }
+
+    LOGA("Imported msgpool messages from disk: %i successes\n", count);
+    return true;
+}
+
+bool CapdMsgPool::DumpMsgPool(void)
+{
+    int64_t start = GetStopwatchMicros();
+
+    READLOCK(csMsgPool);
+    auto &priorityIndexer = msgs.get<MsgPriorityTag>();
+
+    int64_t mid = GetStopwatchMicros();
+
+    try
+    {
+        FILE *fileMsgpool = fopen((GetDataDir() / "msgpool.dat.new").string().c_str(), "wb");
+        if (!fileMsgpool)
+        {
+            LOGA("Could not dump txpool, failed to open the msgpool file from disk. Continuing anyway.\n");
+            return false;
+        }
+
+        CAutoFile file(fileMsgpool, SER_DISK, CLIENT_VERSION);
+        uint64_t version = MSGPOOL_DUMP_VERSION;
+        file << version;
+
+        file << (uint64_t)msgs.size();
+
+        MsgIterByPriority i = priorityIndexer.begin();
+        for (unsigned int j = 0; i != priorityIndexer.end(); j++, i++)
+        {
+            file << *((*i).get());
+        }
+
+        FileCommit(file.Get());
+        file.fclose();
+        RenameOver(GetDataDir() / "msgpool.dat.new", GetDataDir() / "msgpool.dat");
+        int64_t last = GetStopwatchMicros();
+        LOGA("Dumped msgpool: %gs to copy, %gs to dump\n", (mid - start) * 0.000001, (last - mid) * 0.000001);
+    }
+    catch (const std::exception &e)
+    {
+        LOGA("Failed to dump msgpool: %s. Continuing anyway.\n", e.what());
+        return false;
+    }
+    return true;
+}
 
 void CapdMsgPool::_DbgDump()
 {
@@ -1110,6 +1207,7 @@ bool StartCapd()
     for (unsigned int i = 0; i < ARRAYLEN(uri_prefixes); i++)
         RegisterHTTPHandler(uri_prefixes[i].prefix, false, uri_prefixes[i].handler);
     */
+
     return true;
 }
 

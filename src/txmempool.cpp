@@ -1849,10 +1849,8 @@ SaltedTxidHasher::SaltedTxidHasher()
 {
 }
 
-// Version is current unix epoch time. Nov 1, 2018 at 12am
-static const uint64_t MEMPOOL_DUMP_VERSION = 1541030400;
-
-bool LoadMempool(void)
+static const uint64_t TXPOOL_DUMP_VERSION = 1;
+bool LoadTxPool(void)
 {
     int64_t nExpiryTimeout = txPoolExpiry.Value();
     FILE *fileTxpool = fopen((GetDataDir() / "txpool.dat").string().c_str(), "rb");
@@ -1876,7 +1874,7 @@ bool LoadMempool(void)
     {
         uint64_t version;
         file >> version;
-        if (version != MEMPOOL_DUMP_VERSION)
+        if (version != TXPOOL_DUMP_VERSION)
         {
             return false;
         }
@@ -1930,7 +1928,7 @@ bool LoadMempool(void)
     return true;
 }
 
-bool DumpMempool(void)
+bool DumpTxPool(void)
 {
     int64_t start = GetStopwatchMicros();
 
@@ -1959,7 +1957,7 @@ bool DumpMempool(void)
 
         CAutoFile file(fileTxpool, SER_DISK, CLIENT_VERSION);
 
-        uint64_t version = MEMPOOL_DUMP_VERSION;
+        uint64_t version = TXPOOL_DUMP_VERSION;
         file << version;
 
         file << (uint64_t)vInfo.size();

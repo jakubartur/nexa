@@ -2283,7 +2283,7 @@ UniValue savetxpool(const UniValue &params, bool fHelp)
                                  HelpExampleCli("savetxpool", "") + HelpExampleRpc("savetxpool", ""));
     }
 
-    if (!DumpMempool())
+    if (!DumpTxPool())
     {
         throw JSONRPCError(RPC_MISC_ERROR, "Unable to dump txpool to disk");
     }

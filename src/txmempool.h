@@ -62,11 +62,11 @@ static const uint32_t MAX_UPDATED_CHAIN_STATE = 500;
 /** Transaction rate statisics update thread */
 void ThreadUpdateTransactionRateStatistics();
 
-/** Dump the mempool to disk. */
-bool DumpMempool();
+/** Dump the txpool to disk. */
+bool DumpTxPool();
 
-/** Load the mempool from disk. */
-bool LoadMempool();
+/** Load the txpool from disk. */
+bool LoadTxPool();
 
 struct LockPoints
 {

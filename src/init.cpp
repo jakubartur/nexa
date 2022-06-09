@@ -147,7 +147,7 @@ static const char *FEE_ESTIMATES_FILENAME = "fee_estimates.dat";
 //
 
 std::atomic<bool> fRequestShutdown{false};
-std::atomic<bool> fDumpMempoolLater{false};
+std::atomic<bool> fDumpTxPoolLater{false};
 
 void StartShutdown() { fRequestShutdown = true; }
 bool ShutdownRequested() { return fRequestShutdown; }
@@ -252,11 +252,14 @@ void Shutdown()
 
     StopTorControl();
     UnregisterNodeSignals(GetNodeSignals());
-    if (fDumpMempoolLater && persistTxPool.Value())
+    if (fDumpTxPoolLater && persistTxPool.Value())
     {
-        DumpMempool();
+        DumpTxPool();
         orphanpool.DumpOrphanPool();
     }
+
+    if (msgpoolMaxSize > 0)
+        msgpool.DumpMsgPool();
 
     if (fFeeEstimatesInitialized)
     {
@@ -592,8 +595,8 @@ void ThreadImport(std::vector<fs::path> vImportFiles, uint64_t nTxIndexCache)
     // Load the mempool if necessary
     if (persistTxPool.Value())
     {
-        uiInterface.InitMessage(_("Loading Mempool"));
-        LoadMempool();
+        uiInterface.InitMessage(_("Loading TxPool"));
+        LoadTxPool();
 
         uiInterface.InitMessage(_("Loading Orphanpool"));
         orphanpool.LoadOrphanPool();
@@ -636,7 +639,7 @@ void ThreadImport(std::vector<fs::path> vImportFiles, uint64_t nTxIndexCache)
                 }
             }
         }
-        fDumpMempoolLater = !fRequestShutdown;
+        fDumpTxPoolLater = !fRequestShutdown;
     }
     if (fRequestShutdown)
         return;
@@ -663,6 +666,10 @@ void ThreadImport(std::vector<fs::path> vImportFiles, uint64_t nTxIndexCache)
     // is almost synced.
     IsChainNearlySyncdInit();
     IsInitialBlockDownloadInit();
+
+    // load messages in capd message pool if capd is on
+    if (msgpoolMaxSize > 0)
+        msgpool.LoadMsgPool();
 
     // Startup txindex. If we start it earlier and before ActivateBestChain
     // we can end up grinding slowly through ActivateBestChain when txindex still has unfinished

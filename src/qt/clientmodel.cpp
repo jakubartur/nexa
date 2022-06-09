@@ -9,6 +9,7 @@
 #include "guiconstants.h"
 #include "peertablemodel.h"
 
+#include "capd/capd.h"
 #include "chainparams.h"
 #include "checkpoints.h"
 #include "clientversion.h"
@@ -93,6 +94,7 @@ QDateTime ClientModel::getLastBlockDate() const
 
 long ClientModel::getMempoolSize() const { return mempool.size(); }
 long ClientModel::getOrphanPoolSize() const { return orphanpool.GetOrphanPoolSize(); }
+long ClientModel::getCapdMessagePoolSize() const { return msgpool.Count(); }
 size_t ClientModel::getMempoolDynamicUsage() const { return mempool.DynamicMemoryUsage(); }
 double ClientModel::getVerificationProgress(const CBlockIndex *tipIn) const
 {
@@ -120,6 +122,9 @@ void ClientModel::updateTimer2()
     // no locking required at this point
     // the following calls will aquire the required lock
     Q_EMIT orphanPoolSizeChanged(getOrphanPoolSize());
+
+    Q_EMIT messagePoolSizeChanged(getCapdMessagePoolSize());
+
     Q_EMIT bytesChanged(getTotalBytesRecv(), getTotalBytesSent());
 
     thindata.FillThinBlockQuickStats(thinStats);
