@@ -262,8 +262,8 @@
         <translation>رمز مربوط به رمزگذاریِ wallet را تغییر دهید</translation>
     </message>
     <message>
-        <source>Bitcoin</source>
-        <translation>bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -400,8 +400,8 @@
         <translation>حساب وارد شده «%1» از پیش در دفترچه حساب ها موجود است.</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Bitcoin address.</source>
-        <translation>آدرس وارد شده "%1" یک آدرس صحیح برای bitcoin نسشت</translation>
+        <source>The entered address "%1" is not a valid Nexa address.</source>
+        <translation>آدرس وارد شده "%1" یک آدرس صحیح برای Nexa نسشت</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>

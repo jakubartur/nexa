@@ -246,7 +246,7 @@
         <translation>Оношилгоо ба засварын консолыг онгойлго</translation>
     </message>
     <message>
-        <source>Bitcoin</source>
+        <source>Nexa</source>
         <translation>Биткойн</translation>
     </message>
     <message>

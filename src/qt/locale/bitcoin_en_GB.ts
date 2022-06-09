@@ -318,8 +318,8 @@
         <translation>Reindexing blocks on disk...</translation>
     </message>
     <message>
-        <source>Send coins to a Bitcoin address</source>
-        <translation>Send coins to a Bitcoin address</translation>
+        <source>Send coins to a Nexa address</source>
+        <translation>Send coins to a Nexa address</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -342,8 +342,8 @@
         <translation>&amp;Verify message...</translation>
     </message>
     <message>
-        <source>Bitcoin</source>
-        <translation>Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -374,12 +374,12 @@
         <translation>Encrypt the private keys that belong to your wallet</translation>
     </message>
     <message>
-        <source>Sign messages with your Bitcoin addresses to prove you own them</source>
-        <translation>Sign messages with your Bitcoin addresses to prove you own them</translation>
+        <source>Sign messages with your Nexa addresses to prove you own them</source>
+        <translation>Sign messages with your Nexa addresses to prove you own them</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Bitcoin addresses</source>
-        <translation>Verify messages to ensure they were signed with specified Bitcoin addresses</translation>
+        <source>Verify messages to ensure they were signed with specified Nexa addresses</source>
+        <translation>Verify messages to ensure they were signed with specified Nexa addresses</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -430,12 +430,12 @@
         <translation>&amp;Command-line options</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Bitcoin command-line options</source>
-        <translation>Show the BCH Unlimited help message to get a list with possible Bitcoin command-line options</translation>
+        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
+        <translation>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Bitcoin network</source>
-        <translation><numerusform>%n active connection to Bitcoin network</numerusform><numerusform>%n active connections to Bitcoin network</numerusform></translation>
+        <source>%n active connection(s) to Nexa network</source>
+        <translation><numerusform>%n active connection to Nexa network</numerusform><numerusform>%n active connections to Nexa network</numerusform></translation>
     </message>
     <message>
         <source>No block source available...</source>
@@ -817,8 +817,8 @@
         <translation>The entered address "%1" is already in the address book.</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Bitcoin address.</source>
-        <translation>The entered address "%1" is not a valid Bitcoin address.</translation>
+        <source>The entered address "%1" is not a valid Nexa address.</source>
+        <translation>The entered address "%1" is not a valid Nexa address.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>

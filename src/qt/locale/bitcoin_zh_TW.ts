@@ -318,8 +318,8 @@
         <translation>正在為磁碟裡的區塊重建索引...</translation>
     </message>
     <message>
-        <source>Send coins to a Bitcoin address</source>
-        <translation>付錢給一個 Bitcoin 位址</translation>
+        <source>Send coins to a Nexa address</source>
+        <translation>付錢給一個 Nexa 位址</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -342,8 +342,8 @@
         <translation>驗證訊息...</translation>
     </message>
     <message>
-        <source>Bitcoin</source>
-        <translation>Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -374,12 +374,12 @@
         <translation>把錢包中的密鑰加密</translation>
     </message>
     <message>
-        <source>Sign messages with your Bitcoin addresses to prove you own them</source>
-        <translation>用 Bitcoin 位址簽署訊息來證明位址是你的</translation>
+        <source>Sign messages with your Nexa addresses to prove you own them</source>
+        <translation>用 Nexa 位址簽署訊息來證明位址是你的</translation>
     </message>
     <message>
-        <source>Verify messages to ensure they were signed with specified Bitcoin addresses</source>
-        <translation>驗證訊息是用來確定訊息是用指定的 Bitcoin 位址簽署的</translation>
+        <source>Verify messages to ensure they were signed with specified Nexa addresses</source>
+        <translation>驗證訊息是用來確定訊息是用指定的 Nexa 位址簽署的</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -434,12 +434,12 @@
         <translation>命令列選項</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Bitcoin command-line options</source>
+        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
         <translation>顯示 BCH Unlimited 的說明訊息，來取得可用命令列選項的列表</translation>
     </message>
     <message numerus="yes">
-        <source>%n active connection(s) to Bitcoin network</source>
-        <translation><numerusform>%n 個運作中的 Bitcoin 網路連線</numerusform></translation>
+        <source>%n active connection(s) to Nexa network</source>
+        <translation><numerusform>%n 個運作中的 Nexa 網路連線</numerusform></translation>
     </message>
     <message>
         <source>No block source available...</source>
@@ -821,8 +821,8 @@
         <translation>輸入的位址 %1 在位址簿中已經有了。</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Bitcoin address.</source>
-        <translation>輸入的位址 %1 並不是有效的 Bitcoin 位址。</translation>
+        <source>The entered address "%1" is not a valid Nexa address.</source>
+        <translation>輸入的位址 %1 並不是有效的 Nexa 位址。</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>

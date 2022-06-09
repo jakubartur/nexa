@@ -287,8 +287,8 @@ Estas son las direcciones de Bitcoin para enviar pagos . Siempre verifique la ca
         <translation>Importando bloques desde el disco...</translation>
     </message>
     <message>
-        <source>Send coins to a Bitcoin address</source>
-        <translation>Enviando monedas a una dirección de Bitcoin</translation>
+        <source>Send coins to a Nexa address</source>
+        <translation>Enviando monedas a una dirección de Nexa</translation>
     </message>
     <message>
         <source>Change the passphrase used for wallet encryption</source>
@@ -307,8 +307,8 @@ Estas son las direcciones de Bitcoin para enviar pagos . Siempre verifique la ca
         <translation>&amp;Verificar Mensaje...</translation>
     </message>
     <message>
-        <source>Bitcoin</source>
-        <translation>Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
