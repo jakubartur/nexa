@@ -304,8 +304,47 @@ bool ScriptMachine::BeginStep(const CScript &_script)
     return true;
 }
 
+bool ScriptMachine::Continue(size_t nSteps)
+{
+    bool ret = true;
+    while ((pc < pend) && (nSteps > 0))
+    {
+        ret = Step();
+        if (!ret)
+            break;
+        nSteps--;
+    }
+    return ret;
+}
+
+bool ScriptMachine::ModifyScript(int position, uint8_t *data, size_t dataLength)
+{
+    CScript *s = (CScript *)script;
+    if (!s)
+        return false;
+
+    if (s->size() < position + dataLength)
+        s->resize(position + dataLength);
+    uint8_t *spos = &((*s)[position]);
+    if (!spos)
+        return false;
+    memcpy(spos, data, dataLength);
+    return true;
+}
 
 int ScriptMachine::getPos() { return (pc - pbegin); }
+
+int ScriptMachine::setPos(size_t offset)
+{
+    if (!script)
+        return -1;
+    if (pbegin + offset > pend)
+        pc = pend;
+    else
+        pc = pbegin + offset;
+    return (pc - pbegin);
+}
+
 bool ScriptMachine::Eval(const CScript &_script)
 {
     bool ret;
@@ -348,6 +387,8 @@ bool ScriptMachine::Step()
     opcodetype opcode;
     StackItem vchPushValue;
     ScriptError *serror = &error;
+    if (!script)
+        return false;
     try
     {
         {

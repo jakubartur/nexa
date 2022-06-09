@@ -18,6 +18,7 @@
 #include "coins.h"
 #include "consensus/validation.h"
 #include "merkleblock.h"
+#include "policy/policy.h"
 #include "random.h"
 #include "script/sign.h"
 #include "streams.h"
@@ -769,8 +770,8 @@ SLAPI int SmGetStackItem(void *smId, unsigned int stack, unsigned int index, Sta
     *t = item.type;
     if (item.type == StackElementType::VCH)
     {
-        int sz = stk[index].size();
-        memcpy(result, stk[index].data().data(), sz);
+        int sz = item.size();
+        memcpy(result, item.data().data(), sz);
         return sz;
     }
     else if (item.type == StackElementType::BIGNUM)
@@ -941,6 +942,317 @@ jbyteArray makeJByteArray(JNIEnv *env, std::vector<unsigned char> &buf)
     return bArray;
 }
 
+#ifndef ANDROID
+extern "C" JNIEXPORT jlong JNICALL Java_bitcoinunlimited_libbitcoincash_ScriptMachine_create(JNIEnv *env,
+    jobject ths,
+    jbyteArray tx,
+    jbyteArray outpoints,
+    jint inputIdx,
+    jint flags)
+{
+    ByteArrayAccessor txb(env, tx);
+    ByteArrayAccessor outpointb(env, outpoints);
+
+    if (flags == -1)
+        flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+    void *sm = CreateScriptMachine(flags, inputIdx, txb.data, txb.size, outpointb.data, outpointb.size);
+    return ((jlong)sm);
+}
+
+extern "C" JNIEXPORT jlong JNICALL Java_bitcoinunlimited_libbitcoincash_ScriptMachine_createTemplateContext(JNIEnv *env,
+    jobject ths,
+    jbyteArray tx,
+    jbyteArray outpoints,
+    jbyteArray satisfierba,
+    jbyteArray constraintba,
+    jint inputIdx,
+    jint flags)
+{
+    ByteArrayAccessor txb(env, tx);
+    ByteArrayAccessor outpointb(env, outpoints);
+    ByteArrayAccessor satbaa(env, satisfierba);
+    ByteArrayAccessor conbaa(env, constraintba);
+
+    CScript satisfier(satbaa.data, satbaa.data + satbaa.size);
+    CScript constraint(conbaa.data, conbaa.data + conbaa.size);
+
+    if (!satisfier.IsPushOnly())
+    {
+        triggerJavaIllegalStateException(env, "satisfier is not push-only");
+        return 0;
+    }
+    if (!constraint.IsPushOnly())
+    {
+        triggerJavaIllegalStateException(env, "constraint is not push-only");
+        return 0;
+    }
+
+    if (flags == -1)
+        flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+
+    const unsigned int maxOps = 0xffffffff;
+    ScriptImportedState noSis;
+    ScriptMachine ssm(flags, noSis, maxOps, 0);
+    if (!ssm.Eval(satisfier))
+    {
+        triggerJavaIllegalStateException(env, ScriptErrorString(ssm.getError()));
+        return 0;
+    }
+    ScriptMachine csm(flags, noSis, maxOps, 0);
+    if (!csm.Eval(constraint))
+    {
+        triggerJavaIllegalStateException(env, ScriptErrorString(csm.getError()));
+        return 0;
+    }
+
+    void *smh = CreateScriptMachine(flags, inputIdx, txb.data, txb.size, outpointb.data, outpointb.size);
+
+    if (smh)
+    {
+        // copy over the stacks that were created by running the constraint and satisfier
+        ScriptMachineData *smd = (ScriptMachineData *)smh;
+        smd->sm->setAltStack(csm.getStack());
+        smd->sm->setStack(ssm.getStack());
+    }
+    return ((jlong)smh);
+}
+
+
+extern "C" JNIEXPORT jlong JNICALL Java_bitcoinunlimited_libbitcoincash_ScriptMachine_createNoContext(JNIEnv *env,
+    jobject ths,
+    jint flags)
+{
+    if (flags == -1)
+        flags = STANDARD_SCRIPT_VERIFY_FLAGS;
+    void *sm = CreateNoContextScriptMachine(flags);
+    return ((jlong)sm);
+}
+
+
+extern "C" JNIEXPORT jboolean Java_bitcoinunlimited_libbitcoincash_ScriptMachine_eval(JNIEnv *env,
+    jobject ths,
+    jlong smid,
+    jbyteArray scriptBytes,
+    jboolean run)
+{
+    ByteArrayAccessor script(env, scriptBytes);
+    bool ret = true;
+    if (run)
+    {
+        ret = SmEval((void *)smid, script.data, script.size);
+    }
+    else
+    {
+        ret = SmBeginStep((void *)smid, script.data, script.size);
+    }
+    return ret;
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_bitcoinunlimited_libbitcoincash_ScriptMachine_cont(JNIEnv *env,
+    jobject ths,
+    jlong smid)
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smid;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return false;
+    }
+    return smd->sm->Continue();
+}
+
+extern "C" JNIEXPORT jboolean JNICALL Java_bitcoinunlimited_libbitcoincash_ScriptMachine_step(JNIEnv *env,
+    jobject ths,
+    jlong smid)
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smid;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return false;
+    }
+    if (!smd->sm->isMoreSteps())
+    {
+        triggerJavaIllegalStateException(env, "completed");
+        return false;
+    }
+    return smd->sm->Step();
+}
+
+
+extern "C" JNIEXPORT void JNICALL Java_bitcoinunlimited_libbitcoincash_ScriptMachine_swapStacks(JNIEnv *env,
+    jobject ths,
+    jlong smid)
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smid;
+    if ((!smd) || (!smd->sm))
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+    else
+    {
+        Stack tmp = smd->sm->getStack();
+        smd->sm->setStack(smd->sm->getAltStack());
+        smd->sm->setAltStack(tmp);
+    }
+}
+
+extern "C" JNIEXPORT jstring Java_bitcoinunlimited_libbitcoincash_ScriptMachine_getError(JNIEnv *env,
+    jobject ths,
+    jlong smid)
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smid;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return nullptr;
+    }
+
+    auto err = smd->sm->getError();
+
+    std::string ret(ScriptErrorString(err));
+    ret += "(" + std::to_string(err) + ")";
+    return env->NewStringUTF(ret.c_str());
+}
+
+// Step-by-step interface: get current position in this script, in bytes offset from the script start
+extern "C" JNIEXPORT jint Java_bitcoinunlimited_libbitcoincash_ScriptMachine_getPos(JNIEnv *env,
+    jobject ths,
+    jlong smId)
+
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smId;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return -1;
+    }
+    return smd->sm->getPos();
+}
+
+// Step-by-step interface: get current position in this script, in bytes offset from the script start
+extern "C" JNIEXPORT jint Java_bitcoinunlimited_libbitcoincash_ScriptMachine_setPos(JNIEnv *env,
+    jobject ths,
+    jlong smId,
+    jint pos)
+
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smId;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return -1;
+    }
+    if (pos < 0)
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return -1;
+    }
+    return smd->sm->setPos(pos);
+}
+
+
+// Step-by-step interface: get current position in this script, in bytes offset from the script start
+extern "C" JNIEXPORT jstring Java_bitcoinunlimited_libbitcoincash_ScriptMachine_getBMD(JNIEnv *env,
+    jobject ths,
+    jlong smId)
+
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smId;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return nullptr;
+    }
+    return env->NewStringUTF(smd->sm->bigNumModulo.str(16).c_str());
+}
+
+// Step-by-step interface: get current position in this script, in bytes offset from the script start
+extern "C" JNIEXPORT bool Java_bitcoinunlimited_libbitcoincash_ScriptMachine_modify(JNIEnv *env,
+    jobject ths,
+    jlong smId,
+    jint offset,
+    jbyteArray data)
+
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smId;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return false;
+    }
+    ByteArrayAccessor d(env, data);
+    return smd->sm->ModifyScript(offset, d.data, d.size);
+}
+
+
+/** This makes sense to give as text because we don't want the higher layers to have to parse the BigNum format
+    and certainly don't want to expose the internal bignum representation
+*/
+extern "C" JNIEXPORT jstring Java_bitcoinunlimited_libbitcoincash_ScriptMachine_getStackItemText(JNIEnv *env,
+    jobject ths,
+    jlong smid,
+    jint whichStack,
+    jint index)
+{
+    ScriptMachineData *smd = (ScriptMachineData *)smid;
+    if ((!smd) || (!smd->sm))
+    {
+        triggerJavaIllegalStateException(env, "internal error: no script machine");
+        return nullptr;
+    }
+
+    const std::vector<StackItem> &stk = (whichStack == 0) ? smd->sm->getStack() : smd->sm->getAltStack();
+    if ((int)stk.size() <= index)
+        return env->NewStringUTF("");
+    index = stk.size() - index - 1;
+    const StackItem &item = stk[index];
+    std::string ret;
+    // return TYPE SIZE string(hex or false) DECIMAL
+    if (item.type == StackElementType::VCH)
+    {
+        size_t sz = item.size();
+        // special case for false stack item because insanity of interpreter
+        if (sz == 0)
+            return env->NewStringUTF((ret + "BYTES 0 false 0").c_str());
+        ret += "BYTES " + std::to_string(sz) + " " + item.hex() + "h";
+        try
+        {
+            int64_t t = item.asInt64(false); // TODO report minimal encoding
+            ret += " " + std::to_string(t);
+        }
+        catch (scriptnum_error &e)
+        {
+            ret += " NaN";
+        }
+        catch (BadOpOnType &e)
+        {
+            ret += " NaN";
+        }
+    }
+    else if (item.type == StackElementType::BIGNUM)
+    {
+        const BigNum &num = item.num();
+        size_t sz = num.magSize();
+        ret += "BIGNUM " + std::to_string(sz) + " " + item.hex() + "h " + num.str();
+    }
+    else
+    {
+        ret += "UNKNW"; // this sw needs to be updated for the newly added type
+    }
+
+    return env->NewStringUTF(ret.c_str());
+}
+
+
+extern "C" JNIEXPORT jboolean JNICALL Java_bitcoinunlimited_libbitcoincash_ScriptMachine_delete(JNIEnv *env,
+    jobject ths,
+    jlong smid)
+{
+    SmRelease((void *)smid);
+    return true;
+}
+
+
+#endif
 
 extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wallet_signMessage(JNIEnv *env,
     jobject ths,
@@ -1086,7 +1398,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
     if (resultLen == 0)
     {
         triggerJavaIllegalStateException(env, "signing operation failed");
-        return jbyteArray();
+        return nullptr;
     }
     return makeJByteArray(env, result, resultLen);
 }
@@ -1325,7 +1637,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_GroupI
     if (len < 32)
     {
         triggerJavaIllegalStateException(env, "bad address argument length");
-        return env->NewStringUTF("bad address argument length");
+        return nullptr;
     }
     jbyte *data = env->GetByteArrayElements(arg, 0);
 
@@ -1648,6 +1960,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_Initia
     if (cashlibParams == nullptr)
     {
         triggerJavaIllegalStateException(env, "unknown blockchain selection");
+        return nullptr;
     }
     switch ((ChainSelector)chainSelector)
     {
