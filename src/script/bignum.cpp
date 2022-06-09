@@ -8,6 +8,8 @@
 #ifndef ANDROID
 const BigNum bnZero = 0_BN;
 const BigNum bnOne = 1_BN;
+const BigNum bnInt64Max(std::numeric_limits<int64_t>::max());
+const BigNum bnUint64Max = 0x10000000000000000_BN - 1; // can't use int ctor because it is not uint
 const BigNum &bnFalse(bnZero);
 const BigNum &bnTrue(bnOne);
 
@@ -33,7 +35,7 @@ bool BigNumScriptOp(BigNum &bn,
 
     case OP_DIV:
         // denominator must not be 0
-        if (bn2 == 0_BN)
+        if (bn2 == bnZero)
         {
             return set_error(serror, SCRIPT_ERR_DIV_BY_ZERO);
         }
@@ -42,7 +44,7 @@ bool BigNumScriptOp(BigNum &bn,
 
     case OP_MOD:
         // divisor must not be 0
-        if (bn2 == 0_BN)
+        if (bn2 == bnZero)
         {
             return set_error(serror, SCRIPT_ERR_MOD_BY_ZERO);
         }

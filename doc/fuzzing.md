@@ -33,7 +33,7 @@ the `llvm_mode` subdirectory of AFL.
 To build Bitcoin using AFL instrumentation (this assumes that the
 `AFLPATH` was set as above):
 ```
-./configure [--disable-ccache] --disable-shared --enable-tests CC=${AFLPATH}/afl-gcc CXX=${AFLPATH}/afl-g++
+./configure [--disable-ccache] --disable-shared --enable-tests CC=${AFLPATH}/afl-clang-fast CXX=${AFLPATH}/afl-clang-fast++
 export AFL_HARDEN=1
 cd src/
 make test/test_bitcoin_fuzzy
@@ -44,8 +44,10 @@ save some HDD space.
 
 The fuzzer is _a lot_ faster now when run in LLVM persistent mode. To
 enable LLVM persistent mode, `bitcoin_test_fuzzy` has to be built with
-clang/clang++. For this replace the above mentions of `afl-gcc` and
-`afl-g++` with `afl-clang-fast` and afl-clang-fast++`.
+clang/clang++. But if you MUST use g++ you can still do it by setting CC and CXX appropriately:
+```
+./configure [--disable-ccache] --disable-shared --enable-tests CC=${AFLPATH}/afl-gcc CXX=${AFLPATH}/afl-g++
+```
 
 Note that fuzzing in fast mode (llvm_mode) might introduce some
 inaccuracies that might lead the fuzzer astray. For details on this,

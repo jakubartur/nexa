@@ -21,9 +21,9 @@ uint64_t StackItem::asUint64(bool requireMinimal) const
     }
     if (isBigNum())
     {
-        if (n < 0_BN)
+        if (n < bnZero)
             throw BadOpOnType("Impossible conversion of negative BigNum to uint64");
-        if (n >= 0x10000000000000000_BN)
+        if (n > bnUint64Max)
             throw BadOpOnType("Impossible conversion of large BigNum to uint64");
         return n.asUint64();
     }
@@ -38,7 +38,7 @@ int64_t StackItem::asInt64(bool requireMinimal) const
     }
     if (isBigNum())
     {
-        if (n > BigNum(std::numeric_limits<int64_t>::max()))
+        if (n > bnInt64Max)
             throw BadOpOnType("Impossible conversion of large BigNum to int64");
         return n.asInt64();
     }

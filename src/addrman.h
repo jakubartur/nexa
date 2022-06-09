@@ -479,7 +479,7 @@ public:
 
     void Clear()
     {
-        std::vector<int>().swap(vRandom);
+        vRandom.clear();
         nKey = insecure_rand.rand256();
         for (size_t bucket = 0; bucket < ADDRMAN_NEW_BUCKET_COUNT; bucket++)
         {

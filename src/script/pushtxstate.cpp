@@ -20,6 +20,8 @@ ScriptError EvalPushTxState(const VchType &specifier, const ScriptImportedState 
     auto specEnd = specifier.end();
     if (specEnd == specIter)
         return SCRIPT_ERR_INVALID_STATE_SPECIFIER;
+    if (!sis.tx)
+        return SCRIPT_ERR_DATA_REQUIRED;
 
     auto specCur = specIter;
     specIter++;
@@ -127,6 +129,8 @@ ScriptError EvalPushTxState(const VchType &specifier, const ScriptImportedState 
     case PushTxStateSpecifier::GROUP_OUTGOING_COUNT:
     case PushTxStateSpecifier::GROUP_COVENANT_HASH:
     {
+        if (!sis.groupState)
+            return SCRIPT_ERR_DATA_REQUIRED;
         if (specEnd - specIter < (int)sizeof(uint256))
             return SCRIPT_ERR_INVALID_STATE_SPECIFIER;
         VchType grpVch(specIter, specEnd);

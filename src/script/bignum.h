@@ -319,6 +319,9 @@ extern const BigNum bnZero;
 extern const BigNum bnOne;
 extern const BigNum &bnFalse;
 extern const BigNum &bnTrue;
+extern const BigNum bnInt64Max;
+extern const BigNum bnUint64Max;
+
 
 #ifndef ANDROID
 inline BigNum BigNum::operator>>(const unsigned long int amt) const

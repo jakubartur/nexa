@@ -610,9 +610,7 @@ CChainParams &Params(const std::string &chain)
         return regTestParams;
     else if (chain == CBaseChainParams::NEXA)
         return nexaParams;
-    else
-        throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
-    return nexaParams; // will never execute, but eliminates a warning in some compilers
+    throw std::runtime_error(strprintf("%s: Unknown chain %s.", __func__, chain));
 }
 
 void SelectParams(const std::string &network)

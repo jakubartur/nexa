@@ -49,7 +49,7 @@ protected:
     virtual void SyncTransaction(const CTransactionRef &ptx, const ConstCBlockRef pblock, int txIdx) {}
     virtual void SyncDoubleSpend(const CTransactionRef ptx) {}
     virtual void SetBestChain(const CBlockLocator &locator) {}
-    virtual void UpdatedTransaction(const uint256 &hash) {}
+    virtual void UpdatedTransaction(const uint256 &txid) {}
     virtual void Inventory(const uint256 &hash) {}
     virtual void ResendWalletTransactions(int64_t nBestBlockTime) {}
     virtual void BlockChecked(const CBlock &, const CValidationState &) {}

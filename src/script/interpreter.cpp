@@ -259,9 +259,10 @@ bool EvalScript(Stack &stack,
 
 
 static const auto snZero = CScriptNum::fromIntUnchecked(0);
-static const auto snOne = CScriptNum::fromIntUnchecked(1);
-static const auto snFalse = CScriptNum::fromIntUnchecked(0);
-static const auto snTrue = CScriptNum::fromIntUnchecked(1);
+// put them back if used
+// static const auto snOne = CScriptNum::fromIntUnchecked(1);
+// static const auto snFalse = CScriptNum::fromIntUnchecked(0);
+// static const auto snTrue = CScriptNum::fromIntUnchecked(1);
 
 static const StackItem vchFalse(VchStack, 0);
 static const StackItem vchZero(VchStack, 0);
@@ -287,7 +288,6 @@ std::tuple<bool, opcodetype, StackItem, ScriptError> ScriptMachine::Peek()
 bool ScriptMachine::BeginStep(const CScript &_script)
 {
     script = &_script;
-
     pc = pbegin = script->begin();
     pend = script->end();
     pbegincodehash = pc;
@@ -541,7 +541,7 @@ bool ScriptMachine::Step()
                     BigNum ret;
                     if (a.isBigNum())
                     {
-                        if (a.num() < 0_BN)
+                        if (a.num() < bnZero)
                             throw BadOpOnType("Negative shift");
                         if (a.num() > BigNum(MAX_BIGNUM_BITSHIFT_SIZE))
                         {
@@ -575,7 +575,7 @@ bool ScriptMachine::Step()
                     {
                         if (a.isBigNum())
                         {
-                            if (a.num() < 0_BN)
+                            if (a.num() < bnZero)
                                 throw BadOpOnType("Negative shift");
                             if (a.num() > BigNum(MAX_BIGNUM_BITSHIFT_SIZE))
                                 ret = bnZero;
@@ -1831,6 +1831,13 @@ bool ScriptMachine::Step()
                         {
                         case OP_UTXOVALUE:
                         {
+                            if (idx >= (int32_t)sis.spentCoins.size())
+                            {
+                                // The code should have provided 1 spent coin per input.  But since
+                                // we checked idx against tx->vin above, we know that the problem is that
+                                // not enough spent coins data was provided
+                                return set_error(serror, SCRIPT_ERR_DATA_REQUIRED);
+                            }
                             const auto bn = CScriptNum::fromInt(sis.spentCoins[idx].nValue);
                             // This is only false if nVaue is -2^63, should not be possible
                             if (!bn)
@@ -1842,6 +1849,13 @@ bool ScriptMachine::Step()
                         break;
                         case OP_UTXOBYTECODE:
                         {
+                            if (idx >= (int32_t)sis.spentCoins.size())
+                            {
+                                // The code should have provided 1 spent coin per input.  But since
+                                // we checked idx against tx->vin above, we know that the problem is that
+                                // not enough spent coins data was provided
+                                return set_error(serror, SCRIPT_ERR_DATA_REQUIRED);
+                            }
                             const auto &utxoScript = sis.spentCoins[idx].scriptPubKey;
                             if (utxoScript.size() > MAX_SCRIPT_ELEMENT_SIZE)
                             {
