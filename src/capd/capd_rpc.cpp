@@ -140,12 +140,31 @@ UniValue capdrpc(const UniValue &params, bool fHelp)
     throw std::runtime_error("unknown subcommand");
 }
 
+UniValue savemsgpool(const UniValue &params, bool fHelp)
+{
+    if (fHelp || params.size() != 0)
+    {
+        throw std::runtime_error("savemsgpool\n"
+                                 "\nDumps the CAPD msgpool to disk.\n"
+                                 "\nExamples:\n" +
+                                 HelpExampleCli("savemsgpool", "") + HelpExampleRpc("savemsgpool", ""));
+    }
+
+    if (!msgpool.DumpMsgPool())
+    {
+        throw JSONRPCError(RPC_MISC_ERROR, "Unable to dump msgpool to disk");
+    }
+
+    return NullUniValue;
+}
+
 
 /* clang-format off */
 static const CRPCCommand commands[] =
 { //  category              name                      actor (function)         okSafeMode
   //  --------------------- ------------------------  -----------------------  ----------
-    { "network",            "capd",                    &capdrpc,               true  }
+    { "network",            "capd",                   &capdrpc,               true  },
+    { "network",            "savemsgpool",            &savemsgpool,           true  }
 };
 /* clang-format on */
 

@@ -4,7 +4,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 """Test txpool persistence.
 
-By default, bitcoind will dump txpool on shutdown and
+By default, nexad will dump txpool on shutdown and
 then reload it on startup. This can be overridden with
 the -cache.persistTxPool=0 command line option.
 
@@ -104,7 +104,7 @@ class MempoolPersistTest(BitcoinTestFramework):
         self.nodes = start_nodes(2, self.options.tmpdir)
         waitFor(10, lambda: len(self.nodes[1].getrawtxpool()) == 5)
 
-        logging.info("Prevent bitcoind from writing txpool.dat to disk. Verify that `savetxpool` fails")
+        logging.info("Prevent nexad from writing txpool.dat to disk. Verify that `savetxpool` fails")
         # try to dump txpool content on a directory rather than a file
         # which is an implementation detail that could change and break this test
         txpooldotnew1 = txpooldat1 + '.new'
@@ -185,7 +185,7 @@ class MempoolPersistTest(BitcoinTestFramework):
         waitFor(DELAY_TIME, lambda: self.nodes[1].gettxpoolinfo()["size"] == 0, lambda: print (getNodeInfo(self.nodes[1])))
         waitFor(DELAY_TIME, lambda: self.nodes[1].gettxpoolinfo()["size"] == 0, lambda: print (getNodeInfo(self.nodes[1])))
 
-        logging.info("Prevent bitcoind from writing orphanpool.dat to disk. Verify that `saveorphanpool` fails")
+        logging.info("Prevent nexad from writing orphanpool.dat to disk. Verify that `saveorphanpool` fails")
         # try to dump orphanpool content on a directory rather than a file
         # which is an implementation detail that could change and break this test
         orphanpooldotnew1 = orphanpooldat1 + '.new'
@@ -200,6 +200,65 @@ class MempoolPersistTest(BitcoinTestFramework):
         self.nodes = start_nodes(2, self.options.tmpdir, node_args)
         waitFor(DELAY_TIME, lambda: self.nodes[0].getorphanpoolinfo()["size"] == 0)
         waitFor(DELAY_TIME, lambda: self.nodes[1].getorphanpoolinfo()["size"] == 0)
+
+        ########## Check the CAPD message pool persistence ###########
+
+        connect_nodes_full(self.nodes)
+        self.sync_blocks()
+
+        logging.info("Send 5 transactions from node2 (to its own address)")
+        for i in range(5):
+            self.nodes[1].capd("send", "this is the message")
+
+        logging.info("Verify that node0 and node1 have 5 transactions in their msgpools")
+        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 5)
+        waitFor(10, lambda: self.nodes[1].capd("info")["count"] == 5)
+
+        logging.info("Stop-start node0 and node1. Verify that node0 has the messages in its msgpool and node1 does not.")
+        stop_nodes(self.nodes)
+        wait_bitcoinds()
+        node_args = [[ ], ['-cache.maxCapdPool=0']]
+        self.nodes = start_nodes(2, self.options.tmpdir, node_args)
+        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 5)
+        waitFor(10, lambda: self.nodes[1].capd("info")["count"] == 0)
+
+        logging.info("Stop-start node0 with -cache.maxCapdPool=0. Verify that it doesn't load its msgpool.dat file.")
+        stop_nodes(self.nodes)
+        wait_bitcoinds()
+        node_args = [['-cache.maxCapdPool=0']]
+        self.nodes = start_nodes(1, self.options.tmpdir, node_args)
+        # Give bitcoind a second to reload the msgpool
+        time.sleep(1)
+        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 0)
+
+        logging.info("Stop-start node0. Verify that it has the transactions in its msgpool.")
+        stop_nodes(self.nodes)
+        wait_bitcoinds()
+        self.nodes = start_nodes(1, self.options.tmpdir)
+        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 5)
+
+        msgpooldat0 = os.path.join(self.options.tmpdir, 'node0', 'regtest', 'msgpool.dat')
+        msgpooldat1 = os.path.join(self.options.tmpdir, 'node1', 'regtest', 'msgpool.dat')
+        logging.info("Remove the msgpool.dat file. Verify that savetxpool to disk via RPC re-creates it")
+        os.remove(msgpooldat0)
+        self.nodes[0].savemsgpool()
+        assert os.path.isfile(msgpooldat0)
+
+        logging.info("Stop nodes, make node1 use msgpool.dat from node0. Verify it has 5 messages")
+        os.rename(msgpooldat0, msgpooldat1)
+        stop_nodes(self.nodes)
+        wait_bitcoinds()
+        self.nodes = start_nodes(2, self.options.tmpdir)
+        waitFor(10, lambda: self.nodes[1].capd("info")["count"] == 5)
+
+        logging.info("Prevent nexad from writing msgpool.dat to disk. Verify that `savemsgpool` fails")
+        # try to dump txpool content on a directory rather than a file
+        # which is an implementation detail that could change and break this test
+        msgpooldotnew1 = msgpooldat1 + '.new'
+        os.mkdir(msgpooldotnew1)
+        assert_raises_rpc_error(-1, "Unable to dump msgpool to disk", self.nodes[1].savemsgpool)
+        os.rmdir(msgpooldotnew1)
+
 
 
 if __name__ == '__main__':

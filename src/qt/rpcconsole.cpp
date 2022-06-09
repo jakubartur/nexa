@@ -406,6 +406,7 @@ void RPCConsole::setClientModel(ClientModel *model)
 
         connect(model, SIGNAL(mempoolSizeChanged(long, size_t)), this, SLOT(setMempoolSize(long, size_t)));
         connect(model, SIGNAL(orphanPoolSizeChanged(long)), this, SLOT(setOrphanPoolSize(long)));
+        connect(model, SIGNAL(messagePoolSizeChanged(long)), this, SLOT(setMessagePoolSize(long)));
         connect(model, SIGNAL(transactionsPerSecondChanged(double, double, double)), this,
             SLOT(setTransactionsPerSecond(double, double, double)));
         connect(model, SIGNAL(thinBlockPropagationStatsChanged(const ThinBlockQuickStats &)), this,
@@ -683,6 +684,10 @@ void RPCConsole::setMempoolSize(long numberOfTxs, size_t dynUsage)
 }
 
 void RPCConsole::setOrphanPoolSize(long numberOfTxs) { ui->orphanPoolNumberTxs->setText(QString::number(numberOfTxs)); }
+void RPCConsole::setMessagePoolSize(long numberOfMessages)
+{
+    ui->messagesInCapdPool->setText(QString::number(numberOfMessages));
+}
 QString FormatTps(double tps)
 {
     // Format the output

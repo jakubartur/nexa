@@ -102,6 +102,8 @@ public Q_SLOTS:
     void setMempoolSize(long numberOfTxs, size_t dynUsage);
     /** Set number of transactions in ophan pool in the UI */
     void setOrphanPoolSize(long numberOfTxs);
+    /** Set number of messages in the CAPD message pool, in the UI */
+    void setMessagePoolSize(long numberOfMessages);
     /** Set tx's per second in the UI */
     void setTransactionsPerSecond(double smoothedTps, double instantaneousTps, double peakTps);
     /** Set block propagation statistics in the UI */
