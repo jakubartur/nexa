@@ -66,11 +66,11 @@
         <translation>Alamat penerima</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Alamat-alamat Anda untuk mengirim pembayaran. Periksalah jumlah dan alamat penerima setiap kali Anda mengirim Bitcoin.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Alamat-alamat Anda untuk mengirim pembayaran. Periksalah jumlah dan alamat penerima setiap kali Anda mengirim Nexa.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>Alamat-alamat Anda untuk menerima pembayaran. Dianjurkan agar Anda menggunakan alamat yang baru untuk setiap transaksi.</translation>
     </message>
     <message>
@@ -160,16 +160,16 @@
         <translation>Konfirmasi enkripsi dompet</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Perhatian: Jika anda mengenkripsi dompet anda dan lupa kata kuncinya, anda akan &lt;b&gt;KEHILANGAN SELURUH BITCOIN ANDA&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Perhatian: Jika anda mengenkripsi dompet anda dan lupa kata kuncinya, anda akan &lt;b&gt;KEHILANGAN SELURUH NEXA ANDA&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
         <translation>Apakah Anda yakin ingin mengenkripsi dompet Anda?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>BCH Unlimited akan ditutup untuk menyelesaikan proses enkripsi. Mohon diingat bahwa mengenkripsi dompet Anda tidak akan sepenuhnya melindungi bitcoin Anda dari virus atau malware yang menginfeksi komputer Anda.</translation>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>BCH Unlimited akan ditutup untuk menyelesaikan proses enkripsi. Mohon diingat bahwa mengenkripsi dompet Anda tidak akan sepenuhnya melindungi coin Anda dari virus atau malware yang menginfeksi komputer Anda.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -1296,8 +1296,8 @@
         <translation>Nilai</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Masukkan alamat Bitcoin (contoh %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Masukkan alamat Nexa (contoh %1)</translation>
     </message>
     <message>
         <source>%1 h</source>
@@ -1977,8 +1977,8 @@
         <translation>Salin tanda tangan terpilih ke sistem klipboard</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>Tandai pesan untuk menyetujui kamu pemiliki alamat Bitcoin ini</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>Tandai pesan untuk menyetujui kamu pemiliki alamat Nexa ini</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>

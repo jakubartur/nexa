@@ -58,12 +58,12 @@
         <translation>Recepción de direcciones</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Estas son tus direcciones Bitcoin para realizar pagos. Siempre checa el monto y la dirección de recepción antes de enviar monedas.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Estas son tus direcciones Nexa para realizar pagos. Siempre checa el monto y la dirección de recepción antes de enviar monedas.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Estas son tus direcciones Bitcoin para recibir pagos. Es recomendable usar una nueva dirección para cada transacción.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Estas son tus direcciones Nexa para recibir pagos. Es recomendable usar una nueva dirección para cada transacción.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -152,8 +152,8 @@
         <translation>Confirmar encriptación de billetera</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Aviso: Si encriptas tu billetera y pierdes tu frase secreta, ¡PERDERÁS TODOS TUS BITCOINS!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Aviso: Si encriptas tu billetera y pierdes tu frase secreta, ¡PERDERÁS TODOS TUS NEXA COINS!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>

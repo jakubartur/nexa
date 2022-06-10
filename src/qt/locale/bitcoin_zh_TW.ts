@@ -66,12 +66,12 @@
         <translation>收款位址</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>這些是你要付款過去的 Bitcoin 位址。在付錢之前，務必要檢查金額和收款位址是否正確。</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>這些是你要付款過去的 Nexa 位址。在付錢之前，務必要檢查金額和收款位址是否正確。</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>這些是你用來收款的 Bitcoin 位址。建議在每次交易時，都使用一個新的收款位址。</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>這些是你用來收款的 Nexa 位址。建議在每次交易時，都使用一個新的收款位址。</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -160,15 +160,15 @@
         <translation>確認錢包加密</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>警告: 如果把錢包加密後又忘記密碼，你就會從此&lt;b&gt;失去其中所有的 Bitcoin 了&lt;/b&gt;！</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>警告: 如果把錢包加密後又忘記密碼，你就會從此&lt;b&gt;失去其中所有的 Nexa 了&lt;/b&gt;！</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
         <translation>你確定要把錢包加密嗎？</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
         <translation>BCH Unlimited 現在要關閉，好完成加密程序。請注意，加密錢包不能完全防止入侵你的電腦的惡意程式偷取錢幣。</translation>
     </message>
     <message>
@@ -1404,8 +1404,8 @@
         <translation>金額</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>輸入 Bitcoin 位址 (比如說 %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>輸入 Nexa 位址 (比如說 %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -2213,8 +2213,8 @@
         <translation>這是一筆正常的付款。</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
-        <translation>接收付款的 Bitcoin 位址</translation>
+        <source>The Nexa address to send the payment to</source>
+        <translation>接收付款的 Nexa 位址</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -2295,8 +2295,8 @@
         <translation>你可以用自己的位址簽署訊息或合約，來證明你可以從該位址收款。但是請小心，不要簽署語意含糊不清，或隨機產生的內容，因為釣魚式詐騙可能會用騙你簽署的手法來冒充是你。只有在語句中的細節你都同意時才簽署。</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
-        <translation>用來簽署訊息的 Bitcoin 位址</translation>
+        <source>The Nexa address to sign the message with</source>
+        <translation>用來簽署訊息的 Nexa 位址</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2327,8 +2327,8 @@
         <translation>複製目前的簽章到系統剪貼簿</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>簽署這個訊息來證明這個 Bitcoin 位址是你的</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>簽署這個訊息來證明這個 Nexa 位址是你的</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -2351,12 +2351,12 @@
         <translation>請在下面輸入收款人的位址，訊息(請確定完整複製了所包含的換行，空格，跳位符號等等)，以及簽章，來驗證這個訊息。請小心，除了訊息內容以外，不要對簽章本身過度解讀，以避免被用「中間人攻擊法」詐騙。請注意，通過驗證的簽章只能證明簽章人確實可以從該位址收款，不能證明任何交易中的付款人身份！</translation>
     </message>
     <message>
-        <source>The Bitcoin address the message was signed with</source>
-        <translation>簽署這個訊息的 Bitcoin 位址</translation>
+        <source>The Nexa address the message was signed with</source>
+        <translation>簽署這個訊息的 Nexa 位址</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>驗證這個訊息來確定是用指定的 Bitcoin 位址簽署的</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>驗證這個訊息來確定是用指定的 Nexa 位址簽署的</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>

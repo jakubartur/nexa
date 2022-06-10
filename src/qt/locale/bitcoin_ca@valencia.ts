@@ -809,8 +809,8 @@
         <translation>L'adreça introduïda «%1» ja és present a la llibreta d'adreces.</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Bitcoin address.</source>
-        <translation>L'adreça introduïda «%1» no és una adreça de Bitcoin vàlida.</translation>
+        <source>The entered address "%1" is not a valid Nexa address.</source>
+        <translation>L'adreça introduïda «%1» no és una adreça de Nexa vàlida.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>

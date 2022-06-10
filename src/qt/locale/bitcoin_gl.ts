@@ -682,7 +682,7 @@
     <name>HelpMessageDialog</name>
     <message>
         <source>BCH Unlimited</source>
-        <translation>Core de Bitcoin</translation>
+        <translation>Unlimited de Bitcoin</translation>
     </message>
     <message>
         <source>version</source>
@@ -690,7 +690,7 @@
     </message>
     <message>
         <source>About BCH Unlimited</source>
-        <translation>Sobre Bitcoin core</translation>
+        <translation>Sobre Bitcoin Unlimited</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -721,7 +721,7 @@
     </message>
     <message>
         <source>BCH Unlimited</source>
-        <translation>Core de Bitcoin</translation>
+        <translation>Unlimited de Bitcoin</translation>
     </message>
     <message>
         <source>Error</source>
@@ -1433,8 +1433,8 @@
         <translation>Copiar a sinatura actual ao portapapeis do sistema</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>Asina a mensaxe para probar que posees esta dirección Bitcoin</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>Asina a mensaxe para probar que posees esta dirección Nexa</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -1453,8 +1453,8 @@
         <translation>&amp;Verificar Mensaxe</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>Verificar a mensaxe para asegurar que foi asinada coa dirección Bitcoin especificada</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>Verificar a mensaxe para asegurar que foi asinada coa dirección Nexa especificada</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>

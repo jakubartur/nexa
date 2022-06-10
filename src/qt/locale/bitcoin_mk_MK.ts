@@ -47,11 +47,11 @@
     </message>
     <message>
         <source>Choose the address to send coins to</source>
-        <translation>Изберете адресата за да пратите биткоини</translation>
+        <translation>Изберете адресата за да пратите коини</translation>
     </message>
     <message>
         <source>Choose the address to receive coins with</source>
-        <translation>Изберете адресата за да примите биткоини</translation>
+        <translation>Изберете адресата за да примите коини</translation>
     </message>
     <message>
         <source>C&amp;hoose</source>
@@ -132,8 +132,8 @@
         <translation>Потврдете го криптирањето на паричникот</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Предупредување: Ако го шифрирате вашиот паричник и ја изгубите вашата тајна фраза, ќе &lt;b&gt;ГИ ИЗГУБИТЕ СИТЕ ВАШИ БИТКОИНИ&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Предупредување: Ако го шифрирате вашиот паричник и ја изгубите вашата тајна фраза, ќе &lt;b&gt;ГИ ИЗГУБИТЕ СИТЕ ВАШИ КОИНИ&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -263,7 +263,7 @@
     </message>
     <message>
         <source>Send coins to a Nexa address</source>
-        <translation>Испрати биткоини на Биткоин адреса</translation>
+        <translation>Испрати коини на Nexa адреса</translation>
     </message>
     <message>
         <source>&amp;Verify message...</source>
@@ -271,7 +271,7 @@
     </message>
     <message>
         <source>Nexa</source>
-        <translation>Биткоин</translation>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>

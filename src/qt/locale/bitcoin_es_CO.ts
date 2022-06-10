@@ -62,13 +62,13 @@
         <translation>Recibiendo direcciones</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>
-Estas son las direcciones de Bitcoin para enviar pagos . Siempre verifique la cantidad y la dirección de recepción antes de enviar monedas.</translation>
+Estas son las direcciones de Nexa para enviar pagos . Siempre verifique la cantidad y la dirección de recepción antes de enviar monedas.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Estas son las direcciones de Bitcoin para recibir los pagos . Se recomienda el uso de una nueva dirección de recepción para cada transacción.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Estas son las direcciones de Nexa para recibir los pagos . Se recomienda el uso de una nueva dirección de recepción para cada transacción.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -157,16 +157,16 @@ Estas son las direcciones de Bitcoin para enviar pagos . Siempre verifique la ca
         <translation>Confirmar encriptación de la billetera</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Precaución: Si tú has encriptado tu billetera y has perdido tu contraseña, usted &lt;b&gt;PERDERÁ TODOS TUS BITCOINS&lt;/b&gt;</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Precaución: Si tú has encriptado tu billetera y has perdido tu contraseña, usted &lt;b&gt;PERDERÁ TODOS TUS NEXA COINS&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
         <translation>Estas seguro de que deseas encriptar tu billetera?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>BCH Unlimited se cerrará ahora para finalizar el proceso de encriptación. Recuerda que encriptando tu billetera no protegera por completo tus bitcoins desde robos por malware que infectan tu computadora.</translation>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>Nexa se cerrará ahora para finalizar el proceso de encriptación. Recuerda que encriptando tu billetera no protegera por completo tus coins desde robos por malware que infectan tu computadora.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>

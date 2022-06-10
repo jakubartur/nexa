@@ -809,8 +809,8 @@
         <translation>Zadaná adresa "%1" už v adresáři je.</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Bitcoin address.</source>
-        <translation>Zadaná adresa "%1" není platná Bitcoinová adresa.</translation>
+        <source>The entered address "%1" is not a valid Nexa address.</source>
+        <translation>Zadaná adresa "%1" není platná Nexa adresa.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>
