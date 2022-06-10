@@ -321,7 +321,7 @@ protected:
     Stack stack;
     Stack altstack;
     const CScript *script;
-    ScriptError error;
+    ScriptError error = SCRIPT_ERR_INITIAL_STATE;
 
     CScript::const_iterator pc;
     CScript::const_iterator pbegin;
