@@ -295,7 +295,7 @@ bool ScriptMachine::BeginStep(const CScript &_script)
     stats.nOpCount = 0;
     vfExec.clear();
 
-    set_error(&error, SCRIPT_ERR_UNKNOWN_ERROR);
+    set_error(&error, SCRIPT_ERR_INITIAL_STATE);
     if (script->size() > maxScriptSize)
     {
         script = nullptr;
