@@ -457,7 +457,8 @@ public:
     // Execute the next instruction of a script (you must have previously BeginStep()ed).
     bool Step();
     // Keep stepping until finished, problem or n steps. EndStep() (finish script eval) is NOT called.
-    bool Continue(size_t nSteps = 0x1000000000000UL);
+    // nsteps default is 2^32-1 (a number bigger than any script will ever be)
+    bool Continue(size_t nSteps = 0x7FFFFFFFUL);
     // Modifies the script in-place, by overriding its const designator. Only use during script debugging
     bool ModifyScript(int position, uint8_t *data, size_t dataLength);
     // Do final checks once the script is complete.
