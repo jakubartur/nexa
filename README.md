@@ -1,33 +1,24 @@
-[Website](https://www.bitcoinunlimited.info)  | [Download](https://www.bitcoinunlimited.info/download) | [Setup](README.md)   |   [Miner](doc/miner.md)  |  [ElectronCash](doc/bu-electrum-integration.md)  |  [UnconfirmedChains](doc/unconfirmedTxChainLimits.md)
+[Website](https://www.nexa.org)  | [Download](https://www.nexa.org/download) | [Setup](README.md)   |   [Miner](doc/miner.md)  |  [ElectronCash](doc/bu-electrum-integration.md)  |  [UnconfirmedChains](doc/unconfirmedTxChainLimits.md)
 
-[![Build Status](https://gitlab.com/bitcoinunlimited/BCHUnlimited/badges/dev/pipeline.svg?key_text=Build%20Status%20%28dev%29&key_width=110)](https://gitlab.com/bitcoinunlimited/BCHUnlimited/-/pipelines)
+[![Build Status](https://gitlab.com/nexa/nexa/badges/dev/pipeline.svg?key_text=Build%20Status%20%28dev%29&key_width=110)](https://gitlab.com/nexa/nexa/-/pipelines)
 
-# What is Bitcoin Cash?
+# What is Nexa?
 
-Bitcoin Cash is an experimental new digital currency that enables instant payments to
-anyone, anywhere in the world. Bitcoin Cash uses peer-to-peer technology to operate
-with no central authority: managing transactions and issuing money are carried
-out collectively by the network. Bitcoin Unlimited is the name of open source
-software which enables the use of this currency.
+Nexa is an experimental financial blockchain and digital currency.  It updates the Bitcoin codebase to enable more transactions per block, advanced scripting, and miner validated (native) fungible and non-fungible tokens.
 
-For more information, as well as an immediately useable, binary version of
-the Bitcoin Unlimited software, see https://www.bitcoinunlimited.info/download, or read the
-[original whitepaper](https://www.bitcoinunlimited.info/resources/bitcoin.pdf).
+Bitcoin can be considered digital gold, while Ethereum is a massively redundant computer that primarily implements financial contracts.  
 
+Nexa positions itself differently -- like Bitcoin, it has a sound money coin distribution, but it supports use as a currency via its massive layer one scalability via dynamic block sizes, double-spend notifications, deep unconfirmed transaction chains, and 2 minute average block discovery times.  
 
+It has smart contracting features like Ethereum, but is not a full turing-complete language.  This and its Bitcoin-like UTXO model allows for massive parallelization of transaction processing.  Financial and cryptographic functions (namely tokens, "fenced" nexa, and large integers) are implemented as fundamental blockchain primitives, allowing for very size and time efficient implementations of financial operations.
 
-# What is Bitcoin Unlimited?
+Nexa's primary goal is to be a financial blockchain -- to allow diverse financial instruments to be created, owned, tracked, and to interact on a peer-to-peer, permissionless, trust-free, pseudo-anonymous, and decentralized ledger.
 
-Bitcoin Unlimited is an implementation of the Bitcoin client software that is based on Bitcoin Core.
-However, Bitcoin Unlimited has a very different philosophy than Core.
-
-It follows a philosophy and is administered by a formal process described in the [Articles of Federation](https://www.bitcoinunlimited.info/resources/BUarticles.pdf).
-In short, we believe in market-driven decision making, emergent consensus, and giving our users choices.
-
+For more general information see [www.nexa.org](https://www.nexa.org).  For protocol specifications see [spec.nexa.org](https://spec.nexa.org).
 
 # Installing
 
-For info on installing Bitcoin Unlimited see [INSTALL.md](INSTALL.md)
+For info on installing Nexa see [INSTALL.md](INSTALL.md)
 
 # Building
 
@@ -45,20 +36,15 @@ They are not complete guides, but include notes on the necessary libraries, comp
 
 # Running / setup
 
-- [Running large unconfirmed transaction chain limits](doc/unconfirmedTxChainLimits.md)
 - [Running an electron cash protocol server](doc/bu-electrum-integration.md)
-- [Getting the most out of Xtreme thinblocks](bu-xthin.md)
-- [Setting up an Xpedited Relay Network](bu-xpedited-forwarding.md)
 - [Tor Support](doc/tor.md)
 - [Init Scripts (systemd/upstart/openrc)](doc/init.md)
-- [Using Bitcoin Unlimited for Mining](doc/miner.md)
+- [Using Nexa for mining](doc/miner.md)
 
 # Development
 
 - [Developer Notes](doc/developer-notes.md)
 - [Contributing](CONTRIBUTING.md)
-- [BUIP, BIP and Bitcoin Cash Specifications](doc/bips-buips-specifications.md)
-- [Bitcoin Unlimited Improvement Proposal Archive](https://github.com/BitcoinUnlimited/BUIP)
 - [Multiwallet Qt Development](doc/multiwallet-qt.md)
 - [Release Notes](doc/release-notes.md)
 - [Release Process](doc/release-process.md)
@@ -74,17 +60,13 @@ They are not complete guides, but include notes on the necessary libraries, comp
 
 # Online resources
 
- - [Issue Tracker](https://github.com/BitcoinUnlimited/BitcoinUnlimited/issues)
- - [The Bitcoin Forum](https://www.bitco.in/forum)
- - [Reddit /r/btc](https://www.reddit.com/r/btc)
- - [Reddit /r/bitcoin_unlimited](https://www.reddit.com/r/bitcoin_unlimited)
- - [Slack Channel](https://bitcoinunlimited.slack.com/)
-
+ - [Issue Tracker](https://gitlab.com/BitcoinUnlimited/BitcoinUnlimited/issues)
+ - [The Nexa Forum](https://forum.bitcoinunlimited.info/forum)
 
 
 # License
 
-Bitcoin Unlimited is released under the terms of the [MIT software license](http://www.opensource.org/licenses/mit-license.php). See [COPYING](COPYING) for more
+Nexa is released under the terms of the [MIT software license](http://www.opensource.org/licenses/mit-license.php). See [COPYING](COPYING) for more
 information.
-This product includes software developed by the OpenSSL Project for use in the [OpenSSL Toolkit](https://www.openssl.org/). This product includes
-cryptographic software written by Eric Young ([eay@cryptsoft.com](mailto:eay@cryptsoft.com)), and UPnP software written by Thomas Bernard.
+
+This product includes software developed by the OpenSSL Project for use in the [OpenSSL Toolkit](https://www.openssl.org/). This product includes cryptographic software written by Eric Young ([eay@cryptsoft.com](mailto:eay@cryptsoft.com)), and UPnP software written by Thomas Bernard.
