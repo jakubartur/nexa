@@ -85,12 +85,16 @@ class DebugSession:
         self.spendTx = MakeCTransaction(spendTx)
         self.inputIdx = None
         if prevoutIdx==None:
-            # find the common tx.
-            txid = self.prevTx.getHash()
+            # find the related input/output.
             self.inputIdx = 0
+            pdb.set_trace()
             for inp in self.spendTx.vin:
-                if txid == inp.prevout.hash:
-                    prevoutIdx = inp.prevout.n
+                for outIdx in range(0,len(self.prevTx.vout)):
+                    outpt = self.prevTx.OutpointAt(outIdx)
+                    if outpt.hash == inp.prevout.hash:
+                        prevoutIdx = inp.prevout.n
+                        break
+                if prevoutIdx != None:
                     break
                 self.inputIdx += 1
 
@@ -190,12 +194,10 @@ class ScriptDebugTest (BitcoinTestFramework):
         tx = CTransaction()
         tx.deserialize(txStream)
 
-        # flags = cashlib.ScriptMachine.SCRIPT_VERIFY_P2SH | cashlib.ScriptMachine.SCRIPT_VERIFY_STRICTENC | cashlib.ScriptMachine.SCRIPT_ENABLE_SIGHASH_FORKID | cashlib.ScriptMachine.SCRIPT_VERIFY_LOW_S | cashlib.ScriptMachine.SCRIPT_VERIFY_NULLFAIL | cashlib.ScriptMachine.SCRIPT_ENABLE_MAY152018_OPCODES | cashlib.ScriptMachine.SCRIPT_VERIFY_CHECKSEQUENCEVERIFY | cashlib.ScriptMachine.SCRIPT_VERIFY_CHECKLOCKTIMEVERIFY | self.SCRIPT_VERIFY_DERSIG
-
         flags = cashlib.ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS
 
         print("eval scriptSig")
-        sm = cashlib.ScriptMachine(flags=flags, tx=tx, inputIdx=0, inputAmount=1*cashlib.BCH)
+        sm = cashlib.ScriptMachine(flags=flags, tx=tx, inputIdx=0)
         worked = evals(sm,CScript(unhexlify("00473044022001a983ec77ff66bcf2d4ad6d4d96a1f6431ee1102c884dc3d01f564092fad92102204d3af3b419ffb2e27249bdfb2290f77bb40b66afc874c2b561f10d5674f61f4201004752210371f9bb1024de3b2da052ec3c238b1917d3f3eca7c7f75798d096b7ed05dc371221028d7ef7f437223338528f7f0c042c95e1d717c0613b97078601ed3019865288eb52ae")))
         if not worked:
             print(sm.error())
@@ -217,7 +219,7 @@ class ScriptDebugTest (BitcoinTestFramework):
     def runAscript(self):
         pdb.set_trace()
         flags=cashlib.ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS | cashlib.ScriptFlags.SCRIPT_ENABLE_CHECKDATASIG
-        sm = cashlib.ScriptMachine(flags=flags, tx=None, inputIdx=0, inputAmount=1*cashlib.BCH)
+        sm = cashlib.ScriptMachine(flags=flags, tx=None, inputIdx=0)
         # s = CScript([ unhexlify("000000000000000000000000000000000000000000000000000001"), OP_SETBMD, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_BIN2BIGNUM, OP_DUP, OP_ADD])
         s = CScript([ unhexlify("000000000000000000000000000000000000000000000000000001"), OP_SETBMD, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_DUP, OP_BIN2BIGNUM, OP_SWAP, OP_BIN2BIGNUM, OP_ADD])
         # s = CScript([ unhexlify("000000000000000000000000000000000000000000000000000001"), OP_SETBMD, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_BIN2BIGNUM, unhexlify("f334a8c048898e4de6b8ca6359533d7fb7c12df3619e22238400"), OP_BIN2BIGNUM, OP_ADD, 26, OP_NUM2BIN])
@@ -226,8 +228,8 @@ class ScriptDebugTest (BitcoinTestFramework):
     def runDSVtest(self):
 
         # this DATASIGVERIFY transaction has a non-minimal number encoding so will fail with the default flags but succeed without MINIMALDATA
-        prevTx = "0200000001f6d349ec2d50ed93679e53a6528a5e4e30180308c46c3c9651311b18d1dcf839000000006a4730440220669444f24fdd23ea476c4b527fa0f76d9d4d53028997b202223114a969166f33022070948ff2b5a7b39c725ffb88f9255fec4bc1b10e6463c7bf038f7358a593287e412103bbdece7959df8a1e3b22746d097fc4e06201e9f042ba4746481025966154bc35ffffffff01803801000000000070766b2103bbdece7959df8a1e3b22746d097fc4e06201e9f042ba4746481025966154bc35ba696c547f049339d05b766ba2696cb1750450c30000a26376a914c5d7f8f90e2b7d0dcedf7a49a524b25f3c340ab388ac6776a914b768b57134fbfa73fb6aa2fd7e1f5ffc10acb72c88ac6800000000"
-        spendTx = unhexlify("02000000014dd4890a4c37a4057abe7fb2fd241127fcb534a26de5ce95cd412dbf68c82a8d00000000bc4830450221009e3ea2a539cad02f90aae92b0fb2bfdd42aedc7e6c4806ec9784a9c035f529b1022026ded0d0caaf20d3bf3abb95bb4394d5e5eb611a5c3e61eba7fe5c9f7376977b412103b0e8fbec8d97e7f6b966c656ce3cc2d01fad789757d7f07e6c3f8f8b9834f75f473045022100e223a63abf4155f59809d8daedff36109efb4f8d36677bbc708a808134906ae902201e94447f2f53bae329b20440c5e80cd56915bda98c57416765c3d1841533ec7d0850c300009339d05b000000000170110100000000001976a914c5d7f8f90e2b7d0dcedf7a49a524b25f3c340ab388ac9439d05b")
+        prevTx = ""
+        spendTx = unhexlify("")
 
         dbg = DebugSession(prevTx, spendTx, flags=cashlib.ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS | cashlib.ScriptFlags.SCRIPT_ENABLE_CHECKDATASIG )
         print("Evaluating spend script")
@@ -244,10 +246,11 @@ class ScriptDebugTest (BitcoinTestFramework):
         assert(result[0] == cashlib.ScriptError.SCRIPT_ERR_OK)
 
     def multisigTest(self):
-        prevTx = "0100000001622614617497345f05d732f51d93a2be4e82d3e0753d9fb8f12602267241b518060000006441823adf2066b671ac1a0d9ea0bb1fffcd38e3689d03e41127f3a70edd6f2bdfa0af22292faadccfcd3a0fb513650e57320e4e2c94968eb5edceec591728c63def412103c1294d14e5daa5c55e7a9c2f7d92cb134d3d2302b2b54712ea7c588240064c85feffffff01624e00000000000017a9143509b289c19490e9bf123d07eca281c80bfab18d873c7d0900"
-        spendTx ="010000000103ff48b851370170e26f2a47bc9eb02ba146a6ae7593ba1aa13172eecb980cad00000000f05541645b754af4bc4bea3ce8f1a29cbbd5cf40bba5982a9b50920f1488a9a22c37064b60155b20fca82760ca9834b13d1eae3396cefa6dfc178f7ec06dd580f4974a4141bc1e337422a4c71100726a8d27f58ba908ffd2a72d2015e8f03021be319a32c5b521cd1c4a46e0c4567c83b8aa158e9a2df8701d7a44630d54a63b8e8def01d8414c695221032fed71dcd99e1c7f74b828b85f9bd45f1a7e8b96dfbf0d56a66ac6ae4bc1209e210341f6b344c440f0c2dc592cd1c6783a82fded9bfb6dd1beba44d30a694aa382272103ffbc963d0cd9160dd7d153400f094629afbf1fc793fba147888d3beff02bec3653aeffffffff01d24c0000000000001976a914254a0a048668e68ba545f1a24ea7e6a05cdec66988ac00000000"
+        
+        prevTx = ""
+        spendTx =""
 
-        dbg = DebugSession(prevTx, spendTx, flags=cashlib.ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS | cashlib.ScriptFlags.SCRIPT_ENABLE_SCHNORR_MULTISIG | cashlib.ScriptFlags.SCRIPT_ENABLE_CHECKDATASIG )
+        dbg = DebugSession(prevTx, spendTx, flags=cashlib.ScriptFlags.STANDARD_SCRIPT_VERIFY_FLAGS | cashlib.ScriptFlags.SCRIPT_ENABLE_CHECKDATASIG )
         print("Evaluating spend script")
         dbg.evalSpendScript()
         print("Evaluating constraint script")
@@ -260,21 +263,25 @@ class ScriptDebugTest (BitcoinTestFramework):
 
 
     def run_test(self):
-        self.multisigTest()
+        # TODO all the examples need updating for Nexa.  However, the active effort in making a debugger has moved to Kotlin so
+        # wait until this is needed again.
+        pass
+        #self.runScriptMachineTests()
+        # self.multisigTest()
         # self.runAscript()
         # self.runDSVtest()
 
 
 
 if __name__ == '__main__':
-    env = os.getenv("BITCOIND", None)
+    env = os.getenv("NEXAD", None)
     if env is None:
         env = os.path.dirname(os.path.abspath(__file__))
-        env = env + os.sep + ".." + os.sep + ".." + os.sep + "src" + os.sep + "bitcoind"
+        env = env + os.sep + ".." + os.sep + ".." + os.sep + "src" + os.sep + "nexad"
         env = os.path.abspath(env)
     path = os.path.dirname(env)
     try:
-        cashlib.init(path + os.sep + ".libs" + os.sep + "libbitcoincash.so")
+        cashlib.init(path + os.sep + ".libs" + os.sep + "libnexa.so")
         MyTest().main()
     except OSError as e:
         print("Issue loading shared library.  This is expected during cross compilation since the native python will not load the .so: %s" % str(e))
@@ -294,5 +301,5 @@ def Test():
         flags.append("--tmppfx=/ramdisk/test")
     binpath = findBitcoind()
     flags.append("--srcdir=%s" % binpath)
-    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libbitcoincash.so")
+    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libnexa.so")
     t.main(flags, bitcoinConf, None)

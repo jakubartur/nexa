@@ -13,7 +13,11 @@
 
 #include "fs.h"
 #include "tinyformat.h"
+#include "utiltime.h"
 
+#include <algorithm>
+#include <map>
+#include <mutex>
 #include <stdint.h>
 #include <string>
 
@@ -21,8 +25,16 @@ static const bool DEFAULT_LOGTIMEMICROS = false;
 static const bool DEFAULT_LOGIPS = true;
 static const bool DEFAULT_LOGTIMESTAMPS = true;
 
-/** Send a string to the log output */
-int LogPrintStr(const std::string &str);
+extern std::atomic<bool> fLogTimestamps;
+extern std::atomic<bool> fLogTimeMicros;
+extern std::atomic<bool> fPrintToConsole;
+extern std::atomic<bool> fPrintToDebugLog;
+extern std::atomic<bool> fReopenDebugLog;
+
+extern std::atomic<std::mutex *> mutexDebugLog;
+extern std::atomic<FILE *> logger_fileout;
+
+extern fs::path pathDebugLog;
 
 // Logging API:
 // Use the two macros
@@ -93,106 +105,26 @@ enum
     // clang-format on
 };
 
+int LogPrintStr(const std::string &str);
+
 namespace Logging
 {
-extern uint64_t categoriesEnabled;
+extern std::atomic<uint64_t> categoriesEnabled; // 64 bit log id mask.
 
-/*
-To add a new log category:
-1) Create a unique 1 bit category mask. (Easiest is to 2* the last enum entry.)
-   Put it at the end of enum above.
-2) Add an category/string pair to LOGLABELMAP macro below.
-*/
-
-// Add corresponding lower case string for the category:
-#define LOGLABELMAP                                                                                             \
-    {                                                                                                           \
-        {NONE, "none"}, {ALL, "all"}, {THIN, "thin"}, {MEMPOOL, "mempool"}, {COINDB, "coindb"}, {TOR, "tor"},   \
-            {NET, "net"}, {ADDRMAN, "addrman"}, {LIBEVENT, "libevent"}, {HTTP, "http"}, {RPC, "rpc"},           \
-            {PARTITIONCHECK, "partitioncheck"}, {BENCH, "bench"}, {PRUNE, "prune"}, {REINDEX, "reindex"},       \
-            {MEMPOOLREJ, "mempoolrej"}, {BLK, "blk"}, {EVICT, "evict"}, {PARALLEL, "parallel"}, {RAND, "rand"}, \
-            {REQ, "req"}, {BLOOM, "bloom"}, {LCK, "lck"}, {PROXY, "proxy"}, {DBASE, "dbase"},                   \
-            {SELECTCOINS, "selectcoins"}, {ESTIMATEFEE, "estimatefee"}, {QT, "qt"}, {IBD, "ibd"},               \
-            {GRAPHENE, "graphene"}, {RESPEND, "respend"}, {WB, "weakblocks"}, {CMPCT, "cmpctblock"},            \
-            {ELECTRUM, "electrum"}, {MPOOLSYNC, "mempoolsync"}, {PRIORITYQ, "priorityq"}, {DSPROOF, "dsproof"}, \
-            {TWEAKS, "tweaks"}, {SCRIPT, "script"}, {ZMQ, "zmq"}, {VALIDATION, "validation"}, {CAPD, "capd"},   \
-        {                                                                                                       \
-            TOKEN, "token"                                                                                      \
-        }                                                                                                       \
-    }
-
+void LogInit(std::vector<std::string> categories = {});
 /**
  * Check if a category should be logged
  * @param[in] category
  * returns true if should be logged
  */
 inline bool LogAcceptCategory(uint64_t category) { return (categoriesEnabled & category); }
+
 /**
  * Turn on/off logging for a category
  * @param[in] category
  * @param[in] on  True turn on, False turn off.
  */
-inline void LogToggleCategory(uint64_t category, bool on)
-{
-    if (on)
-        categoriesEnabled |= category;
-    else
-        categoriesEnabled &= ~category; // off
-}
-
-/**
- * Get a category associated with a string.
- * @param[in] label string
- * returns category
- */
-uint64_t LogFindCategory(const std::string label);
-
-/**
- * Get the label / associated string for a category.
- * @param[in] category
- * returns label
- */
-std::string LogGetLabel(uint64_t category);
-
-/**
- * Get all categories and their state.
- * Formatted for display.
- * returns all categories and states
- */
-std::string LogGetAllString(bool fEnabled = false);
-
-/**
- * Initialize
- */
-void LogInit();
-
-/**
- * Write log string to console:
- *
- * @param[in] All parameters are "printf like".
- */
-template <typename T1, typename... Args>
-inline void LogStdout(const char *fmt, const T1 &v1, const Args &...args)
-{
-    try
-    {
-        std::string str = tfm::format(fmt, v1, args...);
-        ::fwrite(str.data(), 1, str.size(), stdout);
-    }
-    catch (...)
-    {
-        // Number of format specifiers (%) do not match argument count, etc
-    };
-}
-
-/**
- * Write log string to console:
- * @param[in] str String to log.
- */
-inline void LogStdout(const std::string &str)
-{
-    ::fwrite(str.data(), 1, str.size(), stdout); // No formatting for a simple string
-}
+void LogToggleCategory(uint64_t category, bool on);
 
 /**
  * Log a string
@@ -208,7 +140,7 @@ inline void LogWrite(const char *fmt, const T1 &v1, const Args &...args)
     catch (...)
     {
         // Number of format specifiers (%) do not match argument count, etc
-    };
+    }
 }
 
 /**
@@ -219,7 +151,32 @@ inline void LogWrite(const std::string &str)
 {
     LogPrintStr(str); // No formatting for a simple string
 }
+
+/**
+ * Get a category associated with a string.
+ * @param[in] label string
+ * returns category
+ */
+uint64_t LogFindCategory(const std::string &label);
+
+/**
+ * Get all categories and their state.
+ * Formatted for display.
+ * returns all categories and states
+ */
+// Return a string rapresentation of all debug categories and their current status,
+// one category per line. If enabled is true it returns only the list of enabled
+// debug categories concatenated in a single line.
+std::string LogGetAllString(bool fEnabled = false);
+
 } // namespace Logging
+
+/**
+ * LOGA macro: Always log a string.
+ *
+ * @param[in] ... "printf like args".
+ */
+#define LOGA(...) Logging::LogWrite(__VA_ARGS__)
 
 // Logging API:
 //
@@ -238,27 +195,20 @@ inline void LogWrite(const std::string &str)
             Logging::LogWrite(__VA_ARGS__);   \
     } while (0)
 
+
 /**
- * LOGA macro: Always log a string.
- *
- * @param[in] ... "printf like args".
+ * Get the label / associated string for a category.
+ * @param[in] category
+ * returns label
  */
-#define LOGA(...) Logging::LogWrite(__VA_ARGS__)
-//
+// note: only used in unit tests
+std::string LogGetLabel(const uint64_t &category);
 
 // Flush log file (if you know you are about to abort)
 void LogFlush();
 
-/** Get format string from VA_ARGS for error reporting */
 template <typename... Args>
-std::string FormatStringFromLogArgs(const char *fmt, const Args &...args)
-{
-    return fmt;
-}
-
-
-template <typename... Args>
-bool error(const char *fmt, const Args &...args)
+inline bool error(const char *fmt, const Args &...args)
 {
     LogPrintStr("ERROR: " + tfm::format(fmt, args...) + "\n");
     return false;
@@ -269,8 +219,11 @@ template <typename... Args>
 inline bool error(uint64_t ctgr, const char *fmt, const Args &...args)
 {
     if (Logging::LogAcceptCategory(ctgr))
+    {
         LogPrintStr("ERROR: " + tfm::format(fmt, args...) + "\n");
+    }
     return false;
 }
+
 
 #endif // BITCOIN_LOGGING_H

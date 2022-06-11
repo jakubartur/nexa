@@ -20,6 +20,7 @@ from test_framework.script import *
 class MyTest (BitcoinTestFramework):
 
     def setup_chain(self, bitcoinConfDict=None, wallets=None):
+        cashlib.loadCashLibOrExit(self.options.srcdir)
         print("Initializing test directory " + self.options.tmpdir)
         initialize_chain(self.options.tmpdir, bitcoinConfDict, wallets)
 
@@ -175,10 +176,9 @@ class MyTest (BitcoinTestFramework):
         tx.vout.append(CTxOut(amt, output))
 
         p2pkt = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
-        sighashtype = 0x41
         n = 0
         for i, priv in zip(inputs, privkeys):
-            sig = cashlib.signTxInput(tx, n, i["amount"], p2pkt, priv, sighashtype)
+            sig = cashlib.signTxInput(tx, n, i["amount"], p2pkt, priv)
             # tx.vin[n].scriptSig = cashlib.spendscript(sig)  # P2PK
             pubkey = cashlib.pubkey(priv)
             args = bytes(CScript([pubkey]))
@@ -193,7 +193,7 @@ class MyTest (BitcoinTestFramework):
         tx2 = CTransaction()
         tx2.vin.append(CTxIn(COutPoint().fromIdemAndIdx(txidem, 0), amt, b"", 0xffffffff))
         tx2.vout.append(CTxOut(amt, CScript([OP_1])))
-        sig2 = cashlib.signTxInput(tx2, 0, amt, output, destPrivKey, sighashtype)
+        sig2 = cashlib.signTxInput(tx2, 0, amt, output, destPrivKey)
         tx2.vin[0].scriptSig = cashlib.spendscript(sig2, destPubKey)
 
         # Local script interpreter:
@@ -231,17 +231,7 @@ class MyTest (BitcoinTestFramework):
 
 
 if __name__ == '__main__':
-    env = os.getenv("BITCOIND", None)
-    if env is None:
-        env = os.path.dirname(os.path.abspath(__file__))
-        env = env + os.sep + ".." + os.sep + ".." + os.sep + "src" + os.sep + "bitcoind"
-        env = os.path.abspath(env)
-    path = os.path.dirname(env)
-    try:
-        cashlib.init(path + os.sep + ".libs" + os.sep + "libbitcoincash.so")
-        MyTest().main()
-    except OSError as e:
-        print("Issue loading shared library.  This is expected during cross compilation since the native python will not load the .so: %s" % str(e))
+    MyTest().main()
 
 # Create a convenient function for an interactive python debugging session
 
@@ -259,5 +249,4 @@ def Test():
     flags = standardFlags() # ["--nocleanup", "--noshutdown"]
     binpath = findBitcoind()
     flags.append("--srcdir=%s" % binpath)
-    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libbitcoincash.so")
     t.main(flags, bitcoinConf, None)

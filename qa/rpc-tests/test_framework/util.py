@@ -1274,10 +1274,14 @@ def get_bip135_status(node, key):
     return info['bip135_forks'][key]
 # bip135 end
 
-def findBitcoind():
+def findBitcoind(trySrcDir=None):
     """Find the nexad executable via env var or search in typical out-of-source locations (debug or release)"""
     env = os.getenv("NEXAD", None)
     if env is None:
+        if trySrcDir:
+            objpath = trySrcDir + "/nexad"
+            if os.path.exists(objpath):
+                return trySrcDir
         here = os.path.dirname(os.path.abspath(__file__))
         objpath = os.path.abspath(here + "/../../../src/nexad")
         if not os.path.exists(objpath):

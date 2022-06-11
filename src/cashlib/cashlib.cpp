@@ -106,11 +106,12 @@ extern "C" void DbgResume() { dbgPauseCond.notify_all(); }
 
 const int CLIENT_VERSION = 0; // 0 because app should report its version, not this lib
 
-// stop the logging
+// Stop the logging.  TODO we can offer an API that lets the app install a log callback function and then call it
+// here so that the app can get our logs and do whatever it wants with them.
 int LogPrintStr(const std::string &str) { return str.size(); }
 namespace Logging
 {
-uint64_t categoriesEnabled = 0; // 64 bit log id mask.
+std::atomic<uint64_t> categoriesEnabled = 0; // 64 bit log id mask.
 };
 
 // I don't want to pull in the args stuff so always pick the defaults
@@ -440,7 +441,9 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     }
 
     if (inputIdx >= tx.vin.size())
+    {
         return 0;
+    }
 
     CScript priorScript(prevoutScript, prevoutScript + priorScriptLen);
     CKey key = LoadKey(keyData);
@@ -448,7 +451,9 @@ SLAPI int SignTxSchnorr(unsigned char *txData,
     size_t nHashedOut = 0;
     uint256 sighash;
     if (!SignatureHashNexa(priorScript, tx, inputIdx, sigHashType, sighash, &nHashedOut))
+    {
         return 0;
+    }
     std::vector<unsigned char> sig;
     if (!key.SignSchnorr(sighash, sig))
     {
