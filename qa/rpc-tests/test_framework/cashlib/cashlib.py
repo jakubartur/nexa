@@ -4,11 +4,14 @@
 from ctypes import *
 from test_framework.nodemessages import *
 from test_framework.constants import *
+from test_framework.util import findBitcoind
 from binascii import hexlify, unhexlify
 from enum import IntEnum, IntFlag
 import pdb
 import hashlib
 import decimal
+import platform
+import os
 
 MAX_STACK_ITEM_LENGTH = 520
 
@@ -16,6 +19,18 @@ MAX_STACK_ITEM_LENGTH = 520
 NEX = 100
 
 cashlib = None
+
+def loadCashLibOrExit(srcdir=None):
+    try:
+        path = findBitcoind(srcdir)
+        init(path + os.sep + ".libs" + os.sep + "libnexa.so")
+    except OSError as e:
+        p = platform.platform()
+        print("Platform  : " + p)
+        if "Linux" in p and "x86_64" in p: raise  # cashlib should be created on this platform
+        print("Issue loading shared library.  This is expected during cross compilation since the native python will not load the .so: %s" % str(e))
+        exit(0)
+
 
 # match this with value in stackitem.h
 class StackItemType(IntEnum):
@@ -29,7 +44,7 @@ class Error(BaseException):
 def init(libbitcoincashfile=None):
     global cashlib
     if libbitcoincashfile is None:
-        libbitcoincashfile = "libbitcoincash.so"
+        libbitcoincashfile = "libnexa.so"
         try:
             cashlib = CDLL(libbitcoincashfile)
         except OSError:

@@ -16,6 +16,7 @@ import test_framework.schnorr as schnorr
 import logging
 import test_framework.loginit
 import array
+import platform
 
 import time
 import sys
@@ -64,7 +65,6 @@ class SchnorrSigTest (BitcoinTestFramework):
                 print("data: ", data, " ", hexlify(databytes))
                 print("sig: ", hexlify(sig))
                 print("privkey:", hexlify(privkey))
-                pdb.set_trace()
             lens[l] += 1
             data += 1
             if ((data&16383)==0):
@@ -121,7 +121,7 @@ class SchnorrSigTest (BitcoinTestFramework):
             amt = inp['amount']-decimal.Decimal(0.00001)
             tx.vin.append(CTxIn(COutPoint(inp["outpoint"]), amt, b"", 0xffffffff))
             tx.vout.append(CTxOut(amt, constraint))
-            sighashtype = 0x41
+            sighashtype = SIGHASH_ALL
             idx = 0
             for i, priv in zip([inp], [privkey]):
                 sig = cashlib.signTxInputSchnorr(tx, idx, i["amount"], i["scriptPubKey"], priv, sighashtype)
@@ -141,7 +141,7 @@ class SchnorrSigTest (BitcoinTestFramework):
         coinbase = create_coinbase(nextheight)
         blkTime = max(tipHdr["time"],int(time.time()))
 
-        block = create_block(tip, nextheight, work, coinbase, blkTime+1, [tx])
+        block = create_block(tip, nextheight, work, coinbase, getAncHash(nextheight, self.nodes[0]), blkTime+1, [tx])
         block.rehash()
         hexblk = ToHex(block)
         expectException(lambda: n.validateblocktemplate(hexblk), JSONRPCException,'bad-txns-input-amount-mismatch')
@@ -152,8 +152,13 @@ class SchnorrSigTest (BitcoinTestFramework):
            enter the mempool.
         """
         n = self.nodes[0]
+        # get a traditional P2PKH
+        addr = n.getnewaddress("p2pkh")
+        n.sendtoaddress(addr, 1000000)
+        n.generate(1)
         wallet = n.listunspent()
-        inp = wallet[0]
+        wallet = filter(lambda x: x['scriptType'] != 'template', wallet)
+        inp = list(wallet)[0]
         privb58 = n.dumpprivkey(inp["address"])
         privkey = decodeBase58(privb58)[1:-5]
         pubkey = cashlib.pubkey(privkey)
@@ -163,7 +168,7 @@ class SchnorrSigTest (BitcoinTestFramework):
         destHash = cashlib.addrbin(destPubKey)
         constraint = CScript([OP_DUP, OP_HASH160, destHash, OP_EQUALVERIFY, OP_CHECKSIG])
 
-        fee = decimal.Decimal("0.00001")
+        fee = decimal.Decimal("2")
         # construct parent tx
         txp = CTransaction()
         amt = inp['amount']
@@ -176,7 +181,7 @@ class SchnorrSigTest (BitcoinTestFramework):
         txc.vout.append(CTxOut(decimal.Decimal(txc.vin[0].amount)/COIN-fee, constraint))
 
         # sign child tx
-        sighashtype = 0x41
+        sighashtype = SIGHASH_ALL
         sig = cashlib.signTxInputSchnorr(txc, 0, txc.vin[0].amount, constraint, destPrivKey, sighashtype)
         txc.vin[0].scriptSig = CScript([sig, destPubKey])  # P2PKH
         result = n.validaterawtransaction(txc.toHex())
@@ -185,15 +190,14 @@ class SchnorrSigTest (BitcoinTestFramework):
         waitFor(10,lambda: n.getorphanpoolinfo()['size'] == 1)
 
         # sign and post parent tx
-        sighashtype = 0x41
         sig = cashlib.signTxInputSchnorr(txp, 0, txp.vin[0].amount, inp["scriptPubKey"], privkey, sighashtype)
-        # txc.vin[0].scriptSig = CScript([sig, destPubKey])  # P2PKH
-        txp.vin[0].scriptSig = CScript([sig])  # P2PKH
+        txp.vin[0].scriptSig = CScript([sig, pubkey])  # P2PKH
+        # txp.vin[0].scriptSig = CScript([sig])  # P2PK
         n.sendrawtransaction(txp.toHex())
         # The child orphan should have been added to the mempool
         waitFor(10, lambda: n.getorphanpoolinfo()['size'] == 0)
-        waitFor(10, lambda: n.getmempoolinfo()['size'] == 2)
-        mp = n.getrawmempool()
+        waitFor(10, lambda: n.gettxpoolinfo()['size'] == 2)
+        mp = n.getrawtxpool()
         assert txp.GetRpcHexIdem() in mp
         assert txc.GetRpcHexIdem() in mp
         n.generate(1) # Clean up txs
@@ -218,10 +222,20 @@ class SchnorrSigTest (BitcoinTestFramework):
 
         logging.info("Schnorr signature transaction generation and commitment")
 
+        # Make some P2PKH outputs because this test uses them for legacy reasons
+        for n in self.nodes:
+            for i in range(0,10):
+                addr = n.getnewaddress("p2pkh")
+                n.sendtoaddress(addr, 1000000)
+            n.generate(1)
+            self.sync_blocks()
+
+
         resultWallet = []
         alltx = []
 
-        wallets = [self.nodes[0].listunspent(), self.nodes[1].listunspent()]
+        wallets = [list(filter(lambda x: x['scriptType'] != 'template',self.nodes[0].listunspent())),
+                   list(filter(lambda x: x['scriptType'] != 'template',self.nodes[1].listunspent()))]
         for txcount in range(0, 2):
             inputs = [x[0] for x in wallets]
             for x in wallets:  # Remove this utxo so we don't use it in the next time around
@@ -242,33 +256,33 @@ class SchnorrSigTest (BitcoinTestFramework):
 
                 output = CScript([OP_DUP, OP_HASH160, destHash, OP_EQUALVERIFY, OP_CHECKSIG])
 
-                amt = int(sum([x["amount"] for x in inputs]) * cashlib.BCH)
+                amt = int(sum([x["amount"] for x in inputs]) * cashlib.NEX)
                 tx.vout.append(CTxOut(amt, output))
 
-                sighashtype = 0x41
+                sighashtype = SIGHASH_ALL
                 n = 0
-                for i, priv in zip(inputs, privkeys):
+                for i, priv, pub in zip(inputs, privkeys, pubkeys):
                     sig = cashlib.signTxInputSchnorr(tx, n, i["amount"], i["scriptPubKey"], priv, sighashtype)
-                    tx.vin[n].scriptSig = cashlib.spendscript(sig)  # P2PK
+                    tx.vin[n].scriptSig = cashlib.spendscript(sig, pub)  # P2PKH
                     n += 1
 
                 txhex = hexlify(tx.serialize()).decode("utf-8")
                 txid = self.nodes[0].enqueuerawtransaction(txhex)
 
         # because enqueuerawtransaction and propagation is asynchronous we need to wait for it
-        waitFor(30, lambda: self.nodes[1].getmempoolinfo()['size'] == txcount+1)
-        mp = [i.getmempoolinfo() for i in self.nodes]
+        waitFor(30, lambda: self.nodes[1].gettxpoolinfo()['size'] == txcount+1)
+        mp = [i.gettxpoolinfo() for i in self.nodes]
         assert txcount+1 == mp[0]['size'] == mp[1]['size']
 
         nonSchnorrBlkHash = self.nodes[0].getbestblockhash()
         self.nodes[0].generate(1)
 
-        assert self.nodes[0].getmempoolinfo()['size'] == 0
+        assert self.nodes[0].gettxpoolinfo()['size'] == 0
         waitFor(30, lambda: self.nodes[0].getbestblockhash() == self.nodes[1].getbestblockhash())
 
         # Since we doublespent the above txs, we can't be sure which succeeded (we'd have to check the blocks)
         # Instead just grab new ones from a node's wallet
-        wallets = self.nodes[0].listunspent()
+        wallets = list(filter(lambda x: x['scriptType'] != 'template', self.nodes[0].listunspent()))
         resultWallet = []
         for i in wallets:
             privb58 = self.nodes[0].dumpprivkey(i["address"])
@@ -300,9 +314,8 @@ class SchnorrSigTest (BitcoinTestFramework):
                     tx.vout.append(CTxOut(amtPerOut, output))
                     resultWallet.append([destPrivKey, destPubKey, amtPerOut, txidHolder, outIdx, amtPerOut, output])
 
-                sighashtype = 0x41
                 n = 0
-                sig = cashlib.signTxInputSchnorr(tx, n, w[2], w[6], w[0], sighashtype)
+                sig = cashlib.signTxInputSchnorr(tx, n, w[2], w[6], w[0])
                 # In this test we only have P2PK or P2PKH type constraint scripts so the length can be used to distinguish them
                 if len(w[6]) == 35:
                     tx.vin[n].scriptSig = cashlib.spendscript(sig)  # P2PK
@@ -315,8 +328,8 @@ class SchnorrSigTest (BitcoinTestFramework):
                 txidHolder.data = txid
 
             # because enqueuerawtransaction and propagation is asynchronous we need to wait for it
-            waitFor(30, lambda: self.nodes[0].getmempoolinfo()['size'] == len(incomingWallet))
-            while self.nodes[0].getmempoolinfo()['size'] != 0:
+            waitFor(30, lambda: self.nodes[0].gettxpoolinfo()['size'] == len(incomingWallet))
+            while self.nodes[0].gettxpoolinfo()['size'] != 0:
                 self.nodes[0].generate(1)
             waitFor(30, lambda: self.nodes[0].getbestblockhash() == self.nodes[1].getbestblockhash())
 
@@ -326,6 +339,8 @@ if __name__ == '__main__':
         cashlib.init(binpath + os.sep + ".libs" + os.sep + "libbitcoincash.so")
         SchnorrSigTest().main()
     except OSError as e:
+        p = platform.platform()
+        if "Linux" in p and "x86-64" in p: raise  # cashlib should be properly created on this platform
         print("Issue loading cashlib shared library.  This is expected during cross compilation since the native python will not load the .so so no error will be reported: %s" % str(e))
 
 
@@ -334,8 +349,7 @@ def Test():
     t = SchnorrSigTest()
     t.drop_to_pdb = True
     bitcoinConf = {
-        "debug": ["net", "blk", "thin", "mempool", "req", "bench", "evict"],
-        "blockprioritysize": 2000000  # we don't want any transactions rejected due to insufficient fees...
+        "debug": ["net", "blk", "thin", "req", "bench", "evict"],
     }
 
     flags = []  # ["--nocleanup", "--noshutdown"]
@@ -343,6 +357,6 @@ def Test():
         flags.append("--tmpdir=/ramdisk/test/t")
     binpath = findBitcoind()
     flags.append("--srcdir=%s" % binpath)
-    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libbitcoincash.so")
+    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libnexa.so")
 
     t.main(flags, bitcoinConf, None)

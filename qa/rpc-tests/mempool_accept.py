@@ -21,7 +21,7 @@ import test_framework.cashlib as cashlib
 from test_framework.nodemessages import *
 from test_framework.script import *
 
-BitcoinCli = "bitcoin-cli"  # Will be amended with the path during initialization
+Cli = "nexa-cli"  # Will be amended with the path during initialization
 
 class PayDest:
     """A payment destination.  All the info you need to send a payment here and make a subsequent payment
@@ -69,8 +69,7 @@ def createConflictingTx(dests, source, count, fee=1):
                 tx.vout.append(CTxOut(amt, script))
                 i += 1
 
-            sighashtype = 0x41
-            sig = cashlib.signTxInput(tx, 0, w["satoshi"], w["scriptPubKey"], w["privkey"], sighashtype)
+            sig = cashlib.signTxInput(tx, 0, w["satoshi"], w["scriptPubKey"], w["privkey"])
             # construct the signature script -- it may be one of 2 types
             if w["scriptPubKey"][0:2] == hexOP_DUP or w["scriptPubKey"][0] == binOP_DUP:  # P2PKH starts with OP_DUP
                 tx.vin[0].scriptSig = cashlib.spendscript(sig, w["pubkey"])  # P2PKH
@@ -129,14 +128,13 @@ def createTx(dests, sources, node, maxx=None, fee=1, nextWallet=None, generatedT
                              "satoshi": amt, "pubkey": d.pubkey})
             i += 1
 
-        sighashtype = 0x41
         p2pkt = CScript([OP_FROMALTSTACK, OP_CHECKSIGVERIFY])
         # to make this fully general, you'd have to check the template hash in the scriptPubKey and get the corresponding code
         # but wallet always genrates p2pkt
         code = p2pkt if w.get("scriptType", None) == 'template' else w['scriptPubKey']
         n = 0
         # print("amountin: %d amountout: %d outscript: %s" % (w["satoshi"], amt, w["scriptPubKey"]))
-        sig = cashlib.signTxInput(tx, n, w["satoshi"], code, w["privkey"], sighashtype)
+        sig = cashlib.signTxInput(tx, n, w["satoshi"], code, w["privkey"])
 
         if w.get("scriptType", None) == 'template':
             pubkey = cashlib.pubkey(w["privkey"])
@@ -178,6 +176,9 @@ class MyTest (BitcoinTestFramework):
         BitcoinTestFramework.__init__(self)
 
     def setup_chain(self, bitcoinConfDict=None, wallets=None):
+        cashlib.loadCashLibOrExit(self.options.srcdir)
+        path = findBitcoind(self.options.srcdir)
+        Cli = os.getenv("NEXACLI", path + os.sep + "nexa-cli")
         logging.info("Initializing test directory " + self.options.tmpdir)
         initialize_chain(self.options.tmpdir, bitcoinConfDict, wallets)
 
@@ -271,10 +272,10 @@ class MyTest (BitcoinTestFramework):
                 # if datadir is not provided, it assumes ~/.bitcoin so this code may sort of work if you
                 # happen to have a ~/.bitcoin since relevant parameters are overloaded.  But that's ugly,
                 # so supply datadir correctly.
-                p1 = subprocess.Popen([BitcoinCli, "-datadir=" + self.options.tmpdir + os.sep + "node0", "-rpcconnect=127.0.0.1", "-rpcport=" + str(rpc_port(0)), "-rpcuser=" + rpc_u, "-rpcpassword=" + rpc_p, "sendrawtransaction", g[0].toHex()], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                
+                p1 = subprocess.Popen([Cli, "-datadir=" + self.options.tmpdir + os.sep + "node0", "-rpcconnect=127.0.0.1", "-rpcport=" + str(rpc_port(0)), "sendrawtransaction", g[0].toHex()], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
                 # send double spend
-                p2 = subprocess.Popen([BitcoinCli, "-datadir=" + self.options.tmpdir + os.sep + "node0", "-rpcconnect=127.0.0.1", "-rpcport=" + str(rpc_port(0)), "-rpcuser=" + rpc_u, "-rpcpassword=" + rpc_p, "sendrawtransaction", g[1].toHex()], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                p2 = subprocess.Popen([Cli, "-datadir=" + self.options.tmpdir + os.sep + "node0", "-rpcconnect=127.0.0.1", "-rpcport=" + str(rpc_port(0)), "sendrawtransaction", g[1].toHex()], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
 
                 stdout_data1, stderr_data1 = p1.communicate(timeout=5)
                 stdout_data2, stderr_data2 = p2.communicate(timeout=5)
@@ -375,7 +376,7 @@ class MyTest (BitcoinTestFramework):
         self.commitTxpool()
 
         # Create 500 transaction and ensure that they get synced
-        NTX = 500 if self.bigTest else 100
+        NTX = 500 if self.bigTest else 20
         start = time.monotonic()
         (amt, wallet) = self.threadedCreateTx(dests0, wallet, 1, NTX)
         end = time.monotonic()
@@ -420,6 +421,7 @@ class MyTest (BitcoinTestFramework):
         # Start up node 3
         self.nodes.append(start_node(2, self.options.tmpdir))
         connect_nodes_bi(self.nodes, 0, 2)
+        connect_nodes_bi(self.nodes, 1, 2)
         sync_blocks(self.nodes)
 
         # Push all tx to node 3 from one node
@@ -469,21 +471,24 @@ class MyTest (BitcoinTestFramework):
             end = time.monotonic()
             logging.info("synced %d tx in %s seconds.  Speed %f tx/sec" % (NTX, end - start, float(NTX) / (end - start)))
 
-        # Stop and start 4 nodes with different minlimitertxfee's.  Then send transactions with varying
-        # fees and see if they propagated correctly.
-        self.nodes[0].generate(1) # clean up
-        self.sync_blocks()
-        logging.info("starting txpool limiting tests")
-        stop_nodes(self.nodes)
-        wait_bitcoinds()
-        self.removeTxPersistFiles()
-
-        self.nodes = start_nodes(4, self.options.tmpdir, [["-relay.minRelayTxFee=1000", "-relay.limitFreeRelay=0"], ["-relay.minRelayTxFee=2000", "-relay.limitFreeRelay=0"], ["-relay.minRelayTxFee=3500", "-relay.limitFreeRelay=0"], ["-relay.minRelayTxFee=0", "-relay.limitFreeRelay=0"]])
-        # Now interconnect the nodes
-        interconnect_nodes(self.nodes)
+        self.nodes.append(start_node(3, self.options.tmpdir))
+        connect_nodes_bi(self.nodes, 0, 3)
+        connect_nodes_bi(self.nodes, 1, 3)
+        connect_nodes_bi(self.nodes, 2, 3)
+        # clear all txpools by mining a block
+        self.commitTxpool()
         self.sync_blocks()
 
-        txId  = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), "100")
+        self.nodes[0].set("relay.minRelayTxFee=1000")
+        self.nodes[0].set("relay.limitFreeRelay=0")
+        self.nodes[1].set("relay.minRelayTxFee=2000")
+        self.nodes[1].set("relay.limitFreeRelay=0")
+        self.nodes[2].set("relay.minRelayTxFee=3500")
+        self.nodes[2].set("relay.limitFreeRelay=0")
+        self.nodes[3].set("relay.minRelayTxFee=0")
+        self.nodes[3].set("relay.limitFreeRelay=0")
+
+        txId  = self.nodes[0].sendtoaddress(self.nodes[0].getnewaddress(), "1000")
         waitFor(20, lambda: txId in self.nodes[0].getrawtxpool())
         waitFor(20, lambda: txId in self.nodes[3].getrawtxpool())
 
@@ -507,7 +512,7 @@ class MyTest (BitcoinTestFramework):
             assert("txn failed to enter txpool: " + str(e.error["message"]))
 
 
-        txId  = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(), "100")
+        txId  = self.nodes[1].sendtoaddress(self.nodes[0].getnewaddress(), "1000")
         waitFor(20, lambda: txId in self.nodes[0].getrawtxpool())
         waitFor(20, lambda: txId in self.nodes[1].getrawtxpool())
         waitFor(20, lambda: txId in self.nodes[3].getrawtxpool())
@@ -531,7 +536,7 @@ class MyTest (BitcoinTestFramework):
             assert("txn failed to enter txpool: " + str(e.error["message"]))
 
         self.nodes[3].set("relay.minRelayTxFee=5000")
-        txId  = self.nodes[2].sendtoaddress(self.nodes[0].getnewaddress(), "100")
+        txId  = self.nodes[2].sendtoaddress(self.nodes[0].getnewaddress(), "1000")
         waitFor(20, lambda: txId in self.nodes[0].getrawtxpool())
         waitFor(20, lambda: txId in self.nodes[1].getrawtxpool())
         waitFor(20, lambda: txId in self.nodes[2].getrawtxpool())
@@ -557,20 +562,23 @@ class MyTest (BitcoinTestFramework):
 
         # Stop and start 4 nodes with different relay.limitFreeRelay's.  Then send transactions with varying
         # fees and see if they propagated correctly.
-        stop_nodes(self.nodes)
-        wait_bitcoinds()
-        self.removeTxPersistFiles()
-
-        self.nodes = start_nodes(4, self.options.tmpdir, [["-relay.minRelayTxFee=0", "-relay.limitFreeRelay=0"], ["-relay.minRelayTxFee=1000", "-relay.limitFreeRelay=1"], ["-relay.minRelayTxFee=2000", "-relay.limitFreeRelay=1"], ["-relay.minRelayTxFee=3000", "-relay.limitFreeRelay=2"]])
 
         # clear all txpools by mining a block
-        interconnect_nodes(self.nodes)
         self.commitTxpool()
         self.sync_blocks()
 
+        self.nodes[0].set("relay.minRelayTxFee=0")
+        self.nodes[0].set("relay.limitFreeRelay=0")
+        self.nodes[1].set("relay.minRelayTxFee=1000")
+        self.nodes[1].set("relay.limitFreeRelay=1")
+        self.nodes[2].set("relay.minRelayTxFee=2000")
+        self.nodes[2].set("relay.limitFreeRelay=1")
+        self.nodes[3].set("relay.minRelayTxFee=3000")
+        self.nodes[3].set("relay.limitFreeRelay=2")
+
         addr = self.nodes[0].getnewaddress()
         for i in range(100):
-            self.nodes[0].sendtoaddress(addr, "100")
+            tx = self.nodes[0].sendtoaddress(addr, "500")
 
         # check all txpools. Nodes 2 and 3 will have had free transactions rate limited with node 2 having
         # only a max of 10K bytes in the pool and node3 up to 20K bytes in the pool, where as, Nodes 1 and 2 will
@@ -604,32 +612,11 @@ class MyTest (BitcoinTestFramework):
 
 
 if __name__ == '__main__':
-    env = os.getenv("BITCOIND", None)
-    path = None
-    if env is None:
-        for arg in sys.argv:
-            if "srcdir" in arg:
-                path = arg.split("=")[1]
-                break
-        if path is None:
-            env = os.path.dirname(os.path.abspath(__file__))
-            env = env + os.sep + ".." + os.sep + ".." + os.sep + "src" + os.sep + "bitcoind"
-            env = os.path.abspath(env)
-    if path is None:
-        path = os.path.dirname(env)
-
-    try:
-        cashlib.init(path + os.sep + ".libs" + os.sep + "libbitcoincash.so")
-        BitcoinCli = os.getenv("BITCOINCLI", path + os.sep + "bitcoin-cli")
         MyTest().main()
-    except OSError as e:
-        print("Issue loading shared library.  This is expected during cross compilation since the native python will not load the .so: %s" % str(e))
-
 
 # Create a convenient function for an interactive python debugging session
 def Test():
-    global BitcoinCli
-    t = MyTest(True)
+    t = MyTest(False)
     t.drop_to_pdb = True
     # install ctrl-c handler
     import signal, pdb
@@ -648,14 +635,7 @@ def Test():
     # Execution is much faster if a ramdisk is used, so use it if one exists in a typical location
     if os.path.isdir("/ramdisk/test"):
         flags.append("--tmpdir=/ramdisk/test/ma")
-
-    # Out-of-source builds are awkward to start because they need an additional flag
-    # automatically add this flag during testing for common out-of-source locations
     binpath = findBitcoind()
     flags.append("--srcdir=%s" % binpath)
-
-    # load the cashlib.so from our build directory
-    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libbitcoincash.so")
-    BitcoinCli = os.getenv("BITCOINCLI", binpath + os.sep + "bitcoin-cli")
     # start the test
     t.main(flags, bitcoinConf, None)

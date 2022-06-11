@@ -177,6 +177,7 @@ class MyTest (BitcoinTestFramework):
         BitcoinTestFramework.__init__(self)
 
     def setup_chain(self, bitcoinConfDict=None, wallets=None):
+        cashlib.loadCashLibOrExit(self.options.srcdir)
         logging.info("Initializing test directory " + self.options.tmpdir)
         initialize_chain(self.options.tmpdir, bitcoinConfDict, wallets)
 
@@ -294,25 +295,7 @@ class MyTest (BitcoinTestFramework):
 
 
 if __name__ == '__main__':
-    env = os.getenv("BITCOIND", None)
-    path = None
-    if env is None:
-        for arg in sys.argv:
-            if "srcdir" in arg:
-                path = arg.split("=")[1]
-                break
-        if path is None:
-            env = os.path.dirname(os.path.abspath(__file__))
-            env = env + os.sep + ".." + os.sep + ".." + os.sep + "src" + os.sep + "bitcoind"
-            env = os.path.abspath(env)
-    if path is None:
-        path = os.path.dirname(env)
-
-    try:
-        cashlib.init(path + os.sep + ".libs" + os.sep + "libbitcoincash.so")
-        MyTest().main()
-    except OSError as e:
-        print("Issue loading shared library.  This is expected during cross compilation since the native python will not load the .so: %s" % str(e))
+    MyTest().main()
 
 
 # Create a convenient function for an interactive python debugging session
@@ -339,6 +322,6 @@ def Test():
     flags.append("--srcdir=%s" % binpath)
 
     # load the cashlib.so from our build directory
-    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libbitcoincash.so")
+    cashlib.init(binpath + os.sep + ".libs" + os.sep + "libnexa.so")
     # start the test
     t.main(flags, bitcoinConf, None)

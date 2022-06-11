@@ -315,6 +315,7 @@ libnexa_server_a_SOURCES = \
   index/txindex.cpp \
   init.cpp \
   dbwrapper.cpp \
+  logging.cpp \
   main.cpp \
   merkleblock.cpp \
   miner.cpp \
@@ -524,6 +525,7 @@ libnexa_consensus_a_SOURCES = \
   consensus/grouptokens.h \
   hashwrapper.cpp \
   hashwrapper.h \
+  logging.h \
   prevector.h \
   primitives/block.cpp \
   primitives/block.h \
@@ -558,6 +560,8 @@ libnexa_consensus_a_SOURCES = \
   uint256.h \
   utilstrencodings.cpp \
   utilstrencodings.h \
+  utiltime.cpp \
+  utiltime.h \
   version.h
 
 # common: shared between nexad, and nexa-qt and non-server tools
@@ -603,6 +607,7 @@ libnexa_util_a_SOURCES = \
   deadlock-detection/lockorder.cpp \
   deadlock-detection/threaddeadlock.cpp \
   fs.cpp \
+  logging.cpp \
   random.cpp \
   rpc/protocol.cpp \
   support/cleanse.cpp \
