@@ -657,15 +657,15 @@ fs::path static StartupShortcutPath()
 {
     std::string chain = ChainNameFromCommandLine();
     if (chain == CBaseChainParams::NEXA)
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "Bitcoin.lnk";
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Nexa.lnk";
     if (chain == CBaseChainParams::TESTNET) // Remove this special case when CBaseChainParams::TESTNET = "testnet4"
-        return GetSpecialFolderPath(CSIDL_STARTUP) / "Bitcoin (testnet).lnk";
-    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("Bitcoin (%s).lnk", chain);
+        return GetSpecialFolderPath(CSIDL_STARTUP) / "Nexa (testnet).lnk";
+    return GetSpecialFolderPath(CSIDL_STARTUP) / strprintf("Nexa (%s).lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
 {
-    // check for Bitcoin*.lnk
+    // check for Nexa*.lnk
     return fs::exists(StartupShortcutPath());
 }
 
@@ -757,8 +757,8 @@ fs::path static GetAutostartFilePath()
 {
     std::string chain = ChainNameFromCommandLine();
     if (chain == CBaseChainParams::NEXA)
-        return GetAutostartDir() / "bitcoin.desktop";
-    return GetAutostartDir() / strprintf("bitcoin-%s.lnk", chain);
+        return GetAutostartDir() / "Nexa.desktop";
+    return GetAutostartDir() / strprintf("Nexa-%s.lnk", chain);
 }
 
 bool GetStartOnSystemStartup()
@@ -796,7 +796,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
         if (!optionFile.good())
             return false;
         std::string chain = ChainNameFromCommandLine();
-        // Write a bitcoin.desktop file to the autostart directory:
+        // Write a Nexa.desktop file to the autostart directory:
         optionFile << "[Desktop Entry]\n";
         optionFile << "Type=Application\n";
         if (chain == CBaseChainParams::NEXA)
@@ -861,28 +861,28 @@ LSSharedFileListItemRef findStartupItemInList(LSSharedFileListRef list, CFURLRef
 
 bool GetStartOnSystemStartup()
 {
-    CFURLRef bitcoinAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+    CFURLRef nexaAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
-    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, bitcoinAppUrl);
+    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, nexaAppUrl);
     // findStartupItemInList retains the item it returned, need to release
     if (foundItem)
         CFRelease(foundItem);
     CFRelease(loginItems);
-    CFRelease(bitcoinAppUrl);
+    CFRelease(nexaAppUrl);
     return !!foundItem;
 }
 
 bool SetStartOnSystemStartup(bool fAutoStart)
 {
-    CFURLRef bitcoinAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+    CFURLRef nexaAppUrl = CFBundleCopyBundleURL(CFBundleGetMainBundle());
     LSSharedFileListRef loginItems = LSSharedFileListCreate(nullptr, kLSSharedFileListSessionLoginItems, nullptr);
-    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, bitcoinAppUrl);
+    LSSharedFileListItemRef foundItem = findStartupItemInList(loginItems, nexaAppUrl);
 
     if (fAutoStart && !foundItem)
     {
-        // add bitcoin app to startup item list
+        // add nexa app to startup item list
         LSSharedFileListInsertItemURL(
-            loginItems, kLSSharedFileListItemBeforeFirst, nullptr, nullptr, bitcoinAppUrl, nullptr, nullptr);
+            loginItems, kLSSharedFileListItemBeforeFirst, nullptr, nullptr, nexaAppUrl, nullptr, nullptr);
     }
     else if (!fAutoStart && foundItem)
     {
@@ -893,7 +893,7 @@ bool SetStartOnSystemStartup(bool fAutoStart)
     if (foundItem)
         CFRelease(foundItem);
     CFRelease(loginItems);
-    CFRelease(bitcoinAppUrl);
+    CFRelease(nexaAppUrl);
     return true;
 }
 #else
