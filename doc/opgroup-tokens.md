@@ -7,11 +7,11 @@ Contact: g.andrew.stone@gmail.com, keybase.io: andrewstone
 
 ## Introduction
 
-OP_GROUP tokens are a method for implementing representative tokens -- also named "colored coins" within the bitcoin community.
+OP_GROUP tokens are a method for implementing representative tokens -- also named "colored coins" within the nexa community.
 
 OP_GROUP tokens differ in significant aspects from other existing or proposed "colored coins" techniques:
 
-* Implemented as a single opcode within Bitcoin Cash's Script language.
+* Implemented as a single opcode within Nexa's Script language.
 	 + Integration with Script means that OP_GROUP functionality will grow as Script grows, and maintenance is minimal compared to colored coins that use "piggy-back" blockchains.
 
 * Is miner validated
@@ -39,7 +39,7 @@ intended to be removed from the final version of this document.
 
 ## Risks and philosophical approach
 
-The purpose of OP_GROUP is to enable colored coins on the Bitcoin Cash blockchain and in SPV (phone) wallets, covering major use cases with a fraction of the development effort and maintenance of other token proposals.  These use cases include ICOs (initial coin offerings), representative tokens for stocks, bonds and currencies, and other uses I haven't considered.  But these use cases notably do not include "smart" contracts, since the introduction of a sophisticated programming language would add tremendous complexity and competes with the evolving Bitcoin Cash Script language.
+The purpose of OP_GROUP is to enable colored coins on the Nexa blockchain and in SPV (phone) wallets, covering major use cases with a fraction of the development effort and maintenance of other token proposals.  These use cases include ICOs (initial coin offerings), representative tokens for stocks, bonds and currencies, and other uses I haven't considered.  But these use cases notably do not include "smart" contracts, since the introduction of a sophisticated programming language would add tremendous complexity and competes with the evolving Nexa Script language.
 
 This proposal also limits itself to exactly one opcode.  It is possible to include additional functionality via additional opcodes but I believe that the discussion and decision around these possible features should occur once OP_GROUP is successfully deployed and employed. 
 
@@ -49,10 +49,10 @@ This proposal also limits itself to exactly one opcode.  It is possible to inclu
 * *GP2SH* - Group pay to script hash script.  Specifically: `<group id> <quantity> OP_GROUP OP_DROP OP_DROP OP_HASH160 <address> OP_EQUAL`
 * *mint-melt address* - An address that can be used to mint or melt tokens.  This is actually the same number as the group identifier.
 * *group identifier* - A number used to identify a group.  This is the same number as the group's mint-melt address, but it uses a cashaddr type of 2.
-* *bitcoin cash group* - A special-case group that includes all transactions with no explicit group id.  This group represents the "native" BCH tokens during transaction analysis.
+* *nexa group* - A special-case group that includes all transactions with no explicit group id.  This group represents the "native" BCH tokens during transaction analysis.
 * *mint* - Move ungrouped satoshis into a group, thereby creating new tokens
 * *melt* - Move tokens back to the native satoshis, thereby destroying existing tokens
-* *UTXO* - Unspend Transaction Output: A record of current value on the bitcoin cash blockchain
+* *UTXO* - Unspend Transaction Output: A record of current value on the nexa blockchain
 
 ## Theory of Operation
 
@@ -145,10 +145,6 @@ Next we go through every transaction input (vin) and add its value to the vin gr
 * For every group in GroupBalances, compare the "input" to the "output":
   * If "mintableOrMeltable" is false and "input" != "output", FAIL
 
-For an example implementation please refer to the CheckTokenGroup() function in this reference implementation:
-
-https://github.com/gandrewstone/BitcoinUnlimited/tree/opgroup2/src/tokengroups.cpp
-
 ### Full node Implementations
 
 #### Remove Dust Threshold
@@ -161,24 +157,24 @@ Miners and full nodes should not require that a transaction exceed a "dust thres
 
 OP_GROUP is implemented as a soft fork so wallets do not need to do anything if they do not want to add token support.  But in that case, the wallet will not recognise the format of an OP_GROUP tagged transaction output script and ignore it.  This could cause user confusion if someone accidentally sends that user a token rather than BCH.  To avoid this, it is recommended that wallets identify OP_GROUP outputs and issue an alert if one is received.
 
-*[since the bitcoin cash devs are contemplating adding quite a few new opcodes, this alert may be useful for more than just op_group]*
+*[since the devs are contemplating adding quite a few new opcodes, this alert may be useful for more than just op_group]*
 
 #### Group Identifier
 
-Group identifiers are a 20 or 32 data bytes which are also bitcoin cash addresses.  Although addresses are 20 bytes today, in the future it is likely that P2SH scripts will be redefined to something like "OP_HASH256 [32-byte-hash-value] OP_EQUAL", so wallets should be prepared to accept 256 bit group identifiers.
+Group identifiers are a 20 or 32 data bytes which are also nexa addresses.  Although addresses are 20 bytes today, in the future it is likely that P2SH scripts will be redefined to something like "OP_HASH256 [32-byte-hash-value] OP_EQUAL", so wallets should be prepared to accept 256 bit group identifiers.
 
 Group identifiers displayed in cashaddr format **MUST** use the "type" byte as 2.  This results in a cashaddr prefix of "z" for example:
-`bitcoincash:zrmn5e26cfkd0j97kx5jdm3jrrzv5l6a0upqxjxkw2`
+`nexareg:zrmn5e26cfkd0j97kx5jdm3jrrzv5l6a0upqxjxkw2`
 
 #### JSON-RPC calls
 
-It is recommended that all wallets with a JSON-RPC (bitcoin-cli) interface provide the same API so that applications built on top of this interface will work with different wallet implementations.
+It is recommended that all wallets with a JSON-RPC (nexa-cli) interface provide the same API so that applications built on top of this interface will work with different wallet implementations.
 
 One new RPC is defined, named "token" that contains several sub-functions.  Parameters are similar for all sub-functions and are as follows:
 
 **group id**  (*string*): The group identifier in cashaddr format.  This identifier is generated in the "token new" command.  All group identifiers have a "z" prefix.
 
-**address**  (*string*): A bitcoin cash address.  Token addresses are interchangable with each other and BCH addresses, so use the standard "getnewaddress" RPC command to create one.  *[having the same addresses for multiple token types allows one to put different tokens in the same address.  This feature may have many uses, such as paying interest in BCH to token holders]*
+**address**  (*string*): A nexa address.  Token addresses are interchangable with each other and BCH addresses, so use the standard "getnewaddress" RPC command to create one.  *[having the same addresses for multiple token types allows one to put different tokens in the same address.  This feature may have many uses, such as paying interest in BCH to token holders]*
 
 **quantity** (large integer):  All functions express token quantities in single units.  This is different than the non-token API which expresses values as BCH or 100,000,000 Satoshi.
 
@@ -202,10 +198,10 @@ token new
 
 **Example:**
 ```bash
-$ ./bitcoin-cli token new
+$ ./nexa-cli token new
 {
-  "groupIdentifier": "bchreg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48",
-  "controllingAddress": "bchreg:qzm4ufz5erpzphtxm5knllxyv9kwut8vns4csw8w25"
+  "groupIdentifier": "nexareg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48",
+  "controllingAddress": "nexareg:qzm4ufz5erpzphtxm5knllxyv9kwut8vns4csw8w25"
 }
 ```
 
@@ -225,7 +221,7 @@ A transaction id (hex string) or list of transaction ids.
 
 **Example:**
 ```bash
-./bitcoin-cli token mint bchreg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48 bchreg:qza38qklu2ztay60xaxl2wuhdzc5327p0ssaqjadz0 100000 bchreg:qpjal7uqcgqv7crjc3s2098ha4thv4z6es6fjnww35 50000
+./nexa-cli token mint nexareg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48 nexareg:qza38qklu2ztay60xaxl2wuhdzc5327p0ssaqjadz0 100000 nexareg:qpjal7uqcgqv7crjc3s2098ha4thv4z6es6fjnww35 50000
 635243c3bc1f7b6f5f0dc0f3b5cd5aa82d483e9ec669f4e81b0c734bccb9c762
 ```
 
@@ -244,7 +240,7 @@ A transaction id (hex string).
 **Example:**
 
 ```bash
-./bitcoin-cli token send bchreg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48 bchreg:qr4tj4zvfcmyjq55wmt4qcz0w27drzcmtcszn9xutz 42 bchreg:qrxqy0hjnjumjayf25sawvjkammspdeyxv8ejpe748 451
+./nexa-cli token send nexareg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48 nexareg:qr4tj4zvfcmyjq55wmt4qcz0w27drzcmtcszn9xutz 42 nexareg:qrxqy0hjnjumjayf25sawvjkammspdeyxv8ejpe748 451
 ```
 
 ### RPC: "token melt"
@@ -262,7 +258,7 @@ A transaction id (hex string).
 **Example:**
 
 ```bash
-./bitcoin-cli token melt bchreg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48 bchreg:qz52hzhqdlfrvwsrt74kf6rt5utzvf5zsv4hdywqxd 100
+./nexa-cli token melt nexareg:zzm4ufz5erpzphtxm5knllxyv9kwut8vnsjjrsfg48 nexareg:qz52hzhqdlfrvwsrt74kf6rt5utzvf5zsv4hdywqxd 100
 9ef6465c47b620507fb99937b9df836820f2b103f9cf1b94be532865f7751757
 ```
 
@@ -298,8 +294,8 @@ The `<URI>` field supports http and https protocols and references an "applicati
 ```
 
 **signature**: The signature field contains the signature of the preceding dictionary using the group identifier, from open brace to close brace inclusive.  Validators must check this signature against the exact bytes of the document so that spacing is not changed. **[DISCUSSION: how hard is this to implement in various languages?  Is there a better way?]**   The signature algorithm is what is implemented in the Satoshi client's "signmessage" RPC function.  The following description is informative, not authorative:
-* Compute the message hash by using the double SHA-256 of the string "Bitcoin Signed Message:\n" + message
-* Create a compact ECDSA signature
+* Compute the message hash by using the double SHA-256 of the string "Nexa Signed Message:\n" + message
+* Create a Schnorr signature
 * Convert to text using base 64 encoding with the following charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 *[Wallets and users use this signature to show that the creator of the token is affirming the information in this json document.  And this signature also proves that this document and URL is associated with this group.  By hosting this document, the owner of a domain name is associated with this token.  It is recommended that token issuers use https for the uri so man-in-the-middle attacks cannot be used to make it look like your domain is hosting a token description document]*
 
@@ -338,10 +334,5 @@ Any ISO4217 currency code, any NYSE ticker, any NASDAQ ticker, any symbol from y
 
 *[If 3rd party company or individual is creating "representative tokens" their ticker should reflect that.]*
 
-*[Since it is possible to allow actual currency and securities to be issued on the bitcoin cash blockchain and we should reserve the nationally and internationally known ticker symbols for this future use.  Doing so securely is likely not hard.  By accessing the token description document via a URL, we already have a binding between the token and a domain name secured by SSL Certificates.  All that remains is to bind the domain name to a ticker.  Since this is a relatively small amount of slowly changing information, it could simply be a data file in the wallet]*
-
-## Reference implementation
-
-Full node:
-https://github.com/gandrewstone/BitcoinUnlimited/tree/opgroup2
+*[Since it is possible to allow actual currency and securities to be issued on the nexa blockchain and we should reserve the nationally and internationally known ticker symbols for this future use.  Doing so securely is likely not hard.  By accessing the token description document via a URL, we already have a binding between the token and a domain name secured by SSL Certificates.  All that remains is to bind the domain name to a ticker.  Since this is a relatively small amount of slowly changing information, it could simply be a data file in the wallet]*
 

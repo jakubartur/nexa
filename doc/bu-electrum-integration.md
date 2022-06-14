@@ -4,7 +4,7 @@
 
 ## Overview
 
-Bitcoin Unlimited includes support for electrum server (from version 1.6, Linux x64 only).
+Nexa includes support for electrum server (from version 1.6, Linux x64 only).
 
 The server is maintained as a [separate piece of software](https://github.com/BitcoinUnlimited/ElectrsCash), but is integrated with the node software. Its process has the same lifetime as the bitcoind process, uses the same log files and adds functionality to the same RPC interface.  Detailed documentation exists [here](https://github.com/BitcoinUnlimited/ElectrsCash/blob/master/doc/usage.md).
 
@@ -14,8 +14,8 @@ By [enabling SSL support](https://github.com/BitcoinUnlimited/ElectrsCash/blob/m
 
 ## Starting the server
 
-Add `electrum=1` to your bitcoin.conf file, or pass `-electrum=1` argument to bitcoind when from command line. You may want to also add `debug=electrum` to enable useful logging.
-To allow incoming connections from any wallet, use `electrum.host=0.0.0.0`.  `electrum.port=1234` will change the listening port.  The default port is 50001.  Don't forget to configure your firewall to pass this port though (similar to what you did for bitcoin port 8333), if you have a firewall/NAT.
+Add `electrum=1` to your nexa.conf file, or pass `-electrum=1` argument to nexad when from command line. You may want to also add `debug=electrum` to enable useful logging.
+To allow incoming connections from any wallet, use `electrum.host=0.0.0.0`.  `electrum.port=1234` will change the listening port.  The default port is 50001.  Don't forget to configure your firewall to pass this port though (similar to what you did for nexa port 8333), if you have a firewall/NAT.
 
 
 The RPC call `getelectruminfo` gives you runtime details, such as indexing status of the server. More detailed metrics are available via Prometheus, see monitoring section of the [usage document](https://github.com/BitcoinUnlimited/ElectrsCash/blob/master/doc/usage.md).
@@ -28,7 +28,7 @@ First install dependencies (rust version has to be 1.34+):
 sudo apt install python3-git cargo clang
 ```
 
-The latest stable release used by the node software can be compiled from the Bitcoin Unlimited source tree by running
+The latest stable release used by the node software can be compiled from the Nexa source tree by running
 
 ```sh
 make electrscash

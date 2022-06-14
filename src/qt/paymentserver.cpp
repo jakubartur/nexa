@@ -1,5 +1,5 @@
 // Copyright (c) 2011-2015 The Bitcoin Core developers
-// Copyright (c) 2015-2019 The Bitcoin Unlimited developers
+// Copyright (c) 2015-2022 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -49,9 +49,9 @@ const int BITCOIN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
 const char *BIP70_MESSAGE_PAYMENTACK = "PaymentACK";
 const char *BIP70_MESSAGE_PAYMENTREQUEST = "PaymentRequest";
 // BIP71 payment protocol media types
-const char *BIP71_MIMETYPE_PAYMENT = "application/bitcoincash-payment";
-const char *BIP71_MIMETYPE_PAYMENTACK = "application/bitcoincash-paymentack";
-const char *BIP71_MIMETYPE_PAYMENTREQUEST = "application/bitcoincash-paymentrequest";
+const char *BIP71_MIMETYPE_PAYMENT = "application/nexa-payment";
+const char *BIP71_MIMETYPE_PAYMENTACK = "application/nexa-paymentack";
+const char *BIP71_MIMETYPE_PAYMENTREQUEST = "application/nexa-paymentrequest";
 
 X509_STORE *PaymentServer::certStore = nullptr;
 void PaymentServer::freeCertStore()
@@ -354,7 +354,7 @@ PaymentServer::PaymentServer(QObject *parent, bool startLocalServer)
     GOOGLE_PROTOBUF_VERIFY_VERSION;
 
     // Install global event filter to catch QFileOpenEvents
-    // on Mac: sent when you click bitcoincash: links
+    // on Mac: sent when you click nexa: links
     // other OSes: helpful when dealing with payment request files
     if (parent)
         parent->installEventFilter(this);
@@ -384,7 +384,7 @@ PaymentServer::PaymentServer(QObject *parent, bool startLocalServer)
 
 PaymentServer::~PaymentServer() { google::protobuf::ShutdownProtobufLibrary(); }
 //
-// OSX-specific way of handling bitcoincash: URIs and PaymentRequest mime types.
+// OSX-specific way of handling nexa: URIs and PaymentRequest mime types.
 // Also used by paymentservertests.cpp and when opening a payment request file
 // via "Open URI..." menu entry.
 //
@@ -411,7 +411,7 @@ void PaymentServer::initNetManager()
     if (netManager != nullptr)
         delete netManager;
 
-    // netManager is used to fetch paymentrequests given in bitcoincash: URIs
+    // netManager is used to fetch paymentrequests given in nexa: URIs
     netManager = new QNetworkAccessManager(this);
 
     QNetworkProxy proxy;
@@ -507,14 +507,14 @@ void PaymentServer::handleURIOrFile(const QString &s)
         return;
     }
 
-    // bitcoincash: CashAddr URI
+    // nexa: CashAddr URI
     QString schemeCash = GUIUtil::bitcoinURIScheme(Params(), true);
     if (handleURI(schemeCash, s))
     {
         return;
     }
 
-    // bitcoincash: Legacy URI
+    // nexa: Legacy URI
     QString schemeLegacy = GUIUtil::bitcoinURIScheme(Params(), false);
     if (handleURI(schemeLegacy, s))
     {
@@ -636,7 +636,7 @@ bool PaymentServer::processPaymentRequest(const PaymentRequestPlus &request, Sen
         }
         else if (!recipient.authenticatedMerchant.isEmpty())
         {
-            // Unauthenticated payment requests to custom bitcoin addresses are
+            // Unauthenticated payment requests to custom addresses are
             // not supported (there is no good way to tell the user where they
             // are paying in a way they'd have a chance of understanding).
             Q_EMIT message(tr("Payment request rejected"),

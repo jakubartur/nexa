@@ -1,13 +1,13 @@
 # UNIX BUILD NOTES (RPM)
 
-Some notes on how to build Bitcoin Unlimited in Unix. Mostly with CentOS / RHEL focus.
+Some notes on how to build Nexa in Unix. Mostly with CentOS / RHEL focus.
 
 For apt (Debian / Ubuntu) based distros, see [build-unix.md](build-unix.md).
 For OpenBSD specific instructions, see [build-openbsd.md](build-openbsd.md)
 
 ## Note
 
-Always use absolute paths to configure and compile bitcoin and the dependencies,
+Always use absolute paths to configure and compile nexa and the dependencies,
 for example, when specifying the path of the dependency:
 
 ```bash
@@ -20,15 +20,15 @@ the usage of the absolute path.
 ## To Build
 
 ```bash
-git clone https://gitlab.com/bitcoinunlimited/BCHUnlimited.git
-cd BCHUnlimited/
+git clone https://gitlab.com/nexa/nexa.git nexa
+cd nexa/
 ./autogen.sh
 ./configure
 make
 make install # optional
 ```
 
-This will build bitcoin-qt as well if the dependencies are met.
+This will build nexa-qt as well if the dependencies are met.
 
 ## Dependencies
 
@@ -57,7 +57,7 @@ For the versions used, see [dependencies.md](dependencies.md)
 ## System requirements
 
 C++ compilers are memory-hungry. It is recommended to have at least 1 GB of
-memory available when compiling Bitcoin Unlimited. With 512MB of memory or less
+memory available when compiling Nexa. With 512MB of memory or less
 compilation will take much longer due to swap thrashing.
 
 ## Dependency Build Instructions: CentOS & RHEL
@@ -92,7 +92,7 @@ sudo ln -fs /user/bin/python2 /usr/bin/python
 ```
 
 
-See the section "Disable-wallet mode" to build Bitcoin Unlimited without wallet.
+See the section "Disable-wallet mode" to build Nexa without wallet.
 
 Optional:
 
@@ -108,7 +108,7 @@ sudo yum install zeromq-devel (provides ZMQ API 4.x)
 
 ## Dependencies for the GUI: CentOS & RHEL
 
-If you want to build Bitcoin-Qt, make sure that the required packages for Qt development
+If you want to build Nexa-Qt, make sure that the required packages for Qt development
 are installed. Qt 5.3 or higher is necessary to build the GUI (QT 4 is not supported).
 To build without GUI pass `--without-gui`.
 
@@ -124,12 +124,12 @@ libqrencode (optional) can be installed with:
 sudo yum install qrencode-devel
 ```
 
-Once these are installed, they will be found by configure and a bitcoin-qt executable will be
+Once these are installed, they will be found by configure and a nexa-qt executable will be
 built by default.
 
 ## Notes
 
-The release is built with GCC and then "strip bitcoind" to strip the debug
+The release is built with GCC and then "strip nexad" to strip the debug
 symbols, which reduces the executable size by about 90%.
 
 
@@ -151,10 +151,10 @@ turned off by default.  See the configure options for upnp behavior desired:
 It is recommended to use Berkeley DB 5.3. If you have to build it yourself:
 
 ```bash
-BITCOIN_ROOT=$(pwd)
+NEXA_ROOT=$(pwd)
 
-# Pick some path to install BDB to, here we create a directory within the bitcoin directory
-BDB_PREFIX="${BITCOIN_ROOT}/db4"
+# Pick some path to install BDB to, here we create a directory within the nexa directory
+BDB_PREFIX="${NEXA_ROOT}/db4"
 mkdir -p $BDB_PREFIX
 
 # Fetch the source and verify that it is not tampered with
@@ -169,8 +169,8 @@ cd db-5.3.30.NC/build_unix/
 ../dist/configure --enable-cxx --disable-shared --with-pic --prefix=$BDB_PREFIX
 make install
 
-# Configure Bitcoin Unlimited to use our own-built instance of BDB
-cd $BITCOIN_ROOT
+# Configure Nexa to use our own-built instance of BDB
+cd $NEXA_ROOT
 ./autogen.sh
 ./configure LDFLAGS="-L${BDB_PREFIX}/lib/" CPPFLAGS="-I${BDB_PREFIX}/include/" # (other args...)
 ```
@@ -188,7 +188,7 @@ sudo su
 
 ## Security
 
-To help make your Bitcoin installation more secure by making certain attacks impossible to
+To help make your Nexa installation more secure by making certain attacks impossible to
 exploit even if a vulnerability is found, binaries are hardened by default.
 This can be disabled with:
 
@@ -215,7 +215,7 @@ Hardening enables the following features:
     To test that you have built PIE executable, install scanelf, part of paxutils, and use:
 
 ```bash
-scanelf -e ./bitcoin
+scanelf -e ./nexa
 ```
 
     The output should contain:
@@ -225,13 +225,13 @@ scanelf -e ./bitcoin
 
 * Non-executable Stack
     If the stack is executable then trivial stack based buffer overflow exploits are possible if
-    vulnerable buffers are found. By default, bitcoin should be built with a non-executable stack
+    vulnerable buffers are found. By default, nexa should be built with a non-executable stack
     but if one of the libraries it uses asks for an executable stack or someone makes a mistake
     and uses a compiler extension which requires an executable stack, it will silently build an
     executable without the non-executable stack protection.
 
     To verify that the stack is non-executable after compiling use:
-    `scanelf -e ./bitcoin`
+    `scanelf -e ./nexa`
 
     the output should contain:
 	STK/REL/PTL
@@ -241,7 +241,7 @@ scanelf -e ./bitcoin
 
 ## Disable-wallet mode
 
-When the intention is to run only a P2P node without a wallet, bitcoin may be compiled in
+When the intention is to run only a P2P node without a wallet, nexa may be compiled in
 disable-wallet mode with:
 
 ```bash
@@ -268,8 +268,8 @@ and deploy in same parch/platform boxes without the need of installing all the d
 just follow these steps:
 
 ```bash
-git clone https://github.com/BitcoinUnlimited/BitcoinUnlimited.git BU
-cd BU/depends
+git clone https://gitlab.com/nexa/nexa.git nexa
+cd nexa/depends
 make HOST=x86_64-pc-linux-gnu NO_QT=1 -j4
 cd ..
 ./configure --prefix=$PWD/depends/x86_64-pc-linux-gnu --without-gui

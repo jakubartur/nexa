@@ -1,6 +1,6 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2015-2019 The Bitcoin Unlimited developers
+// Copyright (c) 2015-2022 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -12,8 +12,8 @@
  * - E-mail usually won't line-break if there's no punctuation to break at.
  * - Double-clicking selects the whole string as one word if it's all alphanumeric.
  */
-#ifndef BITCOIN_BASE58_H
-#define BITCOIN_BASE58_H
+#ifndef NEXA_BASE58_H
+#define NEXA_BASE58_H
 
 #include "chainparams.h"
 #include "key.h"
@@ -147,10 +147,10 @@ public:
 typedef CBitcoinExtKeyBase<CExtKey, 74, CChainParams::EXT_SECRET_KEY> CBitcoinExtKey;
 typedef CBitcoinExtKeyBase<CExtPubKey, 74, CChainParams::EXT_PUBLIC_KEY> CBitcoinExtPubKey;
 
-/// Encode an old-style bitcoin address
+/// Encode an old-style address
 std::string EncodeLegacyAddr(const CTxDestination &dest, const CChainParams &);
 
-/// Decode an old-style bitcoin address
+/// Decode an old-style address
 CTxDestination DecodeLegacyAddr(const std::string &str, const CChainParams &);
 
-#endif // BITCOIN_BASE58_H
+#endif // NEXA_BASE58_H

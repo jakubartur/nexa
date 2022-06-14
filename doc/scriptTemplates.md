@@ -2,7 +2,7 @@
 *Allows 3 agent (covenant, owner, and spender) trustless interaction*
 
 ## Introduction
-A script template is a generalization of the P2SH (pay-to-script-hash) format, that allows for the implementation of covenants.  It is perhaps conceptually difficult to understand at first, but is both easy to implement over the existing Bitcoin scripting system and is powerful.
+A script template is a generalization of the P2SH (pay-to-script-hash) format, that allows for the implementation of covenants.  It is perhaps conceptually difficult to understand at first, but is both easy to implement over the existing Nexa scripting system and is powerful.
 
 A script template factors all data in a traditional script out into arguments that are furnished by the owner and spender.  For example, a traditional pay-to-pubkey-hash script looks like this:
 
@@ -29,7 +29,7 @@ A smart contract or covenant system contains 3 agents (an "agent" is defined by 
 * The current holder
 * The spender
 
-These three agents are now captured in 3 scripts: the "template", the "constraint scriptlets", and the "satisfier" scripts.  
+These three agents are now captured in 3 scripts: the "template", the "constraint scriptlets", and the "satisfier" scripts.
 
 The "satisfier" script is analogous to the traditional "scriptSig".  It is provided by the spender and pushes data onto the stack that "satisfies" the constraints enforced by other scripts. 
 

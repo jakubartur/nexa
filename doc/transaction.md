@@ -15,13 +15,13 @@ Transaction identity is split into two roles:
 1. The **"transaction idem"**.  Latin for same, all transactions with the same idem cause the same UTXO state transformation.
 2. The **transaction "id"**.  Similar to Bitcoin's transaction hash, the id is (probabilistically) unique for a transaction.
 
-Using the Idem avoids most malleability attacks.  In practice, users only care about UTXO state transformation (who paid who) rather then the exact bytes in the transaction, so the Idem should be used by default in wallets.  Transactions spend other transactions by Idem, allowing children to be signed before parents and preventing malleability from orphaning chains of unspent transactions.  The bitcoind RPC operations generally return the Idem, but sometimes both.
+Using the Idem avoids most malleability attacks.  In practice, users only care about UTXO state transformation (who paid who) rather then the exact bytes in the transaction, so the Idem should be used by default in wallets.  Transactions spend other transactions by Idem, allowing children to be signed before parents and preventing malleability from orphaning chains of unspent transactions.  The nexad RPC operations generally return the Idem, but sometimes both.
 
 The Id is used in the networking code, and in the block merkle tree.  Using the Id in the networking code is necessary so an attacker can't "spoof" a valid transaction with an invalid one.  Using the Id in the block merkle tree ensures participant consistency -- the blockchain converges to a specific transaction regardless of variants, and ensures that the chain-of-signatures must be retained by all full node participants.
 
 ### Background
 
-Bitcoin uses a single identity for a transaction -- the SHA256 of the serialized transaction.  This allows transaction malleability attacks, because there are some bytes in the transaction that may be changed without changing the transaction signatures or the transaction's effect on the blockchain's UTXO state.  Although malleability has been "solved", the solution only covers typical script types, and consists of a variety of patches that enforce constraints on transactions that seems unnecessary and arbitrary for anyone not familiar with malleability.  
+Bitcoin uses a single identity for a transaction -- the SHA256 of the serialized transaction.  This allows transaction malleability attacks, because there are some bytes in the transaction that may be changed without changing the transaction signatures or the transaction's effect on the blockchain's UTXO state.  Although malleability has been "solved", the solution only covers typical script types, and consists of a variety of patches that enforce constraints on transactions that seems unnecessary and arbitrary for anyone not familiar with malleability.
 
 Recognizing that a transaction is fundamentally exactly and only a transformation of blockchain UTXO state allows for a clean input script malleability solution.  From the point of view of the blockchain, all valid transactions that effect the same UTXO state transformation are equivalent, since the UTXO state is the only data that subsequent transactions can access.
 
@@ -36,7 +36,7 @@ The block merkle tree and network subsystems use the transaction id.  This guara
 *Note that if a layered application uses transaction data that does not affect the UTXO (for example a data push within the satisfier script that is popped and ignored) it still might be vulnerable to transaction malleability.  These applications should either commit to that data within the UTXO (preventing malleability of that data), or wait for the particular idem to be confirmed on the blockchain.*
 
 ### Transaction Idem Calculation
-Serialize the following transaction fields using standard bitcoin serialization algorithms:
+Serialize the following transaction fields using standard serialization algorithms:
 * version
 * inputs
 	* prevout
@@ -65,7 +65,7 @@ for each input:
 
 An "amount" field was included in each input.  This field MUST match the amount (nValue) in the output that is spent.  The existence of this field helps stop wallets from making errors where they incorrectly track input amounts, resulting in accidentally giving extremely large fees to miners.  It also provides this information to signing-only wallets, which defuses a theoretical attack where a such a wallet is tricked into giving large fees to miners.
 
-Note that Bitcoin Cash requires that the amount field be part of the sighash, solving the above without solving HOW wallets learn about the previous amount.  This change simply provides a convenient and default way to communicate this amount.
+Note that Nexa requires that the amount field be part of the sighash, solving the above without solving HOW wallets learn about the previous amount.  This change simply provides a convenient and default way to communicate this amount.
 
 Note that this field is redundant information to the full node and so in theory does not need to be stored or passed over the network.  However, this implementation stores it, and until this space and bandwidth are at a premium, this optimization makes little sense.
 

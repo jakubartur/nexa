@@ -1,6 +1,6 @@
 // Copyright (c) 2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2015-2020 The Bitcoin Unlimited developers
+// Copyright (c) 2015-2022 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -217,7 +217,7 @@ UniValue generatetoaddress(const UniValue &params, bool fHelp)
                             "\nMine blocks immediately to a specified address (before the RPC call returns)\n"
                             "\nArguments:\n"
                             "1. numblocks    (numeric, required) How many blocks are generated immediately.\n"
-                            "2. address    (string, required) The address to send the newly generated bitcoin to.\n"
+                            "2. address    (string, required) The address to send the newly generated coins to.\n"
                             "3. maxtries     (numeric, optional) How many iterations to try (default = 1000000).\n"
                             "\nResult\n"
                             "[ blockhashes ]     (array) hashes of blocks generated\n"

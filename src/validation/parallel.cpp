@@ -695,7 +695,7 @@ CCheckQueue<CScriptCheck> *CParallelValidation::GetScriptCheckQueue()
                         pqueue->Quit(false); // set to false because it still may be set to true from last run.
 
                         // Only assign a pqueue to a validation thread if a validation thread is actually running.
-                        // When mining or when bitcoin is first starting there will be no validation threads so we
+                        // When mining or when the node is first starting there will be no validation threads so we
                         // don't want to assign a pqueue here if that is the case.
                         boost::thread::id this_id(boost::this_thread::get_id());
                         if (mapBlockValidationThreads.count(this_id))
