@@ -1,21 +1,21 @@
-# Installing Bitcoin Unlimited
+# Installing Nexa
 
-This document describes how to install and configure Bitcoin Unlimited.
+This document describes how to install and configure Nexa.
 
-# Downloading Bitcoin Unlimited
+# Downloading Nexa
 
-If you just want to run the Bitcoin Unlimited software go to the 
+If you just want to run the Nexa software go to the 
 [Download](https://www.bitcoinunlimited.info/download) page and get the relevant 
 files for your system.
 
-If you are moving from another Bitcoin compatible implementations (Core, Classic, XT, ABC) to BU, make sure to follow this plan before moving:
+If you are moving from another Nexa compatible implementation, make sure to follow this plan before moving:
 
 - backup your wallet (if any)
-- make a backup of the `~/.bitcoin` dir
-- if you have installed Core via apt using the ppa bitcoin core repo:
-   - `sudo apt-get remove bitcoin*`
-   - `sudo rm /etc/apt/sources.list.d/bitcoin-*.*`
-- if you have compile Core from source:
+- make a backup of the `~/.nexa` dir
+- if you have installed nexa via apt using the ppa nexa repo:
+   - `sudo apt-get remove nexa*`
+   - `sudo rm /etc/apt/sources.list.d/nexa-*.*`
+- if you have compile Nexa from source:
    - `cd /path/where/the/code/is/stored`
    - `sudo make uninstall`
 
@@ -25,19 +25,19 @@ If you are moving from another Bitcoin compatible implementations (Core, Classic
 You can choose
 
 - Download the setup file (exe), and run the setup program, or
-- download the (zip) file, unpack the files into a directory, and then run bitcoin-qt.exe.
+- download the (zip) file, unpack the files into a directory, and then run nexa-qt.exe.
 
 
 ## Linux / Unix
 
 Unpack the files into a directory and run:
 
-- `bin/bitcoin-qt` (GUI) or
-- `bin/bitcoind` (headless)
+- `bin/nexa-qt` (GUI) or
+- `bin/nexad` (headless)
 
 ## macOS
 
-Drag Bitcoin-Unlimited to your applications folder, and then run Bitcoin-Unlimited.
+Drag Nexa to your applications folder, and then run Nexa.
 
 # Installing Ubuntu binaries from Bitcoin Unlimited Official BU repositories
 
@@ -49,20 +49,20 @@ The repository will provide binaries and debug symbols for 4 different architect
 sudo apt-get install software-properties-common
 sudo add-apt-repository ppa:bitcoin-unlimited/bu-ppa
 sudo apt-get update
-sudo apt-get install bitcoind bitcoin-qt (# on headlesse server just install bitcoind)
+sudo apt-get install nexad nexa-qt (# on headlesse server just install nexad)
 ```
 
-Once installed you can run `bitcoind` or `bitcoin-qt`
+Once installed you can run `nexad` or `nexa-qt`
 
 
 
-# Building Bitcoin Unlimited from source
+# Building Nexa from source
 
-See doc/build-*.md for detailed instructions on building the Bitcoin Unlimited software for your specific architecture. Includes both info on building 
-- `bitcoind`, the intended-for-services, no-graphical-interface, implementation of Bitcoin and 
-- `bitcoin-qt`, the GUI.
+See doc/build-*.md for detailed instructions on building the Nexa software for your specific architecture. Includes both info on building 
+- `nexad`, the intended-for-services, no-graphical-interface, implementation of Nexa and 
+- `nexa-qt`, the GUI.
 
-Once you have finished the process you can find the relevant binary files (`bitcoind`, `bitcoin-qt` and `bitcoin-cli`) in `/src/`.
+Once you have finished the process you can find the relevant binary files (`nexad`, `nexa-qt` and `nexa-cli`) in `/src/`.
 
 
 ## Dependencies
@@ -74,7 +74,7 @@ If you're compiling from source on a Ubuntu like system, you can get all the req
 ```sh
 sudo apt-get install git build-essential libtool autotools-dev automake pkg-config libssl-dev libevent-dev bsdmainutils libboost-all-dev
 
-## optional: only needed if you want bitcoin-qt
+## optional: only needed if you want nexa-qt
 sudo apt-get install qttools5-dev-tools qttools5-dev libprotobuf-dev protobuf-compiler libqrencode-dev
 
 ## optional: only needed if your wallet use the old format
@@ -90,15 +90,15 @@ sudo apt-get install libdb4.8-dev libdb4.8++-dev
 ## Fetching the code and compile it
 
 ```sh
-git clone https://github.com/BitcoinUnlimited/BitcoinUnlimited.git
-cd BitcoinUnlimited
+git clone https://gitlab.com/nexa/nexa.git nexa
+cd nexa
 git checkout release 	# or git checkout origin/dev
 ./autogen.sh
 
-# if you want a plain bitcoind binary without GUI and without wallet support, use this configure line:
+# if you want a plain nexad binary without GUI and without wallet support, use this configure line:
 ./configure --disable-wallet --without-gui
 
-# otherwise if you need bitcoin-qt just issue
+# otherwise if you need nexa-qt just issue
 ./configure
 
 export NUMCPUS=`grep -c '^processor' /proc/cpuinfo`
@@ -109,8 +109,8 @@ sudo make install #(will place them in /usr/local/bin, this step is to be consid
 ## Miscellaneous
 
 
-- `strip(1)` your binaries, bitcoind will get a lot smaller, from 73MB to 4.3MB)
-- execute `bitcoind` using the `-daemon` option, bash will fork bitcoin process without cluttering the stdout
+- `strip(1)` your binaries, nexad will get a lot smaller, from 73MB to 4.3MB)
+- execute `nexad` using the `-daemon` option, bash will fork nexa process without cluttering the stdout
 
 
 
@@ -118,7 +118,7 @@ sudo make install #(will place them in /usr/local/bin, this step is to be consid
 
 ## QT or the command line:
 
-There are two modes of operation, one uses the QT UI and the other runs as a daemon from the command line.  The QT version is bitcoin-qt or bitcoin-qt.exe, the command line version is bitcoind or bitcoind.exe. No matter which version you run, when you launch for the first time you will have to complete the intial blockchain sync.
+There are two modes of operation, one uses the QT UI and the other runs as a daemon from the command line.  The QT version is nexa-qt or nexa-qt.exe, the command line version is nexad or nexad.exe. No matter which version you run, when you launch for the first time you will have to complete the intial blockchain sync.
 
 ## Initial Sync of the blockchain:
 
@@ -136,27 +136,27 @@ There are dozens of configuration and node policy options available but the two 
 
 As stated above, this setting is crucial to a fast initial sync.  You can set this value from the command line by running
 ```
-bitcoind -dbcache=<your size in MB>
+nexad -cache.dbcache=<your size in MB>
 ```
 For example, a 1GB dbcache would be 
 ```
-bitcoind -dbcache=1000
+nexad -cache.dbcache=1000
 ```
-Similarly you can also add the setting to the bitcoin.conf file located in your installation folder. In the config file a simlilar entry would be
+Similarly you can also add the setting to the nexa.conf file located in your installation folder. In the config file a simlilar entry would be
 
  > `dbcache=1000`
 
 When entering the size
 try to give it the maximum that your system can afford while still leaving enough memory for other processes.
 
-### maxoutconnections:
+### Maximum outbound connections:
 
 It is generally fine to leave the default outbound connection settings for doing a sync, however, at times some users
 have reported issues with not being able to find enough useful connections. If that happens you can change this setting to override the default.
 For instance
 
 ```
-bitcoind -maxoutconnections=30
+nexad -net.maxOutboundConnections=30
 ```
 
 will give you 30 outbound connections and should be more than enough in the event that the
@@ -168,10 +168,7 @@ This can also be added to the config file with
 
 # Getting help
 
- - [The Bitcoin Forum](https://www.bitco.in/forum)
- - [Issue Tracker](https://github.com/BitcoinUnlimited/BitcoinUnlimited/issues)
- - [Reddit /r/bitcoin_unlimited](https://www.reddit.com/r/bitcoin_unlimited)
- - [Reddit /r/btc](https://www.reddit.com/r/btc)
- - [Slack Channel](https://bitcoinunlimited.slack.com/)
+ - [Issue Tracker](https://gitlab.com/nexa/nexa/issues)
+ - [Reddit /r/nexa](https://www.reddit.com/r/nexa)
 
 

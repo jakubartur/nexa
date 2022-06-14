@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-/* The request manager creates an isolation layer between the bitcoin message processor and the network.
+/* The request manager creates an isolation layer between the nodes message processor and the network.
 It tracks known locations of data objects and issues requests to the node most likely to respond.  It monitors responses
 and is capable of re-requesting the object if the node disconnects or does not respond.
 

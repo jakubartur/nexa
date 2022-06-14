@@ -1,14 +1,14 @@
-# TOR SUPPORT IN BITCOIN
+# TOR SUPPORT IN NEXA
 
-It is possible to run Bitcoin as a Tor hidden service, and connect to such services.
+It is possible to run Nexa as a Tor hidden service, and connect to such services.
 
 The following directions assume you have a Tor proxy running on port 9050. Many distributions default to having a SOCKS proxy listening on port 9050, but others may not. In particular, the Tor Browser Bundle defaults to listening on a random port. See [Tor Project FAQ:TBBSocksPort](https://www.torproject.org/docs/faq.html.en#TBBSocksPort) for how to properly
 configure Tor.
 
 
-## Run bitcoin behind a Tor proxy
+## Run nexa behind a Tor proxy
 
-The first step is running Bitcoin behind a Tor proxy. This will already make all
+The first step is running Nexa behind a Tor proxy. This will already make all
 outgoing connections be anonymized, but more is possible.
 
 	-proxy=ip:port  Set the proxy server. If SOCKS5 is selected (default), this proxy
@@ -29,26 +29,26 @@ outgoing connections be anonymized, but more is possible.
 
 In a typical situation, this suffices to run behind a Tor proxy:
 
-	./bitcoin -proxy=127.0.0.1:9050
+	./nexa -proxy=127.0.0.1:9050
 
 
-## Run a bitcoin hidden server
+## Run a nexa hidden server
 
 If you configure your Tor system accordingly, it is possible to make your node also
 reachable from the Tor network. Add these lines to your /etc/tor/torrc (or equivalent
 config file):
 
-	HiddenServiceDir /var/lib/tor/bitcoin-service/
+	HiddenServiceDir /var/lib/tor/nexa-service/
 	HiddenServicePort 8333 127.0.0.1:8333
 	HiddenServicePort 18333 127.0.0.1:18333
 
 The directory can be different of course, but (both) port numbers should be equal to
-your bitcoind's P2P listen port (8333 by default).
+your nexad's P2P listen port (8333 by default).
 
-	-externalip=X   You can tell bitcoin about its publicly reachable address using
+	-externalip=X   You can tell nexa about its publicly reachable address using
 	                this option, and this can be a .onion address. Given the above
 	                configuration, you can find your onion address in
-	                /var/lib/tor/bitcoin-service/hostname. Onion addresses are given
+	                /var/lib/tor/nexa-service/hostname. Onion addresses are given
 	                preference for your node to advertise itself with, for connections
 	                coming from unroutable addresses (such as 127.0.0.1, where the
 	                Tor proxy typically runs).
@@ -65,45 +65,45 @@ your bitcoind's P2P listen port (8333 by default).
 
 In a typical situation, where you're only reachable via Tor, this should suffice:
 
-	./bitcoind -proxy=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -listen
+	./nexad -proxy=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -listen
 
 (obviously, replace the Onion address with your own). It should be noted that you still
 listen on all devices and another node could establish a clearnet connection, when knowing
 your address. To mitigate this, additionally bind the address of your Tor proxy:
 
-	./bitcoind ... -bind=127.0.0.1
+	./nexad ... -bind=127.0.0.1
 
 If you don't care too much about hiding your node, and want to be reachable on IPv4
 as well, use `discover` instead:
 
-	./bitcoind ... -discover
+	./nexad ... -discover
 
 and open port 8333 on your firewall (or use -upnp).
 
 If you only want to use Tor to reach onion addresses, but not use it as a proxy
 for normal IPv4/IPv6 communication, use:
 
-	./bitcoin -onion=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -discover
+	./nexa -onion=127.0.0.1:9050 -externalip=57qr3yd1nyntf5k.onion -discover
 
 ## Automatically listen on Tor
 
 Starting with Tor version 0.2.7.1 it is possible, through Tor's control socket
 API, to create and destroy 'ephemeral' hidden services programmatically.
-Bitcoin Unlimited has been updated to make use of this.
+Nexa has been updated to make use of this.
 
 This means that if Tor is running (and proper authorization is available),
-Bitcoin Unlimited automatically creates a hidden service to listen on, without
+Nexa automatically creates a hidden service to listen on, without
 manual configuration. This will positively affect the number of available
 .onion nodes.
 
-This new feature is enabled by default if Bitcoin Unlimited is listening, and
+This new feature is enabled by default if Nexa is listening, and
 a connection to Tor can be made. It can be configured with the `-listenonion`,
 `-torcontrol` and `-torpassword` settings. To show verbose debugging
 information, pass `-debug=tor`.
 
 In more practical way this what you need to do to actually setting tor to operate
 in this new configuration. Firstly you need to be sure that the user under which
-bitcoind is going to be executed has write permission on tor system directories
+nexad is going to be executed has write permission on tor system directories
 (e.g. /var/run/tor/control.authcookie). On Debian and Ubuntu system add such user
 to the `debian-tor` group should be enough (i.e. `sudo adduser $USER debian-tor`)
 
@@ -121,7 +121,7 @@ Next you have to restart the Tor service:
 
 	sudo service tor restart
 
-Add these lines to your `bitcoin.conf` file
+Add these lines to your `nexa.conf` file
 
 	proxy=127.0.0.1:9050
 	listen=1
@@ -133,7 +133,7 @@ Add these lines to your `bitcoin.conf` file
 
 Then issue this command to get the url of your onion hidden service
 
-	bitcoin-cli getnetworkinfo | grep -w addr
+	nexa-cli getnetworkinfo | grep -w addr
 
 you should get an output like this one
 
@@ -145,16 +145,16 @@ reachable.
 If you want to leverage the nature of tor and stop a DDoS attack to your
 node, firstly stop your node:
 
-	bitcoin-cli stop
+	nexa-cli stop
 
-Remove your peer file and tor private key from bitcoin data directory
+Remove your peer file and tor private key from nexa data directory
 
-	cd ~/.bitcoin
+	cd ~/.nexa
 	rm onion_private_key
 	rm peers.dat
 
 Removing the `onion_private_key` serves the aim of having a new onion URL for
-your bitcoin node, in such a way your attacker won't be able to harm you
+your nexa node, in such a way your attacker won't be able to harm you
 again in the near term cause the prev URL is not valid any more.
 
 Removing `peer.dat` will let you fetch a bunch of new peers from the seeder
@@ -165,4 +165,4 @@ the onion private key file.
 
 Restart your node:
 
-	bitcoind -daemon
+	nexad -daemon

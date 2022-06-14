@@ -1,5 +1,5 @@
 // Copyright (c) 2015 G. Andrew Stone
-// Copyright (c) 2015-2020 The Bitcoin Unlimited developers
+// Copyright (c) 2015-2022 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -1173,11 +1173,11 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
             "\nArguments:\n"
             "1. \"coinbasesize\" (int, optional) Get a fixed size coinbase transaction.\n"
             "                                  Default: null (null indicates unspecified / use daemon defaults)\n"
-            "2. \"address\"      (string, optional) The address to send the newly generated bitcoin to.\n"
+            "2. \"address\"      (string, optional) The address to send the newly generated coins to.\n"
             "                                     Default: an address in daemon's wallet.\n" +
             HelpExampleCli("getminingcandidate", "") + HelpExampleCli("getminingcandidate", "1000") +
-            HelpExampleCli("getminingcandidate", "1000 bchtest:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q") +
-            HelpExampleCli("getminingcandidate", "null bchtest:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q"));
+            HelpExampleCli("getminingcandidate", "1000 nexa:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q") +
+            HelpExampleCli("getminingcandidate", "null nexa:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q"));
     }
 
     CScript coinbaseScript;

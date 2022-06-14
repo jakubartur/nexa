@@ -1,6 +1,6 @@
 # WINDOWS BUILD NOTES
 
-Below are some notes on how to build Bitcoin Unlimited for Windows.
+Below are some notes on how to build Nexa for Windows.
 
 Most developers use cross-compilation from Ubuntu to build executables for Windows. This is also used to build the release binaries.
 
@@ -97,8 +97,8 @@ For further documentation on the depends system see [README.md](../depends/READM
 After building using the Windows subsystem it can be useful to copy the compiled
 executables to a directory on the Windows drive in the same directory structure
 as they appear in the release `.zip` archive. This can be done in the following
-way. This will install to `c:\workspace\bitcoin`, for example:
+way. This will install to `c:\workspace\nexa`, for example:
 
 ```bash
-make install DESTDIR=/mnt/c/workspace/bitcoin
+make install DESTDIR=/mnt/c/workspace/nexa
 ```

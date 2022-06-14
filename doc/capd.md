@@ -24,11 +24,11 @@ Counterparty discovery protocols are a part of decentralized exchanges. Work on 
 
 ## Architecture
 
-The network architecture consists of a set of anonymous, permissionless, IP accessible peer-to-peer nodes (called "peers") that store messages, and a set of "clients" that communicate with any peer to submit, retrieve, or search for messages, but do not store messages themselves. This is a semantic, not architectural distinction. A single node may behave as both peer and client. Nexa "full" nodes are leveraged to provide the peer nodes of this network (but it would be possible to make specialized CAPD-only nodes), and clients are typically light cryptocurrency wallets but actually may be any application. Leveraging the existing P2P bitcoin architecture makes implementing this functionality much simpler since it amounts to the addition of a few new P2P messages types and CAPD message storage.
+The network architecture consists of a set of anonymous, permissionless, IP accessible peer-to-peer nodes (called "peers") that store messages, and a set of "clients" that communicate with any peer to submit, retrieve, or search for messages, but do not store messages themselves. This is a semantic, not architectural distinction. A single node may behave as both peer and client. Nexa "full" nodes are leveraged to provide the peer nodes of this network (but it would be possible to make specialized CAPD-only nodes), and clients are typically light cryptocurrency wallets but actually may be any application. Leveraging the existing P2P architecture makes implementing this functionality much simpler since it amounts to the addition of a few new P2P messages types and CAPD message storage.
 
 ### Message Pool
 
-Peer nodes contain a configurable size memory buffer (typically a few hundred MB) containing arbitrary messages (called the msgPool).  Note that these "messages" are different from bitcoin P2P messages, where unclear this document will use CAPD message or P2P message to distinguish.
+Peer nodes contain a configurable size memory buffer (typically a few hundred MB) containing arbitrary messages (called the msgPool).  Note that these "messages" are different from typical P2P messages, where unclear this document will use CAPD message or P2P message to distinguish.
 
 New CAPD messages are received from peers or clients and inserted into a peer's msgPool. If the pool is full, new messages knock out old messages based on priority (see section Message Priority). More formally, if the pool is full and the incoming message's priority is higher than the N lowest priority messages in the pool whose cumulative length is greater than or equal to the new message length, then the incoming message will replace these messages.
 
@@ -62,11 +62,11 @@ The minimum insertion priority defines the lowest priority message that this nod
 
 The ban priority defines the lowest priority message that this node will accept and not ban the peer or client node.
 
-As described above, a message will not be forwarded if it is below either the minimum forwarding priority of this node, and that of the remote node. Peer nodes will typically specify this minimum forwarding priority to be greater than the bottom ¼ to ½ of its msgPool. This allows a client to place a "local" message into a node's msgPool by searching for proof-of-work that is lower than the minimum forwarding priority but higher than the ban priority.  It also minimizes message pool turnover and makes spam attacks more difficult. 
+As described above, a message will not be forwarded if it is below either the minimum forwarding priority of this node, and that of the remote node. Peer nodes will typically specify this minimum forwarding priority to be greater than the bottom 1/4 to 1/2 of its msgPool. This allows a client to place a "local" message into a node's msgPool by searching for proof-of-work that is lower than the minimum forwarding priority but higher than the ban priority.  It also minimizes message pool turnover and makes spam attacks more difficult. 
 
 The minimum insertion priority is simply the lowest priority message in the message pool.
 
-The ban priority ensures that a network DoS attack by sending the node low priority messages is harder to accomplish. However, it should be well below the minimum insertion priority because the minimum insertion priority is dynamic and the message priority decreases over time. It is recommended that the ban priority be ½ or less of the minimum insertion priority.
+The ban priority ensures that a network DoS attack by sending the node low priority messages is harder to accomplish. However, it should be well below the minimum insertion priority because the minimum insertion priority is dynamic and the message priority decreases over time. It is recommended that the ban priority be 1/2 or less of the minimum insertion priority.
 
 #### Message Contents
 
@@ -88,7 +88,7 @@ Any other data (optional): Additional conversation-specific data that may be use
 
 *nonce*: a byte vector used in calculating proof of work, containing between 1 and 8 bytes, inclusive
 
-*difficultyBits*: (uint32) Message proof of work must meet or exceed this target.  This field is specified in the same format as Bitcoin's "nBits" field (eg. nBits as 0xSSVVVVVV becomes VVVVVV << ((SS-3)*8))
+*difficultyBits*: (uint32) Message proof of work must meet or exceed this target.  This field is specified in the same format as Nexa's "nBits" field (eg. nBits as 0xSSVVVVVV becomes VVVVVV << ((SS-3)*8))
 
 #### Message Proof of Work
 
@@ -96,11 +96,11 @@ Messages contain proof of work which is calculated as:
 
 SHA256(SHA256(nonce ++ SHA256(data ++ create time ++ rescind hash ++ expiration ++ difficultyBits)))
 
-where ++ denotes binary string concatenation of bitcoin-style serialized objects. Use 0s for any unpopulated optional field (e.g. rescind hash or expiration).
+where ++ denotes binary string concatenation of nexa-style serialized objects. Use 0s for any unpopulated optional field (e.g. rescind hash or expiration).
 
-Note that the innermost SHA256 reduces the message to a 32 byte data object to "grind" against the nonce. The outer two SHA256 are how proof-of-work is calculated. Like Bitcoin proof-of-work, it is necessary to use a double SHA256 so that an algorithm cannot save intermediate states of the SHA256 operation to check a nonce in less time than 1 SHA256.
+Note that the innermost SHA256 reduces the message to a 32 byte data object to "grind" against the nonce. The outer two SHA256 are how proof-of-work is calculated. Like Nexa proof-of-work, it is necessary to use a double SHA256 so that an algorithm cannot save intermediate states of the SHA256 operation to check a nonce in less time than 1 SHA256.
 
-To eliminate spam, message creators must generate proof-of-work before forwarding a message to nodes, and this proof-of-work is used to calculate the message priority. Nodes calculate the minimum acceptable forwarding and ban priority by looking at the contents of their msgPool, and forward these values to peer nodes. The forwarding priority minimum is implementation defined, but generally calculated so that at least ¼ to 1/2 of the messages in the msgPool contain a lower priority. If a message is in the lower tier, it is no longer announced, but is available to clients via query requests.
+To eliminate spam, message creators must generate proof-of-work before forwarding a message to nodes, and this proof-of-work is used to calculate the message priority. Nodes calculate the minimum acceptable forwarding and ban priority by looking at the contents of their msgPool, and forward these values to peer nodes. The forwarding priority minimum is implementation defined, but generally calculated so that at least 1/4 to 1/2 of the messages in the msgPool contain a lower priority. If a message is in the lower tier, it is no longer announced, but is available to clients via query requests.
 
 Peer nodes that forward messages lower than the ban priority are considered "misbehaving". Nodes with enough misbehavior are banned. However, note that the receiving node must keep track of the ban priority that it communicated to the sending node rather than banning based on a message's instantaneous msgPool insertion position.
 
@@ -128,7 +128,7 @@ Message replies are not distinguishable from other messages, except that they ar
 
 ## Node Protocol
 
-Nodes follow the Nexa P2P protocol, which is beyond the scope of this specification.  The information provided here is sufficient to allow anyone already familiar with the Bitcoin P2P node protocol to add the CAPD specific messages.
+Nodes follow the Nexa P2P protocol, which is beyond the scope of this specification.  The information provided here is sufficient to allow anyone already familiar with the P2P node protocol to add the CAPD specific messages.
 
 ### CAPD message serialization
 
@@ -209,7 +209,7 @@ It is expected that if this service becomes quite popular the POW required for a
 
 This first version acts as a communication medium for active agents -- connecting two entities that would like to interact right now. However, it can be easily extended into a message system with storage (i.e. messages persist).
 
-In its basic operation, wallets open a payment channel to one or several full nodes and send the full node micropayments, message retention duration, and filter information. Note that perhaps the service is offered for free, but this opens a storage-exhaustion attack where wallets request storage on every network node — so some effort or identity is required to be given by the wallet. Full nodes store all messages that match the filter until the wallet retrieves them, or the purchased duration is exceeded. Full nodes could drop messages and lie about it, but wallets can subscribe to multiple full nodes. So this service ultimately still acts like email as a "best effort" delivery.
+In its basic operation, wallets open a payment channel to one or several full nodes and send the full node micropayments, message retention duration, and filter information. Note that perhaps the service is offered for free, but this opens a storage-exhaustion attack where wallets request storage on every network node - so some effort or identity is required to be given by the wallet. Full nodes store all messages that match the filter until the wallet retrieves them, or the purchased duration is exceeded. Full nodes could drop messages and lie about it, but wallets can subscribe to multiple full nodes. So this service ultimately still acts like email as a "best effort" delivery.
 
 Guaranteed provably delivered messages are already solved as OP_RETURN data inside a blockchain transaction.
 

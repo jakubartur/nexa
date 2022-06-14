@@ -1,6 +1,6 @@
-# About Bitcoin unit tests
+# About Nexa unit tests
 
-The Bitcoin software currently includes couple of types of unit tests:
+The Nexa software currently includes couple of types of unit tests:
 
 - Boost Test based unit tests for the non-GUI parts of the C/C++ code
 - QtTest based unit tests for the GUI code
@@ -21,38 +21,38 @@ in `./configure` and tests were not explicitly disabled.
 After configuring, the C++ unit tests can be run with `make check`.
 This runs tests of several libraries.
 
-To run the bitcoin unit test suite sequentially, launch
-`src/test/test_bitcoin`.
+To run the nexa unit test suite sequentially, launch
+`src/test/test_nexa`.
 
 You can run it with the `--help` option to get a list of parameters
 supported by the Boost Test framework.  Some of these are very useful,
 specifically `--run_test=<name>` to run a particular subset of tests, e.g.
 
-    $ src/test/test_bitcoin --run_test=transaction_tests
+    $ src/test/test_nexa --run_test=transaction_tests
 
 If on Boost 1.59 or higher, you can also get a full list of tests
 using `--list_content`:
 
-    $ src/test/test_bitcoin --list_content
+    $ src/test/test_nexa --list_content
 
-The bitcoin-qt GUI tests use a different framework which does not support
+The -qt GUI tests use a different framework which does not support
 the above options.
-You can run these tests manually by launching `src/qt/test/test_bitcoin-qt`.
+You can run these tests manually by launching `src/qt/test/test_-qt`.
 
 
 ## Running Boost unit tests in parallel
 
-There is a wrapper tool in contrib/testtools/gtest-parallel-bitcoin
+There is a wrapper tool in contrib/testtools/gtest-parallel-
 which can execute the Boost-based C++ unit tests in parallel
 
-NOTE: only works if Bitcoin has been compiled against Boost 1.59 or later,
+NOTE: only works if Nexa has been compiled against Boost 1.59 or later,
 as it uses some command line argument features only provided by Boost Test
 from that version onwards.
 
 Assuming you have contrib/testtools/ in your path, it can be run by passing
 it the name of the test executable, e.g.
 
-    $ gtest-parallel-bitcoin src/test/test_bitcoin
+    $ gtest-parallel- src/test/test_
 
 It works by extracting the list of tests contained in the executable
 using the `--list_content` command line parameter, and then running the
@@ -64,7 +64,7 @@ execution.
 The `--print_test_times` will print a detailed breakdown of all test times.
 
 The wrapper creates and maintains a score database of test execution times
-in `~/.gtest-parallel-bitcoin-times` .
+in `~/.gtest-parallel--times` .
 When it executes tests in repeated runs, it does so in order from longest
 to shortest test.
 
@@ -86,7 +86,7 @@ To add more C++ tests, add `BOOST_AUTO_TEST_CASE` functions to the existing
 implement new BOOST_AUTO_TEST_SUITE sections.
 
 
-To add more bitcoin-qt tests, add them to the `src/qt/test/` directory and
+To add more -qt tests, add them to the `src/qt/test/` directory and
 the `src/qt/test/test_main.cpp` file.
 
 

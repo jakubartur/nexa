@@ -2,9 +2,9 @@
 # Based on https://github.com/google/gtest-parallel
 # Copyright 2013 Google Inc. All rights reserved.
 #
-# Adaptations for running Bitcoin's tests (using runner based on
+# Adaptations for running Nexa's tests (using runner based on
 # Boost Test Library instead of Google Test):
-# Copyright (c) 2016-2017 The Bitcoin Unlimited developers
+# Copyright (c) 2016-2022 The Bitcoin Unlimited developers
 # Copyright (C) 2017 Tom Zander <tomz@freedommail.ch>
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -359,7 +359,7 @@ parser = optparse.OptionParser(
 
 parser.add_option('-d', '--output_dir', type='string',
                   default=os.path.join(
-                      tempfile.gettempdir(), "gtest-parallel-bitcoin.%s" %
+                      tempfile.gettempdir(), "gtest-parallel-nexa.%s" %
                       getpass.getuser()),
                   help='output directory for test logs')
 parser.add_option('-r', '--repeat', type='int', default=1,
@@ -420,7 +420,7 @@ test_results = (IgnoreTestResults() if options.dump_json_test_results is None
 
 # Find tests.
 save_file = os.path.join(os.path.expanduser(
-    "~"), ".gtest-parallel-bitcoin-times")
+    "~"), ".gtest-parallel-nexa-times")
 times = TestTimes(save_file)
 tests = []
 for test_binary in binaries:

@@ -1,11 +1,11 @@
 // Copyright (c) 2009-2010 Satoshi Nakamoto
 // Copyright (c) 2009-2015 The Bitcoin Core developers
-// Copyright (c) 2015-2020 The Bitcoin Unlimited developers
+// Copyright (c) 2015-2022 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_STANDARD_H
-#define BITCOIN_SCRIPT_STANDARD_H
+#ifndef NEXA_SCRIPT_STANDARD_H
+#define NEXA_SCRIPT_STANDARD_H
 
 #include "consensus/grouptokens.h"
 #include "script/interpreter.h"
@@ -13,9 +13,8 @@
 #include "streams.h"
 #include "uint256.h"
 
-#include <variant>
-
 #include <stdint.h>
+#include <variant>
 
 class CKeyID;
 class CScript;
@@ -155,7 +154,7 @@ public:
  *  * CNoDestination: no destination set
  *  * CKeyID: TX_PUBKEYHASH destination
  *  * CScriptID: TX_SCRIPTHASH destination
- *  A CTxDestination is the internal data type encoded in a bitcoin address
+ *  A CTxDestination is the internal data type encoded in an address
  */
 typedef std::variant<CNoDestination, CKeyID, CScriptID, ScriptTemplateDestination> CTxDestination;
 
@@ -183,4 +182,4 @@ CScript GetScriptForFreeze(CScriptNum nLockTime, const CPubKey &pubKey);
 CScript GetScriptLabelPublic(const std::string &labelPublic);
 
 
-#endif // BITCOIN_SCRIPT_STANDARD_H
+#endif // NEXA_SCRIPT_STANDARD_H

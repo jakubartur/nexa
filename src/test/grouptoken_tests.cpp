@@ -1267,8 +1267,8 @@ BOOST_AUTO_TEST_CASE(grouptoken_basicfunctions)
         ok = CheckGroupTokens(t, state, coins);
         BOOST_CHECK(ok);
 
-        // send 1 coins and melt tokens, but incorrect BCH amount
-        // this will work because CheckGroupTokens does not enforce bitcoin balances
+        // send 1 coins and melt tokens, but incorrect amount
+        // this will work because CheckGroupTokens does not enforce wallet balances
         t = tx3x1(putxo, meltctrl1, gutxo, p2pkh(u2), 300);
         ok = CheckGroupTokens(t, state, coins);
         BOOST_CHECK(ok);
