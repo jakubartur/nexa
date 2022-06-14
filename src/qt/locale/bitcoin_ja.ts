@@ -66,11 +66,11 @@
         <translation>アドレス受信中</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>これらは支払いを送信するためのあなたの Bitcoin アドレスです。コインを送信する前に、常に額と受信アドレスを確認してください。</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>これらは支払いを送信するためのあなたの Nexa アドレスです。コインを送信する前に、常に額と受信アドレスを確認してください。</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>これらは支払いを受け取るためのビットコインアドレスです。トランザクションごとに新しい受け取り用アドレスを作成することが推奨されます。</translation>
     </message>
     <message>
@@ -160,16 +160,16 @@
         <translation>ウォレットの暗号化を確認する</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>警告: もしもあなたのウォレットを暗号化してパスフレーズを失ってしまったなら、&lt;b&gt;あなたの Bitcoin はすべて失われます&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>警告: もしもあなたのウォレットを暗号化してパスフレーズを失ってしまったなら、&lt;b&gt;あなたの Nexa はすべて失われます&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
         <translation>本当にウォレットを暗号化しますか?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>暗号化処理を完了させるため BCH Unlimited をいますぐ終了します。ウォレットの暗号化では、コンピュータに感染したマルウェアなどによるビットコインの盗難から完全に守ることはできないことにご注意ください。</translation>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>暗号化処理を完了させるため Nexa をいますぐ終了します。ウォレットの暗号化では、コンピュータに感染したマルウェアなどによるビットコインの盗難から完全に守ることはできないことにご注意ください。</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -430,8 +430,8 @@
         <translation>コマンドラインオプション (&amp;C)</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Bitcoin command-line options</source>
-        <translation>有効な Bitcoin のコマンドライン オプションを見るために BCH Unlimited のヘルプメッセージを表示します。</translation>
+        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
+        <translation>有効な Nexa のコマンドライン オプションを見るために BCH Unlimited のヘルプメッセージを表示します。</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
@@ -1396,8 +1396,8 @@
         <translation>総額</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Bitcoinアドレスを入力してください (例 %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Nexaアドレスを入力してください (例 %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1994,8 +1994,8 @@
         <translation>最小手数料</translation>
     </message>
     <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for bitcoin transactions than the network can process.</source>
-        <translation>ブロックの容量に比べてトランザクション流量が少ないうちは最小手数料のみの支払で十分です。しかしながらネットワークが処理しきれないほどbitcoinトランザクションの需要がひとたび生まれてしまった場合には、永遠に検証がされないトランザクションになってしまう可能性があることに注意してください。</translation>
+        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for nexa transactions than the network can process.</source>
+        <translation>ブロックの容量に比べてトランザクション流量が少ないうちは最小手数料のみの支払で十分です。しかしながらネットワークが処理しきれないほどnexaトランザクションの需要がひとたび生まれてしまった場合には、永遠に検証がされないトランザクションになってしまう可能性があることに注意してください。</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2205,8 +2205,8 @@
         <translation>これは通常の支払です。</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
-        <translation>支払の送金先Bitcoinアドレス</translation>
+        <source>The Nexa address to send the payment to</source>
+        <translation>支払の送金先Nexaアドレス</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -2225,7 +2225,7 @@
         <translation>この項目を削除する</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive less bitcoins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive less coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
         <translation>送金する金額から手数料が差し引かれます。受取人は数量フィールドで指定した量よりも少ないビットコインを受け取ります。受取人が複数いる場合には、手数料は均等割されます。</translation>
     </message>
     <message>
@@ -2287,8 +2287,8 @@
         <translation>あなたの所有しているアドレスによりメッセージや合意書に署名をすることで、それらアドレスに対して送られたビットコインを受け取ることができることを証明できます。フィッシング攻撃により不正にあなたの識別情報を署名させられてしまうことを防ぐために、不明確なものやランダムなものに対して署名しないよう注意してください。合意することが可能な、よく詳細の記された文言にのみ署名するようにしてください。</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
-        <translation>メッセージを署名するBitcoinアドレス</translation>
+        <source>The Nexa address to sign the message with</source>
+        <translation>メッセージを署名するNexaアドレス</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2319,8 +2319,8 @@
         <translation>現在の署名をシステムのクリップボードにコピーする</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>この Bitcoin アドレスを所有していることを証明するためにメッセージに署名</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>この Nexa アドレスを所有していることを証明するためにメッセージに署名</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -2343,12 +2343,12 @@
         <translation>受取人のアドレスとメッセージ（改行やスペース、タブなども完全に一致するよう注意してください）および署名を以下に入力し、メッセージの署名を検証してください。中間者攻撃により騙されるのを防ぐため、署名対象のメッセージに書かれていること以上の意味を署名から読み取ろうとしないよう注意してください。これは署名作成者がこのアドレスで受け取ったことを証明するだけであり、トランザクションの送信権限を証明するものではないことに注意してください！</translation>
     </message>
     <message>
-        <source>The Bitcoin address the message was signed with</source>
-        <translation>メッセージの署名に使われたBitcoinアドレス</translation>
+        <source>The Nexa address the message was signed with</source>
+        <translation>メッセージの署名に使われたNexaアドレス</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>指定された Bitcoin アドレスで署名されたことを保証するメッセージを検証</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>指定された Nexa アドレスで署名されたことを保証するメッセージを検証</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>

@@ -66,12 +66,12 @@
         <translation>Imenik naslovov za prejemanje</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>To je vaš imenik shranjenih naslovov Bitcoin, na katere lahko pošiljate plačila. Pred vsakim odlivom vedno preverite, če sta znesek in prejemnikov naslov pravilna.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>To je vaš imenik shranjenih naslovov Nexa, na katere lahko pošiljate plačila. Pred vsakim odlivom vedno preverite, če sta znesek in prejemnikov naslov pravilna.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>To je imenik vaših ustvarjenih naslovov Bitcoin, na katere lahko prejemate plačila. Priporočljivo je, da za vsak nov priliv ustvarite nov prejemni naslov.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>To je imenik vaših ustvarjenih naslovov Nexa, na katere lahko prejemate plačila. Priporočljivo je, da za vsak nov priliv ustvarite nov prejemni naslov.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -160,15 +160,15 @@
         <translation>Potrditev šifriranja denarnice</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Opozorilo: V primeru izgube gesla šifrirane denarnice, boste &lt;b&gt;IZGUBILI VSE BITCOINE V DENARNICI&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Opozorilo: V primeru izgube gesla šifrirane denarnice, boste &lt;b&gt;IZGUBILI VSE NEXACOINE V DENARNICI&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
         <translation>Ali ste prepričani, da želite šifrirati vašo denarnico?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
         <translation>Program se bo zaprl, da dokonča proces šifriranja. Zapomnite si, da šifriranje ne more popolnoma zaščititi vaše denarnice pred krajami in zlonamernimi programi, ki bi lahko bili nameščeni na vašem računalniku.</translation>
     </message>
     <message>
@@ -1336,8 +1336,8 @@
         <translation>Znesek</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Vnesite naslov Bitcoin (npr. %1):</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Vnesite naslov Nexa (npr. %1):</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1862,7 +1862,7 @@
         <translation>skupno vsaj</translation>
     </message>
     <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for bitcoin transactions than the network can process.</source>
+        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for nexa transactions than the network can process.</source>
         <translation>Dokler bo v blokih še dovolj prostora za vse nastajajoče transakcije, zadostuje, če plačate samo minimalno provizijo. Ko pa se bo količina vseh transakcij povečala do meja zmogljivosti omrežja, se lahko zgodi, da vaša transakcija brez večje provizije nikoli ne bo potrjena.</translation>
     </message>
     <message>
@@ -2065,8 +2065,8 @@
         <translation>Plačilo je navadne vrste.</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
-        <translation>Naslov Bitcoin, na katerega bo plačilo poslano</translation>
+        <source>The Nexa address to send the payment to</source>
+        <translation>Naslov Nexa, na katerega bo plačilo poslano</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -2085,7 +2085,7 @@
         <translation>Izpraznite vsebino polja</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive less bitcoins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive less coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
         <translation>Znesek plačila bo zmanjšan za znesek provizije. Prejemnik bo prejel manjše število kovancev, kot je bil vnešeni znesek. Če je prejemnikov več, bo provizija med njih enakomerno porazdeljena.</translation>
     </message>
     <message>
@@ -2147,8 +2147,8 @@
         <translation>S svojimi naslovi lahko podpisujete sporočila ali pogodbe in s tem dokazujete, da na teh naslovih lahko prejemate kovance. Bodite previdni in ne podpisujte ničesar nejasnega ali naključnega, ker vas zlikovci preko ribarjenja (phishing) lahko prelisičijo, da na njih prepišete svojo identiteto. Podpisujte samo podrobno opisane izjave, s katerimi se strinjate.</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
-        <translation>Naslov Bitcoin, s katerim podpisujete sporočilo</translation>
+        <source>The Nexa address to sign the message with</source>
+        <translation>Naslov Nexa, s katerim podpisujete sporočilo</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2179,7 +2179,7 @@
         <translation>Kopiranje trenutnega podpisa na sistemsko odložišče.</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
+        <source>Sign the message to prove you own this Nexa address</source>
         <translation>Podpišite sporočilo, da dokažete lastništvo nad zgornjim naslovom.</translation>
     </message>
     <message>
@@ -2203,12 +2203,12 @@
         <translation>Da preverite verodostojnost sporočila, spodaj vnesite: prejemnikov naslov, prejeto sporočilo (pazljivo skopirajte vse prelome vrstic, presledke, tabulatorje ipd.,) in prejeti podpis. Da se izognete napadom tipa man-in-the-middle, vedite, da iz veljavnega podpisa ne sledi nič drugega, kot tisto, kar je navedeno v sporočilu. Podpis samo potrjuje dejstvo, da ima podpisnik v lasti prejemni naslov, ne more pa dokazati vira nobene transakcije!</translation>
     </message>
     <message>
-        <source>The Bitcoin address the message was signed with</source>
-        <translation>Naslov Bitcoin, s katerim je bilo sporočilo podpisano</translation>
+        <source>The Nexa address the message was signed with</source>
+        <translation>Naslov Nexa, s katerim je bilo sporočilo podpisano</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>Preverite, ali je bilo sporočilo v resnici podpisano z navedenim naslovom Bitcoin.</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>Preverite, ali je bilo sporočilo v resnici podpisano z navedenim naslovom Nexa.</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>

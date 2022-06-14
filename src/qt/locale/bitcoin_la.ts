@@ -30,7 +30,7 @@
         <translation>&amp;Dele</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>Hae sunt inscriptiones mittendi pensitationes.  Semper inspice quantitatem et inscriptionem accipiendi antequam nummos mittis.</translation>
     </message>
     <message>
@@ -108,8 +108,8 @@
         <translation>Confirma cifrationem cassidilis</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Monitio: Si cassidile tuum cifras et tesseram amittis, tu &lt;b&gt;AMITTES OMNES TUOS NUMMOS BITOS&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Monitio: Si cassidile tuum cifras et tesseram amittis, tu &lt;b&gt;AMITTES OMNES TUOS NUMMOS NEXAS&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -945,8 +945,8 @@
         <translation>Copia signationem in latibulum systematis</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>Signa nuntium ut demonstres hanc inscriptionem Bitcoin a te possessa esse</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>Signa nuntium ut demonstres hanc inscriptionem Nexa a te possessa esse</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -965,8 +965,8 @@
         <translation>&amp;Verifica Nuntium</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>Verifica nuntium ut cures signatum esse cum specifica inscriptione Bitcoin</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>Verifica nuntium ut cures signatum esse cum specifica inscriptione Nexa</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>

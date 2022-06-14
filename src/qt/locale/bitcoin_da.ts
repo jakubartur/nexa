@@ -435,7 +435,7 @@
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
-        <translation><numerusform>%n aktiv forbindelse til Nexa-netværket</numerusform><numerusform>%n aktive forbindelser til Bitcoin-netværket</numerusform></translation>
+        <translation><numerusform>%n aktiv forbindelse til Nexa-netværket</numerusform><numerusform>%n aktive forbindelser til Nexa-netværket</numerusform></translation>
     </message>
     <message>
         <source>No block source available...</source>
@@ -817,8 +817,8 @@
         <translation>Den indtastede adresse "%1" er allerede i adressebogen.</translation>
     </message>
     <message>
-        <source>The entered address "%1" is not a valid Bitcoin address.</source>
-        <translation>Den indtastede adresse "%1" er ikke en gyldig Bitcoin-adresse.</translation>
+        <source>The entered address "%1" is not a valid Nexa address.</source>
+        <translation>Den indtastede adresse "%1" er ikke en gyldig Nexa-adresse.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>

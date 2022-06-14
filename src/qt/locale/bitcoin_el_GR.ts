@@ -66,12 +66,12 @@
         <translation>Διευθύνσεις λήψης</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Αυτές είναι οι Bitcoin διευθύνσεις σας για να λαμβάνετε πληρωμές. Δίνοντας μία ξεχωριστή διεύθυνση σε κάθε αποστολέα, θα μπορείτε να ελέγχετε ποιος σας πληρώνει.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Αυτές είναι οι Nexa διευθύνσεις σας για να λαμβάνετε πληρωμές. Δίνοντας μία ξεχωριστή διεύθυνση σε κάθε αποστολέα, θα μπορείτε να ελέγχετε ποιος σας πληρώνει.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Αυτές είναι οι Bitcoin διευθύνσεις σας για να λαμβάνετε πληρωμές. Δίνοντας μία ξεχωριστή διεύθυνση σε κάθε αποστολέα, θα μπορείτε να ελέγχετε ποιος σας πληρώνει.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Αυτές είναι οι Nexa διευθύνσεις σας για να λαμβάνετε πληρωμές. Δίνοντας μία ξεχωριστή διεύθυνση σε κάθε αποστολέα, θα μπορείτε να ελέγχετε ποιος σας πληρώνει.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -160,8 +160,8 @@
         <translation>Επιβεβαίωσε την κρυπτογραφηση του πορτοφολιού</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Προσοχη: Εαν κρυπτογραφησεις το πορτοφολι σου και χάσεις τον κωδικο σου θα χάσεις &lt;b&gt; ΟΛΑ ΣΟΥ ΤΑ BITCOINS&lt;/b&gt;!
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Προσοχη: Εαν κρυπτογραφησεις το πορτοφολι σου και χάσεις τον κωδικο σου θα χάσεις &lt;b&gt; ΟΛΑ ΣΟΥ ΤΑ NEXA COINS&lt;/b&gt;!
 Είσαι σίγουρος ότι θέλεις να κρυπτογραφησεις το πορτοφολι;</translation>
     </message>
     <message>
@@ -169,8 +169,8 @@
         <translation>Είστε σίγουροι ότι θέλετε να κρυπτογραφήσετε το πορτοφόλι σας;</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>Το BCH Unlimited θα κλεισει τώρα για να τελειώσει την διαδικασία κρυπτογράφησης. Θυμήσου ότι κρυπτογραφώντας το πορτοφόλι σου δεν μπορείς να προστατέψεις πλήρως τα bitcoins σου από κλοπή στην περίπτωση που μολυνθεί ο υπολογιστής σου με κακόβουλο λογισμικό.
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>Το Nexa θα κλεισει τώρα για να τελειώσει την διαδικασία κρυπτογράφησης. Θυμήσου ότι κρυπτογραφώντας το πορτοφόλι σου δεν μπορείς να προστατέψεις πλήρως τα coins σου από κλοπή στην περίπτωση που μολυνθεί ο υπολογιστής σου με κακόβουλο λογισμικό.
 </translation>
     </message>
     <message>
@@ -1256,8 +1256,8 @@
         <translation>Ποσό</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Εισάγετε μια διεύθυνση Bitcoin (π.χ. %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Εισάγετε μια διεύθυνση Nexa (π.χ. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

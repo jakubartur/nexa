@@ -66,12 +66,12 @@
         <translation>Қабул қилинадиган манзиллар</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Улар тўловларни жўнатиш учун сизнинг Bitcoin манзилларингиз. Доимо тангаларни жўнатишдан олдин сумма ва қабул қилувчи манзилни текшириб кўринг. </translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Улар тўловларни жўнатиш учун сизнинг Nexa манзилларингиз. Доимо тангаларни жўнатишдан олдин сумма ва қабул қилувчи манзилни текшириб кўринг. </translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Улар тўловларни қабул қилиш учун сизнинг Bitcoin манзилларингиз. Ҳар бир ўтказма учун янги қабул қилувчи манзилдан фойдаланиш тавсия қилинади.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Улар тўловларни қабул қилиш учун сизнинг Nexa манзилларингиз. Ҳар бир ўтказма учун янги қабул қилувчи манзилдан фойдаланиш тавсия қилинади.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -160,8 +160,8 @@
         <translation>Ҳамённи кодлашни тасдиқлаш</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Диққат: Агар сиз ҳамёнингизни кодласангиз ва махфий сўзингизни унутсангиз, сиз &lt;b&gt;БАРЧА BITCOIN ПУЛЛАРИНГИЗНИ ЙЎҚОТАСИЗ&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Диққат: Агар сиз ҳамёнингизни кодласангиз ва махфий сўзингизни унутсангиз, сиз &lt;b&gt;БАРЧА NEXA COIN ПУЛЛАРИНГИЗНИ ЙЎҚОТАСИЗ&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -1098,8 +1098,8 @@
         <translation>Миқдори</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Bitcoin манзилини киритинг (масалан.  %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Nexa манзилини киритинг (масалан.  %1)</translation>
     </message>
     <message>
         <source>%1 m</source>

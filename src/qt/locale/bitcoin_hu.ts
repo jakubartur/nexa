@@ -66,12 +66,12 @@
         <translation>Fogadó címek</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Ezekről a címekről küldhetsz bitcoint. Mindig ellenőrizd a fogadó címet és a fizetendő összeget, mielőtt elküldöd.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Ezekről a címekről küldhetsz Nexa. Mindig ellenőrizd a fogadó címet és a fizetendő összeget, mielőtt elküldöd.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Ezekkel a címekkel fogadhatsz bitcoint. Ajánlott minden tranzakcióhoz egy új fogadó címet használni.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Ezekkel a címekkel fogadhatsz Nexa. Ajánlott minden tranzakcióhoz egy új fogadó címet használni.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -160,8 +160,8 @@
         <translation>Biztosan titkosítani akarod a tárcát?</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Figyelem: ha titkosítod a tárcát és elveszted a jelszavad, akkor &lt;b&gt;AZ ÖSSZES BITCOINOD ELVESZIK!&lt;/b&gt;</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Figyelem: ha titkosítod a tárcát és elveszted a jelszavad, akkor &lt;b&gt;AZ ÖSSZES NEXA COINOD ELVESZIK!&lt;/b&gt;</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -1184,8 +1184,8 @@
         <translation>Összeg</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Ad meg egy Bitcoin címet (pl: %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Ad meg egy Nexa címet (pl: %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1747,7 +1747,7 @@
     </message>
     <message>
         <source>The amount exceeds your balance.</source>
-        <translation>Nincs ennyi bitcoin az egyenlegeden.</translation>
+        <translation>Nincs ennyi nexa az egyenlegeden.</translation>
     </message>
     <message>
         <source>The total exceeds your balance when the %1 transaction fee is included.</source>
@@ -1876,7 +1876,7 @@
         <translation>A jelenleg kiválasztott aláírás másolása a rendszer-vágólapra</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
+        <source>Sign the message to prove you own this Nexa address</source>
         <translation>Üzenet </translation>
     </message>
     <message>
@@ -2541,7 +2541,7 @@
     </message>
     <message>
         <source>Insufficient funds</source>
-        <translation>Nincs elég bitcoinod.</translation>
+        <translation>Nincs elég coinod.</translation>
     </message>
     <message>
         <source>Loading block index...</source>

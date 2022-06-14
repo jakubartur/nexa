@@ -66,12 +66,12 @@
         <translation>Adresa de primire</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Acestea sînt adresele dumneavoastră Bitcoin pentru efectuarea plăţilor. Verificaţi întotdeauna cantitatea şi adresa de primire înainte de a trimite monede.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Acestea sînt adresele dumneavoastră Nexa pentru efectuarea plăţilor. Verificaţi întotdeauna cantitatea şi adresa de primire înainte de a trimite monede.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Acestea sînt adresele dumneavoastră Bitcoin folosite pentru a primi plati. Este recomandat să folosiţi o adresă nouă de primire pentru fiecare tranzacţie în parte.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Acestea sînt adresele dumneavoastră Nexa folosite pentru a primi plati. Este recomandat să folosiţi o adresă nouă de primire pentru fiecare tranzacţie în parte.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -168,8 +168,8 @@
         <translation>Sigur doriţi să criptaţi portofelul dvs.?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>Bitcoin se va închide acum pentru a termina procesul de criptare. Ţineţi minte că criptarea portofelului nu vă poate proteja în totalitate de furtul monedelor de către programe dăunătoare care vă infectează calculatorul.</translation>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>Nexa se va închide acum pentru a termina procesul de criptare. Ţineţi minte că criptarea portofelului nu vă poate proteja în totalitate de furtul monedelor de către programe dăunătoare care vă infectează calculatorul.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -430,8 +430,8 @@
         <translation>Opţiuni linie de &amp;comandă</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Bitcoin command-line options</source>
-        <translation>Arată mesajul de ajutor BCH Unlimited pentru a obţine o listă cu opţiunile posibile de linii de comandă Bitcoin</translation>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
+        <translation>Arată mesajul de ajutor Nexa pentru a obţine o listă cu opţiunile posibile de linii de comandă Nexa</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
@@ -1149,7 +1149,7 @@
     </message>
     <message>
         <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
-        <translation>Alegeţi subdiviziunea folosită la afişarea interfeţei şi la trimiterea de bitcoin.</translation>
+        <translation>Alegeţi subdiviziunea folosită la afişarea interfeţei şi la trimiterea de coin.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1380,8 +1380,8 @@
         <translation>Cantitate</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Introduceţi o adresă Bitcoin (de exemplu %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Introduceţi o adresă Nexa (de exemplu %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -2117,8 +2117,8 @@
         <translation>Aceasta este o tranzacţie normală.</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
-        <translation>Adresa bitcoin către care se face plata</translation>
+        <source>The Nexa address to send the payment to</source>
+        <translation>Adresa Nexa către care se face plata</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -2179,7 +2179,7 @@
         <translation>&amp;Semnează mesaj</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
+        <source>The Nexa address to sign the message with</source>
         <translation>Adresa cu care semnaţi mesajul</translation>
     </message>
     <message>
@@ -2211,8 +2211,8 @@
         <translation>Copiază semnatura curentă în clipboard-ul sistemului</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>Semnează mesajul pentru a dovedi ca deţineţi acestă adresă Bitcoin</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>Semnează mesajul pentru a dovedi ca deţineţi acestă adresă Nexa</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -2231,12 +2231,12 @@
         <translation>&amp;Verifică mesaj</translation>
     </message>
     <message>
-        <source>The Bitcoin address the message was signed with</source>
-        <translation>Introduceţi o adresă Bitcoin</translation>
+        <source>The Nexa address the message was signed with</source>
+        <translation>Introduceţi o adresă Nexa</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>Verificaţi mesajul pentru a vă asigura că a fost semnat cu adresa Bitcoin specificată</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>Verificaţi mesajul pentru a vă asigura că a fost semnat cu adresa Nexa specificată</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -2747,7 +2747,7 @@
     <name>WalletModel</name>
     <message>
         <source>Send Coins</source>
-        <translation>Trimitere bitcoin</translation>
+        <translation>Trimitere coin</translation>
     </message>
 </context>
 <context>

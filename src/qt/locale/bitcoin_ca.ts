@@ -1400,8 +1400,8 @@
         <translation>Import</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Introduïu una adreça de Bitcoin (p. ex. %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Introduïu una adreça de Nexa (p. ex. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>

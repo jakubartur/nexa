@@ -43,11 +43,11 @@
     </message>
     <message>
         <source>Choose the address to send coins to</source>
-        <translation>Izvēlies adresi uz kuru sūtīt bitcoins</translation>
+        <translation>Izvēlies adresi uz kuru sūtīt coins</translation>
     </message>
     <message>
         <source>Choose the address to receive coins with</source>
-        <translation>Izvēlies adresi ar kuru saņemt bitcoins</translation>
+        <translation>Izvēlies adresi ar kuru saņemt coins</translation>
     </message>
     <message>
         <source>C&amp;hoose</source>
@@ -62,12 +62,12 @@
         <translation>Saņemšanas adreses</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Šīs ir jūsu Bitcoin adreses maksājumu sūtīšanai. Vienmēr  pārbaudiet summu un saņēmēja adresi pirms monētu sūtīšanas.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Šīs ir jūsu Nexa adreses maksājumu sūtīšanai. Vienmēr  pārbaudiet summu un saņēmēja adresi pirms monētu sūtīšanas.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Šīs ir jūsu Bitcoin adreses maksājumu saņemšanai. Ir ieteicams katram darījumam izmantot jaunu saņemšanas adresi.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Šīs ir jūsu Nexa adreses maksājumu saņemšanai. Ir ieteicams katram darījumam izmantot jaunu saņemšanas adresi.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -164,8 +164,8 @@
         <translation>Vai tu tiešām vēlies šifrēt savu maciņu?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>BCH Unlimited tiks aizvērts, lai pabeigtu šifrēšansa procesu. Atcerieties, ka jūsu maka šifrēšana nevar pilnībā pasargāt jūsu monētas no to nozagašanas, inficējot datoru ar ļaunprātīgām programmām.</translation>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>Nexa tiks aizvērts, lai pabeigtu šifrēšansa procesu. Atcerieties, ka jūsu maka šifrēšana nevar pilnībā pasargāt jūsu monētas no to nozagašanas, inficējot datoru ar ļaunprātīgām programmām.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -907,7 +907,7 @@
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
-        <translation>Vai rādīt Bitcoin kontroles funkcijas vai nē.</translation>
+        <translation>Vai rādīt coin kontroles funkcijas vai nē.</translation>
     </message>
     <message>
         <source>&amp;OK</source>
@@ -1333,7 +1333,7 @@
     </message>
     <message>
         <source>Coin Control Features</source>
-        <translation>Bitcoin Kontroles Funkcijas</translation>
+        <translation>Coin Kontroles Funkcijas</translation>
     </message>
     <message>
         <source>Inputs...</source>
@@ -1589,8 +1589,8 @@
         <translation>Kopēt parakstu uz sistēmas starpliktuvi</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>Parakstīt ziņojumu lai pierādītu, ka esi šīs Bitcoin adreses īpašnieks.</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>Parakstīt ziņojumu lai pierādītu, ka esi šīs Nexa adreses īpašnieks.</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>

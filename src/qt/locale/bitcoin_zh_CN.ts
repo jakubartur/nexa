@@ -66,11 +66,11 @@
         <translation>正在接收地址</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>这是您用来付款的比特币地址。在付款前，请仔细核实付款金额和收款地址。</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>这些都是您的比特币地址，可用于收款。建议对每笔交易都使用一个新的地址。</translation>
     </message>
     <message>
@@ -160,7 +160,7 @@
         <translation>确认加密钱包</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
         <translation>警告：如果您加密了您的钱包，但是忘记了密码，你将会&lt;b&gt;丢失所有的比特币&lt;/b&gt;！</translation>
     </message>
     <message>
@@ -168,7 +168,7 @@
         <translation>您确定需要为钱包加密吗？</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
         <translation>比特币无限现在将关闭以完成加密过程。请记住，在您的计算机被恶意软件感染的情况下，加密不能完全保护您的比特币免于被盗。</translation>
     </message>
     <message>
@@ -1400,7 +1400,7 @@
         <translation>金额</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Nexa address (e.g. %1)</source>
         <translation>请输入一个比特币地址 (例如 %1)</translation>
     </message>
     <message>
@@ -1994,7 +1994,7 @@
         <translation>最小额 </translation>
     </message>
     <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for bitcoin transactions than the network can process.</source>
+        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for nexa transactions than the network can process.</source>
         <translation>交易量小时只支付最小交易费是可以的。但是请注意，当交易量大到超出网络可处理时您的交易可能永远无法确认。</translation>
     </message>
     <message>
@@ -2205,7 +2205,7 @@
         <translation>这是笔正常的支付。</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
+        <source>The Nexa address to send the payment to</source>
         <translation>付款目的地址</translation>
     </message>
     <message>
@@ -2287,7 +2287,7 @@
         <translation>您可以用你的地址对消息/协议进行签名，以证明您可以接收发送到该地址的比特币。注意不要对任何模棱两可或者随机的消息进行签名，以免遭受钓鱼式攻击。请确保消息内容准确的表达了您的真实意愿。</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
+        <source>The Nexa address to sign the message with</source>
         <translation>用来对消息签名的地址 </translation>
     </message>
     <message>
@@ -2319,7 +2319,7 @@
         <translation>复制当前签名至剪切板</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
+        <source>Sign the message to prove you own this Nexa address</source>
         <translation>签名消息，证明这个地址属于您。</translation>
     </message>
     <message>
@@ -2343,11 +2343,11 @@
         <translation>请在下面输入接收者地址、消息（确保换行符、空格符、制表符等完全相同）和签名以验证消息。请仔细核对签名信息，以提防中间人攻击。请注意，这只是证明接收方签名的地址，它不能证明任何交易！</translation>
     </message>
     <message>
-        <source>The Bitcoin address the message was signed with</source>
+        <source>The Nexa address the message was signed with</source>
         <translation>消息使用的签名地址</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
         <translation>验证消息，确保消息是由指定的比特币地址签名过的。</translation>
     </message>
     <message>

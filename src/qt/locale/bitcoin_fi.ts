@@ -66,12 +66,12 @@
         <translation>Vastaanottava osoite</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Nämä ovat sinun Bitcoin osoitteita maksujen lähetykseen. Tarkista aina summa ja vastaanottajan osoite ennenkuin lähetät kolikkoja.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Nämä ovat sinun Nexa osoitteita maksujen lähetykseen. Tarkista aina summa ja vastaanottajan osoite ennenkuin lähetät kolikkoja.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Nämä ovat sinun Bitcoin-osoitteesi suoritusten vastaanottamiseen. Suositellaan että annat uuden osoitteen kullekin transaktiolle.</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Nämä ovat sinun Nexa-osoitteesi suoritusten vastaanottamiseen. Suositellaan että annat uuden osoitteen kullekin transaktiolle.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -160,16 +160,16 @@
         <translation>Vahvista lompakon salaus</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Varoitus: Jos salaat lompakkosi ja menetät tunnuslauseesi, &lt;b&gt;MENETÄT KAIKKI BITCOINISI&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Varoitus: Jos salaat lompakkosi ja menetät tunnuslauseesi, &lt;b&gt;MENETÄT KAIKKI NEXA COINISI&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
         <translation>Haluatko varmasti salata lompakkosi?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>BCH Unlimited sammuu nyt viimeistelläkseen kryptaamisen. Muista että lompakon kryptaaminen ei voi täysin suojata bitcoinejasi varkaudelta malwaren saastuttamalla tietokoneella.</translation>
+        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>BCH Unlimited sammuu nyt viimeistelläkseen kryptaamisen. Muista että lompakon kryptaaminen ei voi täysin suojata coinejasi varkaudelta malwaren saastuttamalla tietokoneella.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -430,8 +430,8 @@
         <translation>&amp;Komentorivin valinnat</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Bitcoin command-line options</source>
-        <translation>Näytä BCH Unlimited ohjeet saadaksesi listan mahdollisista Bitcoinin komentorivivalinnoista</translation>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
+        <translation>Näytä Nexa ohjeet saadaksesi listan mahdollisista Nexa komentorivivalinnoista</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
@@ -1396,8 +1396,8 @@
         <translation>Määrä</translation>
     </message>
     <message>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
-        <translation>Syötä Bitcoin-osoite (esim. %1)</translation>
+        <source>Enter a Nexa address (e.g. %1)</source>
+        <translation>Syötä Nexa-osoite (esim. %1)</translation>
     </message>
     <message>
         <source>%1 d</source>
@@ -1911,7 +1911,7 @@
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
-        <translation>Lähetä Bitcoineja</translation>
+        <translation>Lähetä coineja</translation>
     </message>
     <message>
         <source>Coin Control Features</source>
@@ -2059,7 +2059,7 @@
     </message>
     <message>
         <source>Confirm send coins</source>
-        <translation>Hyväksy Bitcoinien lähettäminen</translation>
+        <translation>Hyväksy coinien lähettäminen</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -2103,7 +2103,7 @@
     </message>
     <message>
         <source>The amount to pay must be larger than 0.</source>
-        <translation>Maksettavan summan tulee olla suurempi kuin 0 Bitcoinia.</translation>
+        <translation>Maksettavan summan tulee olla suurempi kuin 0 coinia.</translation>
     </message>
     <message>
         <source>The amount exceeds your balance.</source>
@@ -2197,8 +2197,8 @@
         <translation>Tämä on normaali maksu.</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
-        <translation>Bitcoin-osoite johon maksu lähetetään</translation>
+        <source>The Nexa address to send the payment to</source>
+        <translation>Nexa-osoite johon maksu lähetetään</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -2271,8 +2271,8 @@
         <translation>&amp;Allekirjoita viesti</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
-        <translation>Bitcoin-osoite jolla viesti allekirjoitetaan</translation>
+        <source>The Nexa address to sign the message with</source>
+        <translation>Nexa-osoite jolla viesti allekirjoitetaan</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2303,8 +2303,8 @@
         <translation>Kopioi tämänhetkinen allekirjoitus leikepöydälle</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>Allekirjoita viesti todistaaksesi, että omistat tämän Bitcoin-osoitteen</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>Allekirjoita viesti todistaaksesi, että omistat tämän Nexa-osoitteen</translation>
     </message>
     <message>
         <source>Sign &amp;Message</source>
@@ -2323,12 +2323,12 @@
         <translation>&amp;Varmista viesti</translation>
     </message>
     <message>
-        <source>The Bitcoin address the message was signed with</source>
-        <translation>Bitcoin-osoite jolla viesti on allekirjoitettu</translation>
+        <source>The Nexa address the message was signed with</source>
+        <translation>Nexa-osoite jolla viesti on allekirjoitettu</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>Tarkista viestin allekirjoitus varmistaaksesi, että se allekirjoitettiin tietyllä Bitcoin-osoitteella</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>Tarkista viestin allekirjoitus varmistaaksesi, että se allekirjoitettiin tietyllä Nexa-osoitteella</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -2847,7 +2847,7 @@
     <name>WalletModel</name>
     <message>
         <source>Send Coins</source>
-        <translation>Lähetä Bitcoineja</translation>
+        <translation>Lähetä coineja</translation>
     </message>
 </context>
 <context>
