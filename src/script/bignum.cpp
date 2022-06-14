@@ -95,11 +95,13 @@ bool BigNumScriptOp(BigNum &bn,
     return true;
 }
 
-#else
+#else // None of this is implemented in android
 const BigNum bnZero;
 const BigNum bnOne;
 const BigNum &bnFalse(bnZero);
 const BigNum &bnTrue(bnOne);
+const BigNum bnInt64Max;
+const BigNum bnUint64Max;
 
 BigNum bigNumUpperLimit;
 BigNum bigNumLowerLimit;
