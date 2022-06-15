@@ -11,7 +11,7 @@
 #include "primitives/transaction.h"
 #include "reverse_iterator.h"
 #include "sync.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "unlimited.h"
 #include "utilmoneystr.h"
 #include "utilstrencodings.h"

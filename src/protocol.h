@@ -9,8 +9,8 @@
 #error This header can only be compiled as C++.
 #endif
 
-#ifndef BITCOIN_PROTOCOL_H
-#define BITCOIN_PROTOCOL_H
+#ifndef NEXA_PROTOCOL_H
+#define NEXA_PROTOCOL_H
 
 #include "netbase.h"
 #include "serialize.h"
@@ -410,13 +410,9 @@ enum
     // set by all Bitcoin Unlimited nodes, and is unset by SPV clients or other peers that just want
     // network services but don't provide them.
     NODE_NETWORK = (1 << 0),
-    // NODE_GETUTXO means the node is capable of responding to the getutxo protocol request.
-    // Bitcoin Unlimited does not support this but a patch set called Bitcoin XT does.
-    // See BIP 64 for details on how this is implemented.
-    NODE_GETUTXO = (1 << 1),
-    // NODE_BLOOM means the node is capable and willing to handle bloom-filtered connections.
-    // Bitcoin Unlimited nodes used to support this by default, without advertising this bit,
-    // but no longer do as of protocol version 70011 (= NO_BLOOM_VERSION)
+
+    // 1<<1 is currently not used
+
     NODE_BLOOM = (1 << 2),
 
     // NODE_XTHIN means the node supports Xtreme Thinblocks
@@ -424,7 +420,7 @@ enum
     // make xthin requests
     NODE_XTHIN = (1 << 4),
 
-    // 1<<5 was taken by NODE_BITCOIN_CASH which is not used anymore
+    // 1<<5 is currently not used
 
     // NODE_GRAPHENE means the node supports Graphene blocks
     // If this is turned off then the node will not service graphene requests nor
@@ -443,6 +439,8 @@ enum
 
     // NODE_CF indicates the node is capable of serving compact block filters to SPV clients.
     NODE_CF = (1 << 8),
+
+    // 1<<9 is currently not used
 
     // NODE_NETWORK_LIMITED means the same as NODE_NETWORK with the limitation
     // of only serving a small subset of the blockchain
@@ -536,4 +534,4 @@ enum
     MSG_DOUBLESPENDPROOF = 7
 };
 
-#endif // BITCOIN_PROTOCOL_H
+#endif // NEXA_PROTOCOL_H

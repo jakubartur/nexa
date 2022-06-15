@@ -5,8 +5,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_VERIFYDB_H
-#define BITCOIN_VERIFYDB_H
+#ifndef NEXA_VERIFYDB_H
+#define NEXA_VERIFYDB_H
 
 #include "chainparams.h"
 #include "coins.h"

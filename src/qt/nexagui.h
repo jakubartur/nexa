@@ -7,7 +7,7 @@
 #define NEXA_QT_NEXAGUI_H
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #endif
 
 #include "amount.h"
@@ -284,4 +284,4 @@ private Q_SLOTS:
     void onMenuSelection(QAction *action);
 };
 
-#endif // BITCOIN_QT_BITCOINGUI_H
+#endif // NEXA_QT_BITCOINGUI_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_EXPEDITED_H
-#define BITCOIN_EXPEDITED_H
+#ifndef NEXA_EXPEDITED_H
+#define NEXA_EXPEDITED_H
 
 #include "blockrelay/thinblock.h"
 

@@ -5,7 +5,7 @@
 
 #include "dbwrapper.h"
 #include "random.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "uint256.h"
 
 #include <boost/assert.hpp>

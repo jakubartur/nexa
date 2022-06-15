@@ -46,7 +46,7 @@
 #########################################################################
 # Limitations, Caveats etc.
 #
-# 1. CAUTION!!!! This kills any running bitcoind's as part of cleanup!
+# 1. CAUTION!!!! This kills any running nexad's as part of cleanup!
 #    Only run in an isolated test environment!
 #
 # 2. Once adapted for a bisection run, you should copy the modified script
@@ -67,12 +67,12 @@ TIMEOUT_CMD=/usr/bin/timeout
     exit 2
 }
 
-# optional tool for use with "test_bitcoin" tests
+# optional tool for use with "test_nexa" tests
 # You should find a copy in contrib/testtools/ , and copy it to
 # somewhere in your PATH.
 # If not present during running of this script, unit tests will be done
 # sequentially.
-PARALLEL_TEST_TOOL=gtest-parallel-bitcoin
+PARALLEL_TEST_TOOL=gtest-parallel-nexa
 
 
 ############ Test run specific configuration ##########
@@ -89,7 +89,7 @@ CLEAR_CACHE_BETWEEN_RUNS=1
 
 # the command to test
 # if not specified as $3, use the default below
-TEST_COMMAND=${3:-"src/test/test_bitcoin"}
+TEST_COMMAND=${3:-"src/test/test_nexa"}
 #TEST_COMMAND=${3:-"qa/pull-tester/rpc-tests.py txn_doublespend.py --mineblock"}
 
 # number of iterations after which to stop and consider the test as passed
@@ -100,11 +100,11 @@ STOP_ITERATIONS=${1:-10}
 ITERATION_TIMEOUT_SECS=${2:-1800}
 
 
-# helper function to check if parameter is some form of test_bitcoin
+# helper function to check if parameter is some form of test_nexa
 # this function has been dumbed down for now.
-is_test_bitcoin()
+is_test_nexa()
 {
-    if [ "$1" = "src/test/test_bitcoin" ]
+    if [ "$1" = "src/test/test_nexa" ]
     then
         return 0
     else
@@ -179,8 +179,8 @@ do
         rm -rf cache
     fi
 
-    # check if the test is src/test/test_bitcoin
-    is_test_bitcoin "${TEST_COMMAND}"
+    # check if the test is src/test/test_nexa
+    is_test_nexa "${TEST_COMMAND}"
     if [ $? -eq 0 ]
     then
         # check if we have parallel testing tool
@@ -202,12 +202,12 @@ do
     then
         if [ ${run_exit_code} -ne 124 ]
         then
-            killall bitcoind
+            killall nexad
             echo "failed during iteration ${iteration} with exit code: ${run_exit_code}"
             exit 1
         else
             # timed out
-            killall bitcoind
+            killall nexad
             echo "timed out after ${ITERATION_TIMEOUT_SECS} seconds during iteration ${iteration}"
             echo "check if you need to adjust the timeout to be higher!"
             exit 1

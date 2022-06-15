@@ -1,0 +1,33 @@
+# /etc/conf.d/nexad: config file for /etc/init.d/nexad
+
+# Config file location
+#NEXAD_CONFIGFILE="/etc/nexa/nexa.conf"
+
+# What directory to write pidfile to?  (created and owned by $NEXAD_USER)
+#NEXAD_PIDDIR="/var/run/nexad"
+
+# What filename to give the pidfile
+#NEXAD_PIDFILE="${NEXAD_PIDDIR}/nexad.pid"
+
+# Where to write nexad data (be mindful that the blockchain is large)
+#NEXAD_DATADIR="/var/lib/nexad"
+
+# User and group to own nexad process
+#NEXAD_USER="nexa"
+#NEXAD_GROUP="nexa"
+
+# Path to nexad executable
+#NEXAD_BIN="/usr/bin/nexad"
+
+# Nice value to run nexad under
+#NEXAD_NICE=0
+
+# Additional options (avoid -conf and -datadir, use flags above)
+NEXAD_OPTS="-disablewallet"
+
+# The timeout in seconds OpenRC will wait for nexad to terminate
+# after a SIGTERM has been raised.
+# Note that this will be mapped as argument to start-stop-daemon's
+# '--retry' option, which means you can specify a retry schedule
+# here. For more information see man 8 start-stop-daemon.
+NEXAD_SIGTERM_TIMEOUT=60

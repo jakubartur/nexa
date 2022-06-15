@@ -8,7 +8,7 @@
 #include "chain.h"
 #include "random.h"
 #include "versionbits.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "chainparams.h"
 #include "chainparamsbase.h"
 #include "main.h"

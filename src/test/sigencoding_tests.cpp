@@ -5,7 +5,7 @@
 
 #include "script/interpreter.h"
 #include "script/sighashtype.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include <boost/test/unit_test.hpp>
 #include <vector>
 

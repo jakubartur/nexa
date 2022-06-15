@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_RPCCONSOLE_H
-#define BITCOIN_QT_RPCCONSOLE_H
+#ifndef NEXA_QT_RPCCONSOLE_H
+#define NEXA_QT_RPCCONSOLE_H
 
 #include "guiutil.h"
 #include "peertablemodel.h"
@@ -165,4 +165,4 @@ private:
     QCompleter *autoCompleter;
 };
 
-#endif // BITCOIN_QT_RPCCONSOLE_H
+#endif // NEXA_QT_RPCCONSOLE_H

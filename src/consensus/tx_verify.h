@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CONSENSUS_TX_VERIFY_H
-#define BITCOIN_CONSENSUS_TX_VERIFY_H
+#ifndef NEXA_CONSENSUS_TX_VERIFY_H
+#define NEXA_CONSENSUS_TX_VERIFY_H
 
 #include "primitives/transaction.h"
 
@@ -83,4 +83,4 @@ bool SequenceLocks(const CTransactionRef tx, int flags, std::vector<int> *prevHe
 
 uint64_t GetTransactionSigOpCount(const CTransactionRef ptx, const CCoinsViewCache &coins, const uint32_t flags);
 
-#endif // BITCOIN_CONSENSUS_TX_VERIFY_H
+#endif // NEXA_CONSENSUS_TX_VERIFY_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_THINBLOCK_H
-#define BITCOIN_THINBLOCK_H
+#ifndef NEXA_THINBLOCK_H
+#define NEXA_THINBLOCK_H
 
 #include "bloom.h"
 #include "consensus/validation.h"
@@ -326,4 +326,4 @@ void BuildSeededBloomFilter(CBloomFilter &memPoolFilter,
     CNode *pfrom,
     bool fDeterministic = false);
 
-#endif // BITCOIN_THINBLOCK_H
+#endif // NEXA_THINBLOCK_H

@@ -8,7 +8,7 @@
 #include "hashwrapper.h"
 #include "iblt.h"
 #include "serialize.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "utilstrencodings.h"
 
 const std::vector<uint8_t> IBLT_NULL_VALUE = {};

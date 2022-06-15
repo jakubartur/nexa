@@ -1,8 +1,8 @@
 // Copyright (c) 2020 The Bitcoin developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef BITCOIN_POLICY_MEMPOOL_H
-#define BITCOIN_POLICY_MEMPOOL_H
+#ifndef NEXA_POLICY_MEMPOOL_H
+#define NEXA_POLICY_MEMPOOL_H
 
 #include <cstdint>
 
@@ -12,4 +12,4 @@ struct Params;
 }
 
 
-#endif // BITCOIN_POLICY_MEMPOOL_H
+#endif // NEXA_POLICY_MEMPOOL_H

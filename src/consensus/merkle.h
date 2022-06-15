@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CONSENSUS_MERKLE_H
-#define BITCOIN_CONSENSUS_MERKLE_H
+#ifndef NEXA_CONSENSUS_MERKLE_H
+#define NEXA_CONSENSUS_MERKLE_H
 
 #include <stdint.h>
 #include <vector>
@@ -44,4 +44,4 @@ uint256 BlockMerkleRoot(const SatoshiBlock &block, bool *mutated = nullptr);
 std::vector<uint256> BlockMerkleBranch(const CBlock &block, uint32_t position);
 std::vector<uint256> BlockMerkleBranch(const SatoshiBlock &block, uint32_t position);
 
-#endif // BITCOIN_CONSENSUS_MERKLE_H
+#endif // NEXA_CONSENSUS_MERKLE_H

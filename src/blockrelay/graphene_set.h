@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_GRAPHENE_SET_H
-#define BITCOIN_GRAPHENE_SET_H
+#ifndef NEXA_GRAPHENE_SET_H
+#define NEXA_GRAPHENE_SET_H
 
 #include "bloom.h"
 #include "fastfilter.h"
@@ -311,4 +311,4 @@ public:
     }
 };
 
-#endif // BITCOIN_GRAPHENE_SET_H
+#endif // NEXA_GRAPHENE_SET_H

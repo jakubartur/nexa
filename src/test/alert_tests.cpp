@@ -8,7 +8,7 @@
 #include "chainparams.h"
 #include "main.h" // For PartitionCheck
 
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "test/testutil.h"
 
 #include <boost/test/unit_test.hpp>

@@ -4,11 +4,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_BITCOINCONSENSUS_H
-#define BITCOIN_SCRIPT_BITCOINCONSENSUS_H
+#ifndef NEXA_SCRIPT_BITCOINCONSENSUS_H
+#define NEXA_SCRIPT_BITCOINCONSENSUS_H
 
 #if defined(BUILD_BITCOIN_INTERNAL) && defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #if defined(_WIN32)
 #if defined(DLL_EXPORT)
 #if defined(HAVE_FUNC_ATTRIBUTE_DLLEXPORT)
@@ -72,4 +72,4 @@ extern "C"
 
 #undef EXPORT_SYMBOL
 
-#endif // BITCOIN_SCRIPT_BITCOINCONSENSUS_H
+#endif // NEXA_SCRIPT_BITCOINCONSENSUS_H

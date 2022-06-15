@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SYNC_H
-#define BITCOIN_SYNC_H
+#ifndef NEXA_SYNC_H
+#define NEXA_SYNC_H
 
 #include "deadlock-detection/threaddeadlock.h"
 #include "rsm/include/recursive_shared_mutex.h"
@@ -690,4 +690,4 @@ public:
 
 #define CORRAL(cral, region) CCorralLock UNIQUIFY(corral)(cral, region);
 
-#endif // BITCOIN_SYNC_H
+#endif // NEXA_SYNC_H

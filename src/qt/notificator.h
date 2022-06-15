@@ -3,11 +3,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_NOTIFICATOR_H
-#define BITCOIN_QT_NOTIFICATOR_H
+#ifndef NEXA_QT_NOTIFICATOR_H
+#define NEXA_QT_NOTIFICATOR_H
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #endif
 
 #include <QIcon>
@@ -82,4 +82,4 @@ private:
 #endif
 };
 
-#endif // BITCOIN_QT_NOTIFICATOR_H
+#endif // NEXA_QT_NOTIFICATOR_H

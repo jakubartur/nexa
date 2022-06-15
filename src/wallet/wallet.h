@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_WALLET_H
-#define BITCOIN_WALLET_WALLET_H
+#ifndef NEXA_WALLET_WALLET_H
+#define NEXA_WALLET_WALLET_H
 
 #include "amount.h"
 #include "clientversion.h"
@@ -68,7 +68,7 @@ static const bool DEFAULT_SEND_FREE_TRANSACTIONS = false;
 //! -txconfirmtarget default
 static const unsigned int DEFAULT_TX_CONFIRM_TARGET = 2;
 //! Largest (in bytes) free transaction we're willing to creat
-//! We can allow a maximum sized free transaction in the Bitcoin Cash Network.
+//! We can allow a maximum sized free transaction on the Network.
 static const unsigned int MAX_FREE_TRANSACTION_CREATE_SIZE = MAX_STANDARD_TX_SIZE;
 static const bool DEFAULT_WALLETBROADCAST = true;
 
@@ -1223,4 +1223,4 @@ public:
 // This will drop all connections and spend a LONG time to complete
 extern void StartWalletRescanThread();
 
-#endif // BITCOIN_WALLET_WALLET_H
+#endif // NEXA_WALLET_WALLET_H

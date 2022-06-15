@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_COINS_H
-#define BITCOIN_COINS_H
+#ifndef NEXA_COINS_H
+#define NEXA_COINS_H
 #ifndef ANDROID // limit dependencies
 #include "compressor.h"
 #include "core_memusage.h"
@@ -427,4 +427,4 @@ SpendCoins(...); AddCoins(...);
 void UpdateCoins(const CTransaction &tx, CCoinsViewCache &inputs, CTxUndo &txundo, int nHeight);
 void UpdateCoins(const CTransaction &tx, CCoinsViewCache &inputs, int nHeight);
 #endif
-#endif // BITCOIN_COINS_H
+#endif // NEXA_COINS_H

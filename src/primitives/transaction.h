@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_PRIMITIVES_TRANSACTION_H
-#define BITCOIN_PRIMITIVES_TRANSACTION_H
+#ifndef NEXA_PRIMITIVES_TRANSACTION_H
+#define NEXA_PRIMITIVES_TRANSACTION_H
 
 #include "amount.h"
 #include "crypto/sha256.h"
@@ -537,4 +537,4 @@ static inline CTransactionRef MakeTransactionRef(Tx &&txIn)
 {
     return std::make_shared<const CTransaction>(std::forward<Tx>(txIn));
 }
-#endif // BITCOIN_PRIMITIVES_TRANSACTION_H
+#endif // NEXA_PRIMITIVES_TRANSACTION_H

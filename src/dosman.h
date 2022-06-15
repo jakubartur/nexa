@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_DOSMANAGER_H
-#define BITCOIN_DOSMANAGER_H
+#ifndef NEXA_DOSMANAGER_H
+#define NEXA_DOSMANAGER_H
 
 #include "banentry.h" // for banmap_t
 #include "net.h" // for NodeId
@@ -123,4 +123,4 @@ protected:
 // actual definition should be in globals.cpp for ordered construction/destruction
 extern CDoSManager dosMan;
 
-#endif // BITCOIN_DOSMANAGER_H
+#endif // NEXA_DOSMANAGER_H

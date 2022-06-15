@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_TRANSACTIONTABLEMODEL_H
-#define BITCOIN_QT_TRANSACTIONTABLEMODEL_H
+#ifndef NEXA_QT_TRANSACTIONTABLEMODEL_H
+#define NEXA_QT_TRANSACTIONTABLEMODEL_H
 
 #include "nexaunits.h"
 #ifdef ENABLE_WALLET
@@ -127,4 +127,4 @@ public Q_SLOTS:
     friend class TransactionTablePriv;
 };
 
-#endif // BITCOIN_QT_TRANSACTIONTABLEMODEL_H
+#endif // NEXA_QT_TRANSACTIONTABLEMODEL_H

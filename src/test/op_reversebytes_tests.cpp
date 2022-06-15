@@ -7,7 +7,7 @@
 #include <script/script.h>
 
 #include <test/lcg.h>
-#include <test/test_bitcoin.h>
+#include <test/test_nexa.h>
 
 #include <boost/test/unit_test.hpp>
 

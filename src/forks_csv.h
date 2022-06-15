@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_FORKS_CSV
-#define BITCOIN_FORKS_CSV
+#ifndef NEXA_FORKS_CSV
+#define NEXA_FORKS_CSV
 
 #include <fstream>
 

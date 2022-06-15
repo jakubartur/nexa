@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_REVERSELOCK_H
-#define BITCOIN_REVERSELOCK_H
+#ifndef NEXA_REVERSELOCK_H
+#define NEXA_REVERSELOCK_H
 
 /**
  * An RAII-style reverse lock. Unlocks on construction and locks on destruction.
@@ -33,4 +33,4 @@ private:
     Lock templock;
 };
 
-#endif // BITCOIN_REVERSELOCK_H
+#endif // NEXA_REVERSELOCK_H

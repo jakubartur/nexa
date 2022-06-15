@@ -7,7 +7,7 @@
 #include "main.h"
 #include "validation/validation.h"
 
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include <boost/signals2/signal.hpp>
 #include <boost/test/unit_test.hpp>

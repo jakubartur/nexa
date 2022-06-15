@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_BIGNUM_H
-#define BITCOIN_BIGNUM_H
+#ifndef NEXA_BIGNUM_H
+#define NEXA_BIGNUM_H
 
 #include <exception>
 #ifndef ANDROID // limit dependencies: BigNum is a NO_OP on android since script machine not needed

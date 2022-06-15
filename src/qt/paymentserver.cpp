@@ -44,7 +44,7 @@
 #include <QTextDocument>
 #include <QUrlQuery>
 
-const int BITCOIN_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
+const int NEXA_IPC_CONNECT_TIMEOUT = 1000; // milliseconds
 // BIP70 payment protocol messages
 const char *BIP70_MESSAGE_PAYMENTACK = "PaymentACK";
 const char *BIP70_MESSAGE_PAYMENTREQUEST = "PaymentRequest";
@@ -320,7 +320,7 @@ bool PaymentServer::ipcSendCommandLine()
     {
         QLocalSocket *socket = new QLocalSocket();
         socket->connectToServer(ipcServerName(), QIODevice::WriteOnly);
-        if (!socket->waitForConnected(BITCOIN_IPC_CONNECT_TIMEOUT))
+        if (!socket->waitForConnected(NEXA_IPC_CONNECT_TIMEOUT))
         {
             delete socket;
             socket = nullptr;
@@ -335,7 +335,7 @@ bool PaymentServer::ipcSendCommandLine()
 
         socket->write(block);
         socket->flush();
-        socket->waitForBytesWritten(BITCOIN_IPC_CONNECT_TIMEOUT);
+        socket->waitForBytesWritten(NEXA_IPC_CONNECT_TIMEOUT);
         socket->disconnectFromServer();
 
         delete socket;

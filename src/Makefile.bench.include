@@ -12,8 +12,8 @@ RAW_BENCH_FILES = \
 GENERATED_BENCH_FILES = $(RAW_BENCH_FILES:.raw=.raw.h)
 
 bench_bench_nexa_SOURCES = \
-  test/test_bitcoin.h \
-  test/test_bitcoin.cpp \
+  test/test_nexa.h \
+  test/test_nexa.cpp \
   test/testutil.h \
   test/testutil.cpp \
   $(RAW_BENCH_FILES) \

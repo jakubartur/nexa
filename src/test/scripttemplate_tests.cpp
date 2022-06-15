@@ -8,7 +8,7 @@
 #include "script/sighashtype.h"
 #include "script/sign.h"
 #include "test/scriptflags.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "unlimited.h"
 #include "util.h"
 #include "utilstrencodings.h"

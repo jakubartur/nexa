@@ -8,11 +8,11 @@
  * Server/client environment: argument handling, config file parsing,
  * logging, thread wrappers, startup time
  */
-#ifndef BITCOIN_UTIL_H
-#define BITCOIN_UTIL_H
+#ifndef NEXA_UTIL_H
+#define NEXA_UTIL_H
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #endif
 
 #include "allowed_args.h"
@@ -378,4 +378,4 @@ int ScheduleBatchPriority(void);
     It will put print lower bit values first into the resulting string.
 */
 std::string toString(uint64_t value, const std::map<uint64_t, std::string> bitmap) PURE_FUNCTION;
-#endif // BITCOIN_UTIL_H
+#endif // NEXA_UTIL_H

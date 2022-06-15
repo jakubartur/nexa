@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CONFIG2_H
-#define BITCOIN_CONFIG2_H
+#ifndef NEXA_CONFIG2_H
+#define NEXA_CONFIG2_H
 
 #include <boost/noncopyable.hpp>
 

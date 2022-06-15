@@ -55,9 +55,9 @@ OSX_PACKAGING = $(OSX_DEPLOY_SCRIPT) $(OSX_FANCY_PLIST) $(OSX_INSTALLER_ICONS) \
   $(top_srcdir)/contrib/macdeploy/detached-sig-create.sh
 
 COVERAGE_INFO = baseline_filtered_combined.info baseline.info \
-  leveldb_baseline.info test_bitcoin_filtered.info total_coverage.info \
+  leveldb_baseline.info test_nexa_filtered.info total_coverage.info \
   baseline_filtered.info rpc_test.info rpc_test_filtered.info \
-  leveldb_baseline_filtered.info test_bitcoin_coverage.info test_bitcoin.info
+  leveldb_baseline_filtered.info test_nexa_coverage.info test_nexa.info
 
 dist-hook:
 	-$(GIT) archive --format=tar HEAD -- src/clientversion.cpp | $(AMTAR) -C $(top_distdir) -xf -
@@ -180,16 +180,16 @@ leveldb_baseline_filtered.info: leveldb_baseline.info
 baseline_filtered_combined.info: leveldb_baseline_filtered.info baseline_filtered.info
 	$(LCOV) -a leveldb_baseline_filtered.info -a baseline_filtered.info -o $@
 
-test_bitcoin.info: baseline_filtered_combined.info
+test_nexa.info: baseline_filtered_combined.info
 	$(MAKE) -C src/ check
-	$(LCOV) -c -d $(abs_builddir)/src -t test_bitcoin -o $@
+	$(LCOV) -c -d $(abs_builddir)/src -t test_nexa -o $@
 	$(LCOV) -z -d $(abs_builddir)/src
 	$(LCOV) -z -d $(abs_builddir)/src/leveldb
 
-test_bitcoin_filtered.info: test_bitcoin.info
+test_nexa_filtered.info: test_nexa.info
 	$(LCOV) -r $< "/usr/include/*" -o $@
 
-rpc_test.info: test_bitcoin_filtered.info
+rpc_test.info: test_nexa_filtered.info
 	-@TIMEOUT=15 python qa/pull-tester/rpc-tests.py $(EXTENDED_RPC_TESTS)
 	$(LCOV) -c -d $(abs_builddir)/src --t rpc-tests -o $@
 	$(LCOV) -z -d $(abs_builddir)/src
@@ -198,13 +198,13 @@ rpc_test.info: test_bitcoin_filtered.info
 rpc_test_filtered.info: rpc_test.info
 	$(LCOV) -r $< "/usr/include/*" -o $@
 
-test_bitcoin_coverage.info: baseline_filtered_combined.info test_bitcoin_filtered.info
-	$(LCOV) -a baseline_filtered.info -a leveldb_baseline_filtered.info -a test_bitcoin_filtered.info -o $@
+test_nexa_coverage.info: baseline_filtered_combined.info test_nexa_filtered.info
+	$(LCOV) -a baseline_filtered.info -a leveldb_baseline_filtered.info -a test_nexa_filtered.info -o $@
 
-total_coverage.info: baseline_filtered_combined.info test_bitcoin_filtered.info rpc_test_filtered.info
-	$(LCOV) -a baseline_filtered.info -a leveldb_baseline_filtered.info -a test_bitcoin_filtered.info -a rpc_test_filtered.info -o $@ | $(GREP) "\%" | $(AWK) '{ print substr($$3,2,50) "/" $$5 }' > coverage_percent.txt
+total_coverage.info: baseline_filtered_combined.info test_nexa_filtered.info rpc_test_filtered.info
+	$(LCOV) -a baseline_filtered.info -a leveldb_baseline_filtered.info -a test_nexa_filtered.info -a rpc_test_filtered.info -o $@ | $(GREP) "\%" | $(AWK) '{ print substr($$3,2,50) "/" $$5 }' > coverage_percent.txt
 
-test_bitcoin.coverage/.dirstamp:  test_bitcoin_coverage.info
+test_nexa.coverage/.dirstamp:  test_nexa_coverage.info
 	$(GENHTML) -s $< -o $(@D)
 	@touch $@
 
@@ -212,7 +212,7 @@ total.coverage/.dirstamp: total_coverage.info
 	$(GENHTML) -s $< -o $(@D)
 	@touch $@
 
-cov: test_bitcoin.coverage/.dirstamp total.coverage/.dirstamp
+cov: test_nexa.coverage/.dirstamp total.coverage/.dirstamp
 
 endif
 
@@ -234,5 +234,5 @@ CLEANFILES = $(OSX_DMG) $(BITCOIN_WIN_INSTALLER)
 .INTERMEDIATE: $(COVERAGE_INFO)
 
 clean-local:
-	rm -rf coverage_percent.txt test_bitcoin.coverage/ total.coverage/ qa/tmp/ cache/ $(OSX_APP)
+	rm -rf coverage_percent.txt test_nexa.coverage/ total.coverage/ qa/tmp/ cache/ $(OSX_APP)
 	rm -rf qa/pull-tester/__pycache__

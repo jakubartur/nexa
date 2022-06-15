@@ -8,7 +8,7 @@
 
 #include "chainparams.h"
 #include "forks_csv.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include <boost/test/unit_test.hpp>
 

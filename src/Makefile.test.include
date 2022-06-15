@@ -42,8 +42,8 @@ NEXA_TEST_SUITE = \
   test/scriptflags.cpp \
   test/scriptflags.h \
   test/scriptnum10.h \
-  test/test_bitcoin.cpp \
-  test/test_bitcoin.h \
+  test/test_nexa.cpp \
+  test/test_nexa.h \
   test/testutil.cpp \
   test/testutil.h
 

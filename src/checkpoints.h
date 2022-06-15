@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CHECKPOINTS_H
-#define BITCOIN_CHECKPOINTS_H
+#ifndef NEXA_CHECKPOINTS_H
+#define NEXA_CHECKPOINTS_H
 
 #include "uint256.h"
 
@@ -28,4 +28,4 @@ CBlockIndex *GetLastCheckpoint(const CCheckpointData &data);
 double GuessVerificationProgress(const CCheckpointData &data, CBlockIndex *pindex, bool fSigchecks = true);
 } // namespace Checkpoints
 
-#endif // BITCOIN_CHECKPOINTS_H
+#endif // NEXA_CHECKPOINTS_H

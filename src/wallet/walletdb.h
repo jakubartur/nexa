@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_WALLETDB_H
-#define BITCOIN_WALLET_WALLETDB_H
+#ifndef NEXA_WALLET_WALLETDB_H
+#define NEXA_WALLET_WALLETDB_H
 
 #include "amount.h"
 #include "key.h"
@@ -192,4 +192,4 @@ private:
 bool BackupWallet(const CWallet &wallet, const std::string &strDest);
 void ThreadFlushWalletDB(const std::string &strFile);
 
-#endif // BITCOIN_WALLET_WALLETDB_H
+#endif // NEXA_WALLET_WALLETDB_H

@@ -5,11 +5,11 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_MAIN_H
-#define BITCOIN_MAIN_H
+#ifndef NEXA_MAIN_H
+#define NEXA_MAIN_H
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #endif
 
 #include "amount.h"
@@ -322,4 +322,4 @@ public:
 };
 #endif
 
-#endif // BITCOIN_MAIN_H
+#endif // NEXA_MAIN_H

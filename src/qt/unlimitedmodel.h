@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_UNLIMITEDMODEL_H
-#define BITCOIN_QT_UNLIMITEDMODEL_H
+#ifndef NEXA_QT_UNLIMITEDMODEL_H
+#define NEXA_QT_UNLIMITEDMODEL_H
 
 #include "amount.h"
 #include "unlimited.h"
@@ -67,4 +67,4 @@ private:
 Q_SIGNALS:
 };
 
-#endif // BITCOIN_QT_OPTIONSMODEL_H
+#endif // NEXA_QT_OPTIONSMODEL_H

@@ -2,8 +2,8 @@
 // Copyright (c) 2009-2015 The Bitcoin Core developers
 // Copyright (c) 2016-2019 The Bitcoin Unlimited developers
 
-#ifndef BITCOIN_CONNMGR_H
-#define BITCOIN_CONNMGR_H
+#ifndef NEXA_CONNMGR_H
+#define NEXA_CONNMGR_H
 
 #include <atomic>
 #include <vector>

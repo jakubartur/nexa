@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CUCKOOCACHE_H
-#define BITCOIN_CUCKOOCACHE_H
+#ifndef NEXA_CUCKOOCACHE_H
+#define NEXA_CUCKOOCACHE_H
 
 #include <algorithm>
 #include <array>
@@ -448,4 +448,4 @@ public:
 };
 } // namespace CuckooCache
 
-#endif // BITCOIN_CUCKOOCACHE_H
+#endif // NEXA_CUCKOOCACHE_H

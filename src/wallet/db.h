@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_WALLET_DB_H
-#define BITCOIN_WALLET_DB_H
+#ifndef NEXA_WALLET_DB_H
+#define NEXA_WALLET_DB_H
 
 #include "clientversion.h"
 #include "fs.h"
@@ -313,4 +313,4 @@ public:
     bool static Rewrite(const std::string &strFile, const char *pszSkip = nullptr);
 };
 
-#endif // BITCOIN_WALLET_DB_H
+#endif // NEXA_WALLET_DB_H

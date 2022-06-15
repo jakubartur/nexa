@@ -2,7 +2,7 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_TXLOOKUP_H
+#ifndef NEXA_TXLOOKUP_H
 
 #include <cstdint>
 

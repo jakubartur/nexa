@@ -6,7 +6,7 @@
 #include <boost/lexical_cast.hpp>
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #endif
 
 #include "optionsmodel.h"

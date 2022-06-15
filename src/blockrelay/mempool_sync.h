@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_MEMPOOL_SYNC_H
-#define BITCOIN_MEMPOOL_SYNC_H
+#ifndef NEXA_MEMPOOL_SYNC_H
+#define NEXA_MEMPOOL_SYNC_H
 
 #include "blockrelay/blockrelay_common.h"
 #include "blockrelay/graphene.h"
@@ -196,4 +196,4 @@ uint64_t NegotiateMempoolSyncVersion(CNode *pfrom);
 CNode *SelectMempoolSyncPeer(std::vector<CNode *> vNodesCopy);
 void ClearDisconnectedFromMempoolSyncMaps(NodeId nodeid);
 
-#endif // BITCOIN_MEMPOOL_SYNC_H
+#endif // NEXA_MEMPOOL_SYNC_H

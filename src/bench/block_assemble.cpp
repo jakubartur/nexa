@@ -9,7 +9,7 @@
 #include <consensus/validation.h>
 #include <miner.h>
 #include <pow.h>
-#include <test/test_bitcoin.h>
+#include <test/test_nexa.h>
 #include <txadmission.h>
 #include <validation/validation.h>
 

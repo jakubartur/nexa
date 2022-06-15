@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_TXDB_H
-#define BITCOIN_TXDB_H
+#ifndef NEXA_TXDB_H
+#define NEXA_TXDB_H
 
 #include "blockstorage/dbabstract.h"
 #include "chain.h"
@@ -244,4 +244,4 @@ public:
     /// been upgraded yet to the new database.
     bool MigrateData(CBlockTreeDB &block_tree_db, const CBlockLocator &best_locator);
 };
-#endif // BITCOIN_TXDB_H
+#endif // NEXA_TXDB_H

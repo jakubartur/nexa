@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_GRAPHENE_H
-#define BITCOIN_GRAPHENE_H
+#ifndef NEXA_GRAPHENE_H
+#define NEXA_GRAPHENE_H
 
 #include "blockrelay/blockrelay_common.h"
 #include "blockrelay/graphene_set.h"
@@ -516,4 +516,4 @@ uint64_t GetShortID(uint64_t shorttxidk0, uint64_t shorttxidk1, const uint256 &t
 bool NegotiateFastFilterSupport(CNode *pfrom);
 uint64_t NegotiateGrapheneVersion(CNode *pfrom);
 
-#endif // BITCOIN_GRAPHENE_H
+#endif // NEXA_GRAPHENE_H

@@ -5,7 +5,7 @@
 
 #include "data/tx_invalid.json.h"
 #include "data/tx_valid.json.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include "clientversion.h"
 #include "consensus/tx_verify.h"

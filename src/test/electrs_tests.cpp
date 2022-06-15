@@ -5,7 +5,7 @@
 #include "electrum/electrs.h"
 #include "extversionkeys.h"
 #include "extversionmessage.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "util.h"
 
 #include <sstream>

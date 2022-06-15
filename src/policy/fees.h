@@ -3,8 +3,8 @@
 // Copyright (c) 2015-2020 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef BITCOIN_POLICY_FEES_H
-#define BITCOIN_POLICY_FEES_H
+#ifndef NEXA_POLICY_FEES_H
+#define NEXA_POLICY_FEES_H
 
 #include "amount.h"
 #include "random.h"

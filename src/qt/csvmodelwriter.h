@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_CSVMODELWRITER_H
-#define BITCOIN_QT_CSVMODELWRITER_H
+#ifndef NEXA_QT_CSVMODELWRITER_H
+#define NEXA_QT_CSVMODELWRITER_H
 
 #include <QList>
 #include <QObject>
@@ -44,4 +44,4 @@ private:
     QList<Column> columns;
 };
 
-#endif // BITCOIN_QT_CSVMODELWRITER_H
+#endif // NEXA_QT_CSVMODELWRITER_H

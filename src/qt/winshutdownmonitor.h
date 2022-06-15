@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_WINSHUTDOWNMONITOR_H
-#define BITCOIN_QT_WINSHUTDOWNMONITOR_H
+#ifndef NEXA_QT_WINSHUTDOWNMONITOR_H
+#define NEXA_QT_WINSHUTDOWNMONITOR_H
 
 #ifdef WIN32
 #include <QByteArray>
@@ -25,4 +25,4 @@ public:
 };
 #endif
 
-#endif // BITCOIN_QT_WINSHUTDOWNMONITOR_H
+#endif // NEXA_QT_WINSHUTDOWNMONITOR_H

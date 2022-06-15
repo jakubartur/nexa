@@ -1,8 +1,8 @@
 // Taken from https://gist.github.com/arvidsson/7231973
 // public domain
 
-#ifndef BITCOIN_REVERSE_ITERATOR_H
-#define BITCOIN_REVERSE_ITERATOR_H
+#ifndef NEXA_REVERSE_ITERATOR_H
+#define NEXA_REVERSE_ITERATOR_H
 
 /**
  * Template used for reverse iteration in C++11 range-based for loops.
@@ -37,4 +37,4 @@ reverse_range<T> reverse_iterate(T &x)
     return reverse_range<T>(x);
 }
 
-#endif // BITCOIN_REVERSE_ITERATOR_H
+#endif // NEXA_REVERSE_ITERATOR_H

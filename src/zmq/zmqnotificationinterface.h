@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_ZMQ_ZMQNOTIFICATIONINTERFACE_H
-#define BITCOIN_ZMQ_ZMQNOTIFICATIONINTERFACE_H
+#ifndef NEXA_ZMQ_ZMQNOTIFICATIONINTERFACE_H
+#define NEXA_ZMQ_ZMQNOTIFICATIONINTERFACE_H
 
 #include "validationinterface.h"
 #include <map>
@@ -39,4 +39,4 @@ private:
 
 extern CZMQNotificationInterface *pzmqNotificationInterface;
 
-#endif // BITCOIN_ZMQ_ZMQNOTIFICATIONINTERFACE_H
+#endif // NEXA_ZMQ_ZMQNOTIFICATIONINTERFACE_H

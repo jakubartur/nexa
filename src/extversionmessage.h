@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_EXTVERSIONMESSAGE_H
-#define BITCOIN_EXTVERSIONMESSAGE_H
+#ifndef NEXA_EXTVERSIONMESSAGE_H
+#define NEXA_EXTVERSIONMESSAGE_H
 
 
 #include "protocol.h"

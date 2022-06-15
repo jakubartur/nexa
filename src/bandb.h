@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_BANDB_H
-#define BITCOIN_BANDB_H
+#ifndef NEXA_BANDB_H
+#define NEXA_BANDB_H
 
 #include "banentry.h" // for banmap_t
 
@@ -26,4 +26,4 @@ public:
     fs::path GetDatabasePath() const { return pathBanlist; }
 };
 
-#endif // BITCOIN_BANDB_H
+#endif // NEXA_BANDB_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_PARALLEL_H
-#define BITCOIN_PARALLEL_H
+#ifndef NEXA_PARALLEL_H
+#define NEXA_PARALLEL_H
 
 #include "checkqueue.h"
 #include "consensus/validation.h"
@@ -264,4 +264,4 @@ public:
 
 extern std::unique_ptr<CParallelValidation> PV; // Singleton class
 
-#endif // BITCOIN_PARALLEL_H
+#endif // NEXA_PARALLEL_H
