@@ -96,6 +96,8 @@ class FrameworkInfo(object):
             return None
 
         m = cls.reOLine.match(line)
+        print("da qui tira fuori il path:")
+        print(line)
         if m is None:
             raise RuntimeError("otool line could not be parsed: " + line)
 
@@ -155,7 +157,7 @@ class FrameworkInfo(object):
 class ApplicationBundleInfo(object):
     def __init__(self, path):
         self.path = path
-        appName = "BCHUnlimited-Qt"
+        appName = "Nexa-Qt"
         self.binaryPath = os.path.join(path, "Contents", "MacOS", appName)
         if not os.path.exists(self.binaryPath):
             raise RuntimeError("Could not find bundle binary for " + path)
@@ -604,7 +606,7 @@ else:
 
 # ------------------------------------------------
 
-target = os.path.join("dist", "BCHUnlmited-Qt.app")
+target = os.path.join("dist", "Nexa-Qt.app")
 
 if verbose >= 2:
     print("+ Copying source bundle +")

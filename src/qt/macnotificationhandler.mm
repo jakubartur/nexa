@@ -14,7 +14,7 @@
 - (NSString *)__bundleIdentifier
 {
     if (self == [NSBundle mainBundle]) {
-        return @"org.bitcoinunlimited.BCHUnlimited-Qt";
+        return @"org.bitcoinunlimited.Nexa-Qt";
     } else {
         return [self __bundleIdentifier];
     }

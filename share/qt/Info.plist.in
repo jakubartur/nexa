@@ -29,16 +29,16 @@
   <string>????</string>
 
   <key>CFBundleExecutable</key>
-  <string>BCHUnlimited-Qt</string>
+  <string>Nexa-Qt</string>
   
   <key>CFBundleName</key>
-  <string>BCHUnlimited-Qt</string>
+  <string>Nexa-Qt</string>
 
   <key>LSHasLocalizedDisplayName</key>
   <true/>
 
   <key>CFBundleIdentifier</key>
-  <string>org.bitcoinunlimited.BCHUnlimited-Qt</string>
+  <string>org.bitcoinunlimited.Nexa-Qt</string>
 
   <key>CFBundleURLTypes</key>
   <array>

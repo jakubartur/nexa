@@ -408,6 +408,14 @@ case $host in
      #pkgconfig does more harm than good with MinGW
      use_pkgconfig=no
 
+     # if we are cross compiling we need pkg-config
+     # to properly detect Qt, thou
+     case $build in
+       *linux*)
+          use_pkgconfig=yes
+         ;;
+     esac
+
      TARGET_OS=windows
      AC_CHECK_LIB([mingwthrd],      [main],, AC_MSG_ERROR(lib missing))
      AC_CHECK_LIB([kernel32],      [main],, AC_MSG_ERROR(lib missing))
