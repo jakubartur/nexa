@@ -19,18 +19,14 @@ endif
 ifeq  ($(HOST),x86_64-apple-darwin19)
   XTRA_CFG:=--disable-assembly
   XTRA_CFG_ENV:=CC="$(darwin_CC)" CXX="$(darwin_CXX)"
-  define $(package)_set_vars
-  $(package)_build_opts+=CFLAGS="$($(package)_cflags) $($(package)_cppflags) -fPIC -keep_private_externs"
-  endef
-else
+endif
+
 define $(package)_set_vars
 $(package)_build_opts+=CFLAGS="$($(package)_cflags) $($(package)_cppflags) -fPIC"
 endef
 
-endif
-
 define $(package)_config_cmds
-  $(XTRA_CFG_ENV) ./configure --enable-static --prefix=$($(package)_staging_dir)/$(host_prefix) --host=$(HOST) $(XTRA_CFG)
+  $(XTRA_CFG_ENV) ./configure --disable-shared --prefix=$($(package)_staging_dir)/$(host_prefix) --host=$(HOST) $(XTRA_CFG)
 endef
 
 define $(package)_build_cmds

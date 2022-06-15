@@ -1,24 +1,17 @@
 ---
-name: "nexa-arm"
+name: "nexa-linux-arm"
 enable_cache: true
 suites:
-- "bionic"
+- "focal"
 architectures:
 - "amd64"
 packages:
 - "curl"
-- "g++-aarch64-linux-gnu"
-- "g++-8-aarch64-linux-gnu"
-- "gcc-8-aarch64-linux-gnu"
-- "binutils-aarch64-linux-gnu"
-- "g++-arm-linux-gnueabihf"
-- "g++-8-arm-linux-gnueabihf"
-- "gcc-8-arm-linux-gnueabihf"
-- "binutils-arm-linux-gnueabihf"
-- "g++-8-multilib"
-- "gcc-8-multilib"
+- "binutils"
+- "g++8"
+- "gcc-8"
 - "binutils-gold"
-- "git-core"
+- "git"
 - "pkg-config"
 - "autoconf"
 - "libtool"
@@ -29,9 +22,18 @@ packages:
 - "bsdmainutils"
 - "ca-certificates"
 - "python"
+# arm32
+- "binutils-arm-linux-gnueabihf"
+- "g++-8-arm-linux-gnueabihf"
+- "g++-arm-linux-gnueabihf"
+# arm64
+- "binutils-aarch64-linux-gnu"
+- "g++-8-aarch64-linux-gnu"
+- "g++-aarch64-linux-gnu"
+
 reference_datetime: "2020-08-20 00:00:00"
 remotes:
-- "url": "https://github.com/BitcoinUnlimited/BitcoinUnlimited.git"
+- "url": "https://gitlab.com/nexa/nexa.git"
   "dir": "nexa"
 files: []
 script: |
@@ -82,52 +84,22 @@ script: |
     done
   done
   }
-  #
+
   # Faketime for depends so intermediate results are comparable
   export PATH_orig=${PATH}
   create_global_faketime_wrappers "2000-01-01 12:00:00"
   create_per-host_faketime_wrappers "2000-01-01 12:00:00"
   export PATH=${WRAP_DIR}:${PATH}
 
-  EXTRA_INCLUDES_BASE=$WRAP_DIR/extra_includes
-  mkdir -p $EXTRA_INCLUDES_BASE
-
-  # x86 needs /usr/include/i386-linux-gnu/asm pointed to /usr/include/x86_64-linux-gnu/asm,
-  # but we can't write there. Instead, create a link here and force it to be included in the
-  # search paths by wrapping gcc/g++.
-
-  mkdir -p $EXTRA_INCLUDES_BASE/i686-pc-linux-gnu
-  rm -f $WRAP_DIR/extra_includes/i686-pc-linux-gnu/asm
-  ln -s /usr/include/x86_64-linux-gnu/asm $EXTRA_INCLUDES_BASE/i686-pc-linux-gnu/asm
-
-  for prog in gcc g++; do
-  rm -f ${WRAP_DIR}/${prog}
-  cat << EOF > ${WRAP_DIR}/${prog}
-  #!/bin/bash
-  REAL="`which -a ${prog} | grep -v ${WRAP_DIR}/${prog} | head -1`"
-  for var in "\$@"
-  do
-    if [ "\$var" = "-m32" ]; then
-      export C_INCLUDE_PATH="$EXTRA_INCLUDES_BASE/i686-pc-linux-gnu"
-      export CPLUS_INCLUDE_PATH="$EXTRA_INCLUDES_BASE/i686-pc-linux-gnu"
-      break
-    fi
-  done
-  \$REAL \$@
-  EOF
-  chmod +x ${WRAP_DIR}/${prog}
-  done
-
   cd nexa
   BASEPREFIX=`pwd`/depends
   # Build dependencies for each host
   for i in $HOSTS; do
-    EXTRA_INCLUDES="$EXTRA_INCLUDES_BASE/$i"
-    if [ -d "$EXTRA_INCLUDES" ]; then
-      export HOST_ID_SALT="$EXTRA_INCLUDES"
+    if [ "${i}" = "x86_64-linux-gnu" ]; then
+      make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}"
+    else
+      make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}" NO_RUST=1
     fi
-    make ${MAKEOPTS} -C ${BASEPREFIX} HOST="${i}" CC=${i}-gcc-8 CXX=${i}-g++-8 NO_RUST=1
-    unset HOST_ID_SALT
   done
 
   # Faketime for binaries
@@ -138,7 +110,6 @@ script: |
 
   # Create the release tarball using (arbitrarily) the first host
   ./autogen.sh
-  ./configure --prefix=${BASEPREFIX}/`echo "${HOSTS}" | awk '{print $1;}'`
   CONFIG_SITE=${BASEPREFIX}/`echo "${HOSTS}" | awk '{print $1;}'`/share/config.site ./configure --prefix=/
   make dist
   SOURCEDIST=`echo nexa-*.tar.gz`
@@ -159,20 +130,32 @@ script: |
     INSTALLPATH=`pwd`/installed/${DISTNAME}
     mkdir -p ${INSTALLPATH}
     tar --strip-components=1 -xf ../$SOURCEDIST
-    CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}" LDFLAGS="${HOST_LDFLAGS}" CC=${i}-gcc-8 CXX=${i}-g++-8
-    make ${MAKEOPTS}
+    CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}" LDFLAGS="${HOST_LDFLAGS}"
+    if [ "$i" = "x86_64-linux-gnu" ]; then
+        # Scope of electrscash support is for servers running linux.
+        # We'll support x86_64 only for now.
+        make ${MAKEOPTS} electrscash
+    fi
+    make -j7 ${MAKEOPTS}
     make ${MAKEOPTS} -C src check-security
-    case $i in
-       aarch64-*) STRIP=/usr/bin/aarch64-linux-gnu-strip make install-strip DESTDIR=${INSTALLPATH} ;;
-       arm-*) STRIP=/usr/bin/arm-linux-gnueabihf-strip make install-strip  DESTDIR=${INSTALLPATH} ;;
-       *)
-          make ${MAKEOPTS} -C src check-symbols
-          make install-strip
-          ;;
-    esac
-
+    make ${MAKEOPTS} -C src check-symbols
+    make install DESTDIR=${INSTALLPATH}
+    # FIXME: electrscash is goin to be rename to Rotrsum
+    # and also need to be changed to be compatible with
+    # nexa blockchan
+    if [ -f src/electrscash ]; then
+        cp src/electrscash ${OUTDIR}/electrscash-${i}.debug
+        strip src/electrscash
+        cp src/electrscash ${INSTALLPATH}/bin/electrscash
+    fi
     # BU save the executables with debug symbols
     cp -f src/nexad ${OUTDIR}/nexad-${i}.debug
+    if [ -f src/qt/nexa-qt ]
+    then
+      cp -f src/qt/nexa-qt ${OUTDIR}/nexa-qt-${i}.debug
+    fi
+
+    make install-strip DESTDIR=${INSTALLPATH}
     #BU clean and tar up the output files
     cd installed
     find . -name "lib*.la" -delete
@@ -185,4 +168,3 @@ script: |
   mv $SOURCEDIST $OUTDIR/src
   mv ${OUTDIR}/${DISTNAME}-aarch64-*.tar.gz ${OUTDIR}/${DISTNAME}-arm64.tar.gz
   mv ${OUTDIR}/${DISTNAME}-arm-*.tar.gz ${OUTDIR}/${DISTNAME}-arm32.tar.gz
-

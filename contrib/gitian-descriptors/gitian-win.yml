@@ -24,7 +24,7 @@ packages:
 - "rename"
 reference_datetime: "2020-08-20 00:00:00"
 remotes:
-- "url": "https://github.com/BitcoinUnlimited/BitcoinUnlimited.git" #FIXME change to new gitlab nexa URL
+- "url": "https://gitlab.com/nexa/nexa.git"
   "dir": "nexa"
 files: []
 script: |
@@ -135,7 +135,6 @@ script: |
     make install-strip
     cp -f nexa*setup*.exe $OUTDIR/
     cd installed
-    mv ${DISTNAME}/bin/*.dll ${DISTNAME}/lib/
     find . -name "lib*.la" -delete
     find . -name "lib*.a" -delete
     rm -rf ${DISTNAME}/lib/pkgconfig
@@ -146,4 +145,3 @@ script: |
   rename 's/-setup\.exe$/-setup-unsigned.exe/' *-setup.exe
   find . -name "*-setup-unsigned.exe" | sort | tar --no-recursion --mode='u+rw,go+r-w,a+X' --owner=0 --group=0 -c -T - | gzip -9n > ${OUTDIR}/${DISTNAME}-win-unsigned.tar.gz
   mv ${OUTDIR}/${DISTNAME}-x86_64-*.zip ${OUTDIR}/${DISTNAME}-win64.zip
-  mv ${OUTDIR}/${DISTNAME}-i686-*.zip ${OUTDIR}/${DISTNAME}-win32.zip

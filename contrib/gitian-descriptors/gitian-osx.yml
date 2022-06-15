@@ -30,7 +30,7 @@ packages:
 - "ca-certificates"
 reference_datetime: "2020-08-20 00:00:00"
 remotes:
-- "url": "https://github.com/BitcoinUnlimited/BitcoinUnlimited.git"
+- "url": "https://gitlab.com/nexa/nexa.git"
   "dir": "nexa"
 files:
 - "MacOSX10.15.sdk.tar.xz"
