@@ -3,7 +3,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #include "electrum/electrumrpcinfo.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include <boost/test/unit_test.hpp>
 #include <map>

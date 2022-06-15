@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_INTERPRETER_H
-#define BITCOIN_SCRIPT_INTERPRETER_H
+#ifndef NEXA_SCRIPT_INTERPRETER_H
+#define NEXA_SCRIPT_INTERPRETER_H
 
 #include "consensus/grouptokens.h"
 #include "primitives/transaction.h"
@@ -606,4 +606,4 @@ ScriptError EvalPushTxState(const VchType &specifier, const ScriptImportedState 
 extern uint64_t maxSatoScriptOps;
 extern uint64_t maxScriptTemplateOps;
 
-#endif // BITCOIN_SCRIPT_INTERPRETER_H
+#endif // NEXA_SCRIPT_INTERPRETER_H

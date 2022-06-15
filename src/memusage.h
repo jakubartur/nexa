@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_MEMUSAGE_H
-#define BITCOIN_MEMUSAGE_H
+#ifndef NEXA_MEMUSAGE_H
+#define NEXA_MEMUSAGE_H
 
 #include <stdlib.h>
 
@@ -158,4 +158,4 @@ static inline size_t DynamicUsage(const std::unordered_map<X, Y, Z> &m)
 }
 } // namespace memusage
 
-#endif // BITCOIN_MEMUSAGE_H
+#endif // NEXA_MEMUSAGE_H

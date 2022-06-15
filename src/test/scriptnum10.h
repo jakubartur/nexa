@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_TEST_SCRIPTNUM10_H
-#define BITCOIN_TEST_SCRIPTNUM10_H
+#ifndef NEXA_TEST_SCRIPTNUM10_H
+#define NEXA_TEST_SCRIPTNUM10_H
 
 #include "assert.h"
 #include <algorithm>
@@ -176,4 +176,4 @@ private:
 };
 
 
-#endif // BITCOIN_TEST_BIGNUM_H
+#endif // NEXA_TEST_BIGNUM_H

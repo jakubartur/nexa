@@ -13,7 +13,7 @@
 #include "script/script_error.h"
 #include "script/sighashtype.h"
 #include "script/sign.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "test/testutil.h"
 #include "txmempool.h"
 #include <boost/test/unit_test.hpp>

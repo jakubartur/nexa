@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_UINT256_H
-#define BITCOIN_UINT256_H
+#ifndef NEXA_UINT256_H
+#define NEXA_UINT256_H
 
 #include "crypto/common.h"
 #include <assert.h>
@@ -192,4 +192,4 @@ inline uint160 uint160S(const std::string &str)
     return rv;
 }
 
-#endif // BITCOIN_UINT256_H
+#endif // NEXA_UINT256_H

@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_PUSHTXSTATE_H
-#define BITCOIN_PUSHTXSTATE_H
+#ifndef NEXA_PUSHTXSTATE_H
+#define NEXA_PUSHTXSTATE_H
 #include "interpreter.h"
 #include "script/script_error.h"
 

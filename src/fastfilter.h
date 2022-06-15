@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_FAST_FILTER_H
-#define BITCOIN_FAST_FILTER_H
+#ifndef NEXA_FAST_FILTER_H
+#define NEXA_FAST_FILTER_H
 
 #include "random.h"
 #include "serialize.h"

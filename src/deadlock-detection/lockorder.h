@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_LOCK_ORDER_H
-#define BITCOIN_LOCK_ORDER_H
+#ifndef NEXA_LOCK_ORDER_H
+#define NEXA_LOCK_ORDER_H
 
 #include <inttypes.h>
 #include <map>

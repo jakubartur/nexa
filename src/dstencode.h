@@ -2,8 +2,8 @@
 // Copyright (c) 2017-2019 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef BITCOIN_DSTENCODE_H
-#define BITCOIN_DSTENCODE_H
+#ifndef NEXA_DSTENCODE_H
+#define NEXA_DSTENCODE_H
 
 // key.h and pubkey.h are not used here, but gcc doesn't want to instantiate
 // CTxDestination if types are unknown
@@ -25,4 +25,4 @@ std::string EncodeDestination(const CTxDestination &);
 CTxDestination DecodeDestination(const std::string &addr);
 bool IsValidDestinationString(const std::string &addr);
 
-#endif // BITCOIN_DSTENCODE_H
+#endif // NEXA_DSTENCODE_H

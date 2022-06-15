@@ -8,7 +8,7 @@
 #include "consensus/params.h"
 #include "main.h"
 #include "random.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "validation/validation.h"
 #include "versionbits.h"
 #include <boost/test/unit_test.hpp>

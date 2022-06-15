@@ -2,10 +2,10 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_UTIL_BITMANIP_H
-#define BITCOIN_UTIL_BITMANIP_H
+#ifndef NEXA_UTIL_BITMANIP_H
+#define NEXA_UTIL_BITMANIP_H
 
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 
 #include <cstdint>
 
@@ -26,4 +26,4 @@ inline uint32_t countBits(uint32_t v) {
 #endif
 }
 
-#endif // BITCOIN_UTIL_BITMANIP_H
+#endif // NEXA_UTIL_BITMANIP_H

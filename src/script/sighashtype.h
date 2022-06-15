@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SIG_HASH_TYPE_H
-#define BITCOIN_SIG_HASH_TYPE_H
+#ifndef NEXA_SIG_HASH_TYPE_H
+#define NEXA_SIG_HASH_TYPE_H
 
 #include "script/interpreter.h"
 #include "serialize.h"
@@ -260,4 +260,4 @@ void RemoveSigHashType(std::vector<unsigned char> &vchSig);
 
 extern const SigHashType defaultSigHashType;
 
-#endif // BITCOIN_SCRIPT_HASH_TYPE_H
+#endif // NEXA_SCRIPT_HASH_TYPE_H

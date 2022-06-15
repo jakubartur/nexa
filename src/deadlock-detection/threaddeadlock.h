@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_THREAD_DEADLOCK_H
-#define BITCOIN_THREAD_DEADLOCK_H
+#ifndef NEXA_THREAD_DEADLOCK_H
+#define NEXA_THREAD_DEADLOCK_H
 
 #include "lockorder.h"
 

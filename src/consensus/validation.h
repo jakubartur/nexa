@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CONSENSUS_VALIDATION_H
-#define BITCOIN_CONSENSUS_VALIDATION_H
+#ifndef NEXA_CONSENSUS_VALIDATION_H
+#define NEXA_CONSENSUS_VALIDATION_H
 
 #include <map>
 #include <string>
@@ -113,4 +113,4 @@ public:
     }
 };
 
-#endif // BITCOIN_CONSENSUS_VALIDATION_H
+#endif // NEXA_CONSENSUS_VALIDATION_H

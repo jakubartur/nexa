@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_LOCK_LOCATION_H
-#define BITCOIN_LOCK_LOCATION_H
+#ifndef NEXA_LOCK_LOCATION_H
+#define NEXA_LOCK_LOCATION_H
 
 #include <inttypes.h>
 #include <map>

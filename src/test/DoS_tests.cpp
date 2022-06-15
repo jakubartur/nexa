@@ -17,7 +17,7 @@
 #include "txorphanpool.h"
 #include "util.h"
 
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include <stdint.h>
 

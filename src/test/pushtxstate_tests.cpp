@@ -8,7 +8,7 @@
 #include "script/script.h"
 #include "script/scripttemplate.h"
 #include "scriptnum10.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include <boost/test/unit_test.hpp>
 #include <stdint.h>

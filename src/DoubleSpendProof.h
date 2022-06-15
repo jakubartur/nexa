@@ -1,8 +1,8 @@
 // Copyright (C) 2019-2020 Tom Zander <tomz@freedommail.ch>
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#ifndef BITCOIN_DOUBLESPENDPROOF_H
-#define BITCOIN_DOUBLESPENDPROOF_H
+#ifndef NEXA_DOUBLESPENDPROOF_H
+#define NEXA_DOUBLESPENDPROOF_H
 
 #include <primitives/transaction.h>
 #include <script/script.h>

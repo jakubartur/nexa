@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CHAIN_H
-#define BITCOIN_CHAIN_H
+#ifndef NEXA_CHAIN_H
+#define NEXA_CHAIN_H
 
 #include "arith_uint256.h"
 #include "pow.h"
@@ -547,4 +547,4 @@ public:
 /** Return the height of the ancestor whose hash must be placed in the block header */
 int64_t GetConsensusAncestorHeight(int64_t height);
 
-#endif // BITCOIN_CHAIN_H
+#endif // NEXA_CHAIN_H

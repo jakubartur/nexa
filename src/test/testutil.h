@@ -6,8 +6,8 @@
 /**
  * Utility functions shared by unit tests
  */
-#ifndef BITCOIN_TEST_TESTUTIL_H
-#define BITCOIN_TEST_TESTUTIL_H
+#ifndef NEXA_TEST_TESTUTIL_H
+#define NEXA_TEST_TESTUTIL_H
 
 #include "fs.h"
 #include "key.h"
@@ -74,4 +74,4 @@ CTransaction tx1x2(const CTransaction &prevtx,
     const CKey &key,
     bool p2pkh = true);
 
-#endif // BITCOIN_TEST_TESTUTIL_H
+#endif // NEXA_TEST_TESTUTIL_H

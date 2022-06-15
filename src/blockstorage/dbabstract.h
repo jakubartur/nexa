@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_DBABSTRACT_H
-#define BITCOIN_DBABSTRACT_H
+#ifndef NEXA_DBABSTRACT_H
+#define NEXA_DBABSTRACT_H
 
 #include "chain.h"
 #include "undo.h"
@@ -64,4 +64,4 @@ public:
     virtual ~CDatabaseAbstract() {}
 };
 
-#endif // BITCOIN_DBABSTRACT_H
+#endif // NEXA_DBABSTRACT_H

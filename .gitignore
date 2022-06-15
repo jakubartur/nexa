@@ -41,6 +41,8 @@ configure
 libtool
 src/config/bitcoin-config.h
 src/config/bitcoin-config.h.in
+src/config/nexa-config.h
+src/config/nexa-config.h.in
 src/config/stamp-h1
 share/setup.nsi
 share/qt/Info.plist

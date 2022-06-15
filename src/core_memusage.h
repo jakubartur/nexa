@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_CORE_MEMUSAGE_H
-#define BITCOIN_CORE_MEMUSAGE_H
+#ifndef NEXA_CORE_MEMUSAGE_H
+#define NEXA_CORE_MEMUSAGE_H
 
 #include "memusage.h"
 #include "primitives/block.h"
@@ -65,4 +65,4 @@ static inline size_t RecursiveDynamicUsage(const CBlockLocator &locator)
     return memusage::DynamicUsage(locator.vHave);
 }
 
-#endif // BITCOIN_CORE_MEMUSAGE_H
+#endif // NEXA_CORE_MEMUSAGE_H

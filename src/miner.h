@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_MINER_H
-#define BITCOIN_MINER_H
+#ifndef NEXA_MINER_H
+#define NEXA_MINER_H
 
 #include "primitives/block.h"
 #include "txmempool.h"
@@ -165,4 +165,4 @@ UniValue mkblocktemplate(const UniValue &params,
 // Force block template recalculation the next time a template is requested
 void SignalBlockTemplateChange();
 
-#endif // BITCOIN_MINER_H
+#endif // NEXA_MINER_H

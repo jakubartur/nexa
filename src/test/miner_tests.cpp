@@ -22,7 +22,7 @@
 #include "utilstrencodings.h"
 #include "validation/validation.h"
 
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include <boost/test/unit_test.hpp>
 extern void dbgPrintBlock(CBlock &blk);

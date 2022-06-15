@@ -5,7 +5,7 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #endif
 
 #include "init.h"
@@ -697,7 +697,7 @@ void ThreadImport(std::vector<fs::path> vImportFiles, uint64_t nTxIndexCache)
 }
 
 /** Sanity checks
- *  Ensure that Bitcoin is running in a usable environment with all
+ *  Ensure that the node is running in a usable environment with all
  *  necessary library support.
  */
 bool InitSanityCheck(void)
@@ -1115,7 +1115,7 @@ bool AppInit2(Config &config)
 
     std::string strDataDir = GetDataDir().string();
 
-    // Make sure only a single Bitcoin process is using the data directory.
+    // Make sure only a single process is using the data directory.
     fs::path pathLockFile = GetDataDir() / ".lock";
     FILE *file = fsbridge::fopen(pathLockFile, "a"); // empty lock file; created if it doesn't exist.
     if (file)

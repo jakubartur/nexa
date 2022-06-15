@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_SCRIPT_ERROR_H
-#define BITCOIN_SCRIPT_SCRIPT_ERROR_H
+#ifndef NEXA_SCRIPT_SCRIPT_ERROR_H
+#define NEXA_SCRIPT_SCRIPT_ERROR_H
 
 typedef enum ScriptError_t
 {
@@ -116,4 +116,4 @@ inline bool set_error(ScriptError *ret, const ScriptError serror)
     return false;
 }
 
-#endif // BITCOIN_SCRIPT_SCRIPT_ERROR_H
+#endif // NEXA_SCRIPT_SCRIPT_ERROR_H

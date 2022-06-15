@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_BENCH_BENCH_CONSTANTS_H
-#define BITCOIN_BENCH_BENCH_CONSTANTS_H
+#ifndef NEXA_BENCH_BENCH_CONSTANTS_H
+#define NEXA_BENCH_BENCH_CONSTANTS_H
 
 static const int64_t DEFAULT_BENCH_EVALUATIONS = 5;
 static const char *DEFAULT_BENCH_FILTER = ".*";

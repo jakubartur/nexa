@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_BANENTRY_H
-#define BITCOIN_BANENTRY_H
+#ifndef NEXA_BANENTRY_H
+#define NEXA_BANENTRY_H
 
 // NOTE: netaddress.h includes serialize.h which is required for serialization macros
 #include "netaddress.h" // for CSubNet
@@ -54,4 +54,4 @@ public:
 
 typedef std::map<CSubNet, CBanEntry> banmap_t;
 
-#endif // BITCOIN_BANENTRY_H
+#endif // NEXA_BANENTRY_H

@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_NETBASE_H
-#define BITCOIN_NETBASE_H
+#ifndef NEXA_NETBASE_H
+#define NEXA_NETBASE_H
 
 #include "netaddress.h" // For CService, serialize.h, etc.
 
@@ -103,4 +103,4 @@ bool SetSocketNonBlocking(SOCKET &hSocket, bool fNonBlocking);
  */
 struct timeval MillisToTimeval(int64_t nTimeout);
 
-#endif // BITCOIN_NETBASE_H
+#endif // NEXA_NETBASE_H

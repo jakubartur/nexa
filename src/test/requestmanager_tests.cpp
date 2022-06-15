@@ -24,7 +24,7 @@
 #include "validation/validation.h"
 #include "version.h"
 
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 
 #include <algorithm>
 #include <atomic>

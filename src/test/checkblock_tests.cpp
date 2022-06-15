@@ -7,7 +7,7 @@
 #include "consensus/validation.h"
 #include "main.h" // For CheckBlock
 #include "primitives/block.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "utiltime.h"
 #include "validation/validation.h"
 

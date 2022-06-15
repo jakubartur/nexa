@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_QT_RECEIVEFREEZEDIALOG_H
-#define BITCOIN_QT_RECEIVEFREEZEDIALOG_H
+#ifndef NEXA_QT_RECEIVEFREEZEDIALOG_H
+#define NEXA_QT_RECEIVEFREEZEDIALOG_H
 
 #include "walletmodel.h"
 
@@ -42,4 +42,4 @@ private:
     OptionsModel *model;
 };
 
-#endif // BITCOIN_QT_RECEIVEFREEZEDIALOG_H
+#endif // NEXA_QT_RECEIVEFREEZEDIALOG_H

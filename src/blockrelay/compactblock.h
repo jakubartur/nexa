@@ -2,8 +2,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_COMPACTBLOCK_H
-#define BITCOIN_COMPACTBLOCK_H
+#ifndef NEXA_COMPACTBLOCK_H
+#define NEXA_COMPACTBLOCK_H
 
 #include "bloom.h"
 #include "consensus/validation.h"
@@ -426,4 +426,4 @@ extern std::set<uint256> setUnVerifiedOrphanTxHash;
 extern CCriticalSection cs_xval;
 // Xpress Validation: end
 
-#endif // BITCOIN_COMPACTBLOCK_H
+#endif // NEXA_COMPACTBLOCK_H

@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_SCRIPT_SIGN_H
-#define BITCOIN_SCRIPT_SIGN_H
+#ifndef NEXA_SCRIPT_SIGN_H
+#define NEXA_SCRIPT_SIGN_H
 
 #include "hashwrapper.h"
 #include "key.h"
@@ -207,4 +207,4 @@ extern template std::vector<unsigned char> signmessage(const std::vector<unsigne
 extern template std::vector<unsigned char> signmessage(const std::string &data, const CKey &key);
 
 
-#endif // BITCOIN_SCRIPT_SIGN_H
+#endif // NEXA_SCRIPT_SIGN_H

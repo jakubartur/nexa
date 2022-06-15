@@ -6,7 +6,7 @@
 #include "blockrelay/blockrelay_common.h"
 #include "blockrelay/thinblock.h"
 #include "net.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include <assert.h>
 #include <boost/range/irange.hpp>
 #include <boost/test/unit_test.hpp>

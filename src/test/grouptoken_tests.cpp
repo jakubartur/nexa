@@ -7,7 +7,7 @@
 #include "main.h"
 #include "miner.h"
 #include "script/sighashtype.h"
-#include "test/test_bitcoin.h"
+#include "test/test_nexa.h"
 #include "test/testutil.h"
 #include "txadmission.h"
 #include "utilstrencodings.h"

@@ -6,8 +6,8 @@
 /**
  * Functionality for communicating with Tor.
  */
-#ifndef BITCOIN_TORCONTROL_H
-#define BITCOIN_TORCONTROL_H
+#ifndef NEXA_TORCONTROL_H
+#define NEXA_TORCONTROL_H
 
 #include "threadgroup.h"
 
@@ -18,4 +18,4 @@ void StartTorControl();
 void InterruptTorControl();
 void StopTorControl();
 
-#endif /* BITCOIN_TORCONTROL_H */
+#endif /* NEXA_TORCONTROL_H */

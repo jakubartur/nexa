@@ -993,9 +993,6 @@ QString formatServicesStr(quint64 mask, const QStringList &additionalServices)
             case NODE_NETWORK:
                 strList.append("NETWORK");
                 break;
-            case NODE_GETUTXO:
-                strList.append("GETUTXO");
-                break;
             case NODE_BLOOM:
                 strList.append("BLOOM");
                 break;

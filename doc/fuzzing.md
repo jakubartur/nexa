@@ -1,6 +1,6 @@
-# Fuzz-testing Bitcoin
+# Fuzz-testing Nexa
 
-A special test harness `test_bitcoin_fuzzy` is provided to provide an easy
+A special test harness `test_nexa_fuzzy` is provided to provide an easy
 entry point for fuzzers and the like. In this document we'll describe how to
 use it with AFL.
 
@@ -30,20 +30,20 @@ the `llvm_mode` subdirectory of AFL.
 
 ## Instrumentation
 
-To build Bitcoin using AFL instrumentation (this assumes that the
+To build Nexa using AFL instrumentation (this assumes that the
 `AFLPATH` was set as above):
 ```
 ./configure [--disable-ccache] --disable-shared --enable-tests CC=${AFLPATH}/afl-clang-fast CXX=${AFLPATH}/afl-clang-fast++
 export AFL_HARDEN=1
 cd src/
-make test/test_bitcoin_fuzzy
+make test/test_nexa_fuzzy
 ```
 
 Disabling ccache should be optional here, and is added above solely to
 save some HDD space.
 
 The fuzzer is _a lot_ faster now when run in LLVM persistent mode. To
-enable LLVM persistent mode, `bitcoin_test_fuzzy` has to be built with
+enable LLVM persistent mode, `test_nexa_fuzzy` has to be built with
 clang/clang++. But if you MUST use g++ you can still do it by setting CC and CXX appropriately:
 ```
 ./configure [--disable-ccache] --disable-shared --enable-tests CC=${AFLPATH}/afl-gcc CXX=${AFLPATH}/afl-g++
@@ -81,20 +81,20 @@ Extract these (or other starting inputs) into the `inputs` directory before star
 
 To start the actual fuzzing and to fuzz all fuzz cases at once:
 ```
-$AFLPATH/afl-fuzz -i ${AFLIN} -o ${AFLOUT} -m 200 -- test/test_bitcoin_fuzzy
+$AFLPATH/afl-fuzz -i ${AFLIN} -o ${AFLOUT} -m 200 -- test/test_nexa_fuzzy
 ```
 
 And to fuzz using just a single fuzzing entrypoint, specify a
-corresponding command line argument to test_bitcoin_fuzzy on what to
+corresponding command line argument to test_nexa_fuzzy on what to
 fuzz. A list of all possible arguments can be printed like this:
 
 ```
-test/test_bitcoin_fuzzy list_tests
+test/test_nexa_fuzzy list_tests
 ```
 
 So, for example, to fuzz the CBlock de-/serialization, you can use this:
 ```
-$AFLPATH/afl-fuzz -i ${AFLIN} -o ${AFLOUT} -m 200 -- test/test_bitcoin_fuzzy cblock_deser
+$AFLPATH/afl-fuzz -i ${AFLIN} -o ${AFLOUT} -m 200 -- test/test_nexa_fuzzy cblock_deser
 ```
 You may have to change a few kernel parameters to test optimally -
 `afl-fuzz` will print an error and suggestion if so.
@@ -106,14 +106,14 @@ fuzzing breaks every time.  Further information can be found in the
 AFL documentation.
 
 *Important note*: Fuzzing does *not* work by simply calling
-`test_bitcoin_fuzzy`. This will just call the instrumented program and
+`test_nexa_fuzzy`. This will just call the instrumented program and
 it will (pretty much) behave like it would have been compiled without
 fuzzer options. It can, however, be used this way to retest test cases
 from the fuzzer.
 
 ## Extending
 
-The code has been updated to be more easily extensible. In test_bitcoin_fuzzy.cpp, 
+The code has been updated to be more easily extensible. In test_nexa_fuzzy.cpp, 
 simply derive a class from `FuzzTest` or, alternatively, `FuzzTestNet` (in case you want
 to read from a network-like CDataStream). Override the `run()` method and either use
 the `buffer` object or the `ds` object to retrieve the data for your test.

@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_TX_ORPHANPOOL
-#define BITCOIN_TX_ORPHANPOOL
+#ifndef NEXA_TX_ORPHANPOOL
+#define NEXA_TX_ORPHANPOOL
 
 #include "net.h"
 #include "primitives/transaction.h"

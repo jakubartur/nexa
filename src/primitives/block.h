@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_PRIMITIVES_BLOCK_H
-#define BITCOIN_PRIMITIVES_BLOCK_H
+#ifndef NEXA_PRIMITIVES_BLOCK_H
+#define NEXA_PRIMITIVES_BLOCK_H
 
 #include "arith_uint256.h"
 #include "primitives/transaction.h"
@@ -304,4 +304,4 @@ static inline CBlockRef MakeBlockRef(Blk &&blkIn)
     return std::make_shared<CBlock>(std::forward<Blk>(blkIn));
 }
 
-#endif // BITCOIN_PRIMITIVES_BLOCK_H
+#endif // NEXA_PRIMITIVES_BLOCK_H

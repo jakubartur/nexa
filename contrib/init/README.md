@@ -1,11 +1,11 @@
 Sample configuration files for:
 
-SystemD: bitcoind.service
-Upstart: bitcoind.conf
-OpenRC:  bitcoind.openrc
-         bitcoind.openrcconf
-CentOS:  bitcoind.init
-OS X:    org.bitcoin.bitcoind.plist
+SystemD: nexad.service
+Upstart: nexad.conf
+OpenRC:  nexad.openrc
+         nexad.openrcconf
+CentOS:  nexad.init
+OS X:    org.nexa.nexad.plist
 
 have been made available to assist packagers in creating node packages here.
 

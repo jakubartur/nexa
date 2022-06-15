@@ -3,8 +3,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_VERSION_H
-#define BITCOIN_VERSION_H
+#ifndef NEXA_VERSION_H
+#define NEXA_VERSION_H
 
 /**
  * network protocol versioning
@@ -18,4 +18,4 @@ static const int INIT_PROTO_VERSION = 209;
 //! disconnect from peers older than this proto version
 static const int MIN_PEER_PROTO_VERSION = 80003;
 
-#endif // BITCOIN_VERSION_H
+#endif // NEXA_VERSION_H

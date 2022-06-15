@@ -3,8 +3,8 @@
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 
-#ifndef BITCOIN_EXTVERSIONKEYS_H
-#define BITCOIN_EXTVERSIONKEYS_H
+#ifndef NEXA_EXTVERSIONKEYS_H
+#define NEXA_EXTVERSIONKEYS_H
 
 #include <unordered_map>
 #include <unordered_set>

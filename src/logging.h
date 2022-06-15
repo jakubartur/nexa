@@ -8,8 +8,8 @@
  * Server/client environment: argument handling, config file parsing,
  * logging, thread wrappers, startup time
  */
-#ifndef BITCOIN_LOGGING_H
-#define BITCOIN_LOGGING_H
+#ifndef NEXA_LOGGING_H
+#define NEXA_LOGGING_H
 
 #include "fs.h"
 #include "tinyformat.h"
@@ -226,4 +226,4 @@ inline bool error(uint64_t ctgr, const char *fmt, const Args &...args)
 }
 
 
-#endif // BITCOIN_LOGGING_H
+#endif // NEXA_LOGGING_H

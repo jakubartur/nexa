@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_POW_H
-#define BITCOIN_POW_H
+#ifndef NEXA_POW_H
+#define NEXA_POW_H
 
 #include "consensus/params.h"
 
@@ -61,4 +61,4 @@ int64_t GetBlockProofEquivalentTime(const CBlockIndex &to,
     const CBlockIndex &tip,
     const Consensus::Params &);
 
-#endif // BITCOIN_POW_H
+#endif // NEXA_POW_H

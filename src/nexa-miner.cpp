@@ -4,7 +4,7 @@
 
 
 #if defined(HAVE_CONFIG_H)
-#include "bitcoin-config.h"
+#include "nexa-config.h"
 #endif
 
 #include "allowed_args.h"

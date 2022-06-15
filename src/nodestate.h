@@ -4,8 +4,8 @@
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
-#ifndef BITCOIN_NODESTATE_H
-#define BITCOIN_NODESTATE_H
+#ifndef NEXA_NODESTATE_H
+#define NEXA_NODESTATE_H
 
 #include "net.h" // For NodeId
 #include "requestManager.h"
@@ -111,4 +111,4 @@ public:
 
 extern CState nodestate;
 
-#endif // BITCOIN_NODESTATE_H
+#endif // NEXA_NODESTATE_H
