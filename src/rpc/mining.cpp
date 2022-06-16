@@ -281,7 +281,7 @@ UniValue getmininginfo(const UniValue &params, bool fHelp)
 }
 
 
-// NOTE: Unlike wallet RPC (which use BCH values), mining RPCs follow GBT (BIP 22) in using satoshi amounts
+// NOTE: Unlike wallet RPC (which use NEX values), mining RPCs follow GBT (BIP 22) in using satoshi amounts
 UniValue prioritisetransaction(const UniValue &params, bool fHelp)
 {
     if (fHelp || params.size() != 3)
@@ -968,7 +968,7 @@ UniValue estimatefee(const UniValue &params, bool fHelp)
                             "\nArguments:\n"
                             "1. nblocks     (numeric)\n"
                             "\nResult:\n"
-                            "n              (numeric) estimated fee-per-kilobyte\n"
+                            "n              (numeric) estimated fee-per-kilobyte (in Nexa)\n"
                             "\n"
                             "A negative value is returned if not enough transactions and blocks\n"
                             "have been observed to make an estimate.\n"
@@ -1001,7 +1001,7 @@ UniValue estimatesmartfee(const UniValue &params, bool fHelp)
                             "1. nblocks     (numeric)\n"
                             "\nResult:\n"
                             "{\n"
-                            "  \"feerate\" : x.x,     (numeric) estimate fee-per-kilobyte (in BCH)\n"
+                            "  \"feerate\" : x.x,     (numeric) estimate fee-per-kilobyte (in Nexa)\n"
                             "  \"blocks\" : 1         (numeric) hardcoded to 1 for backwards compatibility reasons\n"
                             "}\n"
                             "\n"

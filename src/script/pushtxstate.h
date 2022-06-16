@@ -15,7 +15,7 @@ enum PushTxStateSpecifier
     TX_IDEM = 0x3,
     TX_INCOMING_AMOUNT = 0x5,
     TX_OUTGOING_AMOUNT = 0x6,
-    GROUP_INCOMING_AMOUNT = 0x7, // This is either the token quantity for a particular group or the fenced BCH quantity
+    GROUP_INCOMING_AMOUNT = 0x7, // This is either the token amount for a particular group or the fenced Nexa amount
     GROUP_OUTGOING_AMOUNT = 0x8,
     GROUP_INCOMING_COUNT = 0x9, // COUNT is the number of inputs or outputs
     GROUP_OUTGOING_COUNT = 0xA,

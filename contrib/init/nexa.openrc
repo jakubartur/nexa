@@ -18,8 +18,8 @@ NEXAD_BIN=${NEXAD_BIN:-/usr/bin/nexad}
 NEXAD_NICE=${NEXAD_NICE:-${NICELEVEL:-0}}
 NEXAD_OPTS="${NEXAD_OPTS:-${NEXA_OPTS}}"
 
-name="BCH Unlimited Daemon"
-description="Bitcoin cryptocurrency P2P network daemon"
+name="Nexa Daemon"
+description="Nexa cryptocurrency P2P network daemon"
 
 command="/usr/bin/nexad"
 command_args="-pid=\"${NEXAD_PIDFILE}\" \
@@ -84,7 +84,7 @@ checkconfig()
 		eerror "It is also recommended that you also set alertnotify so you are "
 		eerror "notified of problems:"
 		eerror ""
-		eerror "ie: alertnotify=echo %%s | mail -s \"Bitcoin Alert\"" \
+		eerror "ie: alertnotify=echo %%s | mail -s \"Nexa Alert\"" \
 			"admin@foo.com"
 		eerror ""
 		return 1

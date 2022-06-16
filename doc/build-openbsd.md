@@ -1,7 +1,7 @@
 # OpenBSD build guide
 (Tested with OpenBSD 6.6)
 
-This guide describes how to build bitcoind and command-line utilities on OpenBSD.
+This guide describes how to build nexad and command-line utilities on OpenBSD.
 
 As OpenBSD is most common as a server OS, we will not bother with the GUI.
 
@@ -34,15 +34,15 @@ gmake install
 See [dependencies.md](dependencies.md) for a complete overview.
 
 
-## Building Bitcoin Unlimited
+## Building Nexa
 
 As your normal (non root) user, go through the steps below
 
 ### Fetch the code
 
 ```bash
-git clone https://gitlab.com/bitcoinunlimited/BCHUnlimited.git
-cd BCHUnlimited/
+git clone https://gitlab.com/nexa/nexa.git Nexa
+cd Nexa/
 ```
 
 ### Preparation
@@ -59,7 +59,7 @@ Now you need to choose to build without or with wallet functionality. If you jus
 
 ### To build without wallet
 
-While in the `BitcoinUnlimited` directory
+While in the `Nexa` directory
 
 ```bash
 ./autogen.sh
@@ -67,7 +67,7 @@ While in the `BitcoinUnlimited` directory
 gmake # You may get an error with one of the tests.
 ```
 
-You will find the `bitcoind` binary in the `src/` folder.
+You will find the `nexad` binary in the `src/` folder.
 
 
 ### To build with wallet
@@ -83,7 +83,7 @@ BerkeleyDB is only necessary for the wallet functionality. To skip this, pass `-
 To build Berkeley DB 5.3:
 
 ```bash
-# Pick some path to install BDB to, here we create a directory within the bitcoin directory
+# Pick some path to install BDB to, here we create a directory within the nexa directory
 BDB_PREFIX=$(pwd)/db4
 mkdir -p $BDB_PREFIX
 
@@ -113,7 +113,7 @@ You should now have the required files in `db4/lib/` and `db4/include/`.
 
 Make sure `BDB_PREFIX` is set to the appropriate path from building BDB. See above.
 
-While in the `BitcoinUnlimited` directory.
+While in the `Nexa` directory.
 
 ```bash
 ./autogen.sh

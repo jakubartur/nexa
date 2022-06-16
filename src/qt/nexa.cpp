@@ -76,10 +76,7 @@ static void InitMessage(const std::string &message) { LOGA("init message: %s\n",
 /*
    Translate string to current locale using Qt.
  */
-static std::string Translate(const char *psz)
-{
-    return QCoreApplication::translate("bch-unlimited", psz).toStdString();
-}
+static std::string Translate(const char *psz) { return QCoreApplication::translate("nexa", psz).toStdString(); }
 
 static QString GetLangTerritory()
 {
@@ -672,8 +669,8 @@ int main(int argc, char *argv[])
     bool fMigrated = false;
     // No migrations right now
 
-    // If we just migrated and this is a BUcash node, have the user reconfirm the data directory.
-    // This is necessary in case the user wants to run side-by-side BTC chain and BCH chain nodes
+    // If we just migrated and this is a Nexa node, have the user reconfirm the data directory.
+    // This is necessary in case the user wants to run side-by-side BTC chain and Nexa chain nodes
     // in which case each instance requires a different data directory.
     if (fMigrated)
         SoftSetBoolArg("-choosedatadir", true);
@@ -683,7 +680,7 @@ int main(int argc, char *argv[])
     // as it is used to locate QSettings
     QApplication::setOrganizationName(QAPP_ORG_NAME);
     QApplication::setOrganizationDomain(QAPP_ORG_DOMAIN);
-    // Use a different app name for BUCash to enable side-by-side installations which won't
+    // Use a different app name for Nexa to enable side-by-side installations which won't
     // interfere with each other
     QApplication::setApplicationName(QAPP_APP_NAME);
     GUIUtil::SubstituteFonts(GetLangTerritory());

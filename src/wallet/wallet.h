@@ -417,7 +417,7 @@ public:
     CAmount GetAvailableWatchOnlyCredit(const bool &fUseCache = true) const;
     CAmount GetChange() const;
 
-    // Get only BCH transaction amounts
+    // Get only Nexa transaction amounts
     void GetAmounts(std::list<COutputEntry> &listReceived,
         std::list<COutputEntry> &listSent,
         CAmount &nFee,

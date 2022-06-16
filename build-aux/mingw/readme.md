@@ -60,7 +60,7 @@ you need to customize to your local system settings.
 	
 3. Clone the Bitcoin Unlimited repository with the following command:
 
-	`git clone https://gitlab.com/bitcoinunlimited/BCHUnlimited.git .`
+	`git clone https://gitlab.com/nexa/nexa.git .`
 	
 4. See section 5.2 below for setting the git path in the configuration file.
 
