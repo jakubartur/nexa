@@ -866,7 +866,7 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
         uint64_t nVersion = 0;
         vRecv >> fHighBandwidth >> nVersion;
 
-        // BCH network currently only supports version 1 (v2 is segwit support on BTC)
+        // The network currently only supports version 1
         // May need to be updated in the future if other clients deploy a new version
         pfrom->fSupportsCompactBlocks = nVersion == 1;
 

@@ -15,7 +15,7 @@ OP_GROUP tokens differ in significant aspects from other existing or proposed "c
 	 + Integration with Script means that OP_GROUP functionality will grow as Script grows, and maintenance is minimal compared to colored coins that use "piggy-back" blockchains.
 
 * Is miner validated
-	 + Like BCH transactions, light wallets can rely on the idea that transactions committed some blocks behind the blockchain tip are valid
+	 + Like NEX transactions, light wallets can rely on the idea that transactions committed some blocks behind the blockchain tip are valid
 
 * Does not require knowledge of the blockchain history to determine token grouping
 	 + Compatible with pruning and forthcoming UTXO commitment techniques
@@ -24,7 +24,7 @@ OP_GROUP tokens differ in significant aspects from other existing or proposed "c
 	 + Can use the same merkle proof technique (SPV or "simplified payment validation") used for transactions today.
 
 * Can be enabled via soft fork
-	+ Wallets do not need to add OP_GROUP functionality immediately.  Wallets that are not upgraded or choose not to support OP_GROUP will likely not recognise tokens sent to the wallet and cannot accidentally spend these tokens as BCH in "normal" scripts.
+	+ Wallets do not need to add OP_GROUP functionality immediately.  Wallets that are not upgraded or choose not to support OP_GROUP will likely not recognise tokens sent to the wallet and cannot accidentally spend these tokens as NEX in "normal" scripts.
 
 ## The format of this document
 
@@ -49,7 +49,7 @@ This proposal also limits itself to exactly one opcode.  It is possible to inclu
 * *GP2SH* - Group pay to script hash script.  Specifically: `<group id> <quantity> OP_GROUP OP_DROP OP_DROP OP_HASH160 <address> OP_EQUAL`
 * *mint-melt address* - An address that can be used to mint or melt tokens.  This is actually the same number as the group identifier.
 * *group identifier* - A number used to identify a group.  This is the same number as the group's mint-melt address, but it uses a cashaddr type of 2.
-* *nexa group* - A special-case group that includes all transactions with no explicit group id.  This group represents the "native" BCH tokens during transaction analysis.
+* *nexa group* - A special-case group that includes all transactions with no explicit group id.  This group represents the "native" NEX tokens during transaction analysis.
 * *mint* - Move ungrouped satoshis into a group, thereby creating new tokens
 * *melt* - Move tokens back to the native satoshis, thereby destroying existing tokens
 * *UTXO* - Unspend Transaction Output: A record of current value on the nexa blockchain
@@ -64,7 +64,7 @@ Please refer to [https://medium.com/@g.andrew.stone/bitcoin-scripting-applicatio
 
 As a soft fork, this specification is divided into 3 sections: miner (consensus) requirements, full node implementations, and wallet implementations
 
-**[DISCUSSION: OP_GROUP can be triggered either via soft fork or hard fork.  If a hard fork is chosen, changes are minimal:  OP_GROUP would be assigned to a new opcode number, and OP_DROP would be removed. This saves a byte.  (Alternately, OP_DROP could be required as the next byte.  This would give us effectively 255 additional 16 bit opcodes: OP_GROUP.OP_XXX).  The advantage of a hard fork is that unupgraded light wallets would discard the transaction as bad (and hopefully indicate such to the user to reduce payment confusion in the case where someone accidentally pays a token rather than BCH).  Otherwise an unupgraded light wallet could be fed an illegal op_group transaction, but with a "normal" output that it understands.  The wallet would then accept this transaction from a 0-conf perspective.  Note that this not specific to op_group.  It is generally a vulnerability in the repurposing of OP_NOP to add functionality via soft fork.  The disadvantage of a hard fork is that all full nodes must upgrade]**
+**[DISCUSSION: OP_GROUP can be triggered either via soft fork or hard fork.  If a hard fork is chosen, changes are minimal:  OP_GROUP would be assigned to a new opcode number, and OP_DROP would be removed. This saves a byte.  (Alternately, OP_DROP could be required as the next byte.  This would give us effectively 255 additional 16 bit opcodes: OP_GROUP.OP_XXX).  The advantage of a hard fork is that unupgraded light wallets would discard the transaction as bad (and hopefully indicate such to the user to reduce payment confusion in the case where someone accidentally pays a token rather than NEX).  Otherwise an unupgraded light wallet could be fed an illegal op_group transaction, but with a "normal" output that it understands.  The wallet would then accept this transaction from a 0-conf perspective.  Note that this not specific to op_group.  It is generally a vulnerability in the repurposing of OP_NOP to add functionality via soft fork.  The disadvantage of a hard fork is that all full nodes must upgrade]**
 
 ### Miner (Consensus) Requirements
 
@@ -72,19 +72,19 @@ As a soft fork, this specification is divided into 3 sections: miner (consensus)
 Miners **MUST** enforce OP_GROUP semantics after the May 2018 hard fork.
 
 #### Retirement
-Since this opcode may not exist inside a P2SH script, removal of this opcode is easier than other opcodes.  A "group stop" block height can be chosen where OP_GROUP balancing is no longer enforced by miners.  At that point OP_GROUP effectively becomes a no-op so all owners of OP_GROUP tokens may spend their UTXOs as normal BCH.  Issuers of tokens have until the group stop block to switch to another blockchain without interruption of their service.  Issuers may do so by importing the utxos marked by their group into a custom blockchain easily and without securing the signatures of all token owners.    When the group stop block occurs, OP_GROUP balances are effectively frozen although the underlying satoshis may now be spent.  So if an issuer has not created a custom blockchain, s/he may subsequently do so at any time by importing the utxos tagged with the relevant OP_GROUP address from the point of the group stop block. 
+Since this opcode may not exist inside a P2SH script, removal of this opcode is easier than other opcodes.  A "group stop" block height can be chosen where OP_GROUP balancing is no longer enforced by miners.  At that point OP_GROUP effectively becomes a no-op so all owners of OP_GROUP tokens may spend their UTXOs as normal NEX.  Issuers of tokens have until the group stop block to switch to another blockchain without interruption of their service.  Issuers may do so by importing the utxos marked by their group into a custom blockchain easily and without securing the signatures of all token owners.    When the group stop block occurs, OP_GROUP balances are effectively frozen although the underlying satoshis may now be spent.  So if an issuer has not created a custom blockchain, s/he may subsequently do so at any time by importing the utxos tagged with the relevant OP_GROUP address from the point of the group stop block. 
 
 #### Validation
 
 A new Script opcode **MUST** be created, named OP_GROUP and replacing OP_NOP7 (0xb6).
 
-This opcode **MUST** behave as a no-op during script evaluation. It therefore may legally appear anywhere in a script. *[Its simpler and less error prone to let it appear anywhere and ignore it (as per the OP_NOP7 semantics today) than to add a consensus rule enforcing its proper appearance.  Having such a rule would be a place where implementation could fall out of consensus.  I believe that consensus rules should be minimal and be those that protect or enhance the monetary function of BCH.  Limiting extraneous appearances of OP_GROUP does neither]*
+This opcode **MUST** behave as a no-op during script evaluation. It therefore may legally appear anywhere in a script. *[Its simpler and less error prone to let it appear anywhere and ignore it (as per the OP_NOP7 semantics today) than to add a consensus rule enforcing its proper appearance.  Having such a rule would be a place where implementation could fall out of consensus.  I believe that consensus rules should be minimal and be those that protect or enhance the monetary function of NEX.  Limiting extraneous appearances of OP_GROUP does neither]*
 
 This opcode comes into play during transaction validation, and ensures that the quantity of input and outputs within every group balance.
 
 First a *"mint-melt group"*, a *"single-mint group"* and a *"group identifier"* are identified for each input and output.
 
-The *group identifier* is the token group that this input or output belongs to.  A *group identifier* is a data string of 20 or 32 bytes.  It is not a number (so no zero or sign extension is allowed).  A 19 byte group identifier is simply invalid.  Transactions that do not use OP_GROUP are put in a special group called "NoGroup" that designates the "native" BCH token.  "NoGroup" is a conceptual aid -- it will never be used outside your implementation.
+The *group identifier* is the token group that this input or output belongs to.  A *group identifier* is a data string of 20 or 32 bytes.  It is not a number (so no zero or sign extension is allowed).  A 19 byte group identifier is simply invalid.  Transactions that do not use OP_GROUP are put in a special group called "NoGroup" that designates the "native" NEX token.  "NoGroup" is a conceptual aid -- it will never be used outside your implementation.
 
 Inputs may also have a *mint-melt group*, depending on their construction.  The *mint-melt group* indicates the ability to either mint or melt tokens into or from the corresponding group.  All inputs have a *single-mint group*.
 
@@ -155,7 +155,7 @@ Miners and full nodes should not require that a transaction exceed a "dust thres
 
 ### Wallet Implementations
 
-OP_GROUP is implemented as a soft fork so wallets do not need to do anything if they do not want to add token support.  But in that case, the wallet will not recognise the format of an OP_GROUP tagged transaction output script and ignore it.  This could cause user confusion if someone accidentally sends that user a token rather than BCH.  To avoid this, it is recommended that wallets identify OP_GROUP outputs and issue an alert if one is received.
+OP_GROUP is implemented as a soft fork so wallets do not need to do anything if they do not want to add token support.  But in that case, the wallet will not recognise the format of an OP_GROUP tagged transaction output script and ignore it.  This could cause user confusion if someone accidentally sends that user a token rather than NEX.  To avoid this, it is recommended that wallets identify OP_GROUP outputs and issue an alert if one is received.
 
 *[since the devs are contemplating adding quite a few new opcodes, this alert may be useful for more than just op_group]*
 
@@ -174,9 +174,9 @@ One new RPC is defined, named "token" that contains several sub-functions.  Para
 
 **group id**  (*string*): The group identifier in cashaddr format.  This identifier is generated in the "token new" command.  All group identifiers have a "z" prefix.
 
-**address**  (*string*): A nexa address.  Token addresses are interchangable with each other and BCH addresses, so use the standard "getnewaddress" RPC command to create one.  *[having the same addresses for multiple token types allows one to put different tokens in the same address.  This feature may have many uses, such as paying interest in BCH to token holders]*
+**address**  (*string*): A nexa address.  Token addresses are interchangable with each other and NEX addresses, so use the standard "getnewaddress" RPC command to create one.  *[having the same addresses for multiple token types allows one to put different tokens in the same address.  This feature may have many uses, such as paying interest in NEX to token holders]*
 
-**quantity** (large integer):  All functions express token quantities in single units.  This is different than the non-token API which expresses values as BCH or 100,000,000 Satoshi.
+**quantity** (large integer):  All functions express token quantities in single units.  This is different than the non-token API which expresses values as NEX or 100,000,000 Satoshi.
 
 
 
@@ -207,9 +207,9 @@ $ ./nexa-cli token new
 
 ### RPC: "token mint"
 
-Create a certain number of tokens of a particular type and sends them to specified addresses.  Converts (redeems) tokens back into BCH.  You must be the owner of this group (have the ability to sign the controllingAddress) to successfully execute this function.
+Create a certain number of tokens of a particular type and sends them to specified addresses.  Converts (redeems) tokens back into NEX.  You must be the owner of this group (have the ability to sign the controllingAddress) to successfully execute this function.
 
-Depending on the implementation, you may need to manually load the group's controlling address with some BCH before calling this function.
+Depending on the implementation, you may need to manually load the group's controlling address with some NEX before calling this function.
 
 **Syntax:**
 
@@ -245,7 +245,7 @@ A transaction id (hex string).
 
 ### RPC: "token melt"
 
-Converts (redeems) tokens back into BCH.  You must be the owner of this group (have the ability to sign the controllingAddress) to successfully execute this function. Some wallets may require that tokens first be sent to the controllingAddress before melting.  This allows you to control which tokens are melted.
+Converts (redeems) tokens back into NEX.  You must be the owner of this group (have the ability to sign the controllingAddress) to successfully execute this function. Some wallets may require that tokens first be sent to the controllingAddress before melting.  This allows you to control which tokens are melted.
 
 **Syntax:**
 
@@ -325,7 +325,7 @@ Authors may add additional fields not defined in this document to the initial di
 
 If a token claims the following ticker names, it is strongly recommended that wallets refuse to display the ticker and instead use "???":
 
-BCH, mBCH, uBCH
+NEX, KEX, MEX
 
 If a token claims the following ticker names, it is recommended that wallets refuse to display the ticker and instead use "???":
 

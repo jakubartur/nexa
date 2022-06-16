@@ -56,12 +56,7 @@ public:
 
 
 /*!
-  Bitcoin Cash extended version message implementation.
-
-  This version message de-/serializes the same fields as the version
-  message format as in the BU BCH implementation as of July 2018,
-  but in addition supports an appended
-  (key, value) map, with the keys and values being uint64_t values.
+  Nexa extended version message implementation.
 
   The keys are declared in the extversion_keys.h header file which
   should obviously be kept in sync between different implementations.

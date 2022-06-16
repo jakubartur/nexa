@@ -25,8 +25,8 @@ As your normal (non root) user, go through the steps below
 ### Fetch the code
 
 ```bash
-git clone https://gitlab.com/nexa/nexa.git
-cd BCHUnlimited/
+git clone https://gitlab.com/nexa/nexa.git Nexa
+cd Nexa/
 ```
 
 ### Preparation

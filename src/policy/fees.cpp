@@ -369,7 +369,7 @@ void CBlockPolicyEstimator::processTransaction(const CTxMemPoolEntry &entry, boo
         return;
     }
 
-    // Fees are stored and reported as BCH-per-kb:
+    // Fees are stored and reported as Nexa-per-kb:
     CFeeRate feeRate(entry.GetFee(), entry.GetTxSize());
 
     mapMemPoolTxs[hash].blockHeight = txHeight;
@@ -400,7 +400,7 @@ void CBlockPolicyEstimator::processBlockTx(unsigned int nBlockHeight, const CTxM
         LOG(ESTIMATEFEE, "Blockpolicy error Transaction had negative blocksToConfirm\n");
         return;
     }
-    // Fees are stored and reported as BCH-per-kb:
+    // Fees are stored and reported as Nexa-per-kb:
     CFeeRate feeRate(entry.GetFee(), entry.GetTxSize());
     feeStats.Record(blocksToConfirm, (double)feeRate.GetFeePerK());
 }
