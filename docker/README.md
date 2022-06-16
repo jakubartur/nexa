@@ -6,30 +6,30 @@ container in a bash shell to change to a new branch and then recompile the code
 or edit the commented section of the dockerfile to have the image build with a specific branch
 
 ## Recommended image names
-- img-bch-unlimited-ubu18-linux32
-- img-bch-unlimited-ubu18-linux64
-- img-bch-unlimited-ubu18-windows32
-- img-bch-unlimited-ubu18-windows64
+- img-nexa-ubu18-linux32
+- img-nexa-ubu18-linux64
+- img-nexa-ubu18-windows32
+- img-nexa-ubu18-windows64
 
 ## Recommended container names
-- bch-unlimited-linux32
-- bch-unlimited-linux64
-- bch-unlimited-windows32
-- bch-unlimited-windows64
+- nexa-linux32
+- nexa-linux64
+- nexa-windows32
+- nexa-windows64
 
 ## To build
 `docker build --no-cache -t <image name> -f <docker file name> .`
 
 example: 
 
-`docker build --no-cache -t img-bch-unlimited-ubu18-linux64 -f Dockerfile.ubuntu18-linux64 .`
+`docker build --no-cache -t img-nexa-ubu18-linux64 -f Dockerfile.ubuntu18-linux64 .`
 
 ## To start an image in a new container in a bash shell
 `docker run -it -d --name <container name> <imagename> bash`
 
 example: 
 
-`docker run -it -d --name bch-unlimited-linux64 img-bch-unlimited-ubu18-linux64 bash`
+`docker run -it -d --name nexa-linux64 img-nexa-ubu18-linux64 bash`
 
 ## To start an image in a new container in a bash shell with a mounted directory and opened port
 ```
