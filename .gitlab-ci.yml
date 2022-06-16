@@ -22,7 +22,7 @@ workflow:
         - if: $CI_COMMIT_TAG
         - if: $CI_COMMIT_BRANCH == "dev"
 
-image: bchunlimited/gitlabci:ubuntu18.04
+image: bchunlimited/nexa:ubuntu20.04
 
 stages:
     - static_checks
