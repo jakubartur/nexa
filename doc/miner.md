@@ -23,10 +23,38 @@ A few of the benefits when using RPC getminingcandidate and RPC submitminingsolu
 ### nexa-miner
 
 An example CPU-miner program is provided that shows a proof-of-concept use of these functions.
-The source code is located at nexa-miner.cpp.  To try it out, run
+The source code is located in src/nexa-miner.cpp. 
+
+A typical way to launch nexa-miner on the main chain is the following. (If no -cpu value is given the default is *1*)
+
 ```sh
-nexa-miner
+./nexa-miner -rpcuser=<your-nodes-login> -rpcpassword=<your-nodes-password> -cpus=4
 ```
+
+If running on tesnet then add *-testnet*
+
+```sh
+./nexa-miner -rpcuser=<your-nodes-login> -rpcpassword=<your-nodes-password> -cpus=4 -testnet
+```
+
+ To get a full list of additional options run
+```sh
+./nexa-miner --help
+```
+
+#### Setting the mining candidate interval
+
+By default your node will generate a new mining candidate every 30 seconds.  Also, by default, the nexa-miner will update the mining candidate it is mining with every 30 seconds.If a new block is received by your node the nexa-miner will almost immediately get the new mining candidate and begin mining with it.
+
+If you want then nexa-miner to update the block mining candidate more frequently than the default of 30 seconds then you can modify *-duration*, but you should only do this if you also make your node update its mining candidate interval by setting *-mining.minCandidateInterval* to match the new *-duration* you have set in your nexa-miner. So you could launch the nexa-miner and nexad with the following settings.
+
+```sh
+./nexa-miner -rpcuser=<your-nodes-login> -rpcpassword=<your-nodes-password> -cpus=4 -testnet -duration=15
+
+./nexad -mining.minCandidateInterval=15
+```
+
+
 
 Of course, given current and foreseeable mining difficulties this program will not find any blocks on mainnet.  However, it will find blocks on testnet or regtest.
 
