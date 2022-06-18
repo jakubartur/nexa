@@ -63,6 +63,7 @@ BOOST_AUTO_TEST_CASE(vector_span)
 BOOST_AUTO_TEST_CASE(capd_msg_test_vectors)
 {
     FastRandomContext insecure_rand;
+    CapdMsgPool mp;
 
     // Check that todouble works, not counting rounding
     {
@@ -241,9 +242,9 @@ BOOST_AUTO_TEST_CASE(capd_msg_test_vectors)
         }
     }
 
-    msgpool.clear();
-    msgpool.SetMaxSize(2000);
-    uint256 diff = msgpool.GetRelayPowTarget();
+    mp.clear();
+    mp.SetMaxSize(2000);
+    uint256 diff = mp.GetRelayPowTarget();
     BOOST_CHECK(diff == ArithToUint256(MIN_FORWARD_MSG_DIFFICULTY)); // because no messages in the pool
 }
 
@@ -258,7 +259,7 @@ BOOST_AUTO_TEST_CASE(capd_pool_test_vectors)
     CapdMsgPool mp;
     mp.SetMaxSize(TEST_MSGPOOL_SIZE);
     // Empty pool must be  minimum difficulty
-    BOOST_CHECK(msgpool.GetRelayPowTarget() == ArithToUint256(MIN_FORWARD_MSG_DIFFICULTY));
+    BOOST_CHECK(mp.GetRelayPowTarget() == ArithToUint256(MIN_FORWARD_MSG_DIFFICULTY));
 
     try
     {
@@ -283,7 +284,7 @@ BOOST_AUTO_TEST_CASE(capd_pool_test_vectors)
     {
     }
 
-    msg1.SetPowTarget(msgpool.GetRelayPowTarget());
+    msg1.SetPowTarget(mp.GetRelayPowTarget());
     msg1.Solve();
 
     BOOST_CHECK(mp.GetLocalPowTarget() == ArithToUint256(MIN_LOCAL_MSG_DIFFICULTY)); // empty pool difficulty
