@@ -368,7 +368,14 @@ UniValue getrawtxpool(const UniValue &params, bool fHelp)
     bool idem = true;
     bool fVerbose = false;
     if (params.size() > 0)
-        fVerbose = params[0].get_bool();
+    {
+        if (params[0].isStr())
+            fVerbose = InterpretBool(params[0].get_str());
+        else if (params[0].isNum())
+            fVerbose = (params[0].get_int() != 0);
+        else
+            fVerbose = params[0].get_bool();
+    }
     if (params.size() > 1)
     {
         std::string s = params[1].get_str();

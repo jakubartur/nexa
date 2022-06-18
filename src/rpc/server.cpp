@@ -144,7 +144,7 @@ static const CRPCConvertParam vRPCConvertParams[] =
     {"verifychain", 0},
     {"verifychain", 1},
     {"keypoolrefill", 0},
-    {"getrawmempool", 0},
+    {"getrawtxpool", 0},
     {"getraworphanpool", 0},
     {"estimatefee", 0},
     {"estimatesmartfee", 0},
@@ -156,8 +156,8 @@ static const CRPCConvertParam vRPCConvertParams[] =
     {"rollbackchain", 1},
     {"reconsidermostworkchain", 0},
     {"reconsidermostworkchain", 1},
-    {"getmempoolancestors", 1},
-    {"getmempooldescendants", 1},
+    {"gettxpoolancestors", 1},
+    {"gettxpooldescendants", 1},
     {"getrawtransactionssince", 1},
     {"getblockstats", 1}
 };
