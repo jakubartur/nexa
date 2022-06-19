@@ -66,11 +66,11 @@
         <translation>כתובות לקבלה</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
         <translation>אלה כתובת הביטקוין שלך לצורך שליחת תשלומים. תמיד יש לבדוק את הכמות ואת כתובות מקבלי התשלומים לפני שליחת מטבעות.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
         <translation>אלה כתובות הביטקוין שלך לצורך קבלת תשלומים. מומלץ להשתמש בכתובת קבלה חדשה לכל העברה.</translation>
     </message>
     <message>
@@ -160,7 +160,7 @@
         <translation>אישור הצפנת הארנק</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
         <translation>אזהרה: הצפנת הארנק ואיבוד מילת הצופן עשויה להוביל &lt;b&gt;לאיבוד כל הביטקוינים שלך&lt;/b&gt;!</translation>
     </message>
     <message>
@@ -168,7 +168,7 @@
         <translation>האם אכן להצפין את הארנק?</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
         <translation>ליבת ביטקוין תיסגר עכשיו כדי לסיים את תליך ההצפנה. זכור כי הצפנה אינה יכולה להגן עלייך באופן מלא מגניבה שמקורה בתוכנות זדוניות המצויות במחשב שלך.</translation>
     </message>
     <message>
@@ -298,7 +298,7 @@
         <translation>פתיחת &amp;כתובת משאב…</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
+        <source>Nexa client</source>
         <translation>לקוח ליבה של ביטקוין</translation>
     </message>
     <message>
@@ -335,7 +335,7 @@
     </message>
     <message>
         <source>Nexa</source>
-        <translation>ביטקוין</translation>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -350,7 +350,7 @@
         <translation>&amp;קבלה</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
+        <source>Show information about Nexa</source>
         <translation>הצגת מידע על ליבת ביטקוין</translation>
     </message>
     <message>
@@ -390,15 +390,11 @@
         <translation>סרגל כלים לשוניות</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>ליבת ביטקוין</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>בקשת תשלומים (יצירה של קודים מסוג QR וסכימות כתובות משאב של %1)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
+        <source>&amp;About Nexa</source>
         <translation>על &amp;אודות ליבת ביטקוין</translation>
     </message>
     <message>
@@ -418,7 +414,7 @@
         <translation>אפשרויות &amp;שורת הפקודה</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
         <translation>הצגת הודעות העזרה של ליבת ביטקוין כדי לקבל רשימה עם אפשרויות שורת הפקודה האפשריות של ביטקוין</translation>
     </message>
     <message>
@@ -765,7 +761,7 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
+        <source>Nexa</source>
         <translation>ליבת ביטקוין</translation>
     </message>
     <message>
@@ -777,7 +773,7 @@
         <translation>(%1-סיביות)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
+        <source>About Nexa</source>
         <translation>על אודות ליבת ביטקוין</translation>
     </message>
     <message>
@@ -800,15 +796,15 @@
         <translation>ברוך בואך</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
+        <source>Welcome to Nexa.</source>
         <translation>ברוך בואך לליבת ביטקוין</translation>
     </message>
     <message>
-        <source>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</source>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
         <translation>מכיוון שזאת הפעם הראשונה שהתכנית פועלת ניתן לבחור איפה ליבת ביטקוין תאחסן את הנתונים שלה.</translation>
     </message>
     <message>
-        <source>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <source>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
         <translation>לקוח ביטקוין יוריד וישמור העתק של שרשרת המקטעים של ביטקוין. לפחות %1 ג״ב מהנתונים יאוחסנו בתיקייה זו, והיא תגדל עם הזמן. הארנק גם יאוחסן בתיקייה הזו.</translation>
     </message>
     <message>
@@ -820,7 +816,7 @@
         <translation>שימוש בתיקיית נתונים מותאמת אישית:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
+        <source>Nexa</source>
         <translation>ליבת ביטקוין</translation>
     </message>
     <message>
@@ -938,7 +934,7 @@
         <translation>עודף &amp;בלתי מאושר מההשקעה</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>פתיחת הפתחה של ביטקוין בנתב באופן אוטומטי. עובד רק אם UPnP מופעל ונתמך בנתב.</translation>
     </message>
     <message>
@@ -1033,7 +1029,7 @@
         <translation>טופס</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
         <translation>המידע המוצג עשוי להיות מיושן. הארנק שלך מסתנכרן באופן אוטומטי עם רשת הביטקוין לאחר יצירת החיבור, אך התהליך טרם הסתיים.</translation>
     </message>
     <message>
@@ -1128,7 +1124,7 @@
         <translation>שגיאה בבקשת תשלום</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
+        <source>Cannot start Nexa: click-to-pay handler</source>
         <translation>לא ניתן להתחיל את ביטקוין: טיפול בלחיצה–לתשלום </translation>
     </message>
     <message>
@@ -1136,7 +1132,7 @@
         <translation>כתובת אחזור בקשת התשלום שגויה: %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid Nexa address or malformed URI parameters.</source>
         <translation>לא ניתן לנתח את כתובת המשאב! מצב זה יכול לקרות עקב כתובת ביטקוין שגויה או פרמטרים שגויים בכתובת המשאב.</translation>
     </message>
     <message>
@@ -1475,7 +1471,7 @@
         <translation>ש&amp;ימוש &amp;חוזר בכתובת קבלה קיימת (לא מומלץ)</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Bitcoin network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Nexa network.</source>
         <translation>הודעת רשות לצירוף לבקשת התשלום שתוצג בעת פתיחת הבקשה. לתשומת לבך: ההודעה לא תישלח עם התשלום ברשת ביטקוין.</translation>
     </message>
     <message>
@@ -1776,7 +1772,7 @@
         <translation>ההעברה נדחתה! מצב כזה עשוי לקרות אם חלק מהמטבעות בארנק שלך כבר הושקעו, כמו למשל עקב שימוש בעותק של wallet.dat והמטבעות הושקעו בעותק אבל לא סומנו כאילו הושקעו דרך כאן.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
+        <source>Warning: Invalid Nexa address</source>
         <translation>אזהרה: כתובת ביטקוין שגויה</translation>
     </message>
     <message>
@@ -1855,7 +1851,7 @@
         <translation>יש להזין תווית עבור כתובת זו כדי להוסיף אותה לרשימת הכתובות בשימוש</translation>
     </message>
     <message>
-        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Bitcoin network.</source>
+        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Nexa network.</source>
         <translation>הודעה שצורפה לביטקוין: כתובת שתאוחסן בהעברה לצורך מעקב מצדך. לתשומת לבך: הודעה זו לא תישלח ברשת הביטקוין.</translation>
     </message>
     <message>
@@ -1870,7 +1866,7 @@
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
+        <source>Nexa is shutting down...</source>
         <translation>ליבת ביטקוין נסגרת…</translation>
     </message>
     <message>
@@ -1945,7 +1941,7 @@
         <translation>כתובת הביטקוין שאתה נחתמה ההודעה</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
         <translation>ניתן לאמת את ההודעה כדי להבטיח שהיא נחתמה עם כתובת הביטקוין הנתונה</translation>
     </message>
     <message>
@@ -2012,11 +2008,11 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
+        <source>Nexa</source>
         <translation>ליבת ביטקוין</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
+        <source>The Nexa developers</source>
         <translation>מתכנתי ליבת ביטקוין</translation>
     </message>
     <message>
@@ -2526,7 +2522,7 @@
         <translation>זוהי בניית ניסיון טרום-שחרור - השימוש בה על אחריותך - אין להשתמש לצורך כריה או יישומי מסחר</translation>
     </message>
     <message>
-        <source>Unable to bind to %s on this computer. BCH Unlimited is probably already running.</source>
+        <source>Unable to bind to %s on this computer. Nexa is probably already running.</source>
         <translation>לא ניתן להתאגד אל %s במחשב זה. כנראה שליבת ביטקוין כבר פועלת.</translation>
     </message>
     <message>
@@ -2662,11 +2658,11 @@
         <translation>התחברות דרך מתווך SOCKS5</translation>
     </message>
     <message>
-        <source>Copyright (C) 2009-%i The BCH Unlimited Developers</source>
+        <source>Copyright (C) 2009-%i The Nexa Developers</source>
         <translation>כל הזכויות שמורות (C)‏ 2009‏-%i מתכנתי ליבת ביטקוין</translation>
     </message>
     <message>
-        <source>Error loading wallet.dat: Wallet requires newer version of BCH Unlimited</source>
+        <source>Error loading wallet.dat: Wallet requires newer version of Nexa</source>
         <translation>אירעה שגיאה בטעינת wallet.dat: הארנק דורש גרסה חדשה יותר של ליבת ביטקוין</translation>
     </message>
     <message>

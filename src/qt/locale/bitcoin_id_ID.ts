@@ -169,7 +169,7 @@
     </message>
     <message>
         <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
-        <translation>BCH Unlimited akan ditutup untuk menyelesaikan proses enkripsi. Mohon diingat bahwa mengenkripsi dompet Anda tidak akan sepenuhnya melindungi coin Anda dari virus atau malware yang menginfeksi komputer Anda.</translation>
+        <translation>Nexa akan ditutup untuk menyelesaikan proses enkripsi. Mohon diingat bahwa mengenkripsi dompet Anda tidak akan sepenuhnya melindungi coin Anda dari virus atau malware yang menginfeksi komputer Anda.</translation>
     </message>
     <message>
         <source>IMPORTANT: Any previous backups you have made of your wallet file should be replaced with the newly generated, encrypted wallet file. For security reasons, previous backups of the unencrypted wallet file will become useless as soon as you start using the new, encrypted wallet.</source>
@@ -306,8 +306,8 @@
         <translation>Buka &amp;URI</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>Klien BCH Unlimited</translation>
+        <source>Nexa client</source>
+        <translation>Klien Nexa</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -358,8 +358,8 @@
         <translation>&amp;Menerima</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Tampilkan informasi tentang BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Tampilkan informasi tentang Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -398,20 +398,16 @@
         <translation>Baris tab</translation>
     </message>
     <message>
-       <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Permintaan pembayaran (membuat kode QR dan %1 URIs)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;Mengenai BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;Mengenai Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
-        <translation>Modifikasi pengaturan konfigurasi untuk BCH Unlimited</translation>
+        <source>Modify configuration options for Nexa</source>
+        <translation>Modifikasi pengaturan konfigurasi untuk Nexa</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -430,8 +426,8 @@
         <translation>&amp;pilihan Command-line</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
-        <translation>Tampilkan pesan bantuan BCH Unlimited untuk mendapatkan daftar pilihan Command-line</translation>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
+        <translation>Tampilkan pesan bantuan Nexa untuk mendapatkan daftar pilihan Command-line</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
@@ -855,8 +851,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -867,8 +863,8 @@
         <translation>(%1-bit)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Mengenai BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>Mengenai Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -918,16 +914,16 @@
         <translation>Selamat Datang</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Selamat Datang ke BCH Unlimited</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Selamat Datang ke Nexa</translation>
     </message>
     <message>
-        <source>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</source>
-        <translation>Ini adalah pertama kali program ini dijalankan, Anda dapat memilih dimana BCH Unlimited menyimpan data.</translation>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
+        <translation>Ini adalah pertama kali program ini dijalankan, Anda dapat memilih dimana Nexa menyimpan data.</translation>
     </message>
     <message>
-        <source>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>BCH Unlimited akan mengunduh dan menyimpan salinan dari block chain Bitcoin. Setidaknya %1GB data akan disimpan di direktori ini, dan akan terus bertambah. Dompet Anda juga akan disimpan di direktori ini.</translation>
+        <source>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>Nexa akan mengunduh dan menyimpan salinan dari block chain Nexa. Setidaknya %1GB data akan disimpan di direktori ini, dan akan terus bertambah. Dompet Anda juga akan disimpan di direktori ini.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -938,8 +934,8 @@
         <translation>Gunakan direktori pilihan Anda:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
@@ -1020,8 +1016,8 @@
         <translation>Minimalisasi aplikasi ketika jendela ditutup. Ketika pilihan ini dipilih, aplikasi akan menutup seluruhnya jika anda memilih Keluar di menu yang tersedia.</translation>
     </message>
     <message>
-        <source>The user interface language can be set here. This setting will take effect after restarting BCH Unlimited.</source>
-        <translation>Bahasa interface pengguna bisa diubah disini. Pengaturan ini akan memberikan efek setelah BCH Unlimited di-restart.</translation>
+        <source>The user interface language can be set here. This setting will take effect after restarting Nexa.</source>
+        <translation>Bahasa interface pengguna bisa diubah disini. Pengaturan ini akan memberikan efek setelah Nexa di-restart.</translation>
     </message>
     <message>
         <source>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items. %s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</source>
@@ -1048,12 +1044,12 @@
         <translation>&amp;Jaringan</translation>
     </message>
     <message>
-        <source>Automatically start BCH Unlimited after logging in to the system.</source>
-        <translation>Buka BCH Unlimited secara otomatis setelah Anda log-in ke sistem Anda.</translation>
+        <source>Automatically start Nexa after logging in to the system.</source>
+        <translation>Buka Nexa secara otomatis setelah Anda log-in ke sistem Anda.</translation>
     </message>
     <message>
-        <source>&amp;Start BCH Unlimited on system login</source>
-        <translation>&amp;Mulai BCH Unlimited saat log-in sistem</translation>
+        <source>&amp;Start Nexa on system login</source>
+        <translation>&amp;Mulai Nexa saat log-in sistem</translation>
     </message>
     <message>
         <source>(0 = auto, &lt;0 = leave that many cores free)</source>
@@ -1080,16 +1076,16 @@
         <translation>&amp;Perubahan saldo untuk transaksi yang belum dikonfirmasi</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Otomatis membuka port client Bitcoin di router. Hanya berjalan apabila router anda mendukung UPnP dan di-enable.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Otomatis membuka port client Nexa di router. Hanya berjalan apabila router anda mendukung UPnP dan di-enable.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Petakan port dengan &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the Bitcoin network through a SOCKS5 proxy.</source>
-        <translation>Hubungkan ke jaringan Bitcoin melalui SOCKS5 proxy.</translation>
+        <source>Connect to the Nexa network through a SOCKS5 proxy.</source>
+        <translation>Hubungkan ke jaringan Nexa melalui SOCKS5 proxy.</translation>
     </message>
     <message>
         <source>Proxy &amp;IP:</source>
@@ -1195,8 +1191,8 @@
         <translation>Formulir</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Informasi terlampir mungkin sudah kedaluwarsa. Dompet Anda secara otomatis mensinkronisasi dengan jaringan Bitcoin ketika sebuah hubungan terbentuk, namun proses ini belum selesai.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
+        <translation>Informasi terlampir mungkin sudah kedaluwarsa. Dompet Anda secara otomatis mensinkronisasi dengan jaringan Nexa ketika sebuah hubungan terbentuk, namun proses ini belum selesai.</translation>
     </message>
     <message>
         <source>Available:</source>
@@ -1464,8 +1460,8 @@
         <translation>1 &amp;tahun</translation>
     </message>
     <message>
-        <source>Welcome to the BCH Unlimited RPC console.</source>
-        <translation>Selamat datang di konsol RPC Bitcoin.</translation>
+        <source>Welcome to the Nexa RPC console.</source>
+        <translation>Selamat datang di konsol RPC Nexa.</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
@@ -1848,8 +1844,8 @@
         <translation>Permintaan pembayaran telah kadaluarsa</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Awas: Alamat Bitcoin tidak sah</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Awas: Alamat Nexa tidak sah</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -1930,8 +1926,8 @@
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
-        <translation>BCH Unlimited sementara dimatikan...</translation>
+        <source>Nexa is shutting down...</source>
+        <translation>Nexa sementara dimatikan...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -2060,12 +2056,12 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
-        <translation>Pembangun BCH Unlimited</translation>
+        <source>The Nexa developers</source>
+        <translation>Pembangun Nexa</translation>
     </message>
     <message>
         <source>[testnet]</source>
@@ -2538,8 +2534,8 @@
         <translation>Jalankan perintah ketika perubahan transaksi dompet (%s di cmd digantikan oleh TxID)</translation>
     </message>
     <message>
-        <source>Unable to bind to %s on this computer. BCH Unlimited is probably already running.</source>
-        <translation>Tidak bisa mengikat dengan %s di computer ini. Kemungkinan BCH Unlimited sudah mulai.</translation>
+        <source>Unable to bind to %s on this computer. Nexa is probably already running.</source>
+        <translation>Tidak bisa mengikat dengan %s di computer ini. Kemungkinan Nexa sudah mulai.</translation>
     </message>
     <message>
         <source>Warning: The network does not appear to fully agree! Some miners appear to be experiencing issues.</source>
@@ -2638,8 +2634,8 @@
         <translation>Harus membangun ulang database menggunakan -reindex supaya mengubah -txindex</translation>
     </message>
     <message>
-        <source>Cannot obtain a lock on data directory %s. BCH Unlimited is probably already running.</source>
-        <translation>Tidak bisa mengunci data directory %s. Kemungkinan BCH Unlimited sudah mulai.</translation>
+        <source>Cannot obtain a lock on data directory %s. Nexa is probably already running.</source>
+        <translation>Tidak bisa mengunci data directory %s. Kemungkinan Nexa sudah mulai.</translation>
     </message>
     <message>
         <source>Cannot resolve -whitebind address: '%s'</source>

@@ -306,7 +306,7 @@
         <translation>URI&amp;열기...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
+        <source>Nexa client</source>
         <translation>비트코인 코어 클라이언트</translation>
     </message>
     <message>
@@ -343,7 +343,7 @@
     </message>
     <message>
         <source>Nexa</source>
-        <translation>비트코인</translation>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -358,7 +358,7 @@
         <translation>받기(&amp;R)</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
+        <source>Show information about Nexa</source>
         <translation>비트코인 코어에 관한 정보입니다.</translation>
     </message>
     <message>
@@ -398,15 +398,11 @@
         <translation>툴바 색인표</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>비트코인 코어</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>지불 요청하기 (QR코드와 비트코인이 생성됩니다 %1: URIs)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
+        <source>&amp;About Nexa</source>
         <translation>&amp;비트코인 코어 소개</translation>
     </message>
     <message>
@@ -866,7 +862,7 @@
         <translation>프로그램이 처음으로 실행되고 있습니다. 비트코인 코어가 어디에 데이터를 저장할지 선택할 수 있습니다. </translation>
     </message>
     <message>
-        <source>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <source>BCH Unlimited will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
         <translation>비트코인 코어가 블럭체인의 복사본을 다운로드 저장합니다. 적어도 %1GB의 데이터가 이 폴더에 저장되며 시간이 경과할수록 점차 증가합니다. 그리고 지갑 또한 이 폴더에 저장됩니다. </translation>
     </message>
     <message>
@@ -980,7 +976,7 @@
         <translation>&amp;확인되지 않은 돈을 쓰다</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>라우터의 비트코인 클라이언트 포트를 자동으로 엽니다. 라우터에서 UPnP를 지원하고 활성화 했을 경우에만 동작합니다.</translation>
     </message>
     <message>
@@ -988,7 +984,7 @@
         <translation>사용중인 UPnP 포트 매핑(&amp;U)</translation>
     </message>
     <message>
-        <source>Connect to the Bitcoin network through a SOCKS5 proxy.</source>
+        <source>Connect to the Nexa network through a SOCKS5 proxy.</source>
         <translation>SOCKS5 프록시를 통해 비트코인 네트워크 연결</translation>
     </message>
     <message>
@@ -1095,7 +1091,7 @@
         <translation>유형</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
         <translation>표시한 정보가 오래된 것 같습니다. 비트코인 네트워크에 연결하고 난 다음에 지갑을 자동으로 동기화 하지만, 아직 과정이 끝나지는 않았습니다.</translation>
     </message>
     <message>
@@ -1710,7 +1706,7 @@
         <translation>거래가 거부되었습니다. 몇몇 코인들이 지갑에서 이미 사용된 경우, 예를 들어 코인을 이미 사용한  wallet.dat를 복사해서 사용한 경우 지금 지갑에 기록이 안되있어 이런 일이 생길 수 있습니다.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
+        <source>Warning: Invalid Nexa address</source>
         <translation>경고: 잘못된 비트코인주소입니다</translation>
     </message>
     <message>
@@ -1781,7 +1777,7 @@
         <translation>사용된 주소 목록에 새 주소를 추가하기 위해 제목을 입력합니다. </translation>
     </message>
     <message>
-        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Bitcoin network.</source>
+        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Nexa network.</source>
         <translation>비트코인에 첨부된 메시지: 참고용으로 거래와 함께 저장될 URI. 메모: 이 메시지는 비트코인 네트워크로 전송되지 않습니다.</translation>
     </message>
     <message>

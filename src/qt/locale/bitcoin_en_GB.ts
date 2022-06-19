@@ -306,8 +306,8 @@
         <translation>Open &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>BCH Unlimited client</translation>
+        <source>Nexa client</source>
+        <translation>Nexa client</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -358,8 +358,8 @@
         <translation>&amp;Receive</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Show information about BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Show information about Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -398,20 +398,16 @@
         <translation>Tabs toolbar</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Request payments (generates QR codes and %1 URIs)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;About BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;About Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
-        <translation>Modify configuration options for BCH Unlimited</translation>
+        <source>Modify configuration options for Nexa</source>
+        <translation>Modify configuration options for Nexa</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -430,8 +426,8 @@
         <translation>&amp;Command-line options</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
-        <translation>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</translation>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
+        <translation>Show the Nexa help message to get a list with possible Nexa command-line options</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
@@ -855,8 +851,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -867,8 +863,8 @@
         <translation>(%1-bit)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>About BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>About Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -918,16 +914,16 @@
         <translation>Welcome</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Welcome to BCH Unlimited.</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Welcome to Nexa.</translation>
     </message>
     <message>
-        <source>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</source>
-        <translation>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</translation>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
+        <translation>As this is the first time the program is launched, you can choose where Nexa will store its data.</translation>
     </message>
     <message>
-        <source>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</translation>
+        <source>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -938,8 +934,8 @@
         <translation>Use a custom data directory:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
@@ -1020,8 +1016,8 @@
         <translation>Minimise instead of exit the application when the window is closed. When this option is enabled, the application will be closed only after selecting Exit in the menu.</translation>
     </message>
     <message>
-        <source>The user interface language can be set here. This setting will take effect after restarting BCH Unlimited.</source>
-        <translation>The user interface language can be set here. This setting will take effect after restarting BCH Unlimited.</translation>
+        <source>The user interface language can be set here. This setting will take effect after restarting Nexa.</source>
+        <translation>The user interface language can be set here. This setting will take effect after restarting Nexa.</translation>
     </message>
     <message>
         <source>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items. %s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</source>
@@ -1048,12 +1044,12 @@
         <translation>&amp;Network</translation>
     </message>
     <message>
-        <source>Automatically start BCH Unlimited after logging in to the system.</source>
-        <translation>Automatically start BCH Unlimited after logging in to the system.</translation>
+        <source>Automatically start Nexa after logging in to the system.</source>
+        <translation>Automatically start Nexa after logging in to the system.</translation>
     </message>
     <message>
-        <source>&amp;Start BCH Unlimited on system login</source>
-        <translation>&amp;Start BCH Unlimited on system login</translation>
+        <source>&amp;Start Nexa on system login</source>
+        <translation>&amp;Start Nexa on system login</translation>
     </message>
     <message>
         <source>(0 = auto, &lt;0 = leave that many cores free)</source>
@@ -1080,16 +1076,16 @@
         <translation>&amp;Spend unconfirmed change</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Map port using &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the Bitcoin network through a SOCKS5 proxy.</source>
-        <translation>Connect to the Bitcoin network through a SOCKS5 proxy.</translation>
+        <source>Connect to the Nexa network through a SOCKS5 proxy.</source>
+        <translation>Connect to the Nexa network through a SOCKS5 proxy.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
@@ -1128,8 +1124,8 @@
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Bitcoin network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Connect to the Bitcoin network through a separate SOCKS5 proxy for Tor hidden services.</translation>
+        <source>Connect to the Nexa network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <translation>Connect to the Nexa network through a separate SOCKS5 proxy for Tor hidden services.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
@@ -1215,8 +1211,8 @@
         <translation>Form</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>The displayed information may be out of date. Your Wallet automatically synchronises with the Bitcoin Network after a connection is established, but this process has not been completed yet.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
+        <translation>The displayed information may be out of date. Your Wallet automatically synchronises with the Nexa Network after a connection is established, but this process has not been completed yet.</translation>
     </message>
     <message>
         <source>Watch-only:</source>
@@ -1314,16 +1310,16 @@
         <translation>Payment request error</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
-        <translation>Cannot start bitcoin: click-to-pay handler</translation>
+        <source>Cannot start Nexa: click-to-pay handler</source>
+        <translation>Cannot start Nexa: click-to-pay handler</translation>
     </message>
     <message>
         <source>Payment request fetch URL is invalid: %1</source>
         <translation>Payment request fetch URL is invalid: %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters.</source>
-        <translation>URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Nexa address or malformed URI parameters.</source>
+        <translation>URI cannot be parsed! This can be caused by an invalid Nexa address or malformed URI parameters.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1518,8 +1514,8 @@
         <translation>Memory usage</translation>
     </message>
     <message>
-        <source>Open the BCH Unlimited debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Open the BCH Unlimited debug log file from the current data directory. This can take a few seconds for large log files.</translation>
+        <source>Open the Nexa debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <translation>Open the Nexa debug log file from the current data directory. This can take a few seconds for large log files.</translation>
     </message>
     <message>
         <source>Received</source>
@@ -1678,8 +1674,8 @@
         <translation>&amp;Unban Node</translation>
     </message>
     <message>
-        <source>Welcome to the BCH Unlimited RPC console.</source>
-        <translation>Welcome to the BCH Unlimited RPC console.</translation>
+        <source>Welcome to the Nexa RPC console.</source>
+        <translation>Welcome to the Nexa RPC console.</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
@@ -1761,8 +1757,8 @@
         <translation>R&amp;euse an existing receiving address (not recommended)</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Bitcoin network.</source>
-        <translation>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Bitcoin network.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Nexa network.</source>
+        <translation>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Nexa network.</translation>
     </message>
     <message>
         <source>An optional label to associate with the new receiving address.</source>
@@ -2154,8 +2150,8 @@
         <translation>Duplicate address found: addresses should only be used once each.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Warning: Invalid Bitcoin address</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Warning: Invalid Nexa address</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -2205,8 +2201,8 @@
         <translation>This is a normal payment.</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
-        <translation>The Bitcoin address to send the payment to</translation>
+        <source>The Nexa address to send the payment to</source>
+        <translation>The Nexa address to send the payment to</translation>
     </message>
     <message>
         <source>Alt+A</source>
@@ -2249,8 +2245,8 @@
         <translation>Enter a label for this address to add it to the list of used addresses</translation>
     </message>
     <message>
-        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Bitcoin network.</source>
-        <translation>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Bitcoin network.</translation>
+        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Nexa network.</source>
+        <translation>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Nexa network.</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -2264,8 +2260,8 @@
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
-        <translation>BCH Unlimited is shutting down...</translation>
+        <source>Nexa is shutting down...</source>
+        <translation>Nexa is shutting down...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -2283,12 +2279,12 @@
         <translation>&amp;Sign Message</translation>
     </message>
     <message>
-        <source>You can sign messages/agreements with your addresses to prove you can receive bitcoins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
-        <translation>You can sign messages/agreements with your addresses to prove you can receive bitcoins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</translation>
+        <source>You can sign messages/agreements with your addresses to prove you can receive coins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <translation>You can sign messages/agreements with your addresses to prove you can receive coins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
-        <translation>The Bitcoin address to sign the message with</translation>
+        <source>The Nexa address to sign the message with</source>
+        <translation>The Nexa address to sign the message with</translation>
     </message>
     <message>
         <source>Choose previously used address</source>
@@ -2414,12 +2410,12 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
-        <translation>The BCH Unlimited developers</translation>
+        <source>The Nexa developers</source>
+        <translation>The Nexa developers</translation>
     </message>
     <message>
         <source>[testnet]</source>
@@ -2936,8 +2932,8 @@
         <translation>Maximum total fees (in %s) to use in a single wallet transaction; setting this too low may abort large transactions (default: %s)</translation>
     </message>
     <message>
-        <source>Please check that your computer's date and time are correct! If your clock is wrong BCH Unlimited will not work properly.</source>
-        <translation>Please check that your computer's date and time are correct! If your clock is wrong BCH Unlimited will not work properly.</translation>
+        <source>Please check that your computer's date and time are correct! If your clock is wrong Nexa will not work properly.</source>
+        <translation>Please check that your computer's date and time are correct! If your clock is wrong Nexa will not work properly.</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -3008,8 +3004,8 @@
         <translation>This is a pre-release test build - use at your own risk - do not use for mining or merchant applications</translation>
     </message>
     <message>
-        <source>Unable to bind to %s on this computer. BCH Unlimited is probably already running.</source>
-        <translation>Unable to bind to %s on this computer. BCH Unlimited is probably already running.</translation>
+        <source>Unable to bind to %s on this computer. Nexa is probably already running.</source>
+        <translation>Unable to bind to %s on this computer. Nexa is probably already running.</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: 1 when listening and no -proxy)</source>
@@ -3216,8 +3212,8 @@
         <translation>Bind to given address to listen for JSON-RPC connections. Use [host]:port notation for IPv6. This option can be specified multiple times (default: bind to all interfaces)</translation>
     </message>
     <message>
-        <source>Cannot obtain a lock on data directory %s. BCH Unlimited is probably already running.</source>
-        <translation>Cannot obtain a lock on data directory %s. BCH Unlimited is probably already running.</translation>
+        <source>Cannot obtain a lock on data directory %s. Nexa is probably already running.</source>
+        <translation>Cannot obtain a lock on data directory %s. Nexa is probably already running.</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3316,12 +3312,12 @@
         <translation>Connect through SOCKS5 proxy</translation>
     </message>
     <message>
-        <source>Copyright (C) 2009-%i The BCH Unlimited Developers</source>
-        <translation>Copyright (C) 2009-%i The BCH Unlimited Developers</translation>
+        <source>Copyright (C) 2015-%i The Bitcoin Unlimited Developers</source>
+        <translation>Copyright (C) 2015-%i The Bitcoin Unlimited Developers</translation>
     </message>
     <message>
-        <source>Error loading wallet.dat: Wallet requires newer version of BCH Unlimited</source>
-        <translation>Error loading wallet.dat: Wallet requires newer version of BCH Unlimited</translation>
+        <source>Error loading wallet.dat: Wallet requires newer version of Nexa</source>
+        <translation>Error loading wallet.dat: Wallet requires newer version of Nexa</translation>
     </message>
     <message>
         <source>Error reading from database, shutting down.</source>
@@ -3336,8 +3332,8 @@
         <translation>Information</translation>
     </message>
     <message>
-        <source>Initialization sanity check failed. BCH Unlimited is shutting down.</source>
-        <translation>Initialisation sanity check failed. BCH Unlimited is shutting down.</translation>
+        <source>Initialization sanity check failed. Nexa is shutting down.</source>
+        <translation>Initialisation sanity check failed. Nexa is shutting down.</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>
@@ -3456,8 +3452,8 @@
         <translation>Username for JSON-RPC connections</translation>
     </message>
     <message>
-        <source>Wallet needed to be rewritten: restart BCH Unlimited to complete</source>
-        <translation>Wallet needed to be rewritten: restart BCH Unlimited to complete</translation>
+        <source>Wallet needed to be rewritten: restart Nexa to complete</source>
+        <translation>Wallet needed to be rewritten: restart Nexa to complete</translation>
     </message>
     <message>
         <source>Warning</source>

@@ -250,8 +250,8 @@
         <translation>Отвори &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>Биткоин Core софтверот</translation>
+        <source>Nexa client</source>
+        <translation>Nexa софтверот</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -286,8 +286,8 @@
         <translation>&amp;Прими</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Прикажи информации за Биткоин Core</translation>
+        <source>Show information about Nexa</source>
+        <translation>Прикажи информации за Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -306,12 +306,8 @@
         <translation>&amp;Помош</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткоин Core</translation>
-    </message>
-    <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;За Биткоин Core</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;За Nexa</translation>
     </message>
     <message numerus="yes">
         <source>Processed %n block(s) of transaction history.</source>
@@ -575,8 +571,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткоин Core</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -587,15 +583,15 @@
         <translation>(%1-бит)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>За Биткоин Core</translation>
+        <source>About Nexa</source>
+        <translation>За Nexa</translation>
     </message>
     </context>
 <context>
     <name>Intro</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткоин Core</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -934,8 +930,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткоин Core</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>

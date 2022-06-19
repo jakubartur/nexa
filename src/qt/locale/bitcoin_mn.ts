@@ -700,8 +700,8 @@
         <translation>Гүйлгээний тѳлбѳр %1-ийг тооцхоор нийт дүн нь таны балансаас хэтрээд байна.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Анхаар:Буруу Биткойны хаяг байна</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Анхаар:Буруу Nexa хаяг байна</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -750,8 +750,8 @@
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
-        <translation>Биткойны цѳм хаагдаж байна...</translation>
+        <source>Nexa is shutting down...</source>
+        <translation>Nexa цѳм хаагдаж байна...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>

@@ -298,8 +298,8 @@
         <translation>Odpri &amp;URI ...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>Odjemalec BCH Unlimited</translation>
+        <source>Nexa client</source>
+        <translation>Odjemalec Nexa</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -350,7 +350,7 @@
         <translation>P&amp;rejmi</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
+        <source>Show information about Nexa</source>
         <translation>Oglejte si informacije o programu</translation>
     </message>
     <message>
@@ -390,19 +390,15 @@
         <translation>Orodna vrstica zavihkov</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Zahtevajte plačilo (ustvarite zahtevek s kodo QR in URI tipa %1)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
+        <source>&amp;About Nexa</source>
         <translation>&amp;O programu</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
+        <source>Modify configuration options for Nexa</source>
         <translation>Spremenite programske nastavitve</translation>
     </message>
     <message>
@@ -422,7 +418,7 @@
         <translation>Opcije &amp;ukazne vrstice</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
         <translation>Oglejte si seznam in kratek opis vseh opcij pri zagonu programa iz ukazne vrstice</translation>
     </message>
     <message numerus="yes">
@@ -847,8 +843,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -859,8 +855,8 @@
         <translation>(%1-bit)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>O programu BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>O programu Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -882,15 +878,15 @@
         <translation>Dobrodošli</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Dobrodošli v programu BCH Unlimited.</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Dobrodošli v programu Nexa.</translation>
     </message>
     <message>
-        <source>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</source>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
         <translation>To je prvi zagon programa, zato lahko izberete mapo, v katero bo program shranjeval podatke.</translation>
     </message>
     <message>
-        <source>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <source>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
         <translation>Program bo prenesel in shranil kopijo verige blokov. V izbrani podatkovni mapi bo shranjenih vsaj %1 GiB podatkov, ta količina pa bo sčasoma še naraščala. V tej mapi bo shranjena tudi denarnica.</translation>
     </message>
     <message>
@@ -902,8 +898,8 @@
         <translation>Uporabi to podatkovno mapo:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
@@ -984,7 +980,7 @@
         <translation>Ko zaprete glavno okno programa, bo program tekel še naprej, okno pa bo zgolj minimirano. Program v tem primeru ustavite tako, da v meniju izberete ukaz Izhod.</translation>
     </message>
     <message>
-        <source>The user interface language can be set here. This setting will take effect after restarting BCH Unlimited.</source>
+        <source>The user interface language can be set here. This setting will take effect after restarting Nexa.</source>
         <translation>Nastavitev jezika uporabniškega vmesnika programa. Nova nastavitev jezika bo uporabljena šele, ko boste znova zagnali program.</translation>
     </message>
     <message>
@@ -1012,11 +1008,11 @@
         <translation>&amp;Omrežje</translation>
     </message>
     <message>
-        <source>Automatically start BCH Unlimited after logging in to the system.</source>
+        <source>Automatically start Nexa after logging in to the system.</source>
         <translation>Ob uporabnikovi prijavi v sistem se bo program samodejno zagnal</translation>
     </message>
     <message>
-        <source>&amp;Start BCH Unlimited on system login</source>
+        <source>&amp;Start Nexa on system login</source>
         <translation>&amp;Zaženi program ob prijavi v sistem</translation>
     </message>
     <message>
@@ -1044,7 +1040,7 @@
         <translation>Omogoči &amp;trošenje drobiža iz še nepotrjenih plačil</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>Program samodejno odpre ustrezna vrata na usmerjevalniku. To deluje samo, če vaš usmerjevalnik podpira in ima omogočen UPnP.</translation>
     </message>
     <message>
@@ -1052,8 +1048,8 @@
         <translation>Preslikaj vrata z uporabo &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the Bitcoin network through a SOCKS5 proxy.</source>
-        <translation>Poveži se v omrežje Bitcoin preko posredniškega strežnika SOCKS5.</translation>
+        <source>Connect to the Nexa network through a SOCKS5 proxy.</source>
+        <translation>Poveži se v omrežje Nexa preko posredniškega strežnika SOCKS5.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
@@ -1155,8 +1151,8 @@
         <translation>Oblika</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Prikazani podatki so morda zastareli. Program ob vzpostavitvi povezave samodejno sinhronizira denarnico z omrežjem Bitcoin, a trenutno ta proces še ni zaključen.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
+        <translation>Prikazani podatki so morda zastareli. Program ob vzpostavitvi povezave samodejno sinhronizira denarnico z omrežjem Nexa, a trenutno ta proces še ni zaključen.</translation>
     </message>
     <message>
         <source>Watch-only:</source>
@@ -1254,16 +1250,16 @@
         <translation>Napaka pri zahtevku za plačilo</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
-        <translation>Ni mogoče zagnati rokovalca plačilnih povezav tipa bitcoin:.</translation>
+        <source>Cannot start Nexa: click-to-pay handler</source>
+        <translation>Ni mogoče zagnati rokovalca plačilnih povezav tipa Nexa:.</translation>
     </message>
     <message>
         <source>Payment request fetch URL is invalid: %1</source>
         <translation>Naslov URL za pridobitev zahtevka za plačilo ni veljaven: %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters.</source>
-        <translation>URI je neprepoznaven! Možno je, da je naslov Bitcoin neveljaven, ali da so parametri v URI napačno oblikovani.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Nexa address or malformed URI parameters.</source>
+        <translation>URI je neprepoznaven! Možno je, da je naslov Nexa neveljaven, ali da so parametri v URI napačno oblikovani.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1446,7 +1442,7 @@
         <translation>Trenutno število blokov</translation>
     </message>
     <message>
-        <source>Open the BCH Unlimited debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <source>Open the Nexa debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation>Odpre razhroščevalni dnevnik debug.log, ki se nahaja v trenutni podatkovni mapi. Če je datoteka velika, lahko postopek traja nekaj sekund.</translation>
     </message>
     <message>
@@ -1550,8 +1546,8 @@
         <translation>Počisti konzolo</translation>
     </message>
     <message>
-        <source>Welcome to the BCH Unlimited RPC console.</source>
-        <translation>Dobrodošli v konzoli RPC programa BCH Unlimited.</translation>
+        <source>Welcome to the Nexa RPC console.</source>
+        <translation>Dobrodošli v konzoli RPC programa Nexa.</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
@@ -1629,8 +1625,8 @@
         <translation>P&amp;onovno uporabite obstoječ naslov za prejemanje. (Ni priporočeno.)</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Bitcoin network.</source>
-        <translation>Neobvezno sporočilo kot priponka zahtevku za plačilo, ki bo prikazano, ko bo zahtevek odprt. Opomba: Opravljeno plačilo.prek omrežja Bitcoin tega sporočila ne bo vsebovalo.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Nexa network.</source>
+        <translation>Neobvezno sporočilo kot priponka zahtevku za plačilo, ki bo prikazano, ko bo zahtevek odprt. Opomba: Opravljeno plačilo.prek omrežja Nexa tega sporočila ne bo vsebovalo.</translation>
     </message>
     <message>
         <source>An optional label to associate with the new receiving address.</source>
@@ -2014,8 +2010,8 @@
         <translation>Naslov je že bil uporabljen. Vsak naslov naj bi se uporabil samo enkrat.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Opozorilo: Neveljaven bitcoin naslov</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Opozorilo: Neveljaven nexa naslov</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -2109,8 +2105,8 @@
         <translation>Če vnesete oznako za zgornji naslov, se bo skupaj z naslovom shranila v imenk že uporabljenih naslovov</translation>
     </message>
     <message>
-        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Bitcoin network.</source>
-        <translation>Sporočilo, ki ste ga pripeli na URI tipa %1. Shranjeno bo skupaj s podatki o transakciji. Opomba: Sporočilo ne bo poslano preko omrežja Bitcoin.</translation>
+        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Nexa network.</source>
+        <translation>Sporočilo, ki ste ga pripeli na URI tipa %1. Shranjeno bo skupaj s podatki o transakciji. Opomba: Sporočilo ne bo poslano preko omrežja Nexa.</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -2124,7 +2120,7 @@
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
+        <source>Nexa is shutting down...</source>
         <translation>Program se ustavlja ...</translation>
     </message>
     <message>
@@ -2143,7 +2139,7 @@
         <translation>&amp;Podpiši sporočilo</translation>
     </message>
     <message>
-        <source>You can sign messages/agreements with your addresses to prove you can receive bitcoins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <source>You can sign messages/agreements with your addresses to prove you can receive coins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
         <translation>S svojimi naslovi lahko podpisujete sporočila ali pogodbe in s tem dokazujete, da na teh naslovih lahko prejemate kovance. Bodite previdni in ne podpisujte ničesar nejasnega ali naključnega, ker vas zlikovci preko ribarjenja (phishing) lahko prelisičijo, da na njih prepišete svojo identiteto. Podpisujte samo podrobno opisane izjave, s katerimi se strinjate.</translation>
     </message>
     <message>
@@ -2274,12 +2270,12 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
-        <translation>BCH Unlimited razvijalci</translation>
+        <source>The Bitcoin Unlimited developers</source>
+        <translation>Bitcoin Unlimited razvijalci</translation>
     </message>
     <message>
         <source>[testnet]</source>
@@ -2812,8 +2808,8 @@
         <translation>To je preizkusna različica še neizdanega programa. Uporabljate jo na lastno odgovornost. Programa ne uporabljajte je za rudarjenje ali trgovske aplikacije.</translation>
     </message>
     <message>
-        <source>Unable to bind to %s on this computer. BCH Unlimited is probably already running.</source>
-        <translation>Na tem računalniku ni bilo mogoče vezati naslova %s. Odjemalec BCH Unlimited je verjetno že zagnan.</translation>
+        <source>Unable to bind to %s on this computer. Nexa is probably already running.</source>
+        <translation>Na tem računalniku ni bilo mogoče vezati naslova %s. Odjemalec Nexa je verjetno že zagnan.</translation>
     </message>
     <message>
         <source>WARNING: abnormally high number of blocks generated, %d blocks received in the last %d hours (%d expected)</source>
@@ -2976,8 +2972,8 @@
         <translation>Veži dani naslov in sprejemaj povezave na JSON-RPC. Za naslove protokola IPv6 uporabite zapis [gostitelj]:vrata. To opcijo lahko navedete večkrat. (privzeto: veži vse omrežne vmesnike)</translation>
     </message>
     <message>
-        <source>Cannot obtain a lock on data directory %s. BCH Unlimited is probably already running.</source>
-        <translation>Ne morem zakleniti podatkovne mape %s. BCH Unlimited je verjetno že zagnan.</translation>
+        <source>Cannot obtain a lock on data directory %s. Nexa is probably already running.</source>
+        <translation>Ne morem zakleniti podatkovne mape %s. Nexa je verjetno že zagnan.</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3020,8 +3016,8 @@
         <translation>Poveži se preko posredniškega strežnika SOCKS5</translation>
     </message>
     <message>
-        <source>Copyright (C) 2009-%i The BCH Unlimited Developers</source>
-        <translation>Copyright (C) 2009-%i The BCH Unlimited Developers</translation>
+        <source>Copyright (C) 2015-%i The Bitcoin Unlimited Developers</source>
+        <translation>Copyright (C) 2015-%i The Bitcoin Unlimited Developers</translation>
     </message>
     <message>
         <source>Information</source>

@@ -156,8 +156,8 @@
         <translation>Apstiprināt maciņa šifrēšanu</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Brīdinājums: Ja tu nošifrē savu maciņu un pazaudē paroli, tu &lt;b&gt;PAZAUDĒSI VISAS SAVAS BITCOINS&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Brīdinājums: Ja tu nošifrē savu maciņu un pazaudē paroli, tu &lt;b&gt;PAZAUDĒSI VISAS SAVAS NEXA COINS&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
@@ -290,8 +290,8 @@
         <translation>Atvērt &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>BCH Unlimited klients</translation>
+        <source>Nexa client</source>
+        <translation>Nexa klients</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -342,8 +342,8 @@
         <translation>&amp;Saņemt</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Parādīt informāciju par BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Parādīt informāciju par Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -382,16 +382,12 @@
         <translation>Ciļņu rīkjosla</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Pieprasīt maksājumus (izveido QR kodu un %1 URIs)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>Par &amp;BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>Par &amp;Nexa</translation>
     </message>
     <message>
        <source>Open a %1 URI or payment request</source>
@@ -705,8 +701,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -717,8 +713,8 @@
         <translation>(%1-biti)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Par BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>Par Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -740,8 +736,8 @@
         <translation>Sveiciens</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Sveicināts BCH Unlimited</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Sveicināts Nexa</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -752,8 +748,8 @@
         <translation>Izmantot pielāgotu datu mapi:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -854,8 +850,8 @@
         <translation>&amp;Tērēt neapstiprinātu atlikumu</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Uz rūtera automātiski atvērt Bitcoin klienta portu. Tas strādā tikai tad, ja rūteris atbalsta UPnP un tas ir ieslēgts.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Uz rūtera automātiski atvērt Nexa klienta portu. Tas strādā tikai tad, ja rūteris atbalsta UPnP un tas ir ieslēgts.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -941,8 +937,8 @@
         <translation>Forma</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Attēlotā informācija var būt novecojusi. Jūsu maciņš pēc savienojuma izveides automātiski sinhronizējas ar Bitcoin tīklu, taču šis process vēl nav beidzies.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
+        <translation>Attēlotā informācija var būt novecojusi. Jūsu maciņš pēc savienojuma izveides automātiski sinhronizējas ar Nexa tīklu, taču šis process vēl nav beidzies.</translation>
     </message>
     <message>
         <source>Available:</source>
@@ -996,8 +992,8 @@
         <translation>Maksājumu pieprasījuma kļūda</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
-        <translation>Nevar palaist Bitcoin: nospied-lai-maksātu apstrādātāju</translation>
+        <source>Cannot start Nexa: click-to-pay handler</source>
+        <translation>Nevar palaist Nexa: nospied-lai-maksātu apstrādātāju</translation>
     </message>
     <message>
         <source>Refund from %1</source>
@@ -1468,8 +1464,8 @@
         <translation>Transakcijas izveidošana neizdevās!</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Brīdinājums: Nederīga Bitcoin adrese</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Brīdinājums: Nederīga Nexa adrese</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -1542,8 +1538,8 @@
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
-        <translation>BCH Unlimited tiek izslēgta...</translation>
+        <source>Nexa is shutting down...</source>
+        <translation>Nexa tiek izslēgta...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -1672,12 +1668,12 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
-        <translation>BCH Unlimited izstrādātāji</translation>
+        <source>The Bitcoin Unlimited developers</source>
+        <translation>Bitcoin Unlimited izstrādātāji</translation>
     </message>
     <message>
         <source>[testnet]</source>

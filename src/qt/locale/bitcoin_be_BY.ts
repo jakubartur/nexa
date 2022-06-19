@@ -298,8 +298,8 @@
         <translation>Адчыниць &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>BCH Unlimited кліент</translation>
+        <source>Nexa client</source>
+        <translation>Nexa кліент</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -335,7 +335,7 @@
     </message>
     <message>
         <source>Nexa</source>
-        <translation>Біткойн</translation>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -350,8 +350,8 @@
         <translation>Атрымаць</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Паказаць інфармацыю аб BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Паказаць інфармацыю аб Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -386,20 +386,16 @@
         <translation>Дапамога</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1: URIs)</source>
         <translation>Запатрабаваць плацёж (генеруецца QR-код для %1 URI)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>Аб BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>Аб Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
-        <translation>Мадыфікаваць опцыі канфігурацыі BCH Unlimited</translation>
+        <source>Modify configuration options for Nexa</source>
+        <translation>Мадыфікаваць опцыі канфігурацыі Nexa</translation>
     </message>
     <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
@@ -422,8 +418,8 @@
         <translation>Опцыі каманднага радка</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
-        <translation>Паказваць даведку BCH Unlimited каб атрымаць спіс магчымых опцый каманднага радка</translation>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
+        <translation>Паказваць даведку Nexa каб атрымаць спіс магчымых опцый каманднага радка</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
@@ -779,16 +775,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>(%1-bit)</source>
         <translation>(%1-біт)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Аб BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>Аб Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -810,12 +806,12 @@
         <translation>Вітаем</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Вітаем у BCH Unlimited.</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Вітаем у Nexa.</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -1106,12 +1102,12 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
-        <translation>Распрацоўнікі BCH Unlimited</translation>
+        <source>The Bitcoin Unlimited developers</source>
+        <translation>Распрацоўнікі Bitcoin Unlimited</translation>
     </message>
     <message>
         <source>[testnet]</source>

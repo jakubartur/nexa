@@ -161,7 +161,7 @@ Var vänlig och försök igen.</translation>
         <translation>Bekräfta kryptering av plånbok</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
         <translation>VARNING: Om du krypterar din plånbok och glömmer ditt lösenord, kommer du att &lt;b&gt;FÖRLORA ALLA DINA TILLGÅNGAR&lt;/b&gt;!</translation>
     </message>
     <message>
@@ -307,8 +307,8 @@ Var vänlig och försök igen.</translation>
         <translation>Öppna &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>BCH Unlimited-klient</translation>
+        <source>Nexa client</source>
+        <translation>Nexa-klient</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -359,8 +359,8 @@ Var vänlig och försök igen.</translation>
         <translation>&amp;Ta emot</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Visa information om BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Visa information om Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -399,20 +399,16 @@ Var vänlig och försök igen.</translation>
         <translation>Verktygsfält för tabbar</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Begär betalning (genererar QR-koder och %1-URI)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;Om BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;Om Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
-        <translation>Ändra konfigurationsalternativ för BCH Unlimited</translation>
+        <source>Modify configuration options for Nexa</source>
+        <translation>Ändra konfigurationsalternativ för Nexa</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -431,8 +427,8 @@ Var vänlig och försök igen.</translation>
         <translation>&amp;Kommandoradsalternativ</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
-        <translation>Visa BCH Unlimiteds hjälpmeddelande för att få en lista med möjliga Nexa-kommandoradsalternativ.</translation>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
+        <translation>Visa Nexas hjälpmeddelande för att få en lista med möjliga Nexa-kommandoradsalternativ.</translation>
     </message>
     <message numerus="yes">
         <source>%n active connection(s) to Nexa network</source>
@@ -856,8 +852,8 @@ Var vänlig och försök igen.</translation>
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -868,8 +864,8 @@ Var vänlig och försök igen.</translation>
         <translation>(%1-bit)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Om BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>Om Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -919,16 +915,16 @@ Var vänlig och försök igen.</translation>
         <translation>Välkommen</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Välkommen till BCH Unlimited.</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Välkommen till Nexa.</translation>
     </message>
     <message>
-        <source>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</source>
-        <translation>Eftersom detta är första gången programmet startas får du välja var BCH Unlimited skall lagra sina data.</translation>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
+        <translation>Eftersom detta är första gången programmet startas får du välja var Nexa skall lagra sina data.</translation>
     </message>
     <message>
-        <source>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>BCH Unlimited kommer att ladda ner och spara en kopia av Bitcoin-blockkedjan. Åtminstone %1GB av data kommer att sparas i denna katalog, och den kommer att växa över tiden. Plånboken kommer också att sparas i denna katalog.</translation>
+        <source>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>Nexa kommer att ladda ner och spara en kopia av Nexa-blockkedjan. Åtminstone %1GB av data kommer att sparas i denna katalog, och den kommer att växa över tiden. Plånboken kommer också att sparas i denna katalog.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -939,8 +935,8 @@ Var vänlig och försök igen.</translation>
         <translation>Använd en anpassad datakatalog:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
@@ -1021,8 +1017,8 @@ Var vänlig och försök igen.</translation>
         <translation>Minimera istället för att stänga programmet när fönstret stängs. När detta alternativ är aktiverat stängs programmet endast genom att välja Stäng i menyn.</translation>
     </message>
     <message>
-        <source>The user interface language can be set here. This setting will take effect after restarting BCH Unlimited.</source>
-        <translation>Gränssnittets språk kan väljas här. Denna inställning träder i kraft efter omstart av BCH Unlimited.</translation>
+        <source>The user interface language can be set here. This setting will take effect after restarting Nexa.</source>
+        <translation>Gränssnittets språk kan väljas här. Denna inställning träder i kraft efter omstart av Nexa.</translation>
     </message>
     <message>
         <source>Third party URLs (e.g. a block explorer) that appear in the transactions tab as context menu items. %s in the URL is replaced by transaction hash. Multiple URLs are separated by vertical bar |.</source>
@@ -1049,12 +1045,12 @@ Var vänlig och försök igen.</translation>
         <translation>&amp;Nätverk</translation>
     </message>
     <message>
-        <source>Automatically start BCH Unlimited after logging in to the system.</source>
-        <translation>Kör BCH Unlimited automatiskt vid systeminloggning.</translation>
+        <source>Automatically start Nexa after logging in to the system.</source>
+        <translation>Kör Nexa automatiskt vid systeminloggning.</translation>
     </message>
     <message>
-        <source>&amp;Start BCH Unlimited on system login</source>
-        <translation>&amp;Kör BCH Unlimited vid systeminloggning</translation>
+        <source>&amp;Start Nexa on system login</source>
+        <translation>&amp;Kör Nexa vid systeminloggning</translation>
     </message>
     <message>
         <source>(0 = auto, &lt;0 = leave that many cores free)</source>
@@ -1081,16 +1077,16 @@ Var vänlig och försök igen.</translation>
         <translation>&amp;Spendera obekräftad växel</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Öppna automatiskt Bitcoin-klientens port på routern. Detta fungerar endast om din router har UPnP aktiverat.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Öppna automatiskt Nexa-klientens port på routern. Detta fungerar endast om din router har UPnP aktiverat.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
         <translation>Tilldela port med hjälp av &amp;UPnP</translation>
     </message>
     <message>
-        <source>Connect to the Bitcoin network through a SOCKS5 proxy.</source>
-        <translation>Anslut till Bitcoin-nätverket genom en SOCKS5-proxy.</translation>
+        <source>Connect to the Nexa network through a SOCKS5 proxy.</source>
+        <translation>Anslut till Nexa-nätverket genom en SOCKS5-proxy.</translation>
     </message>
     <message>
         <source>&amp;Connect through SOCKS5 proxy (default proxy):</source>
@@ -1129,8 +1125,8 @@ Var vänlig och försök igen.</translation>
         <translation>Tor</translation>
     </message>
     <message>
-        <source>Connect to the Bitcoin network through a separate SOCKS5 proxy for Tor hidden services.</source>
-        <translation>Anslut till Bitcoin-nätverket genom en separat SOCKS5-proxy för dolda tjänster i Tor.</translation>
+        <source>Connect to the Nexa network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <translation>Anslut till Nexa-nätverket genom en separat SOCKS5-proxy för dolda tjänster i Tor.</translation>
     </message>
     <message>
         <source>Use separate SOCKS5 proxy to reach peers via Tor hidden services:</source>
@@ -1216,8 +1212,8 @@ Var vänlig och försök igen.</translation>
         <translation>Formulär</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Den visade informationen kan vara inaktuell. Plånboken synkroniseras automatiskt med Bitcoin-nätverket efter att anslutningen är upprättad, men denna process har inte slutförts ännu.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
+        <translation>Den visade informationen kan vara inaktuell. Plånboken synkroniseras automatiskt med Nexa-nätverket efter att anslutningen är upprättad, men denna process har inte slutförts ännu.</translation>
     </message>
     <message>
         <source>Watch-only:</source>
@@ -1315,16 +1311,16 @@ Var vänlig och försök igen.</translation>
         <translation>Fel vid betalningsbegäran</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
-        <translation>Kan inte starta bitcoin: klicka-och-betala handhavare</translation>
+        <source>Cannot start Nexa: click-to-pay handler</source>
+        <translation>Kan inte starta Nexa: klicka-och-betala handhavare</translation>
     </message>
     <message>
         <source>Payment request fetch URL is invalid: %1</source>
         <translation>Betalningsbegärans hämta URL är felaktig: %1</translation>
     </message>
     <message>
-        <source>URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters.</source>
-        <translation>URI går inte att tolkas! Detta kan orsakas av en ogiltig Bitcoin-adress eller felaktiga URI parametrar.</translation>
+        <source>URI cannot be parsed! This can be caused by an invalid Nexa address or malformed URI parameters.</source>
+        <translation>URI går inte att tolkas! Detta kan orsakas av en ogiltig Nexa-adress eller felaktiga URI parametrar.</translation>
     </message>
     <message>
         <source>Payment request file handling</source>
@@ -1519,8 +1515,8 @@ Var vänlig och försök igen.</translation>
         <translation>Minnesåtgång</translation>
     </message>
     <message>
-        <source>Open the BCH Unlimited debug log file from the current data directory. This can take a few seconds for large log files.</source>
-        <translation>Öppna felsökningsloggfilen för BCH Unlimited från den nuvarande datakatalogen. Detta kan ta några sekunder om loggfilen är stor.</translation>
+        <source>Open the Nexa debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <translation>Öppna felsökningsloggfilen för Nexa från den nuvarande datakatalogen. Detta kan ta några sekunder om loggfilen är stor.</translation>
     </message>
     <message>
         <source>Received</source>
@@ -1679,8 +1675,8 @@ Var vänlig och försök igen.</translation>
         <translation>&amp;Ta bort ban från nod</translation>
     </message>
     <message>
-        <source>Welcome to the BCH Unlimited RPC console.</source>
-        <translation>Välkommen till RPC-konsolen för BCH Unlimited.</translation>
+        <source>Welcome to the Nexa RPC console.</source>
+        <translation>Välkommen till RPC-konsolen för Nexa.</translation>
     </message>
     <message>
         <source>Use up and down arrows to navigate history, and &lt;b&gt;Ctrl-L&lt;/b&gt; to clear screen.</source>
@@ -1762,8 +1758,8 @@ Var vänlig och försök igen.</translation>
         <translation>Åt&amp;eranvänd en existerande mottagningsadress (rekommenderas inte)</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Bitcoin network.</source>
-        <translation>Ett frivilligt meddelande att bifoga betalningsbegäran, vilket visas när begäran öppnas. NB: Meddelandet kommer inte att sändas med betalningen över Bitcoinnätverket.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Nexa network.</source>
+        <translation>Ett frivilligt meddelande att bifoga betalningsbegäran, vilket visas när begäran öppnas. NB: Meddelandet kommer inte att sändas med betalningen över Nexanätverket.</translation>
     </message>
     <message>
         <source>An optional label to associate with the new receiving address.</source>
@@ -1995,8 +1991,8 @@ Var vänlig och försök igen.</translation>
         <translation>totalt minst</translation>
     </message>
     <message>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for bitcoin transactions than the network can process.</source>
-        <translation>Att betala endast den minsta avgiften är bara bra så länge det är mindre transaktionsvolym än utrymme i blocken. Men tänk på att det kan hamna i en aldrig bekräftar transaktion när det finns mer efterfrågan på bitcoin transaktioner än nätverket kan bearbeta.</translation>
+        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for nexa transactions than the network can process.</source>
+        <translation>Att betala endast den minsta avgiften är bara bra så länge det är mindre transaktionsvolym än utrymme i blocken. Men tänk på att det kan hamna i en aldrig bekräftar transaktion när det finns mer efterfrågan på nexa transaktioner än nätverket kan bearbeta.</translation>
     </message>
     <message>
         <source>(read the tooltip)</source>
@@ -2155,8 +2151,8 @@ Var vänlig och försök igen.</translation>
         <translation>Duplicerad adress upptäckt: adresser skall endast användas en gång var.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Varning: Felaktig Bitcoinadress</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Varning: Felaktig Nexaadress</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -2226,8 +2222,8 @@ Var vänlig och försök igen.</translation>
         <translation>Radera denna post</translation>
     </message>
     <message>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive less bitcoins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
-        <translation>Avgiften dras från beloppet som skickas. Mottagaren kommer att få mindre bitcoins än du angivit i belopp-fältet. Om flera mottagare valts kommer avgiften delas jämt.</translation>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive less coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <translation>Avgiften dras från beloppet som skickas. Mottagaren kommer att få mindre coins än du angivit i belopp-fältet. Om flera mottagare valts kommer avgiften delas jämt.</translation>
     </message>
     <message>
         <source>S&amp;ubtract fee from amount</source>
@@ -2250,8 +2246,8 @@ Var vänlig och försök igen.</translation>
         <translation>Ange en etikett för denna adress att adderas till listan över använda adresser</translation>
     </message>
     <message>
-        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Bitcoin network.</source>
-        <translation>Ett meddelande som bifogades %1-URI, vilket lagras med transaktionen som referens. NB: Meddelandet kommer inte att sändas över Bitcoinnätverket.</translation>
+        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Nexa network.</source>
+        <translation>Ett meddelande som bifogades %1-URI, vilket lagras med transaktionen som referens. NB: Meddelandet kommer inte att sändas över Nexanätverket.</translation>
     </message>
     <message>
         <source>Pay To:</source>
@@ -2265,8 +2261,8 @@ Var vänlig och försök igen.</translation>
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
-        <translation>BCH Unlimited stängs av...</translation>
+        <source>Nexa is shutting down...</source>
+        <translation>Nexa stängs av...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -2415,8 +2411,8 @@ Var vänlig och försök igen.</translation>
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Kärna</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>The BCH Unlimited developers</source>
@@ -2937,8 +2933,8 @@ Var vänlig och försök igen.</translation>
         <translation>Maximal total avgift (i %s) att använda i en plånbokstransaktion. Sätts denna för lågtkan stora transaktioner komma att avbrytas (förvalt: %s)</translation>
     </message>
     <message>
-        <source>Please check that your computer's date and time are correct! If your clock is wrong BCH Unlimited will not work properly.</source>
-        <translation>Vänligen kontrollera att din dators datum och tid är korrekt! Om din klocka går fel kommer BCH Unlimited inte att fungera ordentligt.</translation>
+        <source>Please check that your computer's date and time are correct! If your clock is wrong Nexa will not work properly.</source>
+        <translation>Vänligen kontrollera att din dators datum och tid är korrekt! Om din klocka går fel kommer Nexa inte att fungera ordentligt.</translation>
     </message>
     <message>
         <source>Prune configured below the minimum of %d MiB.  Please use a higher number.</source>
@@ -3009,8 +3005,8 @@ Var vänlig och försök igen.</translation>
         <translation>Detta är ett förhands testbygge - använd på egen risk - använd inte för mining eller handels applikationer</translation>
     </message>
     <message>
-        <source>Unable to bind to %s on this computer. BCH Unlimited is probably already running.</source>
-        <translation>Det går inte att binda till %s på den här datorn. BCH Unlimited är förmodligen redan igång.</translation>
+        <source>Unable to bind to %s on this computer. Nexa is probably already running.</source>
+        <translation>Det går inte att binda till %s på den här datorn. Nexa är förmodligen redan igång.</translation>
     </message>
     <message>
         <source>Use UPnP to map the listening port (default: 1 when listening and no -proxy)</source>
@@ -3217,8 +3213,8 @@ Var vänlig och försök igen.</translation>
         <translation>Bind till angiven adress för att lyssna på JSON-RPC-anslutningar. Använd [värd]:port-format for IPv6. Detta alternativ kan anges flera gånger (förvalt: bind till alla gränssnitt)</translation>
     </message>
     <message>
-        <source>Cannot obtain a lock on data directory %s. BCH Unlimited is probably already running.</source>
-        <translation>Kan inte låsa data-mappen %s. BCH Unlimited körs förmodligen redan.</translation>
+        <source>Cannot obtain a lock on data directory %s. Nexa is probably already running.</source>
+        <translation>Kan inte låsa data-mappen %s. Nexa körs förmodligen redan.</translation>
     </message>
     <message>
         <source>Create new files with system default permissions, instead of umask 077 (only effective with disabled wallet functionality)</source>
@@ -3317,12 +3313,12 @@ Var vänlig och försök igen.</translation>
         <translation>Anslut genom SOCKS5 proxy</translation>
     </message>
     <message>
-        <source>Copyright (C) 2009-%i The BCH Unlimited Developers</source>
-        <translation>Copyright (C) 2009-%i BCH Unlimited Utvecklarna</translation>
+        <source>Copyright (C) 2015-%i The Bitcoin Unlimited Developers</source>
+        <translation>Copyright (C) 2015-%i Bitcoin Unlimited Utvecklarna</translation>
     </message>
     <message>
-        <source>Error loading wallet.dat: Wallet requires newer version of BCH Unlimited</source>
-        <translation>Fel vid inläsningen av wallet.dat: Kontofilen kräver en senare version av BCH Unlimited</translation>
+        <source>Error loading wallet.dat: Wallet requires newer version of Nexa</source>
+        <translation>Fel vid inläsningen av wallet.dat: Kontofilen kräver en senare version av Nexa</translation>
     </message>
     <message>
         <source>Error reading from database, shutting down.</source>
@@ -3337,8 +3333,8 @@ Var vänlig och försök igen.</translation>
         <translation>Information</translation>
     </message>
     <message>
-        <source>Initialization sanity check failed. BCH Unlimited is shutting down.</source>
-        <translation>Initieringschecken fallerade. BCH Unlimited stängs av...</translation>
+        <source>Initialization sanity check failed. Nexa is shutting down.</source>
+        <translation>Initieringschecken fallerade. Nexa stängs av...</translation>
     </message>
     <message>
         <source>Invalid amount for -maxtxfee=&lt;amount&gt;: '%s'</source>
@@ -3457,8 +3453,8 @@ Var vänlig och försök igen.</translation>
         <translation>Användarnamn för JSON-RPC-anslutningar</translation>
     </message>
     <message>
-        <source>Wallet needed to be rewritten: restart BCH Unlimited to complete</source>
-        <translation>Kontot behöver sparas om: Starta om BCH Unlimited för att fullfölja</translation>
+        <source>Wallet needed to be rewritten: restart Nexa to complete</source>
+        <translation>Kontot behöver sparas om: Starta om Nexa för att fullfölja</translation>
     </message>
     <message>
         <source>Warning</source>

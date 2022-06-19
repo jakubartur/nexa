@@ -279,8 +279,8 @@ Estas son las direcciones de Nexa para enviar pagos . Siempre verifique la canti
         <translation>Abrir &amp;URL...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>BCH Unlimited cliente</translation>
+        <source>Nexa client</source>
+        <translation>Nexa cliente</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -323,8 +323,8 @@ Estas son las direcciones de Nexa para enviar pagos . Siempre verifique la canti
         <translation>&amp;Recibir</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Mostrar información sobre BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Mostrar información sobre Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -345,10 +345,6 @@ Estas son las direcciones de Nexa para enviar pagos . Siempre verifique la canti
     <message>
         <source>&amp;Help</source>
         <translation>&amp;Ayuda</translation>
-    </message>
-    <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
     </message>
     <message>
         <source>Error</source>
@@ -374,15 +370,15 @@ Estas son las direcciones de Nexa para enviar pagos . Siempre verifique la canti
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>
     <name>Intro</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -457,8 +453,8 @@ Estas son las direcciones de Nexa para enviar pagos . Siempre verifique la canti
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>

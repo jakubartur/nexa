@@ -286,8 +286,8 @@
         <translation>Atidaryti &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>BCH Unlimited klientas</translation>
+        <source>Nexa client</source>
+        <translation>Nexa klientas</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -338,8 +338,8 @@
         <translation>&amp;Gauti</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Rodyti informaciją apie BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Rodyti informaciją apie Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -370,12 +370,8 @@
         <translation>Kortelių įrankinė</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin branduolys</translation>
-    </message>
-    <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;Apie BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;Apie Nexa</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
@@ -637,16 +633,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin branduolys</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
         <translation>versija</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Apie BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>Apie Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -668,12 +664,12 @@
         <translation>Sveiki</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Sveiki atvykę į BCH Unlimited.</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Sveiki atvykę į Nexa.</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin branduolys</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -714,8 +710,8 @@
         <translation>Piniginė</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatiškai atidaryti Bitcoin kliento prievadą maršrutizatoriuje. Tai veikia tik tada, kai jūsų maršrutizatorius palaiko UPnP ir ji įjungta.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatiškai atidaryti Nexa kliento prievadą maršrutizatoriuje. Tai veikia tik tada, kai jūsų maršrutizatorius palaiko UPnP ir ji įjungta.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -1305,8 +1301,8 @@
         <translation>&amp;Patikrinti žinutę</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
-        <translation>Patikrinkite žinutę, jog įsitikintumėte, kad ją pasirašė nurodytas Bitcoin adresas</translation>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
+        <translation>Patikrinkite žinutę, jog įsitikintumėte, kad ją pasirašė nurodytas Nexa adresas</translation>
     </message>
     <message>
         <source>Verify &amp;Message</source>
@@ -1360,8 +1356,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin branduolys</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>[testnet]</source>

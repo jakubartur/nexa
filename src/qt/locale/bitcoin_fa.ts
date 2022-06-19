@@ -164,7 +164,7 @@
         <translation>آیا مطمئن هستید که می‌خواهید کیف پول خود را رمزنگاری کنید؟</translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
         <translation>هسته بیت‌کوین هم اکنون بسته می‌شود تا فرایند رمزگذاری را تمام کند. به خاطر داشته باشید که رمزگذاری کردن کیف پول‌تان نمی‌تواند به طور کامل بیت‌کوین‌های شما را در برابر دزدیده شدن توسط بدافزارهایی که رایانه‌ی شما را آلوده می‌کنند، محافظت نماید.</translation>
     </message>
     <message>
@@ -342,7 +342,7 @@
         <translation>&amp;دریافت</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
+        <source>Show information about Nexa</source>
         <translation>نمایش اطلاعات در مورد بیت‌کوین</translation>
     </message>
     <message>
@@ -382,11 +382,7 @@
         <translation>نوارابزار برگه‌ها</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation> هسته Bitcoin </translation>
-    </message>
-    <message>
-        <source>&amp;About BCH Unlimited</source>
+        <source>&amp;About Nexa</source>
         <translation>درباره هسته ی بیت کوین</translation>
     </message>
     <message>
@@ -709,15 +705,15 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation> هسته Bitcoin </translation>
+        <source>Nexa</source>
+        <translation> هسته Nexa </translation>
     </message>
     <message>
         <source>version</source>
         <translation>نسخه</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
+        <source>About Nexa</source>
         <translation>درباره هسته ی بیت کوین</translation>
     </message>
     <message>
@@ -740,11 +736,11 @@
         <translation>خوش‌آمدید</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
+        <source>Welcome to Nexa.</source>
         <translation>به هسته بیت کوین خوش آمدید.</translation>
     </message>
     <message>
-        <source>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</source>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
         <translation>از آنجایی که این اولین اجرای برنامه است، شما می‌توانید مسیر ذخیرهٔ داده‌ها را انتخاب کنید.</translation>
     </message>
     <message>
@@ -756,8 +752,8 @@
         <translation>استفاده از یک مسیر سفارشی:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation> هسته Bitcoin </translation>
+        <source>Nexa</source>
+        <translation> هسته Nexa </translation>
     </message>
     <message>
         <source>Error</source>
@@ -802,7 +798,7 @@
         <translation>استخراج</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
         <translation>باز کردن خودکار درگاه شبکهٔ بیت‌کوین روی روترها. تنها زمانی کار می‌کند که روتر از پروتکل UPnP پشتیبانی کند و این پروتکل فعال باشد.</translation>
     </message>
     <message>
@@ -889,7 +885,7 @@
         <translation>فرم</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
         <translation>اطلاعات نمایش‌داده شده ممکن است قدیمی باشند. بعد از این که یک اتصال با شبکه برقرار شد، کیف پول شما به‌صورت خودکار با شبکهٔ بیت‌کوین همگام‌سازی می‌شود. اما این روند هنوز کامل نشده است.</translation>
     </message>
     <message>
@@ -948,7 +944,7 @@
         <translation>خطای درخواست پرداخت</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
+        <source>Cannot start Nexa: click-to-pay handler</source>
         <translation>نمی‌توان بیت‌کوین را اجرا کرد: کنترل‌کنندهٔ کلیک-و-پرداخت</translation>
     </message>
     <message>
@@ -1080,7 +1076,7 @@
         <translation>پاکسازی کنسول</translation>
     </message>
     <message>
-        <source>Welcome to the BCH Unlimited RPC console.</source>
+        <source>Welcome to the Nexa RPC console.</source>
         <translation>به کنسول RPC هسته بیت کوین خوش آمدید.</translation>
     </message>
     <message>
@@ -1319,7 +1315,7 @@
         <translation>این یک پرداخت عادی است</translation>
     </message>
     <message>
-        <source>The Bitcoin address to send the payment to</source>
+        <source>The Nexa address to send the payment to</source>
         <translation>نشانی بیت‌کوین برای ارسال پرداخت به آن</translation>
     </message>
     <message>
@@ -1361,7 +1357,7 @@
         <translation>ا&amp;مضای پیام</translation>
     </message>
     <message>
-        <source>The Bitcoin address to sign the message with</source>
+        <source>The Nexa address to sign the message with</source>
         <translation>نشانی بیت‌کوین برای امضاء پیغام با آن</translation>
     </message>
     <message>
@@ -1393,7 +1389,7 @@
         <translation>امضای فعلی را به حافظهٔ سیستم کپی کن</translation>
     </message>
     <message>
-        <source>Sign the message to prove you own this Bitcoin address</source>
+        <source>Sign the message to prove you own this Nexa address</source>
         <translation>برای اثبات تعلق این نشانی به شما، پیام را امضا کنید</translation>
     </message>
     <message>
@@ -1413,11 +1409,11 @@
         <translation>&amp;شناسایی پیام</translation>
     </message>
     <message>
-        <source>The Bitcoin address the message was signed with</source>
+        <source>The Nexa address the message was signed with</source>
         <translation>نشانی بیت‌کوین که پیغام با آن امضاء شده</translation>
     </message>
     <message>
-        <source>Verify the message to ensure it was signed with the specified Bitcoin address</source>
+        <source>Verify the message to ensure it was signed with the specified Nexa address</source>
         <translation>برای حصول اطمینان از اینکه پیام با نشانی بیت‌کوین مشخص شده امضا است یا خیر، پیام را شناسایی کنید</translation>
     </message>
     <message>
@@ -1484,11 +1480,11 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation> هسته Bitcoin </translation>
+        <source>Nexa</source>
+        <translation> هسته Nexa </translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
+        <source>The Nexa developers</source>
         <translation>توسعه‌دهندگان هسته بیت‌کوین</translation>
     </message>
     <message>

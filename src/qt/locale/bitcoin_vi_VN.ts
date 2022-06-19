@@ -174,8 +174,8 @@
         <translation>Mở &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>BCH Unlimited client</translation>
+        <source> client</source>
+        <translation> client</translation>
     </message>
     <message>
         <source>Nexa</source>
@@ -214,8 +214,8 @@
         <translation>Trợ &amp;giúp</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source></source>
+        <translation></translation>
     </message>
     <message>
         <source>Tabs toolbar</source>
@@ -226,8 +226,8 @@
         <translation>Yêu cầu thanh toán(tạo mã QR và địa chỉ %1 URLs)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;Về BCH Unlimited</translation>
+        <source>&amp;About </source>
+        <translation>&amp;Về </translation>
     </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
@@ -389,16 +389,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source></source>
+        <translation></translation>
     </message>
     <message>
         <source>version</source>
         <translation>version</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Về BCH Unlimited</translation>
+        <source>About </source>
+        <translation>Về </translation>
     </message>
     </context>
 <context>
@@ -408,8 +408,8 @@
         <translation>Chào mừng</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source></source>
+        <translation></translation>
     </message>
     <message>
         <source>Error</source>
@@ -628,8 +628,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source></source>
+        <translation></translation>
     </message>
     </context>
 <context>

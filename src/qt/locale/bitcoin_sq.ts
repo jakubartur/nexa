@@ -246,12 +246,8 @@
         <translation>Shiriti i mjeteve</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Berthama Bitcoin</translation>
-    </message>
-    <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>Rreth Berthames Bitkoin</translation>
+        <source>&amp;About Nexa</source>
+        <translation>Rreth Nexa</translation>
     </message>
     <message>
         <source>%1 and %2</source>
@@ -385,16 +381,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Berthama Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
         <translation>versioni</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Rreth Berthames Bitkoin</translation>
+        <source>About Nexa</source>
+        <translation>Rreth Nexa</translation>
     </message>
     </context>
 <context>
@@ -404,12 +400,12 @@
         <translation>Miresevini</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Miresevini ne Berthamen Bitcoin</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Miresevini ne Nexa</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Berthama Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -624,8 +620,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Berthama Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>[testnet]</source>
