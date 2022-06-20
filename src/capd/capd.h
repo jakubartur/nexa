@@ -522,12 +522,13 @@ public:
     /** Set a new maximum size for this message pool */
     void SetMaxSize(uint64_t newSize)
     {
+        WRITELOCK(csMsgPool);
         if (newSize != maxSize)
         {
             maxSize = newSize;
-            if (Size() > maxSize)
+            if (size > maxSize)
             {
-                pare(0);
+                _pare(0);
             }
         }
     }
