@@ -500,7 +500,7 @@ public:
         strNetworkID = "nexa"; // Do not use the const string because of ctor execution order issues
 
         consensus.nSubsidyHalvingInterval = 210000 * 5; // 2 minute blocks rather than 10 min -> * 5
-        uint32_t tgtBits = 0x1e04ffff;
+        uint32_t tgtBits = 503382016;
         bool fNegative;
         bool fOverflow;
         arith_uint256 tmp;
@@ -520,10 +520,10 @@ public:
 
         std::vector<unsigned char> nonce; // TODO make this difficulty higher and hard code solution
         std::vector<unsigned char> hardCodedNonce;
-        nonce = hardCodedNonce = ParseHex("a1103d00");
-        genesis = CreateGenesisBlock(
-            "Innovations enabling viral uses create a virtuous adoption cycle that overwhelms legacy systems",
-            CScript() << OP_1, 1630437560, nonce, tgtBits, 0 * COIN);
+        nonce = hardCodedNonce = ParseHex("03001700");
+        genesis = CreateGenesisBlock("Reuters: Japan PM Kishida backs BOJ ultra-easy policy while yen worries mount "
+                                     "BTC:741711:000000000000000000075f4bc08e1d78a3ab3af8274d13334c0ac2de25309768",
+            CScript() << OP_FALSE, 1655812800, nonce, tgtBits, 0);
 #if 0 // recalculate GB if needed (note that this code will not work with the java nexa shared library because it
       // must start before the random numbers (initialized in ECC_Start are hooked up).
         ECC_Start();
@@ -539,7 +539,7 @@ public:
 #else
         consensus.hashGenesisBlock = genesis.GetHash();
         assert(
-            consensus.hashGenesisBlock == uint256S("4664461cc431873fd25559286065680b729be51877afe9657ec61f344eced50e"));
+            consensus.hashGenesisBlock == uint256S("edc7144fe1ba4edd0edf35d7eea90f6cb1dba42314aa85da8207e97c5339c801"));
 #endif
         /**
          * The message start string is designed to be unlikely to occur in normal data.
