@@ -11,7 +11,7 @@ export PYTHONPATH
 
 if BUILD_NEXA_LIBS
 pkgconfigdir = $(libdir)/pkgconfig
-pkgconfig_DATA = libnexaconsensus.pc
+pkgconfig_DATA =
 endif
 
 dist_data_DATA = config/forks.csv

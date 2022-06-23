@@ -45,7 +45,6 @@ NEXA_INCLUDES += -I$(srcdir)/rsm/include
 
 LIBNEXA_SERVER=libnexa_server.a
 LIBNEXA_COMMON=libnexa_common.a
-LIBNEXA_CONSENSUS=libnexa_consensus.a
 LIBNEXA_CLI=libnexa_cli.a
 LIBNEXA_UTIL=libnexa_util.a
 LIBNEXA_CRYPTO=crypto/libnexa_crypto.a
@@ -61,7 +60,6 @@ LIBNEXA_ZMQ=libnexa_zmq.a
 endif
 
 if BUILD_NEXA_LIBS
-LIBNEXACONSENSUS=libnexaconsensus.la
 if TARGET_LINUX
 LIBBITCOINCASH=libnexa.la
 endif
@@ -88,13 +86,12 @@ EXTRA_LIBRARIES += \
   $(LIBNEXA_CRYPTO_AVX2) \
   $(LIBNEXA_UTIL) \
   $(LIBNEXA_COMMON) \
-  $(LIBNEXA_CONSENSUS) \
   $(LIBNEXA_SERVER) \
   $(LIBNEXA_CLI) \
   $(LIBNEXA_WALLET) \
   $(LIBNEXA_ZMQ)
 
-lib_LTLIBRARIES = $(LIBBITCOINCASH) $(LIBNEXACONSENSUS)
+lib_LTLIBRARIES = $(LIBBITCOINCASH)
 
 bin_PROGRAMS =
 noinst_PROGRAMS =
@@ -508,13 +505,22 @@ crypto_libnexa_crypto_avx2_a_CPPFLAGS += -DENABLE_AVX2
 endif
 crypto_libnexa_crypto_avx2_a_SOURCES = crypto/sha256_avx2.cpp
 
-# consensus: shared between all executables that validate any consensus rules.
-libnexa_consensus_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
-libnexa_consensus_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libnexa_consensus_a_SOURCES = \
+# common: shared between nexad, and nexa-qt and non-server tools
+libnexa_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
+libnexa_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
+libnexa_common_a_SOURCES = \
+  amount.cpp \
   amount.h \
   arith_uint256.cpp \
   arith_uint256.h \
+  base58.cpp \
+  cashaddr.cpp \
+  cashaddrenc.cpp \
+  chain.cpp \
+  chainparams.cpp \
+  coins.cpp \
+  compressor.cpp \
+  config.cpp \
   consensus/adaptive_blocksize.cpp \
   consensus/adaptive_blocksize.h \
   consensus/merkle.cpp \
@@ -523,9 +529,16 @@ libnexa_consensus_a_SOURCES = \
   consensus/validation.h \
   consensus/grouptokens.cpp \
   consensus/grouptokens.h \
+  core_read.cpp \
+  core_write.cpp \
+  dstencode.cpp \
   hashwrapper.cpp \
   hashwrapper.h \
   logging.h \
+  key.cpp \
+  keystore.cpp \
+  netaddress.cpp \
+  netbase.cpp \
   prevector.h \
   primitives/block.cpp \
   primitives/block.h \
@@ -533,10 +546,12 @@ libnexa_consensus_a_SOURCES = \
   primitives/transaction.h \
   primitives/satoshiTransaction.h \
   primitives/satoshiblock.h \
+  protocol.cpp \
   pubkey.cpp \
   pubkey.h \
   script/scriptattributes.cpp \
   script/bitcoinconsensus.cpp \
+  script/bitcoinconsensus.h \
   script/bitfield.cpp \
   script/bitfield.h \
   script/bignum.cpp \
@@ -554,40 +569,16 @@ libnexa_consensus_a_SOURCES = \
   script/script_error.h \
   script/scripttemplate.cpp \
   script/sighashtype.h \
+  script/sign.cpp \
+  script/standard.cpp \
   serialize.h \
   tinyformat.h \
   uint256.cpp \
   uint256.h \
   utilstrencodings.cpp \
   utilstrencodings.h \
-  utiltime.cpp \
-  utiltime.h \
-  version.h
-
-# common: shared between nexad, and nexa-qt and non-server tools
-libnexa_common_a_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES)
-libnexa_common_a_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-libnexa_common_a_SOURCES = \
-  amount.cpp \
-  base58.cpp \
-  cashaddr.cpp \
-  cashaddrenc.cpp \
-  chainparams.cpp \
-  coins.cpp \
-  compressor.cpp \
-  config.cpp \
-  core_read.cpp \
-  core_write.cpp \
-  dstencode.cpp \
-  key.cpp \
-  keystore.cpp \
-  netaddress.cpp \
-  netbase.cpp \
-  protocol.cpp \
-  script/sign.cpp \
-  script/standard.cpp \
+  version.h \
   versionbits.cpp \
-  chain.cpp \
   $(BITCOIN_CORE_H)
 
 # util: shared between all executables.
@@ -651,7 +642,6 @@ nexad_LDADD = \
   $(LIBNEXA_UTIL) \
   $(LIBNEXA_WALLET) \
   $(LIBNEXA_ZMQ) \
-  $(LIBNEXA_CONSENSUS) \
   $(LIBNEXA_CRYPTO) \
   $(LIBNEXA_CRYPTO_SSE41) \
   $(LIBNEXA_CRYPTO_AVX2) \
@@ -700,7 +690,6 @@ nexa_tx_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBNEXA_COMMON) \
   $(LIBNEXA_UTIL) \
-  $(LIBNEXA_CONSENSUS) \
   $(LIBNEXA_CRYPTO) \
   $(LIBNEXA_CRYPTO_SSE41) \
   $(LIBNEXA_CRYPTO_AVX2) \
@@ -734,7 +723,6 @@ nexa_miner_LDADD = \
   $(LIBUNIVALUE) \
   $(LIBNEXA_COMMON) \
   $(LIBNEXA_UTIL) \
-  $(LIBNEXA_CONSENSUS) \
   $(LIBNEXA_CRYPTO) \
   $(LIBNEXA_CRYPTO_SSE41) \
   $(LIBNEXA_CRYPTO_AVX2) \
@@ -761,21 +749,6 @@ endif
 endif
 #
 
-# nexa consensus library #
-if BUILD_NEXA_LIBS
-include_HEADERS = script/bitcoinconsensus.h
-libnexaconsensus_la_SOURCES = $(crypto_libnexa_crypto_a_SOURCES) $(libnexa_consensus_a_SOURCES)
-
-if GLIBC_BACK_COMPAT
-  libnexaconsensus_la_SOURCES += compat/glibc_compat.cpp
-endif
-
-libnexaconsensus_la_LDFLAGS = $(AM_LDFLAGS) $(BOOST_LIBS) -no-undefined $(RELDFLAGS) $(LIBTOOL_APP_LDFLAGS)  $(PTHREAD_FLAGS)
-libnexaconsensus_la_LIBADD = $(LIBSECP256K1)
-libnexaconsensus_la_CPPFLAGS = $(AM_CPPFLAGS) -I$(BOOST_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include -DBUILD_BITCOIN_INTERNAL
-libnexaconsensus_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-endif
-#
 CLEANFILES = $(EXTRA_LIBRARIES)
 
 CTAES_DIST =  crypto/ctaes/bench.c
