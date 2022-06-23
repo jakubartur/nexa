@@ -59,15 +59,15 @@ check-formatting:
         - make check-formatting
 
 # x86_64 Linux + deps as via system lib
-.cache-debian-nodeps:
+.cache-ubuntu-nodeps:
     extends: .ccache_scripts
     cache:
         <<: *global_cache_settings
-        key: debian_cache-nodeps
+        key: ubuntu_cache-nodeps
 
-build-debian-nodeps:
+build-ubuntu-nodeps:
     stage: build
-    extends: .cache-debian-nodeps
+    extends: .cache-ubuntu-nodeps
     needs: []
     script:
         - ./autogen.sh
@@ -89,9 +89,9 @@ build-debian-nodeps:
             - ./src/test/*.log
             - ./src/test-suite.log
 
-build-debian-nodeps-qt:
+build-ubuntu-nodeps-qt:
     stage: build
-    extends: .cache-debian-nodeps
+    extends: .cache-ubuntu-nodeps
     needs: []
     script:
         - ./autogen.sh
@@ -107,20 +107,20 @@ build-debian-nodeps-qt:
             - ./build/src/nexa-tx
 
 # Linux 64 bit, source deps
-.cache-debian:
+.cache-ubuntu:
     extends: .ccache_scripts
     cache:
         <<: *global_cache_settings
-        key: debian_cache
+        key: ubuntu_cache
         paths:
             - ccache/
             - depends/sources
             - depends/built
             - depends/x86_64-unknown-linux-gnu
 
-build-debian-deps:
+build-ubuntu-deps:
     stage: build_depends
-    extends: .cache-debian
+    extends: .cache-ubuntu
     needs: []
     script:
         - cd depends
@@ -129,10 +129,10 @@ build-debian-deps:
         paths:
             - depends/x86_64-unknown-linux-gnu
 
-build-debian:
+build-ubuntu:
     stage: build
-    extends: .cache-debian
-    needs: [build-debian-deps]
+    extends: .cache-ubuntu
+    needs: [build-ubuntu-deps]
     script:
         - ./autogen.sh
         - mkdir build; cd build
@@ -145,7 +145,7 @@ build-debian:
         - echo $CI_PROJECT_DIR/cores/core.%e.%p.%h.%t | tee /proc/sys/kernel/core_pattern
         - ./qa/pull-tester/rpc-tests.py --coverage --no-ipv6-rpc-listen --gitlab
     dependencies:
-        - build-debian-deps
+        - build-ubuntu-deps
     artifacts:
         when: on_failure
         paths:
@@ -160,7 +160,7 @@ build-debian:
             - ./src/test/*.log
             - ./src/test-suite.log
 
-build-debian-electrscash:
+build-ubuntu-electrscash:
     stage: build
     cache:
       paths:
@@ -170,7 +170,7 @@ build-debian-electrscash:
         - cargohome/registry/cache
         - cargohome/git/db
 
-    needs: [build-debian-deps]
+    needs: [build-ubuntu-deps]
 
     variables:
       CARGO_HOME: ${CI_PROJECT_DIR}/cargohome
@@ -192,37 +192,37 @@ build-debian-electrscash:
         - make electrscash
 
     dependencies:
-        - build-debian-deps
+        - build-ubuntu-deps
 
     artifacts:
         paths:
             - ./build/src/electrscash
 
-test-debian-benchmarks:
+test-ubuntu-benchmarks:
     stage: benchmark_tests
-    #extends: .cache-debian
-    needs: ["build-debian-nodeps"]
+    #extends: .cache-ubuntu
+    needs: ["build-ubuntu-nodeps"]
     script:
         - (./build/src/bench/bench_nexa -evals=1)
     dependencies:
-        - build-debian-nodeps
+        - build-ubuntu-nodeps
 
 # nexad clang (no depend, only system lib installed via apt)
-.cache-debian-clang:
+.cache-ubuntu-clang:
     extends: .ccache_scripts
     cache:
         <<: *global_cache_settings
-        key: debian_cache_clang
+        key: ubuntu_cache_clang
 
-.debian-clang-env:
-    extends: .cache-debian-clang
+.ubuntu-clang-env:
+    extends: .cache-ubuntu-clang
     variables:
         CC: clang-12
         CXX: clang++-12
 
-build-debian-clang:
+build-ubuntu-clang:
     stage: build
-    extends: .debian-clang-env
+    extends: .ubuntu-clang-env
     needs: []
     script:
         - ./autogen.sh
@@ -392,4 +392,3 @@ build-osx:
         paths:
             - build/config.log
             - depends/x86_64-apple-darwin19/share/config.site
-
