@@ -1061,10 +1061,6 @@ AC_MSG_RESULT($build_bitcoin_utils)
 
 AC_MSG_CHECKING([whether to build libraries])
 AM_CONDITIONAL([BUILD_NEXA_LIBS], [test x$build_nexa_libs = xyes])
-if test x$build_nexa_libs = xyes; then
-  AC_DEFINE(HAVE_CONSENSUS_LIB, 1, [Define this symbol if the consensus lib has been built])
-  AC_CONFIG_FILES([libnexaconsensus.pc:libnexaconsensus.pc.in])
-fi
 AC_MSG_RESULT($build_nexa_libs)
 
 AC_LANG_POP
