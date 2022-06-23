@@ -2,16 +2,13 @@
 
 # Using Nexa for Mining
 
-Nexa is based on the Satoshi codebase, so it is a drop in replacement for your mining pool software.  Simply configure your pool to point to the Nexa daemon, in the exact same manner you would for the Bitcoin Cash daemon.
-
-But Nexa has specific features to facilitate mining.
+Nexa has an ASIC resistant mining algorithm and has specific features to facilitate CPU mining.
 
 ## ***getminingcandidate*** and ***submitminingsolution***
 
 *efficient protocol to access block candidates and submit block solutions*
 
-
-Nexa provides 2 additional mining RPC functions that can be used instead of "getblocktemplate" and "submitblock".  These RPCs do not pass the entire block to mining pools.  Instead, the candidate block header, proposed coinbase transaction, and coinbase merkle proof are passed.  This is the approximately the same data that is passed to hashing hardware via the Stratum protocol, so if you are familiar with Stratum, you are familiar with how this is possible.
+Nexa provides 2 mining RPC functions that can be used instead of the traditional "getblocktemplate" and "submitblock".  These RPCs do not pass the entire block to mining pools.  Instead, the candidate block header, proposed coinbase transaction, and coinbase merkle proof are passed.  This is the approximately the same data that is passed to hashing hardware via the Stratum protocol, so if you are familiar with Stratum, you are familiar with how this is possible.
 
 A mining pool uses ***getminingcandidate*** to receive the previously described block information and a tracking identifier.  It then may modify or completely replace the coinbase transaction and many block header fields, to create different candidates for hashing hardware.  It then forwards these candidates to the hashing hardware via Stratum.  When a solution is found, the mining pool can submit the solution back to nexad via ***submitminingsolution***.
 
@@ -29,6 +26,12 @@ A typical way to launch nexa-miner on the main chain is the following. (If no -c
 
 ```sh
 ./nexa-miner -rpcuser=<your-nodes-login> -rpcpassword=<your-nodes-password> -cpus=4
+```
+
+Rather than supplying the rpc username/password you can supply the path to the config file where the username/password is defined and which your nexa node will also use.
+
+```sh
+./nexa-miner -config=nexa.conf -cpus=4
 ```
 
 If running on tesnet then add *-testnet*
@@ -54,9 +57,6 @@ If you want then nexa-miner to update the block mining candidate more frequently
 ./nexad -mining.minCandidateInterval=15
 ```
 
-
-
-Of course, given current and foreseeable mining difficulties this program will not find any blocks on mainnet.  However, it will find blocks on testnet or regtest.
 
 ### miningtest.py
 
