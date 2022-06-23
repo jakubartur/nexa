@@ -16,6 +16,7 @@
 #include "utiltime.h"
 
 #include <algorithm>
+#include <atomic>
 #include <map>
 #include <mutex>
 #include <stdint.h>
@@ -117,7 +118,7 @@ void LogInit(std::vector<std::string> categories = {});
  * @param[in] category
  * returns true if should be logged
  */
-inline bool LogAcceptCategory(uint64_t category) { return (categoriesEnabled & category); }
+inline bool LogAcceptCategory(uint64_t category) { return (categoriesEnabled.load() & category); }
 
 /**
  * Turn on/off logging for a category
