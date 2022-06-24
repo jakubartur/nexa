@@ -270,8 +270,8 @@
         <translation>Abrir &amp;URL...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>cliente BCH Unlimited</translation>
+        <source>Nexa client</source>
+        <translation>cliente Nexa</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -338,20 +338,16 @@
         <translation>Pestañas</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>nucleo Bitcoin</translation>
-    </message>
-    <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>Acerca de BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>Acerca de Nexa</translation>
     </message>
     <message>
         <source>&amp;Command-line options</source>
         <translation>opciones de la &amp;Linea de comandos</translation>
     </message>
     <message>
-        <source>Show the BCH Unlimited help message to get a list with possible Nexa command-line options</source>
-        <translation>Mostrar mensaje de ayuda del nucleo de Nexa para optener una lista con los posibles comandos  de Nexa</translation>
+        <source>Show the Nexa help message to get a list with possible Nexa command-line options</source>
+        <translation>Mostrar mensaje de ayuda del Nexa para optener una lista con los posibles comandos  de Nexa</translation>
     </message>
     <message>
         <source>Up to date</source>
@@ -505,8 +501,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>nucleo Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -517,8 +513,8 @@
         <translation>(%1-bit)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Acerca de BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>Acerca de Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -536,8 +532,8 @@
 <context>
     <name>Intro</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>nucleo Bitcoin</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>
@@ -603,8 +599,8 @@
         <translation>Mensaje:</translation>
     </message>
     <message>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Bitcoin network.</source>
-        <translation>Mensaje opcional para agregar a la solicitud de pago, el cual será mostrado cuando la solicitud este abierta. Nota: El mensaje no se manda con el pago a travéz de la red de Bitcoin.</translation>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Nexa network.</source>
+        <translation>Mensaje opcional para agregar a la solicitud de pago, el cual será mostrado cuando la solicitud este abierta. Nota: El mensaje no se manda con el pago a travéz de la red de Nexa.</translation>
     </message>
     <message>
         <source>Use this form to request payments. All fields are &lt;b&gt;optional&lt;/b&gt;.</source>
@@ -756,8 +752,8 @@
         <translation>¡La transación fue rechazada! Esto puede ocurrir si algunas de tus monedas en tu cartera han sido gastadas, al igual que si usas una cartera copiada y la monedas fueron gastadas en la copia pero no se marcaron como gastadas.</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Advertencia: Dirección de Bitcoin invalida</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Advertencia: Dirección de Nexa invalida</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -818,8 +814,8 @@
 <context>
     <name>ShutdownWindow</name>
     <message>
-        <source>BCH Unlimited is shutting down...</source>
-        <translation>Apagando el nucleo de Bitcoin...</translation>
+        <source>Nexa is shutting down...</source>
+        <translation>Apagando el Nexa...</translation>
     </message>
     <message>
         <source>Do not shut down the computer until this window disappears.</source>
@@ -848,8 +844,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>The BCH Unlimited developers</source>

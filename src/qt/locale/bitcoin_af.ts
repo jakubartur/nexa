@@ -258,8 +258,8 @@
         <translation>Oop &amp; URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>Bitcoin Kern klient</translation>
+        <source>Nexa client</source>
+        <translation>Nexa klient</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -298,8 +298,8 @@
         <translation>&amp;Ontvang</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Vertoon inligting oor Bitcoin Kern</translation>
+        <source>Show information about Nexa</source>
+        <translation>Vertoon inligting oor Nexa</translation>
     </message>
     <message>
         <source>Show or hide the main Window</source>
@@ -320,10 +320,6 @@
     <message>
         <source>&amp;Help</source>
         <translation>&amp;Help</translation>
-    </message>
-    <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Kern</translation>
     </message>
     <message>
         <source>Tabs toolbar</source>
@@ -382,12 +378,12 @@
         <translation>Versoek betalings (genereer QR-kodes en %1: URI's)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;Omtrent Bitcoin Kern</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;Omtrent Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
-        <translation>Verander konfigurasie-opsies vir Bitcoin Kern</translation>
+        <source>Modify configuration options for Nexa</source>
+        <translation>Verander konfigurasie-opsies vir Nexa</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -421,8 +417,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Kern</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Reset all settings changes made over the GUI</source>
@@ -432,8 +428,8 @@
 <context>
     <name>Intro</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Kern</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>
@@ -496,8 +492,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Kern</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>

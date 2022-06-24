@@ -67,11 +67,11 @@
     </message>
     <message>
         <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Jen viaj Bitmon-adresoj por sendi pagojn. Zorge kontrolu la sumon kaj la alsendan adreson antaŭ ol sendi.</translation>
+        <translation>Jen viaj Nexa-adresoj por sendi pagojn. Zorge kontrolu la sumon kaj la alsendan adreson antaŭ ol sendi.</translation>
     </message>
     <message>
         <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Jen viaj bitmonaj adresoj por ricevi pagojn. Estas konsilinde uzi apartan ricevan adreson por ĉiu transakcio.</translation>
+        <translation>Jen viaj nexaj adresoj por ricevi pagojn. Estas konsilinde uzi apartan ricevan adreson por ĉiu transakcio.</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -290,8 +290,8 @@
         <translation>Malfermi &amp;URI-on...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>kliento de bitmon-kerno</translation>
+        <source>Nexa client</source>
+        <translation>kliento de Nexa</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -303,7 +303,7 @@
     </message>
     <message>
         <source>Send coins to a Nexa address</source>
-        <translation>Sendi monon al Bitmon-adreso</translation>
+        <translation>Sendi monon al Nexa-adreso</translation>
     </message>
     <message>
         <source>Backup wallet to another location</source>
@@ -327,7 +327,7 @@
     </message>
     <message>
         <source>Nexa</source>
-        <translation>Bitmono</translation>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -342,8 +342,8 @@
         <translation>&amp;Ricevi</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Vidigi informon pri Bitmona Kerno</translation>
+        <source>Show information about Nexa</source>
+        <translation>Vidigi informon pri Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -359,11 +359,11 @@
     </message>
     <message>
         <source>Sign messages with your Nexa addresses to prove you own them</source>
-        <translation>Subskribi mesaĝojn per via Bitmon-adresoj por pravigi, ke vi estas la posedanto</translation>
+        <translation>Subskribi mesaĝojn per via Nexa-adresoj por pravigi, ke vi estas la posedanto</translation>
     </message>
     <message>
         <source>Verify messages to ensure they were signed with specified Nexa addresses</source>
-        <translation>Kontroli mesaĝojn por kontroli ĉu ili estas subskribitaj per specifaj Bitmon-adresoj</translation>
+        <translation>Kontroli mesaĝojn por kontroli ĉu ili estas subskribitaj per specifaj Nexa-adresoj</translation>
     </message>
     <message>
         <source>&amp;File</source>
@@ -382,16 +382,12 @@
         <translation>Langeto-breto</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Kerno de Bitmono</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Peti pagon (kreas QR-kodojn kaj URI-ojn kun prefikso %1)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;Pri la Bitmona Kerno</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;Pri la Nexa</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -766,7 +762,7 @@
     </message>
     <message>
         <source>The entered address "%1" is not a valid Nexa address.</source>
-        <translation>La adreso enigita "%1" ne estas valida Bitmon-adreso.</translation>
+        <translation>La adreso enigita "%1" ne estas valida Nexa-adreso.</translation>
     </message>
     <message>
         <source>Could not unlock wallet.</source>
@@ -803,16 +799,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Kerno de Bitmono</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
         <translation>versio</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Pri la Bitmona Kerno</translation>
+        <source>About Nexa</source>
+        <translation>Pri la Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -838,16 +834,16 @@
         <translation>Bonvenon</translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Bonvenon al la bitmona kerno, BCH Unlimited.</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Bonvenon al la nexa.</translation>
     </message>
     <message>
-        <source>As this is the first time the program is launched, you can choose where BCH Unlimited will store its data.</source>
-        <translation>Dum tiu ĉi unua uzo de la programo, vi povas elekti lokon, kie BCH Unlimited stokos siajn datumojn.</translation>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
+        <translation>Dum tiu ĉi unua uzo de la programo, vi povas elekti lokon, kie Nexa stokos siajn datumojn.</translation>
     </message>
     <message>
-        <source>BCH Unlimited will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
-        <translation>BCH Unlimited elŝutos kaj konservos kopion de la bitmona blokĉeno. Almenaŭ %1GB da datumoj konserviĝos en tiu loko, kaj tio poiome kreskos. Ankaŭ via monujo konserviĝos en tiu dosierujo.</translation>
+        <source>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <translation>Nexa elŝutos kaj konservos kopion de la nexa blokĉeno. Almenaŭ %1GB da datumoj konserviĝos en tiu loko, kaj tio poiome kreskos. Ankaŭ via monujo konserviĝos en tiu dosierujo.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -858,8 +854,8 @@
         <translation>Uzi alian dosierujon por datumoj:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Kerno de Bitmono</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -940,8 +936,8 @@
         <translation>Fakulo</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Aŭtomate malfermi la kursilan pordon por Bitmono. Tio funkcias nur se via kursilo havas la UPnP-funkcion, kaj se tiu ĉi estas ŝaltita.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Aŭtomate malfermi la kursilan pordon por Nexa. Tio funkcias nur se via kursilo havas la UPnP-funkcion, kaj se tiu ĉi estas ŝaltita.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -997,7 +993,7 @@
     </message>
     <message>
         <source>Choose the default subdivision unit to show in the interface and when sending coins.</source>
-        <translation>Elekti la defaŭltan manieron por montri bitmonajn sumojn en la interfaco, kaj kiam vi sendos bitmonon.</translation>
+        <translation>Elekti la defaŭltan manieron por montri Nexa sumojn en la interfaco, kaj kiam vi sendos monon.</translation>
     </message>
     <message>
         <source>Whether to show coin control features or not.</source>
@@ -1035,8 +1031,8 @@
         <translation>Formularo</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>Eblas, ke la informoj videblaj ĉi tie estas eksdataj. Via monujo aŭtomate sinkoniĝas kun la bitmona reto kiam ili konektiĝas, sed tiu procezo ankoraŭ ne finfariĝis.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
+        <translation>Eblas, ke la informoj videblaj ĉi tie estas eksdataj. Via monujo aŭtomate sinkoniĝas kun la nexa reto kiam ili konektiĝas, sed tiu procezo ankoraŭ ne finfariĝis.</translation>
     </message>
     <message>
         <source>Your current spendable balance</source>
@@ -1094,7 +1090,7 @@
         <translation>Eraro dum pagopeto</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
+        <source>Cannot start Nexa: click-to-pay handler</source>
         <translation>Ne eblas lanĉi la ilon 'klaki-por-pagi'</translation>
     </message>
     <message>
@@ -1459,7 +1455,7 @@
     <name>SendCoinsDialog</name>
     <message>
         <source>Send Coins</source>
-        <translation>Sendi Bitmonon</translation>
+        <translation>Sendi Monon</translation>
     </message>
     <message>
         <source>Coin Control Features</source>
@@ -1539,7 +1535,7 @@
     </message>
     <message>
         <source>Confirm send coins</source>
-        <translation>Konfirmi sendon de bitmono</translation>
+        <translation>Konfirmi sendon de Mono</translation>
     </message>
     <message>
         <source>%1 to %2</source>
@@ -1595,7 +1591,7 @@
     </message>
     <message>
         <source>Warning: Invalid Nexa address</source>
-        <translation>Averto: Nevalida Bitmon-adreso</translation>
+        <translation>Averto: Nevalida Nexa-adreso</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -1806,12 +1802,12 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Kerno de Bitmono</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
-        <translation>La programistoj de Bitmona Kerno</translation>
+        <source>The Bitcoin Unlimited developers</source>
+        <translation>La programistoj de Bitmona</translation>
     </message>
     <message>
         <source>[testnet]</source>
@@ -2171,7 +2167,7 @@
     <name>WalletModel</name>
     <message>
         <source>Send Coins</source>
-        <translation>Sendi Bitmonon</translation>
+        <translation>Sendi Monon</translation>
     </message>
 </context>
 <context>

@@ -43,11 +43,11 @@
     </message>
     <message>
         <source>Choose the address to send coins to</source>
-        <translation>Choisissez une adresse où envoyer les bitcoins</translation>
+        <translation>Choisissez une adresse où envoyer les coins</translation>
     </message>
     <message>
         <source>Choose the address to receive coins with</source>
-        <translation>Choisissez une adresse où recevoir les bitcoins</translation>
+        <translation>Choisissez une adresse où recevoir les coins</translation>
     </message>
     <message>
         <source>Sending addresses</source>
@@ -58,12 +58,12 @@
         <translation>Adresses de réception</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
-        <translation>Voici vos adresses Bitcoin qui vous permettent d'envoyer des paiements.  Vérifiez toujours le montant et l'adresse de réception avant d'envoyer des pièces.</translation>
+        <source>These are your Nexa addresses for sending payments. Always check the amount and the receiving address before sending coins.</source>
+        <translation>Voici vos adresses Nexa qui vous permettent d'envoyer des paiements.  Vérifiez toujours le montant et l'adresse de réception avant d'envoyer des pièces.</translation>
     </message>
     <message>
-        <source>These are your Bitcoin addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
-        <translation>Voici vos adresses Bitcoin qui vous permettent de recevoir des paiements.  Il est recommandé d'utiliser une nouvelle adresse de réception pour chaque transaction</translation>
+        <source>These are your Nexa addresses for receiving payments. It is recommended to use a new receiving address for each transaction.</source>
+        <translation>Voici vos adresses Nexa qui vous permettent de recevoir des paiements.  Il est recommandé d'utiliser une nouvelle adresse de réception pour chaque transaction</translation>
     </message>
     <message>
         <source>Copy &amp;Label</source>
@@ -153,16 +153,16 @@ Réessayez.</translation>
         <translation>Confirmer le chiffrement du porte-monnaie</translation>
     </message>
     <message>
-        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR BITCOINS&lt;/b&gt;!</source>
-        <translation>Attention: Si vous cryptez votre portefeuille et que vous perdez votre mot de passe vous &lt;b&gt; PERDREZ TOUS VOS BITCOINS&lt;/b&gt;!</translation>
+        <source>Warning: If you encrypt your wallet and lose your passphrase, you will &lt;b&gt;LOSE ALL OF YOUR NEXA COINS&lt;/b&gt;!</source>
+        <translation>Attention: Si vous cryptez votre portefeuille et que vous perdez votre mot de passe vous &lt;b&gt; PERDREZ TOUS VOS NEXA COINS&lt;/b&gt;!</translation>
     </message>
     <message>
         <source>Are you sure you wish to encrypt your wallet?</source>
         <translation>Êtes-vous sûr de de vouloir crypter votre portefeuille ? </translation>
     </message>
     <message>
-        <source>BCH Unlimited will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your bitcoins from being stolen by malware infecting your computer.</source>
-        <translation>BCH Unlimited fermera maintenant pour finir le processus de chiffrement. Rappelez-vous que crypter votre portefeuille ne protége pas totalement vos bitcoins d'être volé par un malware ayant infecté votre ordinateur. </translation>
+        <source>Nexa will close now to finish the encryption process. Remember that encrypting your wallet cannot fully protect your coins from being stolen by malware infecting your computer.</source>
+        <translation>Nexa fermera maintenant pour finir le processus de chiffrement. Rappelez-vous que crypter votre portefeuille ne protége pas totalement vos coins d'être volé par un malware ayant infecté votre ordinateur. </translation>
     </message>
     <message>
         <source>Warning: The Caps Lock key is on!</source>
@@ -291,8 +291,8 @@ Réessayez.</translation>
         <translation>Ouvrir &amp;URI</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>Client BCH Unlimited</translation>
+        <source>Nexa client</source>
+        <translation>Client Nexa</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -343,8 +343,8 @@ Réessayez.</translation>
         <translation>&amp;Réception</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Montrer les informations à propos de BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Montrer les informations à propos de Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -379,20 +379,16 @@ Réessayez.</translation>
         <translation>Barre d'outils des onglets</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Demander des paiements (générer QR codes et %1 URIs)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
+        <source>&amp;About Nexa</source>
         <translation>&amp;À propos de Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
-        <translation>Modifier les options de configuration de BCH Unlimited</translation>
+        <source>Modify configuration options for Nexa</source>
+        <translation>Modifier les options de configuration de Nexa</translation>
     </message>
     <message>
         <source>Show the list of used sending addresses and labels</source>
@@ -804,8 +800,8 @@ Réessayez.</translation>
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -816,8 +812,8 @@ Réessayez.</translation>
         <translation>(%1-bit)</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>À propos de BCH Unlimited</translation>
+        <source>About Nexa</source>
+        <translation>À propos de Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -847,8 +843,8 @@ Réessayez.</translation>
         <translation>Bienvenue </translation>
     </message>
     <message>
-        <source>Welcome to BCH Unlimited.</source>
-        <translation>Bienvenue sur BCH Unlimited.</translation>
+        <source>Welcome to Nexa.</source>
+        <translation>Bienvenue sur Nexa.</translation>
     </message>
     <message>
         <source>Use the default data directory</source>
@@ -859,8 +855,8 @@ Réessayez.</translation>
         <translation>Utiliser votre propre répertoire</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error: Specified data directory "%1" cannot be created.</source>
@@ -945,16 +941,16 @@ Réessayez.</translation>
         <translation>&amp;Réseau</translation>
     </message>
     <message>
-        <source>Automatically start BCH Unlimited after logging in to the system.</source>
-        <translation>Démarrer automatiquement BCH Unlimited après s'être connecté au système. </translation>
+        <source>Automatically start Nexa after logging in to the system.</source>
+        <translation>Démarrer automatiquement Nexa après s'être connecté au système. </translation>
     </message>
     <message>
         <source>Expert</source>
         <translation>Expert</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Ouvrir le port du client Bitcoin automatiquement sur le routeur. Cela ne fonctionne que si votre routeur supporte l'UPnP et si la fonctionnalité est activée.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Ouvrir le port du client Nexa automatiquement sur le routeur. Cela ne fonctionne que si votre routeur supporte l'UPnP et si la fonctionnalité est activée.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -1723,8 +1719,8 @@ Réessayez.</translation>
         <translation>Payer seulement les frais obligatoire de %1</translation>
     </message>
     <message>
-        <source>Warning: Invalid Bitcoin address</source>
-        <translation>Attention: Adresse Bitcoin Invalide</translation>
+        <source>Warning: Invalid Nexa address</source>
+        <translation>Attention: Adresse Nexa Invalide</translation>
     </message>
     <message>
         <source>(no label)</source>
@@ -1879,12 +1875,12 @@ Réessayez.</translation>
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
-        <translation>Les développeurs de BCH Unlimited</translation>
+        <source>The Nexa developers</source>
+        <translation>Les développeurs de Nexa</translation>
     </message>
     <message>
         <source>[testnet]</source>

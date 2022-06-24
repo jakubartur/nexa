@@ -390,7 +390,7 @@
     </message>
     <message>
         <location line="+183"/>
-        <source>Bitcoin client</source>
+        <source>Nexa client</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -455,7 +455,7 @@
     </message>
     <message>
         <location line="+40"/>
-        <source>Show information about BCH Unlimited</source>
+        <source>Show information about Nexa</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -505,8 +505,8 @@
     </message>
     <message>
         <location line="-314"/>
-        <source>BCH Unlimited</source>
-        <translation type="unfinished">BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation type="unfinished">Nexa</translation>
     </message>
     <message>
         <location line="+160"/>
@@ -515,12 +515,12 @@
     </message>
     <message>
         <location line="+38"/>
-        <source>&amp;About BCH Unlimited</source>
+        <source>&amp;About Nexa</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+7"/>
-        <source>Modify configuration options for Bitcoin</source>
+        <source>Modify configuration options for Nexa</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1087,8 +1087,8 @@
     <name>HelpMessageDialog</name>
     <message>
         <location filename="../utilitydialog.cpp" line="+36"/>
-        <source>BCH Unlimited</source>
-        <translation type="unfinished">BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation type="unfinished">Nexa</translation>
     </message>
     <message>
         <location line="+0"/>
@@ -1103,7 +1103,7 @@
     </message>
     <message>
         <location line="+5"/>
-        <source>About BCH Unlimited</source>
+        <source>About Nexa</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1166,17 +1166,17 @@
     </message>
     <message>
         <location line="+9"/>
-        <source>Welcome to BCH Unlimited.</source>
+        <source>Welcome to Nexa.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+26"/>
-        <source>As this is the first time the program is launched, you can choose where Bitcoin will store its data.</source>
+        <source>As this is the first time the program is launched, you can choose where Nexa will store its data.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+10"/>
-        <source>Bitcoin will download and store a copy of the Bitcoin block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
+        <source>Nexa will download and store a copy of the Nexa block chain. At least %1GB of data will be stored in this directory, and it will grow over time. The wallet will also be stored in this directory.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1191,8 +1191,8 @@
     </message>
     <message>
         <location filename="../intro.cpp" line="+86"/>
-        <source>BCH Unlimited</source>
-        <translation type="unfinished">BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation type="unfinished">Nexa</translation>
     </message>
     <message>
         <location line="+1"/>
@@ -1299,7 +1299,7 @@
     </message>
     <message>
         <location line="+45"/>
-        <source>The user interface language can be set here. This setting will take effect after restarting BCH Unlimited.</source>
+        <source>The user interface language can be set here. This setting will take effect after restarting Nexa.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1335,12 +1335,12 @@
     </message>
     <message>
         <location line="-153"/>
-        <source>Automatically start Bitcoin after logging in to the system.</source>
+        <source>Automatically start Nexa after logging in to the system.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+3"/>
-        <source>&amp;Start Bitcoin on system login</source>
+        <source>&amp;Start Nexa on system login</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1375,8 +1375,8 @@
     </message>
     <message>
         <location line="+30"/>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -1385,7 +1385,7 @@
     </message>
     <message>
         <location line="+17"/>
-        <source>Connect to the Bitcoin network through a SOCKS5 proxy.</source>
+        <source>Connect to the Nexa network through a SOCKS5 proxy.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1440,7 +1440,7 @@
     </message>
     <message>
         <location line="+25"/>
-        <source>Connect to the Bitcoin network through a separate SOCKS5 proxy for Tor hidden services.</source>
+        <source>Connect to the Nexa network through a separate SOCKS5 proxy for Tor hidden services.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1550,8 +1550,8 @@
     <message>
         <location line="+59"/>
         <location line="+386"/>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
-        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</translation>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
+        <translation>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</translation>
     </message>
     <message>
         <location line="-139"/>
@@ -1695,7 +1695,7 @@
     </message>
     <message>
         <location line="+21"/>
-        <source>URI cannot be parsed! This can be caused by an invalid Bitcoin address or malformed URI parameters.</source>
+        <source>URI cannot be parsed! This can be caused by an invalid Nexa address or malformed URI parameters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1787,7 +1787,7 @@
     </message>
     <message>
         <location filename="../guiutil.cpp" line="+118"/>
-        <source>Enter a Bitcoin address (e.g. %1)</source>
+        <source>Enter a Nexa address (e.g. %1)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1962,7 +1962,7 @@
     </message>
     <message>
         <location line="+48"/>
-        <source>Open the Bitcoin debug log file from the current data directory. This can take a few seconds for large log files.</source>
+        <source>Open the Nexa debug log file from the current data directory. This can take a few seconds for large log files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2170,7 +2170,7 @@
     </message>
     <message>
         <location line="+74"/>
-        <source>Welcome to the Bitcoin RPC console.</source>
+        <source>Welcome to the Nexa RPC console.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2276,7 +2276,7 @@
     <message>
         <location line="+14"/>
         <location line="+23"/>
-        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Bitcoin network.</source>
+        <source>An optional message to attach to the payment request, which will be displayed when the request is opened. Note: The message will not be sent with the payment over the Nexa network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2570,7 +2570,7 @@
     <message>
         <location line="+30"/>
         <location line="+13"/>
-        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for bitcoin transactions than the network can process.</source>
+        <source>Paying only the minimum fee is just fine as long as there is less transaction volume than space in the blocks. But be aware that this can end up in a never confirming transaction once there is more demand for nexa transactions than the network can process.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2776,7 +2776,7 @@
     </message>
     <message>
         <location line="+236"/>
-        <source>Warning: Invalid Bitcoin address</source>
+        <source>Warning: Invalid Nexa address</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2841,7 +2841,7 @@
     </message>
     <message>
         <location line="+39"/>
-        <source>The Bitcoin address to send the payment to</source>
+        <source>The Nexa address to send the payment to</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2868,7 +2868,7 @@
     </message>
     <message>
         <location line="-1021"/>
-        <source>The fee will be deducted from the amount being sent. The recipient will receive less bitcoins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
+        <source>The fee will be deducted from the amount being sent. The recipient will receive less coins than you enter in the amount field. If multiple recipients are selected, the fee is split equally.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2898,7 +2898,7 @@
     </message>
     <message>
         <location line="+47"/>
-        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Bitcoin network.</source>
+        <source>A message that was attached to the %1 URI which will be stored with the transaction for your reference. Note: This message will not be sent over the Nexa network.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2918,7 +2918,7 @@
     <name>ShutdownWindow</name>
     <message>
         <location filename="../utilitydialog.cpp" line="+78"/>
-        <source>Bitcoin is shutting down...</source>
+        <source>Nexa is shutting down...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2941,12 +2941,12 @@
     </message>
     <message>
         <location line="+6"/>
-        <source>You can sign messages/agreements with your addresses to prove you can receive bitcoins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
+        <source>You can sign messages/agreements with your addresses to prove you can receive coins sent to them. Be careful not to sign anything vague or random, as phishing attacks may try to trick you into signing your identity over to them. Only sign fully-detailed statements you agree to.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <location line="+18"/>
-        <source>The Bitcoin address to sign the message with</source>
+        <source>The Nexa address to sign the message with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2988,8 +2988,8 @@
     </message>
     <message>
         <location line="+21"/>
-        <source>Sign the message to prove you own this Bitcoin address</source>
-        <translation>Sign the message to prove you own this Bitcoin address</translation>
+        <source>Sign the message to prove you own this Nexa address</source>
+        <translation>Sign the message to prove you own this Nexa address</translation>
     </message>
     <message>
         <location line="+3"/>
@@ -3019,7 +3019,7 @@
     </message>
     <message>
         <location line="+21"/>
-        <source>The Bitcoin address the message was signed with</source>
+        <source>The Nexa address the message was signed with</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3113,8 +3113,8 @@
     <name>SplashScreen</name>
     <message>
         <location filename="../splashscreen.cpp" line="+41"/>
-        <source>BCH Unlimited</source>
-        <translation type="unfinished">BCH Unlimited</translation>
+        <source>Nexa</source>
+        <translation type="unfinished">Nexa</translation>
     </message>
     <message>
         <location line="+2"/>
@@ -4315,7 +4315,7 @@
     </message>
     <message>
         <location line="+16"/>
-        <source>Error loading wallet.dat: Wallet requires newer version of BCH Unlimited</source>
+        <source>Error loading wallet.dat: Wallet requires newer version of Nexa</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4485,7 +4485,7 @@
     </message>
     <message>
         <location line="+4"/>
-        <source>Wallet needed to be rewritten: restart Bitcoin to complete</source>
+        <source>Wallet needed to be rewritten: restart Nexa to complete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

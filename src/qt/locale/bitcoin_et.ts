@@ -326,12 +326,8 @@
         <translation>Vahelehe tööriistariba</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoini tuumik</translation>
-    </message>
-    <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>Kirjeldus Bitcoini Tuumast</translation>
+        <source>&amp;About Nexa</source>
+        <translation>Kirjeldus Nexa</translation>
     </message>
     <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
@@ -599,16 +595,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoini tuumik</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
         <translation>versioon</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Kirjeldus Bitcoini Tuumast</translation>
+        <source>About Nexa</source>
+        <translation>Kirjeldus Nexa</translation>
     </message>
     <message>
         <source>Command-line options</source>
@@ -630,8 +626,8 @@
         <translation>Teretulemast</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoini tuumik</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -684,8 +680,8 @@
         <translation>Ekspert</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Bitcoini kliendi pordi automaatne avamine ruuteris. Toimib, kui sinu ruuter aktsepteerib UPnP ühendust.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Nexa kliendi pordi automaatne avamine ruuteris. Toimib, kui sinu ruuter aktsepteerib UPnP ühendust.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -763,7 +759,7 @@
         <translation>Vorm</translation>
     </message>
     <message>
-        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Bitcoin network after a connection is established, but this process has not completed yet.</source>
+        <source>The displayed information may be out of date. Your wallet automatically synchronizes with the Nexa network after a connection is established, but this process has not completed yet.</source>
         <translation>Kuvatav info ei pruugi olla ajakohane. Ühenduse loomisel süngitakse sinu rahakott automaatselt Bitconi võrgustikuga, kuid see toiming on hetkel lõpetamata.</translation>
     </message>
     <message>
@@ -786,8 +782,8 @@
         <translation>URI käsitsemine</translation>
     </message>
     <message>
-        <source>Cannot start bitcoin: click-to-pay handler</source>
-        <translation>Bitcoin ei käivitu: vajuta-maksa toiming</translation>
+        <source>Cannot start Nexa: click-to-pay handler</source>
+        <translation>Nexa ei käivitu: vajuta-maksa toiming</translation>
     </message>
     </context>
 <context>
@@ -1298,8 +1294,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoini tuumik</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>The BCH Unlimited developers</source>

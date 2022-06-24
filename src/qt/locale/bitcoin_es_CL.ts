@@ -262,8 +262,8 @@
         <translation>Abrir y url...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>cliente bitcoin core</translation>
+        <source>Nexa client</source>
+        <translation>cliente Nexa</translation>
     </message>
     <message>
         <source>Reindexing blocks on disk...</source>
@@ -310,8 +310,8 @@
         <translation>y recibir</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>Mostrar informacion sobre BCH Unlimited</translation>
+        <source>Show information about Nexa</source>
+        <translation>Mostrar informacion sobre Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -338,20 +338,16 @@
         <translation>Barra de pestañas</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>bitcoin core</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>Pide pagos (genera codigos QR and %1 URls)</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>&amp;Sobre BCH Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>&amp;Sobre Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
-        <translation>Modifica las opciones para BitCoin Core</translation>
+        <source>Modify configuration options for Nexa</source>
+        <translation>Modifica las opciones para Nexa</translation>
     </message>
     <message>
         <source>%1 and %2</source>
@@ -538,8 +534,8 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>bitcoin core</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
@@ -561,8 +557,8 @@
         <translation>bienvenido</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>bitcoin core</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -603,8 +599,8 @@
         <translation>experto</translation>
     </message>
     <message>
-        <source>Automatically open the Bitcoin client port on the router. This only works when your router supports UPnP and it is enabled.</source>
-        <translation>Abre automáticamente el puerto del cliente Bitcoin en el router. Esto funciona solo cuando tu router es compatible con UPnP y está habilitado.</translation>
+        <source>Automatically open the Nexa client port on the router. This only works when your router supports UPnP and it is enabled.</source>
+        <translation>Abre automáticamente el puerto del cliente Nexa en el router. Esto funciona solo cuando tu router es compatible con UPnP y está habilitado.</translation>
     </message>
     <message>
         <source>Map port using &amp;UPnP</source>
@@ -1050,7 +1046,7 @@
     </message>
     <message>
         <source>Please check the address and try again.</source>
-        <translation>Por favor, revise la dirección Bitcoin e inténtelo denuevo</translation>
+        <translation>Por favor, revise la dirección Nexa e inténtelo denuevo</translation>
     </message>
     <message>
         <source>Wallet unlock was cancelled.</source>
@@ -1072,8 +1068,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>bitcoin core</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>[testnet]</source>

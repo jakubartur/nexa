@@ -14,12 +14,8 @@
 <context>
     <name>BitcoinGUI</name>
     <message>
-        <source>Bitcoin</source>
-        <translation>Bitcoin</translation>
-    </message>
-    <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Jezrga</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>
@@ -37,15 +33,15 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Jezrga</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>
     <name>Intro</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin Jezrga</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>

@@ -298,8 +298,8 @@
         <translation>افتح &amp;URI...</translation>
     </message>
     <message>
-        <source>BCH Unlimited client</source>
-        <translation>عميل bitcion core</translation>
+        <source>Nexa client</source>
+        <translation>عميل Nexa</translation>
     </message>
     <message>
         <source>Importing blocks from disk...</source>
@@ -335,7 +335,7 @@
     </message>
     <message>
         <source>Nexa</source>
-        <translation>بت كوين</translation>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Wallet</source>
@@ -350,8 +350,8 @@
         <translation>&amp;استقبل</translation>
     </message>
     <message>
-        <source>Show information about BCH Unlimited</source>
-        <translation>  اظهار معلومات حول bitcion core</translation>
+        <source>Show information about Nexa</source>
+        <translation>  اظهار معلومات حول Nexa</translation>
     </message>
     <message>
         <source>&amp;Show / Hide</source>
@@ -390,10 +390,6 @@
         <translation>شريط أدوات علامات التبويب</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>جوهر البيت كوين</translation>
-    </message>
-    <message>
         <source>Request payments (generates QR codes and %1 URIs)</source>
         <translation>أطلب دفعات (يولد كودات الرمز المربع وبيت كوين: العناوين المعطاة)</translation>
     </message>
@@ -410,11 +406,11 @@
         <translation>فتح URI : Nexa أو طلب دفع</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>حول Bitcoin Unlimited</translation>
+        <source>&amp;About Nexa</source>
+        <translation>حول Nexa</translation>
     </message>
     <message>
-        <source>Modify configuration options for BCH Unlimited</source>
+        <source>Modify configuration options for Nexa</source>
         <translation>تغيير خيارات الإعداد لأساس Nexa</translation>
     </message>
     <message>
@@ -669,16 +665,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>جوهر البيت كوين</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>version</source>
         <translation>النسخة</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>عن جوهر البيت كوين</translation>
+        <source>About Nexa</source>
+        <translation>عن Nexa</translation>
     </message>
     <message>
         <source>Usage:</source>
@@ -700,8 +696,8 @@
         <translation>استخدام دليل بيانات مخصص:</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>جوهر البيت كوين</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -1388,11 +1384,11 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>جوهر البيت كوين</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>The BCH Unlimited developers</source>
+        <source>The Bitcoin Unlimited developers</source>
         <translation>مطوري جوهر البيت كوين</translation>
     </message>
     <message>

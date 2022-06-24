@@ -222,8 +222,8 @@
         <translation>Трака са картицама</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>O Bitcoin Coru</translation>
+        <source>&amp;About Nexa</source>
+        <translation>O Nexa</translation>
     </message>
     <message>
         <source>Up to date</source>
@@ -321,8 +321,8 @@
         <translation>верзија</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>O Bitcoin Coru</translation>
+        <source>About Nexa</source>
+        <translation>O Nexa</translation>
     </message>
     <message>
         <source>Usage:</source>

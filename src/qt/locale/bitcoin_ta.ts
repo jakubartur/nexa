@@ -145,10 +145,6 @@
         <source>&amp;Help</source>
         <translation>&amp;உதவி</translation>
     </message>
-    <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin மையம்</translation>
-    </message>
     <message numerus="yes">
         <source>%n hour(s)</source>
         <translation><numerusform>%n மணி</numerusform><numerusform>%n மணி</numerusform></translation>
@@ -289,12 +285,12 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin மையம்</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>Bitcoin மையம் பற்றி</translation>
+        <source>About Nexa</source>
+        <translation>Nexa பற்றி</translation>
     </message>
     </context>
 <context>
@@ -304,8 +300,8 @@
         <translation>நல்வரவு</translation>
     </message>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin மையம்</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
         <source>Error</source>
@@ -812,8 +808,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Bitcoin மையம்</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>

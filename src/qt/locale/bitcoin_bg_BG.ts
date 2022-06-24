@@ -34,12 +34,12 @@
 <context>
     <name>BitcoinGUI</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткойн ядро</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>&amp;About BCH Unlimited</source>
-        <translation>За Биткойн ядрото</translation>
+        <source>&amp;About Nexa</source>
+        <translation>За Nexa</translation>
     </message>
     </context>
 <context>
@@ -57,20 +57,16 @@
 <context>
     <name>HelpMessageDialog</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткойн ядро</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     <message>
-        <source>About BCH Unlimited</source>
-        <translation>За Биткойн ядрото</translation>
+        <source>About Nexa</source>
+        <translation>За Nexa</translation>
     </message>
     </context>
 <context>
     <name>Intro</name>
-    <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткойн ядро</translation>
-    </message>
     </context>
 <context>
     <name>OpenURIDialog</name>
@@ -120,8 +116,8 @@
 <context>
     <name>SplashScreen</name>
     <message>
-        <source>BCH Unlimited</source>
-        <translation>Биткойн ядро</translation>
+        <source>Nexa</source>
+        <translation>Nexa</translation>
     </message>
     </context>
 <context>
