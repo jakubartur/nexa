@@ -4,8 +4,8 @@ This document describes how to install and configure Nexa.
 
 # Downloading Nexa
 
-If you just want to run the Nexa software go to the 
-[Download](https://www.bitcoinunlimited.info/download) page and get the relevant 
+If you just want to run the Nexa software go to the
+[Download](https://gitlab.com/nexa/nexa/-/releases/) page and get the relevant
 files for your system.
 
 If you are moving from another Nexa compatible implementation, make sure to follow this plan before moving:
@@ -39,21 +39,20 @@ Unpack the files into a directory and run:
 
 Drag Nexa to your applications folder, and then run Nexa.
 
-# Installing Ubuntu binaries from Bitcoin Unlimited Official BU repositories
-
-If you're running an Ubuntu system you can install Bitcoin Unlimited from the official BU repository.
-The repository will provide binaries and debug symbols for 4 different architectures: i386, amd64, armhf and arm64. From a terminal do
-
-
-```sh
-sudo apt-get install software-properties-common
-sudo add-apt-repository ppa:bitcoin-unlimited/bu-ppa
-sudo apt-get update
-sudo apt-get install nexad nexa-qt (# on headlesse server just install nexad)
-```
-
-Once installed you can run `nexad` or `nexa-qt`
-
+[comment]: # (# Installing Ubuntu binaries from Bitcoin Unlimited Official BU repositories)
+[comment]: # ()
+[comment]: # (If you're running an Ubuntu system you can install Bitcoin Unlimited from the official BU repository.)
+[comment]: # (The repository will provide binaries and debug symbols for 4 different architectures: i386, amd64, armhf and arm64. From a terminal do)
+[comment]: # ()
+[comment]: # ()
+[comment]: # (```sh)
+[comment]: # (sudo apt-get install software-properties-common)
+[comment]: # (sudo add-apt-repository ppa:bitcoin-unlimited/bu-ppa)
+[comment]: # (sudo apt-get update)
+[comment]: # (sudo apt-get install nexad nexa-qt (# on headlesse server just install nexad))
+[comment]: # (```)
+[comment]: # ()
+[comment]: # (Once installed you can run `nexad` or `nexa-qt`)
 
 
 # Building Nexa from source
@@ -76,16 +75,6 @@ sudo apt-get install git build-essential libtool autotools-dev automake pkg-conf
 
 ## optional: only needed if you want nexa-qt
 sudo apt-get install qttools5-dev-tools qttools5-dev libprotobuf-dev protobuf-compiler libqrencode-dev
-
-## optional: only needed if your wallet use the old format
-## this not needed if your wallet will use the new
-## format, or if you're not going to use a wallet at all
-sudo apt-get install software-properties-common
-sudo add-apt-repository ppa:bitcoin-unlimited/bu-ppa
-sudo apt-get update
-sudo apt-get install libdb4.8-dev libdb4.8++-dev
-```
-
 
 ## Fetching the code and compile it
 

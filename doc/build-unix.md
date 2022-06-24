@@ -250,7 +250,9 @@ scanelf -e ./nexad
 
 If you want to build statically linked binaries so that you could compile in one machine
 and deploy in same parch/platform boxes without the need of installing all the dependencies
-just follow these steps. You will need to install `curl`.
+just follow these steps. You will need to install `curl` and `bison` via apt. The former is
+needed to fetch the source code of all the depends packages, the latter is needed to build
+the Qt library from source.
 
 ```bash
 git clone https://gitlab.com/nexa/nexa.git nexa

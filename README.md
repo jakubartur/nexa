@@ -1,4 +1,4 @@
-[Website](https://www.nexa.org)  | [Download](https://www.nexa.org/download) | [Setup](README.md)   |   [Miner](doc/miner.md)  |  [ElectronCash](doc/bu-electrum-integration.md)  |  [UnconfirmedChains](doc/unconfirmedTxChainLimits.md)
+[Website](https://www.nexa.org) | [Download](https://gitlab.com/nexa/nexa/-/releases) | [Setup](README.md) | [Miner](doc/miner.md) | [ElectronCash](doc/bu-electrum-integration.md)
 
 [![Build Status](https://gitlab.com/nexa/nexa/badges/dev/pipeline.svg?key_text=Build%20Status%20%28dev%29&key_width=110)](https://gitlab.com/nexa/nexa/-/pipelines)
 
