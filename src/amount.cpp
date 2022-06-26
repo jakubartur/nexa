@@ -30,7 +30,11 @@ CAmount CFeeRate::GetFee(size_t nSize) const
 std::string CFeeRate::ToString() const { return strprintf("%d sat/KB", nSatoshisPerK); }
 CAmount CFeeRate::GetDust() const
 {
+#ifdef ENABLE_WALLET
     CAmount dust = txWalletDust.Value();
+#else
+    CAmount dust = 0;
+#endif
     // If dust has not been configured, then
     // "Dust" is defined in terms of CTransaction::minRelayTxFee, which has units satoshis-per-kilobyte.
     // If you'd pay more than 1/3 in fees to spend something, then we consider it dust.

@@ -1031,6 +1031,7 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                 }
             }
         }
+#ifdef ENABLE_WALLET
         // We calculate the recommended fee by looking at what's in the mempool.  This starts at 0 though for an
         // empty mempool.  So set the minimum "absurd" fee to 10000 satoshies per byte.  If for some reason fees rise
         // above that, you can specify up to 100x what other txns are paying in the mempool
@@ -1047,6 +1048,7 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                     strprintf("%d > %d", nFees, std::max((int64_t)100L * nSize, maxTxFeeTweak.Value()) * 100));
             }
         }
+#endif
 
         // Check again against just the consensus-critical mandatory script
         // verification flags, in case of bugs in the standard flags that cause
