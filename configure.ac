@@ -498,7 +498,7 @@ case $host in
          dnl the user (--without-wallet or --without-gui for example).
 
          openssl_prefix=`$BREW --prefix openssl 2>/dev/null`
-         bdb_prefix4=`$BREW --prefix berkeley-db4 2>/dev/null`
+         gmp_prefix=`$BREW --prefix gmp 2>/dev/null`
          bdb_prefix=`$BREW --prefix berkeley-db 2>/dev/null`
          qt5_prefix=`$BREW --prefix qt5 2>/dev/null`
          if test x$openssl_prefix != x; then
@@ -506,16 +506,19 @@ case $host in
            export PKG_CONFIG_PATH
          fi
          if test x$enable_wallet != xno; then
-           if test x$bdb_prefix4 != x && $BREW list --versions berkeley-db@4 >/dev/null; then
-             CPPFLAGS="$CPPFLAGS -I$bdb_prefix4/include"
-             LIBS="$LIBS -L$bdb_prefix4/lib"
-	   elif test x$bdb_prefix != x && $BREW list --versions berkeley-db >/dev/null; then
+	   if test x$bdb_prefix != x && $BREW list --versions berkeley-db >/dev/null; then
              CPPFLAGS="$CPPFLAGS -I$bdb_prefix/include"
              LIBS="$LIBS -L$bdb_prefix/lib"
            fi
          fi
          if test x$qt5_prefix != x; then
            PKG_CONFIG_PATH="$qt5_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
+           export PKG_CONFIG_PATH
+         fi
+         if test x$gmp_prefix != x; then
+           CPPFLAGS="$CPPFLAGS -I$gmp_prefix/include"
+           LIBS="$LIBS -L$gmp_prefix/lib"
+           PKG_CONFIG_PATH="$gmp_prefix/lib/pkgconfig:$PKG_CONFIG_PATH"
            export PKG_CONFIG_PATH
          fi
        fi

@@ -16,7 +16,7 @@ Then install [Homebrew](http://brew.sh).
 ## Dependencies
 
 ```bash
-brew install automake berkeley-db4 libtool boost --c++11 miniupnpc openssl pkg-config protobuf --c++11 qt5 libevent
+brew install automake berkeley-db libtool boost miniupnpc openssl pkg-config protobuf qt5 libevent gmp
 ```
 
 See [dependencies.md](dependencies.md) for a complete overview.
@@ -27,7 +27,7 @@ If you want to build the disk image with `make deploy` (.dmg / optional), you ne
 brew install librsvg
 ```
 
-NOTE: Must build with QT 5.3 or higher. Building with Qt4 is not supported.
+NOTE: Must build with QT 5.9 or higher. Building with Qt4 is not supported.
 
 ## Build Nexa
 
