@@ -803,17 +803,19 @@ int main(int argc, char *argv[])
     }
     SelectParams(ChainNameFromCommandLine());
 
+    // Launch miner threads
     int nThreads = GetArg("-cpus", 1);
     boost::thread_group minerThreads;
     printf("Running on %d CPUs\n", nThreads);
     for (int i = 0; i < nThreads; i++)
         minerThreads.create_thread(MinerThread);
 
-    try
+    // Start loop which checks whether we have a new mining candidate
+    bool fWait = true;
+    uint64_t nStartTime = 0;
+    do
     {
-        bool fWait = true;
-        uint64_t nStartTime = 0;
-        do
+        try
         {
             // only check for new candidates every 2 seconds, or if the bestblockhash has changed.
             if ((GetTimeMillis() - nStartTime > 2000) || FoundNewBlock(fWait))
@@ -822,16 +824,18 @@ int main(int argc, char *argv[])
                 fWait = CheckForNewMiningCandidate(fWait);
             }
             MilliSleep(100);
+        }
+        catch (const std::exception &e)
+        {
+            PrintExceptionContinue(&e, "CommandLineRPC()");
+            MilliSleep(1000);
+        }
+        catch (...)
+        {
+            PrintExceptionContinue(nullptr, "CommandLineRPC()");
+            MilliSleep(1000);
+        }
+    } while (fWait);
 
-        } while (fWait);
-    }
-    catch (const std::exception &e)
-    {
-        PrintExceptionContinue(&e, "CommandLineRPC()");
-    }
-    catch (...)
-    {
-        PrintExceptionContinue(nullptr, "CommandLineRPC()");
-    }
     return ret;
 }
