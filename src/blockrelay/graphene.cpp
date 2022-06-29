@@ -872,6 +872,8 @@ double CGrapheneBlockData::average(std::map<int64_t, uint64_t> &map)
 double CGrapheneBlockData::computeTotalBandwidthSavingsInternal() EXCLUSIVE_LOCKS_REQUIRED(cs_graphenestats)
 {
     AssertLockHeld(cs_graphenestats);
+    if ((nGrapheneSize() + nTotalMemPoolInfoBytes()) >= nOriginalSize())
+        return (double)0;
 
     return double(nOriginalSize() - nGrapheneSize() - nTotalMemPoolInfoBytes());
 }
@@ -904,7 +906,10 @@ double CGrapheneBlockData::compute24hAverageCompressionInternal(
     if (nOriginalSizeTotal > 0)
         nCompressionRate = 100 - (100 * (double)(nGrapheneSizeTotal + nMemPoolInfoSize) / nOriginalSizeTotal);
 
-    return nCompressionRate;
+    if (nCompressionRate > 0)
+        return nCompressionRate;
+    else
+        return (double)0;
 }
 
 double CGrapheneBlockData::compute24hInboundRerequestTxPercentInternal() EXCLUSIVE_LOCKS_REQUIRED(cs_graphenestats)
