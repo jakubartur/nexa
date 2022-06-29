@@ -22,8 +22,6 @@ workflow:
         - if: $CI_COMMIT_TAG
         - if: $CI_COMMIT_BRANCH == "dev"
 
-image: bchunlimited/nexa:ubuntu20.04
-
 stages:
     - static_checks
     - build_depends
@@ -34,7 +32,11 @@ cache: &global_cache_settings
     paths:
         - ccache/
 
-.ccache_scripts:
+.ubuntu_base:
+    image: bchunlimited/nexa:ubuntu20.04
+
+.ubuntu_ccache_scripts:
+    extends: .ubuntu_base
     before_script:
         - mkdir -p ccache
         - export CCACHE_BASEDIR=${PWD}
@@ -43,15 +45,15 @@ cache: &global_cache_settings
         - ccache --zero-stats || true
 
 # Linting
-.cache-linting:
-    extends: .ccache_scripts
+.ubuntu_cache-linting:
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: linting_cache
 
 check-formatting:
     stage: static_checks
-    extends: .cache-linting
+    extends: .ubuntu_cache-linting
     needs: []
     script:
         - ./autogen.sh
@@ -60,7 +62,7 @@ check-formatting:
 
 # x86_64 Linux + deps as via system lib
 .cache-ubuntu-nodeps:
-    extends: .ccache_scripts
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: ubuntu_cache-nodeps
@@ -108,7 +110,7 @@ build-ubuntu-nodeps-qt:
 
 # Linux 64 bit, source deps
 .cache-ubuntu:
-    extends: .ccache_scripts
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: ubuntu_cache
@@ -161,6 +163,7 @@ build-ubuntu:
             - ./src/test-suite.log
 
 build-ubuntu-electrscash:
+    extends: .ubuntu_base
     stage: build
     cache:
       paths:
@@ -199,6 +202,7 @@ build-ubuntu-electrscash:
             - ./build/src/electrscash
 
 test-ubuntu-benchmarks:
+    extends: .ubuntu_base
     stage: benchmark_tests
     #extends: .cache-ubuntu
     needs: ["build-ubuntu-nodeps"]
@@ -209,7 +213,7 @@ test-ubuntu-benchmarks:
 
 # nexad clang (no depend, only system lib installed via apt)
 .cache-ubuntu-clang:
-    extends: .ccache_scripts
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: ubuntu_cache_clang
@@ -245,7 +249,7 @@ build-ubuntu-clang:
 
 # ARM64
 .cache-arm-64:
-    extends: .ccache_scripts
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: arm_cache-64
@@ -280,7 +284,7 @@ build-arm-64:
 
 # ARM32
 .cache-arm-32:
-    extends: .ccache_scripts
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: arm_cache-32
@@ -315,7 +319,7 @@ build-arm-32:
 
 # Win64
 .cache-win-64:
-    extends: .ccache_scripts
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: win_cache-64
@@ -350,7 +354,7 @@ build-win-64:
 
 # OSX
 .cache-osx:
-    extends: .ccache_scripts
+    extends: .ubuntu_ccache_scripts
     cache:
         <<: *global_cache_settings
         key: osx_cache
@@ -392,3 +396,66 @@ build-osx:
         paths:
             - build/config.log
             - depends/x86_64-apple-darwin19/share/config.site
+
+
+###### Debian CI tests
+
+.debian_base:
+    image: bchunlimited/gitlabci:debian11
+
+.debian_ccache_scripts:
+    extends: .debian_base
+    before_script:
+        - mkdir -p ccache
+        - export CCACHE_BASEDIR=${PWD}
+        - export CCACHE_DIR=${PWD}/ccache
+        - export CCACHE_COMPILERCHECK=content
+        - ccache --zero-stats || true
+
+ # x86_64 Debian + deps as via system lib
+.cache-debian-nodeps:
+    extends: .debian_ccache_scripts
+    cache:
+        <<: *global_cache_settings
+        key: debian_cache-nodeps
+
+build-debian-nodeps:
+    stage: build
+    extends: .cache-debian-nodeps
+    needs: []
+    script:
+        - ./autogen.sh
+        - mkdir build; cd build
+        - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
+        - make -j `nproc`
+        - ccache --show-stats
+        - make check
+    artifacts:
+        when: always
+        paths:
+            - ./build/src/nexad
+            - ./build/src/nexa-cli
+            - ./build/src/nexa-miner
+            - ./build/src/nexa-tx
+            - ./build/src/test/test_nexa
+            - ./build/src/bench/bench_nexa
+            - ./build/src/test/*.log
+            - ./src/test/*.log
+            - ./src/test-suite.log
+
+build-debian-nodeps-qt:
+    stage: build
+    extends: .cache-debian-nodeps
+    needs: []
+    script:
+        - ./autogen.sh
+        - mkdir build; cd build
+        - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-tests
+        - make -j `nproc`
+        - ccache --show-stats
+    artifacts:
+        paths:
+            - ./build/src/nexad
+            - ./build/src/nexa-cli
+            - ./build/src/nexa-miner
+            - ./build/src/nexa-tx
