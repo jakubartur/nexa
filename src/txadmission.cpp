@@ -645,6 +645,10 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
         {
             debugger->AddInvalidReason(state.GetRejectReason());
             state = CValidationState();
+            debugger->mineable = false;
+            // assume a tx that does not pass validation is non standard and not future mineable
+            debugger->futureMineable = false;
+            debugger->standard = false;
         }
         else
         {
@@ -685,6 +689,10 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
         if (debugger)
         {
             debugger->AddInvalidReason(reason);
+            // if we require standard, a non standard tx is not mineable or future mineable
+            debugger->mineable = false;
+            debugger->futureMineable = false;
+            debugger->standard = false;
         }
         else
         {
@@ -706,6 +714,7 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
         if (debugger)
         {
             debugger->AddInvalidReason("non-final");
+            // non final is not mineable now but may be in the future
             debugger->mineable = false;
         }
         else
@@ -722,6 +731,7 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
             {
                 debugger->AddInvalidReason("txn-undersize");
                 debugger->mineable = false;
+                debugger->futureMineable = false;
             }
             else
             {
@@ -754,11 +764,11 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
     {
         if (debugger)
         {
-            debugger->mineable = false;
-            debugger->futureMineable = false;
             // debugger->AddInvalidReason(
             // "tx-mempool-conflict: " + txin.prevout.hash.ToString() + ":" + std::to_string(txin.prevout.n));
             debugger->AddInvalidReason("txn-txpool-conflict");
+            debugger->mineable = false;
+            debugger->futureMineable = false;
         }
         else
         {
@@ -807,9 +817,11 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                     {
                         if (debugger)
                         {
+                            debugger->AddInvalidReason("input-does-not-exist: " + txin.prevout.hash.ToString());
+                            // missing inputs are not mineable now. it may be mineable
+                            // in the future but it is not certain, assume it will not be
                             debugger->mineable = false;
                             debugger->futureMineable = false;
-                            debugger->AddInvalidReason("input-does-not-exist: " + txin.prevout.hash.ToString());
                         }
                         // fMissingInputs and not state.IsInvalid() is used to detect this condition, don't set
                         // state.Invalid()
@@ -825,6 +837,10 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                     if (debugger)
                     {
                         debugger->AddInvalidReason("inputs-are-missing");
+                        // missing inputs are not mineable now. it may be mineable
+                        // in the future but it is not certain, assume it will not be
+                        debugger->mineable = false;
+                        debugger->futureMineable = false;
                         return false;
                     }
                     else
@@ -854,6 +870,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                 if (debugger)
                 {
                     debugger->AddInvalidReason("non-BIP68-final");
+                    // not mineable now but should be in the future
+                    debugger->mineable = false;
                 }
                 else
                 {
@@ -869,6 +887,10 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
             {
                 debugger->AddInvalidReason("bad-txns-nonstandard-inputs");
                 debugger->standard = false;
+                // if we require standard and this tx is not standard, we can not
+                // mine now or in the future either
+                debugger->mineable = false;
+                debugger->futureMineable = false;
             }
             else
             {
@@ -929,7 +951,9 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                 if (debugger)
                 {
                     debugger->AddInvalidReason("bad-txns-too-many-sigchecks");
+                    // not mineable now or in the future under the current ruleset
                     debugger->mineable = false;
+                    debugger->futureMineable = false;
                 }
                 else
                 {
@@ -957,6 +981,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                 debugger->AddInvalidReason("insufficient-fee: need " + std::to_string(minRelayTxFee.GetFee(nSize)) +
                                            " was only " + std::to_string(nModifiedFees));
                 debugger->AddInvalidReason("minimum-fee: " + std::to_string(minRelayTxFee.GetFee(nSize)));
+                // fees are not a reason to mark something as not mineable, keep current mineable and futureMineable
+                // values unchanged
                 debugger->standard = false;
             }
             else
@@ -1006,6 +1032,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                     if (debugger)
                     {
                         debugger->AddInvalidReason("rate limited free transaction");
+                        // fees are not a reason to mark something as not mineable, keep current mineable and
+                        // futureMineable values unchanged
                         debugger->standard = false;
                     }
                     else
@@ -1022,6 +1050,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
                 if (debugger)
                 {
                     debugger->AddInvalidReason("mempool min fee not met");
+                    // fees are not a reason to mark something as not mineable, keep current mineable and futureMineable
+                    // values unchanged
                     debugger->standard = false;
                 }
                 else
@@ -1040,6 +1070,8 @@ bool ParallelAcceptToMemoryPool(Snapshot &ss,
             if (debugger)
             {
                 debugger->AddInvalidReason("absurdly-high-fee");
+                // fees are not a reason to mark something as not mineable, keep current mineable and futureMineable
+                // values unchanged
                 debugger->standard = false;
             }
             else
