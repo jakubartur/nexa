@@ -924,6 +924,8 @@ double CThinBlockData::average(std::map<int64_t, uint64_t> &map)
 double CThinBlockData::computeTotalBandwidthSavingsInternal() EXCLUSIVE_LOCKS_REQUIRED(cs_thinblockstats)
 {
     AssertLockHeld(cs_thinblockstats);
+    if ((nThinSize() + nTotalBloomFilterBytes()) >= nOriginalSize())
+        return (double)0;
 
     return double(nOriginalSize() - nThinSize() - nTotalBloomFilterBytes());
 }
@@ -956,7 +958,10 @@ double CThinBlockData::compute24hAverageCompressionInternal(
     if (nOriginalSizeTotal > 0)
         nCompressionRate = 100 - (100 * (double)(nThinSizeTotal + nBloomFilterSize) / nOriginalSizeTotal);
 
-    return nCompressionRate;
+    if (nCompressionRate > 0)
+        return nCompressionRate;
+    else
+        return (double)0;
 }
 
 double CThinBlockData::compute24hInboundRerequestTxPercentInternal() EXCLUSIVE_LOCKS_REQUIRED(cs_thinblockstats)

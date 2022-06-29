@@ -722,6 +722,8 @@ double CCompactBlockData::average(std::map<int64_t, uint64_t> &map)
 double CCompactBlockData::computeTotalBandwidthSavingsInternal() EXCLUSIVE_LOCKS_REQUIRED(cs_compactblockstats)
 {
     AssertLockHeld(cs_compactblockstats);
+    if (nOriginalSize() >= nCompactSize())
+        return (double)0;
 
     return double(nOriginalSize() - nCompactSize());
 }
@@ -745,7 +747,10 @@ double CCompactBlockData::compute24hAverageCompressionInternal(
     if (nOriginalSizeTotal > 0)
         nCompressionRate = 100 - (100 * (double)(nCompactSizeTotal) / nOriginalSizeTotal);
 
-    return nCompressionRate;
+    if (nCompressionRate > 0)
+        return nCompressionRate;
+    else
+        return (double)0;
 }
 
 double CCompactBlockData::compute24hInboundRerequestTxPercentInternal() EXCLUSIVE_LOCKS_REQUIRED(cs_compactblockstats)
