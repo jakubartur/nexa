@@ -80,6 +80,9 @@ QString TransactionDesc::toHTML(CWallet *wallet, CWalletTx &wtx, TransactionReco
     if (wtx.IsCoinBase())
     {
         strHTML += "<b>" + tr("Source") + ":</b> " + tr("Generated") + "<br>";
+        strHTML += "<b>" + tr("To") + ":</b> ";
+        strHTML += GUIUtil::HtmlEscape(rec->addresses.begin()->first);
+        strHTML += "<br>";
     }
     else if (wtx.mapValue.count("from") && !wtx.mapValue["from"].empty())
     {

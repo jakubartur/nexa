@@ -66,11 +66,19 @@ QList<TransactionRecord> TransactionRecord::decomposeTransaction(const CWallet *
                     if (labelPublic != "")
                         continue;
                 }
-
                 if (wtx.IsCoinBase())
                 {
                     // Generated
                     sub.type = TransactionRecord::Generated;
+
+                    if (ExtractDestination(txout.scriptPubKey, address))
+                    {
+                        if (labelPublic == "")
+                            sub.addresses.push_back(std::make_pair(EncodeDestination(address), txout.scriptPubKey));
+                        else
+                            sub.addresses.push_back(std::make_pair(
+                                "<" + labelPublic + "> " + EncodeDestination(address), txout.scriptPubKey));
+                    }
                 }
                 else if (ExtractDestination(txout.scriptPubKey, address) && wallet->IsMine(address))
                 {
