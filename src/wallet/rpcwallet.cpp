@@ -595,13 +595,9 @@ UniValue signmessage(const UniValue &params, bool fHelp)
     if (!IsValidDestination(dest))
         throw JSONRPCError(RPC_TYPE_ERROR, "Invalid coin address");
 
-    const CKeyID *keyID = std::get_if<CKeyID>(&dest);
-    if (!keyID)
-        throw JSONRPCError(RPC_TYPE_ERROR, "Address does not refer to key");
-
     CKey key;
-    if (!pwalletMain->GetKey(*keyID, key))
-        throw JSONRPCError(RPC_WALLET_ERROR, "Private key not available");
+    if (!pwalletMain->GetKey(dest, key))
+        throw JSONRPCError(RPC_WALLET_ERROR, "Private key not available, or address has no single key");
 
     vector<unsigned char> vchSig = signmessage(strMessage, key);
     if (vchSig.empty())
