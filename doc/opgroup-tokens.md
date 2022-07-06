@@ -272,13 +272,16 @@ This data should only be included in one (presumably, but not necessarily, the f
 
 The contents of the OP_RETURN output are defined as null separated strings:
 
-`<ticker> <0> <name> <0> <uri> <0> <double SHA256 of dictionary in the uri json document (see below)>`
+`<ticker> <0> <name> <0> <uri> <0> <binary double SHA256 of dictionary in the uri json document (see below)>`
 
 It is possible to have an empty field.  For example,
 
 `MYCOIN\0\0http://www.mycoin.com/info`
 
 The `<URI>` field supports http and https protocols and references an "application/json" type document in [I-JSON format](https://tools.ietf.org/html/rfc7493) with fields defined as follows:
+
+The <ver> field is the version of these contents.  It starts with the text character "1".
+
 
 ```json
 [{
@@ -293,9 +296,9 @@ The `<URI>` field supports http and https protocols and references an "applicati
 "<signature>"]
 ```
 
-**signature**: The signature field contains the signature of the preceding dictionary using the group identifier, from open brace to close brace inclusive.  Validators must check this signature against the exact bytes of the document so that spacing is not changed. **[DISCUSSION: how hard is this to implement in various languages?  Is there a better way?]**   The signature algorithm is what is implemented in the Satoshi client's "signmessage" RPC function.  The following description is informative, not authorative:
+**signature**: The signature field contains the signature of the preceding dictionary using a public key extracted from the first signed input in this transaction, from open brace to close brace inclusive.  Validators must check this signature against the exact bytes of the document so that spacing is not changed. **[DISCUSSION: how hard is this to implement in various languages?  Is there a better way?]**   The signature algorithm is what is implemented in the Satoshi client's "signmessage" RPC function.  The following description is informative, not authorative:
 * Compute the message hash by using the double SHA-256 of the string "Bitcoin Signed Message:\n" + message
-* Create a Schnorr signature
+* Create an ECDSA signature
 * Convert to text using base 64 encoding with the following charset: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
 *[Wallets and users use this signature to show that the creator of the token is affirming the information in this json document.  And this signature also proves that this document and URL is associated with this group.  By hosting this document, the owner of a domain name is associated with this token.  It is recommended that token issuers use https for the uri so man-in-the-middle attacks cannot be used to make it look like your domain is hosting a token description document]*
 

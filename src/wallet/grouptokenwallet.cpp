@@ -724,7 +724,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
         throw std::runtime_error(
             "token [new, mint, melt, send] \n"
             "\nToken functions.\n"
-            "'new' creates a new token type. args: authorityAddress\n"
+            "'new' creates a new token type. args: [address] [ticker name [descUrl descHash]]\n"
             "'mint' creates new tokens. args: groupId address quantity\n"
             "'melt' removes tokens from circulation. args: groupId quantity\n"
             "'balance' reports quantity of this token. args: groupId [address]\n"
@@ -736,6 +736,10 @@ extern UniValue token(const UniValue &params, bool fHelp)
             "2. \"address\"     (string, required) the destination address\n"
             "3. \"quantity\"    (numeric, required) the quantity desired\n"
             "4. \"data\"        (number, 0xhex, or string) binary data\n"
+            "5. \"ticker\"      (string, optional) the token's preferred ticker symbol\n"
+            "6. \"name\"        (string, optional) the name of the token\n"
+            "7. \"descUrl\"    (string, optional) the url of the token description json document\n"
+            "8. \"descHash\"   (string, optional) the hash of the token description json document\n"
             "\nResult:\n"
             "\n"
             "\nExamples:\n"
@@ -1006,17 +1010,26 @@ extern UniValue token(const UniValue &params, bool fHelp)
             authDest = DecodeDestination(params[curparam].get_str(), Params());
             if (authDest == CTxDestination(CNoDestination()))
             {
+                CPubKey authKey;
+                authKeyReservation.GetReservedKey(authKey);
+                authDest = ScriptTemplateDestination(P2pktOutput(authKey));
+            }
+            else
+            {
+                curparam++;
+            }
+
+            // If token description info is supplied then parse it and create an OP_RETURN output.  Otherwise
+            // do not create an OP_RETURN output
+            if (curparam < params.size())
+            {
                 auto desc = ParseGroupDescParams(params, curparam);
                 if (desc.size()) // Add an op_return if there's a token desc doc
                 {
                     opretScript = BuildTokenDescScript(desc);
                     outputs.push_back(CRecipient{opretScript, 0, false});
                 }
-                CPubKey authKey;
-                authKeyReservation.GetReservedKey(authKey);
-                authDest = ScriptTemplateDestination(P2pktOutput(authKey));
             }
-            curparam++;
         }
 
         CAmount totalNeeded = 0;
@@ -1037,6 +1050,26 @@ extern UniValue token(const UniValue &params, bool fHelp)
         UniValue ret(UniValue::VOBJ);
         ret.pushKV("groupIdentifier", EncodeGroupToken(grpID));
         ret.pushKV("transaction", wtx.GetIdem().GetHex());
+        auto spentScript = chosenCoins[0].GetScriptPubKey();
+        txnouttype whichType;
+        std::vector<std::vector<unsigned char> > solutionsRet;
+        // Need to solve for the coin I used to extract the pubkey so I can tell the creator what address to
+        // use to sign coins
+        std::string addr;
+        if (Solver(spentScript, whichType, solutionsRet))
+        {
+            if (whichType == TX_PUBKEYHASH)
+            {
+                addr = EncodeCashAddr(solutionsRet[0], CashAddrType::PUBKEY_TYPE, Params());
+            }
+            else if (whichType == TX_SCRIPT_TEMPLATE)
+            {
+                CScript ug = UngroupedScriptTemplate(spentScript);
+                ScriptTemplateDestination d(ug);
+                addr = EncodeDestination(d);
+            }
+            ret.pushKV("tokenDescriptorSigningAddress", addr);
+        }
         return ret;
     }
 

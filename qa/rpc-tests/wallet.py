@@ -61,6 +61,34 @@ class WalletTest (BitcoinTestFramework):
         self.is_network_split=False
         self.sync_blocks()
 
+    def signmessageTest(self):
+        n = self.nodes[0]
+        n2 = self.nodes[1]
+        addr = n.getnewaddress("p2pkt")
+        addr2 = n.getnewaddress("p2pkt")
+        sig = n.signmessage(addr, "test message")
+        assert n.verifymessage(addr, sig, "test message") == True
+        assert n.verifymessage(addr, sig, "test messag") == False
+        assert n.verifymessage(addr2, sig, "test message") == False
+
+        # Node that didn't sign should be able to verify as well
+        assert n2.verifymessage(addr, sig, "test message") == True
+        assert n2.verifymessage(addr, sig, "test messag") == False
+        assert n2.verifymessage(addr2, sig, "test message") == False
+
+        addr = n.getnewaddress("p2pkh")
+        addr2 = n.getnewaddress("p2pkh")
+        sig = n.signmessage(addr, "test message")
+        assert n.verifymessage(addr, sig, "test message") == True
+        assert n.verifymessage(addr, sig, "test messag") == False
+        assert n.verifymessage(addr2, sig, "test message") == False
+
+        # Node that didn't sign should be able to verify as well
+        assert n2.verifymessage(addr, sig, "test message") == True
+        assert n2.verifymessage(addr, sig, "test messag") == False
+        assert n2.verifymessage(addr2, sig, "test message") == False
+
+
     def run_test (self):
         addrType = self.options.addrType
 
@@ -87,6 +115,8 @@ class WalletTest (BitcoinTestFramework):
         assert_equal(self.nodes[0].getbalance("*"), COINBASE_REWARD)
         assert_equal(self.nodes[1].getbalance("*"), COINBASE_REWARD)
         assert_equal(self.nodes[2].getbalance("*"), 0)
+
+        self.signmessageTest()
 
         # Check that only first and second nodes have UTXOs
         assert_equal(len(self.nodes[0].listunspent()), 1)

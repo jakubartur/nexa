@@ -37,7 +37,7 @@ class GroupTokensTest (BitcoinTestFramework):
         self.is_network_split = False
         self.sync_blocks()
 
-    def checkGroupNew(self, txjson):
+    def checkGroupNew(self, txjson, ticker=None, name = None, url = None, sha = None):
         hasGroupOutput = 0
         groupFlags = 0
         for t in txjson["vout"]:
@@ -46,9 +46,18 @@ class GroupTokensTest (BitcoinTestFramework):
             if "group" in t["scriptPubKey"]:
                 hasGroupOutput += 1
                 groupFlags = int(asm[1], 10)
-
         assert(hasGroupOutput == 1)
         assert(groupFlags < 0)  # verify group bit set (highest bit set causes bitcoind asm script decoder to output a negative number)
+        if ticker:
+            for t in txjson["vout"]:
+                if t["value"] == Decimal("0"): # Found the op return
+                    asm = t["scriptPubKey"]["asm"].split()
+                    tmp = hex(int(asm[2]))
+                    assert bytes.fromhex(tmp[2:])[::-1].decode() == ticker
+                    assert bytes.fromhex(asm[3]).decode() == name
+                    assert bytes.fromhex(asm[4]).decode() == url
+                    assert bytes.fromhex(asm[5])[::-1] == bytes.fromhex(sha)
+
 
     def examineTx(self, tx, node):
         txjson = node.decoderawtransaction(node.gettransaction(tx)["hex"])
@@ -169,6 +178,44 @@ class GroupTokensTest (BitcoinTestFramework):
         t = self.nodes[0].token("new", auth0Addr)
         self.checkGroupNew(self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"]))
         grp0Id = t["groupIdentifier"]
+
+        t = self.nodes[0].token("new", auth0Addr, "TICK", "NameGoesHere", "https://www.nexa.org", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
+        raw = self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"])
+        self.checkGroupNew(raw,"TICK", "NameGoesHere", "https://www.nexa.org", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
+
+        t = self.nodes[0].token("new", "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
+        self.checkGroupNew(self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"]),
+        "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
+
+        try:
+            t = self.nodes[0].token("new", "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing")
+            assert False  # bad param combination (missing - each param is optional in the spec but in the RPC if you give a url to a desc doc you need to provide the dsha256 hash of that doc)
+        except JSONRPCException as e:
+            pass
+        try:
+            t = self.nodes[0].token("new", "TICK2", "AnotherNameGoesHere")
+        except JSONRPCException as e:
+            assert False  # this param combination should work
+        try:
+            t = self.nodes[0].token("new", "TICK2")
+            assert False  # bad param combination (missing)
+        except JSONRPCException as e:
+            pass
+
+        try:
+            t = self.nodes[0].token("new", auth1Addr, "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing")
+            assert False
+        except JSONRPCException as e:
+            pass
+        try:
+            t = self.nodes[0].token("new", auth1Addr, "TICK2", "AnotherNameGoesHere")
+        except JSONRPCException as e:
+            assert False
+        try:
+            t = self.nodes[0].token("new", auth1Addr, "TICK2")
+            assert False  # bad param combination (missing)
+        except JSONRPCException as e:
+            pass
 
         # Create a group on behalf of a different node (with an authority address I don't control)
         t = self.nodes[0].token("new", auth1Addr)
