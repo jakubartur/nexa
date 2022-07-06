@@ -47,6 +47,10 @@
 #include "validation/validation.h"
 #include "validationinterface.h"
 #include "version.h"
+#ifdef ENABLE_WALLET
+#include "wallet/wallet.h"
+#include "wallet/walletdb.h"
+#endif
 
 #include <atomic>
 #include <boost/lexical_cast.hpp>
@@ -1706,9 +1710,15 @@ UniValue getaddressforms(const UniValue &params, bool fHelp)
                             "1. \"address\"    (string, required) the address\n"
                             "\nResult:\n"
                             "{\n"
-                            "\"legacy\": \"1 or 3 prefixed address\",\n"
+                            "\"legacy\": \"base58 encoding (OBSOLETE DO NOT USE)\",\n"
                             "\"nexa\": \"nexa prefixed address\",\n"
-                            "\"bitpay\": \"C or H prefixed address\"\n"
+                            "\nIf this wallet is unlocked and owns this address additional information is supplied:\n"
+                            "\"pubkey\": \"public key corresponding to this address\"\n"
+                            "\"p2pkh\": \"The pay-to-pub-key-hash address corresponding to this pubkey\"\n"
+                            "\"p2pkt\": \"The pay-to-pub-key-template address corresponding to this pubkey\"\n"
+                            "\nIf this address is a wrapped output script, the script is provided:\n"
+                            "\"outScript\": \"The disassembly of the output script specified by this address\"\n"
+                            "\"outScriptHex\": \"The hex of the output script specified by this address\"\n"
                             "}\n"
                             "\nExamples:\n" +
                             HelpExampleCli("getaddressforms", "\"address\"") +
@@ -1730,6 +1740,31 @@ UniValue getaddressforms(const UniValue &params, bool fHelp)
     UniValue node(UniValue::VOBJ);
     node.pushKV("legacy", legacyAddr);
     node.pushKV("nexa", cashAddr);
+
+#ifdef ENABLE_WALLET
+    {
+        LOCK(pwalletMain->cs_wallet);
+        if (!pwalletMain->IsLocked())
+        {
+            CKey key;
+            if (pwalletMain->GetKey(dest, key))
+            {
+                CPubKey pub = key.GetPubKey();
+                node.pushKV("pubkey", pub.GetHex());
+                node.pushKV("p2pkh", EncodeCashAddr(CTxDestination(pub.GetID()), Params()));
+                ScriptTemplateDestination sd = P2pktOutput(pub);
+                node.pushKV("p2pkt", EncodeCashAddr(sd, Params()));
+            }
+        }
+    }
+#endif
+
+    const ScriptTemplateDestination *st = std::get_if<ScriptTemplateDestination>(&dest);
+    if (st)
+    {
+        node.pushKV("outScript", st->toScript().GetAsm());
+        node.pushKV("outScriptHex", st->toScript().GetHex());
+    }
     return node;
 }
 
