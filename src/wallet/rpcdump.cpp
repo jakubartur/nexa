@@ -12,6 +12,7 @@
 #include "merkleblock.h"
 #include "rpc/server.h"
 #include "script/script.h"
+#include "script/scripttemplate.h"
 #include "script/standard.h"
 #include "sync.h"
 #include "util.h"
@@ -847,14 +848,17 @@ UniValue dumpwallet(const UniValue &params, bool fHelp)
     {
         const CKeyID &keyid = it->second;
         std::string strTime = EncodeDumpTime(it->first);
-        std::string strAddr = EncodeDestination(keyid);
+
         CKey key;
         if (pwalletMain->GetKey(keyid, key))
         {
+            ScriptTemplateDestination dest(P2pktOutput(key.GetPubKey()));
+            std::string strAddr = EncodeDestination(dest);
+
             file << strprintf("%s %s ", CBitcoinSecret(key).ToString(), strTime);
-            if (pwalletMain->mapAddressBook.count(keyid))
+            if (pwalletMain->mapAddressBook.count(dest))
             {
-                file << strprintf("label=%s", EncodeDumpString(pwalletMain->mapAddressBook[keyid].name));
+                file << strprintf("label=%s", EncodeDumpString(pwalletMain->mapAddressBook[dest].name));
             }
             else if (keyid == masterKeyID)
             {

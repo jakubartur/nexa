@@ -85,7 +85,6 @@ class GrapheneBlockTest(BitcoinTestFramework):
 
         # Node 1 generates and propagates a graphene block.
         send_to = {}
-        self.nodes[0].keypoolrefill(2)
         for i in range(10):
             send_to[self.nodes[1].getnewaddress()] = Decimal("1000000.01")
         self.nodes[0].sendmany("", send_to)
@@ -100,7 +99,6 @@ class GrapheneBlockTest(BitcoinTestFramework):
 
         # Node 2 generates and propagates a graphene block.
         send_to = {}
-        self.nodes[0].keypoolrefill(2)
         for i in range(10):
             send_to[self.nodes[2].getnewaddress()] = Decimal("1000000.01")
         self.nodes[0].sendmany("", send_to)

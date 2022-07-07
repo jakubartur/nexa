@@ -70,7 +70,6 @@ class CBTest(BitcoinTestFramework):
         # Generate and propagate blocks from a node that has bloomfiltering turned on.
         # This should work.
         send_to = {}
-        self.nodes[0].keypoolrefill(20)
         for i in range(20):
             send_to[self.nodes[1].getnewaddress()] = Decimal("100000.01")
         self.nodes[0].sendmany("", send_to)
@@ -82,7 +81,6 @@ class CBTest(BitcoinTestFramework):
         # Generate and propagate blocks from a node that does not have bloomfiltering turned on.
         # This should work.
         send_to = {}
-        self.nodes[0].keypoolrefill(20)
         for i in range(20):
             send_to[self.nodes[1].getnewaddress()] = Decimal("100000.01")
         self.nodes[0].sendmany("", send_to)
