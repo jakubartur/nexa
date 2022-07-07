@@ -2340,7 +2340,8 @@ UniValue keypoolrefill(const UniValue &params, bool fHelp)
     }
 
     EnsureWalletIsUnlocked();
-    pwalletMain->TopUpKeyPool(kpSize);
+    if (!pwalletMain->TopUpKeyPool(kpSize))
+        throw runtime_error(strprintf("Keypool is already full: %d keys", pwalletMain->GetKeyPoolSize()));
 
     if (pwalletMain->GetKeyPoolSize() < kpSize)
         throw JSONRPCError(RPC_WALLET_ERROR, "Error refreshing keypool.");

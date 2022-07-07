@@ -38,9 +38,9 @@ class KeyPoolTest(BitcoinTestFramework):
         except JSONRPCException as e:
             assert(e.error['code']==-12)
 
-        # put three new keys in the keypool
+        # top up the keypool and make the size be 4
         nodes[0].walletpassphrase('test', 12000)
-        nodes[0].keypoolrefill(3)
+        nodes[0].keypoolrefill(4)
         nodes[0].walletlock()
 
         # drain the keys
@@ -58,9 +58,9 @@ class KeyPoolTest(BitcoinTestFramework):
         except JSONRPCException as e:
             assert(e.error['code']==-12)
 
-        # refill keypool with three new addresses
+        # refill keypool with four new addresses
         nodes[0].walletpassphrase('test', 1)
-        nodes[0].keypoolrefill(3)
+        nodes[0].keypoolrefill(4)
         # test walletpassphrase timeout
         waitFor(20, lambda: nodes[0].getwalletinfo()["unlocked_until"] == 0)
         assert_equal(nodes[0].getwalletinfo()["unlocked_until"], 0)
@@ -72,19 +72,15 @@ class KeyPoolTest(BitcoinTestFramework):
         nodes[0].generate(1)
         try:
             nodes[0].generate(1)
-            raise AssertionError('Keypool should be exhausted after three addesses')
+            raise AssertionError('Keypool should be exhausted after four addesses')
         except JSONRPCException as e:
             assert(e.error['code']==-12)
-
-    # BU Removed, implemented in base class def setup_chain(self):
-    #    print("Initializing test directory "+self.options.tmpdir)
-    #    initialize_chain(self.options.tmpdir)
 
     def setup_network(self):
         self.nodes = start_nodes(1, self.options.tmpdir)
 
 if __name__ == '__main__':
-    KeyPoolTest().main(None,{"keypool":1})  # BU add limited keypool here, not across all other tests
+    KeyPoolTest().main(None,{"keypool":1})  # add limited keypool here, not across all other tests
 
 def Test():
     flags = standardFlags()

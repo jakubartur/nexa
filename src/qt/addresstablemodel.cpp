@@ -387,7 +387,10 @@ QString AddressTableModel::addRow(const QString &type,
                 return QString();
         }
         else
-            strAddress = EncodeDestination(newKey.GetID());
+        {
+            ScriptTemplateDestination dest(P2pktOutput(newKey));
+            strAddress = EncodeDestination(dest);
+        }
     }
     else
     {

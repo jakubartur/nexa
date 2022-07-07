@@ -25,6 +25,7 @@
 #include "primitives/block.h"
 #include "primitives/transaction.h"
 #include "script/script.h"
+#include "script/scripttemplate.h"
 #include "script/sign.h"
 #include "timedata.h"
 #include "txadmission.h"
@@ -3628,7 +3629,10 @@ bool CWallet::TopUpKeyPool(unsigned int kpSize)
     else
         nTargetSize = max(GetArg("-keypool", DEFAULT_KEYPOOL_SIZE), (int64_t)0);
 
-    while (setKeyPool.size() < (nTargetSize + 1))
+    if (setKeyPool.size() >= nTargetSize)
+        return false;
+
+    while (setKeyPool.size() < nTargetSize)
     {
         int64_t nEnd = 1;
         if (!setKeyPool.empty())
@@ -4251,7 +4255,8 @@ bool CWallet::InitLoadWallet()
         if (walletInstance->GetKeyFromPool(newDefaultKey))
         {
             walletInstance->SetDefaultKey(newDefaultKey);
-            if (!walletInstance->SetAddressBook(walletInstance->vchDefaultKey.GetID(), "", "receive"))
+            ScriptTemplateDestination dest(P2pktOutput(newDefaultKey));
+            if (!walletInstance->SetAddressBook(dest, "", "receive"))
                 return InitError(_("Cannot write default address") += "\n");
         }
 

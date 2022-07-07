@@ -4,7 +4,7 @@
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
 from test_framework.test_framework import BitcoinTestFramework
-from test_framework.util import (start_nodes, start_node, assert_equal, bitcoind_processes, assert_raises_rpc_error)
+from test_framework.util import (start_nodes, start_node, assert_equal, bitcoind_processes, assert_raises_rpc_error, JSONRPCException)
 from test_framework.util import standardFlags
 import pdb
 
@@ -13,6 +13,7 @@ def read_dump(file_name, addrs, hd_master_addr_old):
     Read the given dump, count the addrs that match, count change and reserve.
     Also check that the old hd_master is inactive
     """
+
     with open(file_name) as inputfile:
         found_addr = 0
         found_addr_chg = 0
@@ -67,37 +68,57 @@ class WalletDumpTest(BitcoinTestFramework):
     def run_test (self):
         tmpdir = self.options.tmpdir
 
+        # test keypool refill
+        self.nodes[0].keypoolrefill()
+        try:
+            self.nodes[0].keypoolrefill()
+            assert False
+        except JSONRPCException as e:
+            assert "Keypool is already full: 90 keys" in str(e)
+
         # generate 20 addresses to compare against the dump
         test_addr_count = 20
         addrs = []
         for i in range(0,test_addr_count):
-            addr = self.nodes[0].getnewaddress("p2pkh")
+            addr = self.nodes[0].getnewaddress()
             vaddr= self.nodes[0].validateaddress(addr) #required to get hd keypath
             addrs.append(vaddr)
-        # Should be a no-op:
-        self.nodes[0].keypoolrefill()
+
+        # There should be one address short in the keypool so refilling the keypool should succeed:
+        try:
+            self.nodes[0].keypoolrefill()
+            assert True
+        except JSONRPCException as e:
+            assert False
+
 
         # dump unencrypted wallet
         self.nodes[0].dumpwallet(tmpdir + "/node0/wallet.unencrypted.dump")
-
         found_addr, found_addr_chg, found_addr_rsv, hd_master_addr_unenc = read_dump(tmpdir + "/node0/wallet.unencrypted.dump", addrs, None)
+
         assert_equal(found_addr, test_addr_count)  # all keys must be in the dump
         assert_equal(found_addr_chg, 50)  # 50 blocks where mined
-        assert_equal(found_addr_rsv, 90 + 1)  # keypool size (TODO: fix off-by-one)
+        assert_equal(found_addr_rsv, 90)
 
         #encrypt wallet, restart, unlock and dump
         self.nodes[0].encryptwallet('test')
         bitcoind_processes[0].wait()
         self.nodes[0] = start_node(0, self.options.tmpdir, self.extra_args[0])
         self.nodes[0].walletpassphrase('test', 10)
+
         # Should be a no-op:
-        self.nodes[0].keypoolrefill()
+        try:
+            self.nodes[0].keypoolrefill()
+            assert False
+        except JSONRPCException as e:
+            assert "Keypool is already full: 90 keys" in str(e)
+
         self.nodes[0].dumpwallet(tmpdir + "/node0/wallet.encrypted.dump")
 
         found_addr, found_addr_chg, found_addr_rsv, hd_master_addr_enc = read_dump(tmpdir + "/node0/wallet.encrypted.dump", addrs, hd_master_addr_unenc)
         assert_equal(found_addr, test_addr_count)
-        assert_equal(found_addr_chg, 90 + 1 + 50)  # old reserve keys are marked as change now
-        assert_equal(found_addr_rsv, 90 + 1)  # keypool size (TODO: fix off-by-one)
+        assert_equal(found_addr_chg, 90 + 50)  # old reserve keys are marked as change now
+        assert_equal(found_addr_rsv, 90)
 
         # Overwriting should fail
         assert_raises_rpc_error(-8, "already exists", self.nodes[0].dumpwallet, tmpdir + "/node0/wallet.unencrypted.dump")

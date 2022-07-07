@@ -82,7 +82,6 @@ class AdaptiveBlockSizeTest(BitcoinTestFramework):
         return (count, size)
 
     def MineBlock(self, node, TEST_BLOCK_SIZE, NUM_ADDRS, DATA_SIZE):
-        node.keypoolrefill(NUM_ADDRS)
         addrs = [node.getnewaddress() for _ in range(NUM_ADDRS)]
 
         legacyAddrs = [node.getaddressforms(x)["legacy"] for x in addrs]
