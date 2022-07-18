@@ -241,13 +241,13 @@ bool SignatureHashNexa(const CScript &scriptCode,
     size_t *nHashedOut);
 
 uint256 SignatureHashBitcoin(const CScript &scriptCode,
-    const CTransaction &txTo,
+    const SatoshiTransaction &txTo,
     unsigned int nIn,
     const uint8_t sigHashType,
     size_t *nHashedOut = nullptr);
 
 uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
-    const CTransaction &txTo,
+    const SatoshiTransaction &txTo,
     unsigned int nIn,
     const uint8_t sigHashType,
     const CAmount &amount,

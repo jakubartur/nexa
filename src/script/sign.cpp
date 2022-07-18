@@ -68,59 +68,6 @@ bool TransactionSignatureCreator::CreateSig(std::vector<uint8_t> &vchSig,
     return true;
 }
 
-TransactionSignatureCreatorBTCBCH::TransactionSignatureCreatorBTCBCH(const CKeyStore *keystoreIn,
-    const CTransaction *txToIn,
-    unsigned int nInIn,
-    const CAmount &amountIn,
-    uint8_t sigHashTypeIn,
-    uint32_t nSigTypeIn)
-    : BaseSignatureCreator(keystoreIn), txTo(txToIn), nIn(nInIn), amount(amountIn), sigHashType(sigHashTypeIn),
-      nSigType(nSigTypeIn),
-      checker(txTo,
-          nIn,
-          STANDARD_SCRIPT_VERIFY_FLAGS | ((sigHashTypeIn & BTCBCH_SIGHASH_FORKID) ? SCRIPT_ENABLE_SIGHASH_FORKID : 0))
-{
-    for (unsigned int i = 0; i < txToIn->vin.size(); i++) // catch uninitialized amounts
-    {
-        assert(txTo->vin[i].amount != -1);
-    }
-}
-
-bool TransactionSignatureCreatorBTCBCH::CreateSig(std::vector<uint8_t> &vchSig,
-    const CKeyID &address,
-    const CScript &scriptCode) const
-{
-    // Bad tx info
-    if (txTo == nullptr || nIn >= txTo->vin.size())
-        return false;
-    // The transaction input has a different amount than reported by the previous out
-    if (amount != txTo->vin[nIn].amount)
-        return false;
-    CKey key;
-    if (!keystore->GetKey(address, key))
-    {
-        return false;
-    }
-
-    uint256 hash;
-    if (sigHashType & BTCBCH_SIGHASH_FORKID)
-        hash = SignatureHashBitcoinCash(scriptCode, *txTo, nIn, sigHashType, amount);
-    else
-        hash = SignatureHashBitcoin(scriptCode, *txTo, nIn, sigHashType);
-    if (nSigType != SIGTYPE_SCHNORR)
-    {
-        LOGA("CreateSig(): Invalid signature type requested \n");
-        return false;
-    }
-    if (!key.SignSchnorr(hash, vchSig))
-        return false;
-    vchSig.push_back(sigHashType);
-
-    p("Sign Schnorr: sig: %x, pubkey: %x sighash: %x\n", HexStr(vchSig),
-        HexStr(key.GetPubKey().begin(), key.GetPubKey().end()), hash.GetHex());
-    return true;
-}
-
 
 static bool Sign1(const CKeyID &address,
     const BaseSignatureCreator &creator,

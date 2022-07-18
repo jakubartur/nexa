@@ -36,6 +36,8 @@ public:
 
     CHash256 &Write(const unsigned char *data, size_t len)
     {
+        // Useful to debug hash mismatches but too time consuming to even have as a conditional log
+        // printf("CHash256 %d: %s\n", (int) len, HexStr(data,data+len).c_str());
         sha.Write(data, len);
         return *this;
     }

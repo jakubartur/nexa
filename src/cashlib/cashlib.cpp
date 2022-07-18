@@ -145,8 +145,138 @@ typedef enum
     AddrBlockchainNexa = 1,
     AddrBlockchainTestnet = 2,
     AddrBlockchainRegtest = 3,
-    AddrBlockchainBCH = 4
+    AddrBlockchainBCH = 4,
+    AddrBlockchainBchTestnet = 5,
+    AddrBlockchainBchRegtest = 6
 } ChainSelector;
+
+/**  Subset of BCH chainparams so we can convert addresses and do other light-client operations
+ */
+class BchRegtestParams : public CChainParams
+{
+public:
+    BchRegtestParams()
+    {
+        strNetworkID = "regtest"; // Do not use the const string because of ctor execution order issues
+        consensus.nSubsidyHalvingInterval = 150;
+        consensus.powLimit = uint256S("7fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+        consensus.nPowTargetSpacing = 10 * 60;
+        consensus.fPowAllowMinDifficultyBlocks = true;
+        consensus.fPowNoRetargeting = true;
+        consensus.powAlgorithm = 0;
+        consensus.initialSubsidy = 50 * COIN;
+        // The half life for the ASERT DAA. For every (nASERTHalfLife) seconds behind schedule the blockchain gets,
+        // difficulty is cut in half. Doubled if blocks are ahead of schedule.
+        // Two days
+        consensus.nASERTHalfLife = 2 * 24 * 60 * 60;
+
+        pchMessageStart[0] = 0xfa;
+        pchMessageStart[1] = 0xbf;
+        pchMessageStart[2] = 0xb5;
+        pchMessageStart[3] = 0xda;
+        /*
+        pchCashMessageStart[0] = 0xda;
+        pchCashMessageStart[1] = 0xb5;
+        pchCashMessageStart[2] = 0xbf;
+        pchCashMessageStart[3] = 0xfa;
+        */
+        nDefaultPort = DEFAULT_REGTESTNET_PORT;
+        nPruneAfterHeight = 1000;
+
+        vFixedSeeds.clear(); //! Regtest mode doesn't have any fixed seeds.
+        vSeeds.clear(); //! Regtest mode doesn't have any DNS seeds.
+
+        fMiningRequiresPeers = false;
+        fDefaultConsistencyChecks = true;
+        fRequireStandard = false;
+        fMineBlocksOnDemand = true;
+        fTestnetToBeDeprecatedFieldRPC = false;
+
+        checkpointData = (CCheckpointData){
+            {{0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")}}, 0, 0, 0};
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<uint8_t>(1, 111);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<uint8_t>(1, 196);
+        base58Prefixes[SECRET_KEY] = std::vector<uint8_t>(1, 239);
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+        cashaddrPrefix = "bchreg";
+    }
+};
+static BchRegtestParams bchRegtestParams;
+
+/**
+ * Testnet (v4)
+ */
+class BchTestnet4Params : public CChainParams
+{
+public:
+    BchTestnet4Params()
+    {
+        strNetworkID = "test4"; // Do not use the const string because of ctor execution order issues
+        consensus.nSubsidyHalvingInterval = 210000;
+        consensus.powLimit = uint256S("00000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+
+        consensus.nPowTargetSpacing = 10 * 60;
+        consensus.fPowAllowMinDifficultyBlocks = true;
+        consensus.fPowNoRetargeting = false;
+        consensus.powAlgorithm = 0;
+        consensus.initialSubsidy = 50 * COIN;
+        // The half life for the ASERT DAA. For every (nASERTHalfLife) seconds behind schedule the blockchain gets,
+        // difficulty is cut in half. Doubled if blocks are ahead of schedule.
+        // One hour
+        consensus.nASERTHalfLife = 60 * 60;
+
+        pchMessageStart[0] = 0xcd;
+        pchMessageStart[1] = 0x22;
+        pchMessageStart[2] = 0xa7;
+        pchMessageStart[3] = 0x92;
+        /*
+        pchCashMessageStart[0] = 0xe2;
+        pchCashMessageStart[1] = 0xb7;
+        pchCashMessageStart[2] = 0xda;
+        pchCashMessageStart[3] = 0xaf;
+        */
+        nDefaultPort = 28333;
+        nPruneAfterHeight = 1000;
+
+        vFixedSeeds.clear();
+        vSeeds.clear();
+        // nodes with support for servicebits filtering should be at the top
+        vSeeds.emplace_back(CDNSSeedData("bitcoinforks.org", "testnet4-seed-bch.bitcoinforks.org", true));
+        vSeeds.emplace_back(CDNSSeedData("toom.im", "testnet4-seed-bch.toom.im", true));
+        vSeeds.emplace_back(CDNSSeedData("loping.net", "seed.tbch4.loping.net", true));
+
+        base58Prefixes[PUBKEY_ADDRESS] = std::vector<uint8_t>(1, 111);
+        base58Prefixes[SCRIPT_ADDRESS] = std::vector<uint8_t>(1, 196);
+        base58Prefixes[SECRET_KEY] = std::vector<uint8_t>(1, 239);
+        base58Prefixes[EXT_PUBLIC_KEY] = {0x04, 0x35, 0x87, 0xCF};
+        base58Prefixes[EXT_SECRET_KEY] = {0x04, 0x35, 0x83, 0x94};
+        cashaddrPrefix = "bchtest";
+
+        fMiningRequiresPeers = true;
+        fDefaultConsistencyChecks = false;
+        fRequireStandard = false;
+        fMineBlocksOnDemand = false;
+        fTestnetToBeDeprecatedFieldRPC = true;
+
+        // clang-format off
+        checkpointData = CCheckpointData();
+        MapCheckpoints &checkpoints = checkpointData.mapCheckpoints;
+        checkpoints[     0] = uint256S("0x000000001dd410c49a788668ce26751718cc797474d3152a5fc073dd44fd9f7b");
+        checkpoints[ 16845] = uint256S("0x00000000fb325b8f34fe80c96a5f708a08699a68bbab82dba4474d86bd743077");
+        // clang-format on
+
+        // Data as of block
+        // 0000000019df558b6686b1a1c3e7aee0535c38052651b711f84eebafc0cc4b5e
+        // (height 5677)
+        checkpointData.nTimeLastCheckpoint = 1599886634;
+        checkpointData.nTransactionsLastCheckpoint = 7432;
+        checkpointData.fTransactionsPerDay = 1.3;
+    }
+};
+
+static BchTestnet4Params bchTestnet4Params;
+
 
 CChainParams *GetChainParams(ChainSelector chainSelector)
 {
@@ -158,6 +288,10 @@ CChainParams *GetChainParams(ChainSelector chainSelector)
         return &Params(CBaseChainParams::REGTEST);
     else if (chainSelector == AddrBlockchainBCH)
         return &Params(CBaseChainParams::LEGACY_UNIT_TESTS);
+    else if (chainSelector == AddrBlockchainBchTestnet)
+        return &bchTestnet4Params;
+    else if (chainSelector == AddrBlockchainBchRegtest)
+        return &bchRegtestParams;
     else
         return nullptr;
 }
@@ -313,7 +447,7 @@ SLAPI int SignTxECDSA(unsigned char *txData,
     DbgAssert(nHashType & BTCBCH_SIGHASH_FORKID, return 0);
     uint8_t sigHashType(nHashType);
     checkSigInit();
-    CTransaction tx;
+    SatoshiTransaction tx;
     result[0] = 0;
 
     CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
@@ -366,7 +500,7 @@ SLAPI int SignBchTxSchnorr(unsigned char *txData,
     DbgAssert(nHashType & BTCBCH_SIGHASH_FORKID, return 0);
     uint8_t sigHashType = nHashType;
     checkSigInit();
-    CTransaction tx;
+    SatoshiTransaction tx;
     result[0] = 0;
 
     CDataStream ssData((char *)txData, (char *)txData + txbuflen, SER_NETWORK, PROTOCOL_VERSION);
@@ -380,7 +514,9 @@ SLAPI int SignBchTxSchnorr(unsigned char *txData,
     }
 
     if (inputIdx >= tx.vin.size())
+    {
         return 0;
+    }
 
     CScript priorScript(prevoutScript, prevoutScript + priorScriptLen);
     CKey key = LoadKey(keyData);
@@ -398,7 +534,9 @@ SLAPI int SignBchTxSchnorr(unsigned char *txData,
     sig.push_back(sigHashType);
     unsigned int sigSize = sig.size();
     if (sigSize > resultLen)
+    {
         return 0;
+    }
     std::copy(sig.begin(), sig.end(), result);
     return sigSize;
 }
@@ -1408,6 +1546,35 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wal
     return makeJByteArray(env, result, resultLen);
 }
 
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wallet_signOneBchInputUsingSchnorr(
+    JNIEnv *env,
+    jobject ths,
+    jbyteArray txData,
+    jint sigHashType,
+    jlong inputIdx,
+    jlong inputAmount,
+    jbyteArray prevoutScript,
+    jbyteArray secret)
+{
+    ByteArrayAccessor tx(env, txData);
+    ByteArrayAccessor prevout(env, prevoutScript);
+    ByteArrayAccessor privkey(env, secret);
+    if (privkey.size != 32)
+        return jbyteArray();
+
+    unsigned char result[MAX_SIG_LEN];
+    uint32_t resultLen = SignBchTxSchnorr(tx.data, tx.size, inputIdx, inputAmount, prevout.data, prevout.size,
+        sigHashType, privkey.data, result, MAX_SIG_LEN);
+
+    if (resultLen == 0)
+    {
+        triggerJavaIllegalStateException(env, "signing operation failed");
+        return nullptr;
+    }
+    return makeJByteArray(env, result, resultLen);
+}
+
+
 /** Create a bloom filter */
 extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Wallet_CreateBloomFilter(JNIEnv *env,
     jobject ths,
@@ -1823,7 +1990,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Has
     return bArray;
 }
 
-extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_BlockHeader_blockHash(JNIEnv *env,
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_NexaBlockHeader_blockHash(JNIEnv *env,
     jobject ths,
     jbyteArray arg)
 {
@@ -1845,7 +2012,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Blo
     return bArray;
 }
 
-extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Transaction_txid(JNIEnv *env,
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_NexaTransaction_txid(JNIEnv *env,
     jobject ths,
     jbyteArray arg)
 {
@@ -1863,7 +2030,7 @@ extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Tra
     return bArray;
 }
 
-extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_Transaction_txidem(JNIEnv *env,
+extern "C" JNIEXPORT jbyteArray JNICALL Java_bitcoinunlimited_libbitcoincash_NexaTransaction_txidem(JNIEnv *env,
     jobject ths,
     jbyteArray arg)
 {
@@ -1896,11 +2063,10 @@ public:
     }
 };
 
-extern "C" JNIEXPORT jobjectArray JNICALL Java_bitcoinunlimited_libbitcoincash_MerkleBlock_Extract(JNIEnv *env,
-    jobject ths,
-    jint numTxes,
-    jbyteArray merkleProofPath,
-    jobjectArray hashArray)
+
+// Since partial Merkle blocks are just trees of hashes, this structure is the same for Nexa and BCH
+jobjectArray JNICALL
+MerkleBlock_Extract(JNIEnv *env, jobject ths, jint numTxes, jbyteArray merkleProofPath, jobjectArray hashArray)
 {
     const unsigned int HASH_LEN = 32;
     size_t hashArrayLen = env->GetArrayLength(hashArray);
@@ -1955,6 +2121,24 @@ extern "C" JNIEXPORT jobjectArray JNICALL Java_bitcoinunlimited_libbitcoincash_M
     return ret;
 }
 
+extern "C" JNIEXPORT jobjectArray JNICALL Java_bitcoinunlimited_libbitcoincash_NexaMerkleBlock_Extract(JNIEnv *env,
+    jobject ths,
+    jint numTxes,
+    jbyteArray merkleProofPath,
+    jobjectArray hashArray)
+{
+    return MerkleBlock_Extract(env, ths, numTxes, merkleProofPath, hashArray);
+}
+
+extern "C" JNIEXPORT jobjectArray JNICALL Java_bitcoinunlimited_libbitcoincash_BchMerkleBlock_Extract(JNIEnv *env,
+    jobject ths,
+    jint numTxes,
+    jbyteArray merkleProofPath,
+    jobjectArray hashArray)
+{
+    return MerkleBlock_Extract(env, ths, numTxes, merkleProofPath, hashArray);
+}
+
 extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_Initialize_LibBitcoinCash(JNIEnv *env,
     jobject ths,
     jbyte chainSelector)
@@ -1980,6 +2164,14 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_Initia
         break;
     case AddrBlockchainBCH:
         SelectParams("main");
+        break;
+        // These set the default params to the NEXA equivalent, because these testnets are not def-ed across the
+        // codebase.  Basically, DONT initialize to these!
+    case AddrBlockchainBchTestnet:
+        SelectParams("test");
+        break;
+    case AddrBlockchainBchRegtest:
+        SelectParams("regtest");
         break;
     }
 

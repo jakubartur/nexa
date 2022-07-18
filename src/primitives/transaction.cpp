@@ -92,6 +92,7 @@ uint256 MutableSatoshiTransaction::GetHash() const { return SerializeHash(*this)
 
 std::string CMutableTransaction::ToString() const { return CTransaction(*this).ToString(); }
 
+void SatoshiTransaction::UpdateHash() const { *const_cast<uint256 *>(&hash) = SerializeHash(*this); }
 void CTransaction::UpdateHash() const
 {
     *const_cast<uint256 *>(&id) = GetTxId(*this);
@@ -248,3 +249,27 @@ std::string CTransaction::HexStr(void) const
     ssTx << *this;
     return ::HexStr(ssTx.begin(), ssTx.end());
 }
+
+
+SatoshiTransaction::SatoshiTransaction()
+    : nTxSize(0), nVersion(SatoshiTransaction::CURRENT_VERSION), vin(), vout(), nLockTime(0)
+{
+}
+
+SatoshiTransaction::SatoshiTransaction(const MutableSatoshiTransaction &tx)
+    : nTxSize(0), nVersion(tx.nVersion), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime)
+{
+    UpdateHash();
+}
+
+SatoshiTransaction::SatoshiTransaction(MutableSatoshiTransaction &&tx)
+    : nTxSize(0), nVersion(tx.nVersion), vin(std::move(tx.vin)), vout(std::move(tx.vout)), nLockTime(tx.nLockTime)
+{
+    UpdateHash();
+}
+
+SatoshiTransaction::SatoshiTransaction(const SatoshiTransaction &tx)
+    : nTxSize(tx.nTxSize.load()), nVersion(tx.nVersion), vin(tx.vin), vout(tx.vout), nLockTime(tx.nLockTime)
+{
+    UpdateHash();
+};
