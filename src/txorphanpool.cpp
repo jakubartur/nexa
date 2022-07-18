@@ -12,7 +12,7 @@
 #include "util.h"
 #include "utiltime.h"
 
-CTxOrphanPool::CTxOrphanPool() : nLastOrphanCheck(GetTime()), nBytesOrphanPool(0){};
+CTxOrphanPool::CTxOrphanPool() : nBytesOrphanPool(0){ nLastOrphanCheck.store(GetTime()); };
 
 bool CTxOrphanPool::AlreadyHaveOrphan(const uint256 &hash)
 {
@@ -77,13 +77,16 @@ bool CTxOrphanPool::EraseOrphanTx(uint256 hash)
 
 void CTxOrphanPool::EraseOrphansByTime()
 {
-    AssertWriteLockHeld(cs_orphanpool);
     // Because we have to iterate through the entire orphan cache which can be large we don't want to check this
     // every time a tx enters the mempool but just once every 5 minutes is good enough.
-    if (GetTime() < nLastOrphanCheck + 5 * 60)
+    int64_t now = GetTime();
+    if (now < nLastOrphanCheck.load() + 5 * 60)
         return;
+    nLastOrphanCheck.store(now);
+
+    WRITELOCK(cs_orphanpool);
     int64_t nOrphanTxCutoffTime = 0;
-    nOrphanTxCutoffTime = GetTime() - orphanPoolExpiry.Value() * 60 * 60;
+    nOrphanTxCutoffTime = now - orphanPoolExpiry.Value() * 60 * 60;
     std::map<uint256, COrphanTx>::iterator iter = mapOrphanTransactions.begin();
     while (iter != mapOrphanTransactions.end())
     {
@@ -91,17 +94,14 @@ void CTxOrphanPool::EraseOrphansByTime()
         int64_t nEntryTime = mi->second.nEntryTime;
         if (nEntryTime < nOrphanTxCutoffTime)
         {
-            uint256 txHash = mi->second.ptx->GetId();
-
             // Uncache any coins that may exist for orphans that will be erased
             pcoinsTip->UncacheTx(*mi->second.ptx);
 
-            LOG(MEMPOOL, "Erased old orphan tx %s of age %d seconds\n", txHash.ToString(), GetTime() - nEntryTime);
+            const uint256 &txHash = mi->second.ptx->GetId();
             EraseOrphanTx(txHash);
+            LOG(MEMPOOL, "Erased old orphan tx %s of age %d seconds\n", txHash.ToString(), now - nEntryTime);
         }
     }
-
-    nLastOrphanCheck = GetTime();
 }
 
 unsigned int CTxOrphanPool::LimitOrphanTxSize(unsigned int nMaxOrphans, uint64_t nMaxBytes)

@@ -456,56 +456,59 @@ BOOST_AUTO_TEST_CASE(DoS_mapOrphans)
 
     // Test EraseOrphansByTime():
     {
-        WRITELOCK(orphanpool.cs_orphanpool);
         int64_t nStartTime = GetTime();
-        orphanpool._SetLastOrphanCheck(nStartTime);
-        SetMockTime(nStartTime); // Overrides future calls to GetTime()
-        for (int i = 0; i < 50; i++)
         {
-            CMutableTransaction tx;
-            tx.vin.resize(1);
-            tx.vin[0].prevout.hash = InsecureRand256();
-            tx.vin[0].scriptSig << OP_1;
-            tx.vout.resize(1);
-            tx.vout[0].nValue = 1 * CENT;
-            tx.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
+            WRITELOCK(orphanpool.cs_orphanpool);
+            orphanpool._SetLastOrphanCheck(nStartTime);
+            SetMockTime(nStartTime); // Overrides future calls to GetTime()
+            for (int i = 0; i < 50; i++)
+            {
+                CMutableTransaction tx;
+                tx.vin.resize(1);
+                tx.vin[0].prevout.hash = InsecureRand256();
+                tx.vin[0].scriptSig << OP_1;
+                tx.vout.resize(1);
+                tx.vout[0].nValue = 1 * CENT;
+                tx.vout[0].scriptPubKey = GetScriptForDestination(key.GetPubKey().GetID());
 
-            CTransaction _tx(tx);
-            orphanpool.AddOrphanTx(MakeTransactionRef(_tx), i);
+                CTransaction _tx(tx);
+                orphanpool.AddOrphanTx(MakeTransactionRef(_tx), i);
+            }
         }
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 50);
-        orphanpool.EraseOrphansByTime();
+        std::vector<CTransactionRef> vWorkQueue;
+        ProcessOrphans(vWorkQueue);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 50);
 
         // Advance the clock 1 minute
         SetMockTime(nStartTime + 60);
-        orphanpool.EraseOrphansByTime();
+        ProcessOrphans(vWorkQueue);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 50);
 
         // Advance the clock 10 minutes
         SetMockTime(nStartTime + 60 * 10);
-        orphanpool.EraseOrphansByTime();
+        ProcessOrphans(vWorkQueue);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 50);
 
         // Advance the clock 1 hour
         SetMockTime(nStartTime + 60 * 60);
-        orphanpool.EraseOrphansByTime();
+        ProcessOrphans(vWorkQueue);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 50);
 
         // Advance the clock DEFAULT_ORPHANPOOL_EXPIRY hours
         SetMockTime(nStartTime + 60 * 60 * DEFAULT_ORPHANPOOL_EXPIRY);
-        orphanpool.EraseOrphansByTime();
+        ProcessOrphans(vWorkQueue);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 50);
 
         /** Test the boundary where orphans should get purged. **/
         // Advance the clock DEFAULT_ORPHANPOOL_EXPIRY hours plus 4 minutes 59 seconds
         SetMockTime(nStartTime + 60 * 60 * DEFAULT_ORPHANPOOL_EXPIRY + 299);
-        orphanpool.EraseOrphansByTime();
+        ProcessOrphans(vWorkQueue);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 50);
 
         // Advance the clock DEFAULT_ORPHANPOOL_EXPIRY hours plus 5 minutes
         SetMockTime(nStartTime + 60 * 60 * DEFAULT_ORPHANPOOL_EXPIRY + 300);
-        orphanpool.EraseOrphansByTime();
+        ProcessOrphans(vWorkQueue);
         BOOST_CHECK(orphanpool.mapOrphanTransactions.size() == 0);
 
         SetMockTime(0);

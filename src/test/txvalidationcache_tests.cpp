@@ -26,6 +26,8 @@
 extern CTweak<uint32_t> minRelayFee;
 extern void LimitMempoolSize(CTxMemPool &pool, size_t limit, unsigned long age);
 
+void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue);
+
 BOOST_AUTO_TEST_SUITE(txvalidationcache_tests) // BU harmonize suite name with filename
 
 static bool ToMemPool(CMutableTransaction &tx, std::string rejectReason = "")
@@ -255,6 +257,7 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
     {
         WRITELOCK(orphanpool.cs_orphanpool);
         BOOST_CHECK(orphanpool.AddOrphanTx(MakeTransactionRef(spends[2]), 1));
+        BOOST_CHECK_EQUAL(orphanpool.mapOrphanTransactions.size(), 1);
     }
     BOOST_CHECK(pcoinsTip->HaveCoinInCache(spends[0].vin[0].prevout, fSpent)); // valid coin from previous txn
     BOOST_CHECK(fSpent == false);
@@ -265,9 +268,12 @@ BOOST_FIXTURE_TEST_CASE(uncache_coins, TestChain100Setup)
 
     // Remove valid orphans by time.  The coins should be removed from the coins cache
     {
-        WRITELOCK(orphanpool.cs_orphanpool);
         SetMockTime(nStartTime + 3600 * DEFAULT_ORPHANPOOL_EXPIRY + 300);
-        orphanpool.EraseOrphansByTime();
+        std::vector<CTransactionRef> vWorkQueue;
+        ProcessOrphans(vWorkQueue);
+
+        WRITELOCK(orphanpool.cs_orphanpool);
+        BOOST_CHECK_EQUAL(orphanpool.mapOrphanTransactions.size(), 0);
     }
 
     BOOST_CHECK(pcoinsTip->HaveCoinInCache(spends[0].vin[0].prevout, fSpent)); // valid coin from previous txn
