@@ -1222,6 +1222,7 @@ void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue)
 
     // First delete the orphans before enqueuing them otherwise we may end up putting them
     // in the queue twice.
+    orphanpool.EraseOrphansByTime();
     if (!mapEnqueue.empty())
     {
         {
@@ -1233,7 +1234,6 @@ void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue)
                 if (!orphanpool.EraseOrphanTx(it->first))
                     it = mapEnqueue.erase(it);
             }
-            orphanpool.EraseOrphansByTime();
         }
         for (auto &it : mapEnqueue)
             EnqueueTxForAdmission(it.second);

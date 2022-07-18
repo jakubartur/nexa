@@ -1,5 +1,5 @@
-// Copyright (c) 2018-2019 The Bitcoin Unlimited developers
 // Copyright (c) 2018 The Bitcoin developers
+// Copyright (c) 2018-2022 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
@@ -25,7 +25,7 @@ public:
 
 private:
     //! Used in EraseOrphansByTime() to track when the last time was we checked the cache for anything to delete
-    int64_t nLastOrphanCheck GUARDED_BY(cs_orphanpool);
+    std::atomic<int64_t> nLastOrphanCheck;
 
     //! txn hashes that are in the previous block
     std::vector<uint256> vPreviousBlock GUARDED_BY(cs_orphanpool);
