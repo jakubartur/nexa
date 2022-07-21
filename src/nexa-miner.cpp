@@ -53,11 +53,25 @@ CCriticalSection cs_commitment;
 uint256 g_headerCommitment;
 uint32_t g_nBits = 0;
 UniValue g_id;
+bool deterministicStartCount = false;
 
 CCriticalSection cs_blockhash;
 uint256 bestBlockHash;
 
+int CpuMiner(int threadNum);
+
 using namespace std;
+
+std::mutex nowLock;
+std::string now()
+{
+    nowLock.lock();
+    std::time_t now_time = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    char *tmp = std::ctime(&now_time);
+    std::string ret(tmp, tmp + strlen(tmp) - 1);
+    nowLock.unlock();
+    return ret;
+}
 
 class Secp256k1Init
 {
@@ -91,7 +105,10 @@ public:
                   "a float or integer"))
             .addArg("address=<string>", ::AllowedArgs::requiredStr,
                 _("The address to send the newly generated nexa to. If omitted, will default to an address in the "
-                  "nexa daemon's wallet."));
+                  "nexa daemon's wallet."))
+            .addArg("deterministic[=boolean]", ::AllowedArgs::optionalBool,
+                _("Instead of starting at a random nonce, start with 0x0N000001, where N is the thread number."
+                  "  Default is false."));
     }
 };
 
@@ -122,6 +139,25 @@ static CBlockHeader CpuMinerJsonToHeader(const UniValue &params)
 }
 */
 
+void static MinerThread(int threadNum)
+{
+    while (1)
+    {
+        try
+        {
+            CpuMiner(threadNum);
+        }
+        catch (const std::exception &e)
+        {
+            PrintExceptionContinue(&e, "CommandLineRPC()");
+        }
+        catch (...)
+        {
+            PrintExceptionContinue(nullptr, "CommandLineRPC()");
+        }
+    }
+}
+
 static bool CpuMinerJsonToData(const UniValue &params, uint256 &headerCommitment, uint32_t &nBits, UniValue &id)
 {
     string tmpstr;
@@ -147,47 +183,47 @@ static bool CpuMineBlockHasherNextChain(int &ntries,
     uint32_t nBits,
     const RandFunc &randFunc,
     const Consensus::Params &conp,
+    uint32_t &count,
+    uint32_t rollAt,
+    uint32_t extra,
     std::vector<unsigned char> &nonce)
 {
     arith_uint256 hashTarget = arith_uint256().SetCompact(nBits);
     bool found = false;
 
-    // Note that since I have a coinbase that is unique to my hashing effort, my hashing won't duplicate a competitor's
-    // efforts.  So it does not matter that we all start with few nonce bits.
-    nonce.resize(4);
+    /* Eventually when hashing performance improved dramatically we may need to start with 6 bytes.
 
-    unsigned int extra = randFunc();
-    uint32_t startCount = randFunc();
-    unsigned int count = startCount;
+    // Note that since I have a coinbase that is unique to my hashing effort, my hashing won't duplicate a competitor's
+    // efforts.  And a new candidate is generated every 30 seconds, so my hashing won't conflict with my earlier self.
+    // So it does not matter that we all start with few nonce bits.
+    if (nonce.size() < 6) nonce.resize(6);
+
+    //uint32_t startCount = randFunc();
+    nonce[4] = extra & 255;
+    nonce[5] = (extra >> 8) & 255;
+    */
+
+    if (nonce.size() < 4)
+        nonce.resize(4);
+
+    nonce[3] = extra & 255;
+
     while (!found)
     {
-        //
         // Search
-        //
         while (!found)
         {
             ++count;
             nonce[0] = count & 255;
             nonce[1] = (count >> 8) & 255;
             nonce[2] = (count >> 16) & 255;
-            nonce[3] = (count >> 24) & 255;
-            if (count == startCount) // Looped around, expand search space
-            {
-                ++extra;
-                // TODO what if extra wraps around (go to 8 bytes)
-                if (nonce.size() < 6)
-                {
-                    nonce.resize(6);
-                }
-                nonce[4] = extra & 255;
-                nonce[5] = (extra >> 8) & 255;
-            }
+
             uint256 miningHash = GetMiningHash(headerCommitment, nonce);
             if (CheckProofOfWork(miningHash, nBits, conp))
             {
                 // Found a solution
                 found = true;
-                printf("proof-of-work found  \n  mining puzzle solution: %s  \ntarget: %s\n",
+                printf("%s: proof-of-work found  \n  mining puzzle solution: %s  \ntarget: %s\n", now().c_str(),
                     miningHash.GetHex().c_str(), hashTarget.GetHex().c_str());
                 break;
             }
@@ -248,7 +284,7 @@ public:
 // shared variable: used to inform all threads when the latest block or difficulty has changed
 static SharedBlkInfo sharedBlkInfo;
 
-static UniValue CpuMineBlock(unsigned int searchDuration, bool &found, const RandFunc &randFunc)
+static UniValue CpuMineBlock(unsigned int searchDuration, bool &found, const RandFunc &randFunc, int threadNum)
 {
     UniValue ret(UniValue::VARR);
     const double maxdiff = GetDoubleArg("-maxdifficulty", 0.0);
@@ -304,13 +340,17 @@ static UniValue CpuMineBlock(unsigned int searchDuration, bool &found, const Ran
     const CChainParams &cparams = Params();
     auto conp = cparams.GetConsensus();
 
-    printf("Mining: id: %x headerCommitment: %s bits: %x difficulty: %3.4f\n", (unsigned int)id.get_int64(),
-        headerCommitment.ToString().c_str(), nBits, difficulty);
+    printf("%s: Mining: id: %x headerCommitment: %s bits: %x difficulty: %3.4f\n", now().c_str(),
+        (unsigned int)id.get_int64(), headerCommitment.ToString().c_str(), nBits, difficulty);
 
     int64_t start = GetTimeMillis();
     std::vector<unsigned char> nonce;
-    int ChunkAmt = 1000;
+    int ChunkAmt = 10000;
     int checked = 0;
+    uint32_t startCount = 1;
+    if (!deterministicStartCount)
+        startCount = randFunc();
+    uint32_t rollAt = startCount - 1;
     const BlkInfo blkInfo = {headerCommitment.GetCheapHash(), nBits};
 
     while ((GetTimeMillis() < start + searchDuration) && !found && sharedBlkInfo == blkInfo)
@@ -322,20 +362,22 @@ static UniValue CpuMineBlock(unsigned int searchDuration, bool &found, const Ran
         // request a new block).
         // header.nTime = (header.nTime < GetTime()) ? GetTime() : header.nTime;
         int tries = ChunkAmt;
-        found = CpuMineBlockHasherNextChain(tries, headerCommitment, nBits, randFunc, conp, nonce);
+        found = CpuMineBlockHasherNextChain(
+            tries, headerCommitment, nBits, randFunc, conp, startCount, rollAt, threadNum, nonce);
         checked += ChunkAmt - tries;
     }
 
     // Leave if not found:
+    std::string rightnow = now();
     if (!found)
     {
         const float elapsed = GetTimeMillis() - start;
-        printf("Checked %d possibilities in %5.1f secs, %3.3f MH/s\n", checked, elapsed / 1000,
+        printf("%s: Checked %d possibilities in %5.1f secs, %3.3f MH/s\n", rightnow.c_str(), checked, elapsed / 1000,
             (checked / 1e6) / (elapsed / 1e3));
         return ret;
     }
 
-    printf("Solution! Checked %d possibilities\n", checked);
+    printf("%s: Solution! Checked %d possibilities\n", rightnow.c_str(), checked);
 
     UniValue tmp(UniValue::VOBJ);
     tmp.pushKV("id", id);
@@ -353,7 +395,7 @@ static UniValue RPCSubmitSolution(const UniValue &solution, int &nblocks)
 
     if (!error.isNull())
     {
-        fprintf(stderr, "Block Candidate submission error: %d %s\n", error["code"].get_int(),
+        fprintf(stderr, "%s: Block Candidate submission error: %d %s\n", now().c_str(), error["code"].get_int(),
             error["message"].get_str().c_str());
         return reply;
     }
@@ -362,7 +404,7 @@ static UniValue RPCSubmitSolution(const UniValue &solution, int &nblocks)
 
     if (result.isNull())
     {
-        printf("Unknown submission error, server gave no result\n");
+        printf("%s: Unknown submission error, server gave no result\n", now().c_str());
     }
     else
     {
@@ -377,22 +419,23 @@ static UniValue RPCSubmitSolution(const UniValue &solution, int &nblocks)
 
         if (errValue.isStr())
         {
-            fprintf(stderr, "Block Candidate %s rejected. Error: %s\n", hashStr.c_str(), result.get_str().c_str());
+            fprintf(stderr, "%s: Block Candidate %s rejected. Error: %s\n", now().c_str(), hashStr.c_str(),
+                result.get_str().c_str());
             // Print some debug info if the block is rejected
             UniValue dbg = solution[0].get_obj();
-            fprintf(stderr, "id: 0x%x  nonce: %s \n", dbg["id"].get_int(), dbg["nonce"].get_str().c_str());
+            fprintf(stderr, "    id: 0x%x  nonce: %s \n", dbg["id"].get_int(), dbg["nonce"].get_str().c_str());
         }
         else
         {
             if (errValue.isNull())
             {
-                printf("Block Candidate %u:%s accepted.\n", (unsigned int)height, hashStr.c_str());
+                printf("%s: Block Candidate %u:%s accepted.\n", now().c_str(), (unsigned int)height, hashStr.c_str());
                 if (nblocks > 0)
                     nblocks--; // Processed a block
             }
             else
             {
-                fprintf(stderr, "Unknown \"submitminingsolution\" Error.\n");
+                fprintf(stderr, "%s: Unknown \"submitminingsolution\" Error.\n", now().c_str());
             }
         }
     }
@@ -433,7 +476,7 @@ static bool FoundNewBlock(bool fWait)
 
             if (strPrint != "")
             {
-                fprintf(stderr, "%s\n", strPrint.c_str());
+                fprintf(stderr, "%s: %s\n", now().c_str(), strPrint.c_str());
                 MilliSleep(1000);
             }
         }
@@ -462,7 +505,7 @@ static bool FoundNewBlock(bool fWait)
     {
         if (fWait)
         {
-            printf("Warning: %s\n", c.what());
+            printf("%s: Warning: %s\n", now().c_str(), c.what());
             MilliSleep(1000);
         }
         else
@@ -526,7 +569,7 @@ static bool CheckForNewMiningCandidate(bool fWait)
 
             if (strPrint != "")
             {
-                fprintf(stderr, "%s\n", strPrint.c_str());
+                fprintf(stderr, "%s: %s\n", now().c_str(), strPrint.c_str());
                 MilliSleep(1000);
             }
         }
@@ -559,7 +602,7 @@ static bool CheckForNewMiningCandidate(bool fWait)
     {
         if (fWait)
         {
-            printf("Warning: %s\n", c.what());
+            printf("%s: Warning: %s\n", now().c_str(), c.what());
             MilliSleep(1000);
         }
         else
@@ -569,7 +612,7 @@ static bool CheckForNewMiningCandidate(bool fWait)
     return fWait;
 }
 
-int CpuMiner(void)
+int CpuMiner(int threadNum)
 {
     // Initialize random number generator lambda. This is per-thread and
     // is thread-safe.  std::rand() is not thread-safe and can result
@@ -588,7 +631,7 @@ int CpuMiner(void)
 
     if (coinbasesize < 0)
     {
-        printf("Negative coinbasesize not reasonable/supported.\n");
+        printf("%s: Negative coinbasesize not reasonable/supported.\n", now().c_str());
         return 0;
     }
 
@@ -597,7 +640,7 @@ int CpuMiner(void)
 
     if (0 == nblocks)
     {
-        printf("Nothing to do for zero (0) blocks\n");
+        printf("%s: Nothing to do for zero (0) blocks\n", now().c_str());
         return 0;
     }
 
@@ -664,7 +707,7 @@ int CpuMiner(void)
                                 if (errMsg.isStr())
                                     strPrint += "error message:\n" + errMsg.get_str();
                             }
-                            printf("ERROR: %s\n", strPrint.c_str());
+                            printf("%s: ERROR: %s\n", now().c_str(), strPrint.c_str());
                             throw;
                         }
                         else
@@ -680,20 +723,20 @@ int CpuMiner(void)
                         {
                             if (nRet != 0)
                             {
-                                fprintf(stderr, "%s\n", strPrint.c_str());
+                                fprintf(stderr, "%s: %s\n", now().c_str(), strPrint.c_str());
                                 return 0;
                             }
                             if (result.isStr())
                             {
                                 // This can happen just after submitting a block and the old block template
                                 // becomes stale
-                                printf("Not mining because: %s\n", result.get_str().c_str());
+                                printf("%s: Not mining because: %s\n", now().c_str(), result.get_str().c_str());
                                 return 0;
                             }
                         }
                         else if (result.isNull())
                         {
-                            printf("No result after submission\n");
+                            printf("%s: No result after submission\n", now().c_str());
                             MilliSleep(1000);
                         }
                         else
@@ -702,7 +745,7 @@ int CpuMiner(void)
                             FoundNewBlock(fWait);
 
                             // Block submission was successfull so retrieve the new mining candidate
-                            printf("Getting new Candidate after successful block submission\n");
+                            printf("%s: Getting new Candidate after successful block submission\n", now().c_str());
                             fWait = CheckForNewMiningCandidate(fWait);
                         }
                     }
@@ -714,7 +757,7 @@ int CpuMiner(void)
                 {
                     if (fWait)
                     {
-                        printf("Warning: %s\n", c.what());
+                        printf("%s: Warning: %s\n", now().c_str(), c.what());
                         MilliSleep(1000);
                     }
                     else
@@ -740,7 +783,7 @@ int CpuMiner(void)
 
         // Actually do some mining
         found = false;
-        mineresult = CpuMineBlock(searchDuration, found, randFunc);
+        mineresult = CpuMineBlock(searchDuration, found, randFunc, threadNum);
         if (!found)
         {
             mineresult.setNull();
@@ -752,24 +795,6 @@ int CpuMiner(void)
     return 0;
 }
 
-void static MinerThread()
-{
-    while (1)
-    {
-        try
-        {
-            CpuMiner();
-        }
-        catch (const std::exception &e)
-        {
-            PrintExceptionContinue(&e, "CommandLineRPC()");
-        }
-        catch (...)
-        {
-            PrintExceptionContinue(nullptr, "CommandLineRPC()");
-        }
-    }
-}
 
 int main(int argc, char *argv[])
 {
@@ -805,10 +830,18 @@ int main(int argc, char *argv[])
 
     // Launch miner threads
     int nThreads = GetArg("-cpus", 1);
-    boost::thread_group minerThreads;
-    printf("Running on %d CPUs\n", nThreads);
+    if (nThreads > 256)
+    {
+        nThreads = 256;
+        printf("%s: Number of threads reduced to the maximum allowed value.\n", now().c_str(), nThreads);
+    }
+    std::vector<std::thread> minerThreads;
+    printf("%s: Running %d threads.\n", now().c_str(), nThreads);
+    minerThreads.resize(nThreads);
     for (int i = 0; i < nThreads; i++)
-        minerThreads.create_thread(MinerThread);
+        minerThreads[i] = std::thread(MinerThread, i);
+
+    deterministicStartCount = GetBoolArg("-deterministic", false);
 
     // Start loop which checks whether we have a new mining candidate
     bool fWait = true;
