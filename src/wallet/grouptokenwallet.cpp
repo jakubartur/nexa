@@ -724,7 +724,7 @@ extern UniValue token(const UniValue &params, bool fHelp)
         throw std::runtime_error(
             "token [new, mint, melt, send] \n"
             "\nToken functions.\n"
-            "'new' creates a new token type. args: [address] [ticker name [descUrl descHash]]\n"
+            "'new' creates a new token type. args: [address] [token-ticker token-name [descUrl descHash]]\n"
             "'mint' creates new tokens. args: groupId address quantity\n"
             "'melt' removes tokens from circulation. args: groupId quantity\n"
             "'balance' reports quantity of this token. args: groupId [address]\n"
@@ -732,23 +732,43 @@ extern UniValue token(const UniValue &params, bool fHelp)
             "'authority create' creates a new authority args: groupId address [mint melt nochild rescript]\n"
             "'subgroup' translates a group and additional data into a subgroup identifier. args: groupId data\n"
             "\nArguments:\n"
-            "1. \"groupId\"     (string, required) the group identifier\n"
-            "2. \"address\"     (string, required) the destination address\n"
-            "3. \"quantity\"    (numeric, required) the quantity desired\n"
-            "4. \"data\"        (number, 0xhex, or string) binary data\n"
-            "5. \"ticker\"      (string, optional) the token's preferred ticker symbol\n"
-            "6. \"name\"        (string, optional) the name of the token\n"
-            "7. \"descUrl\"    (string, optional) the url of the token description json document\n"
-            "8. \"descHash\"   (string, optional) the hash of the token description json document\n"
+            "1. \"groupId\"           (string, required) the group identifier\n"
+            "2. \"address\"           (string, required) the destination address\n"
+            "3. \"quantity\"          (numeric, required) the quantity desired\n"
+            "4. \"data\"              (number, 0xhex, or string) binary data\n"
+            "5. \"token-ticker\"      (string, optional) the token's preferred ticker symbol\n"
+            "6. \"token-name\"        (string, optional) the name of the token\n"
+            "7. \"descUrl\"           (string, optional) the url of the token description json document\n"
+            "8. \"descHash\"          (string, optional) the hash of the token description json document\n"
             "\nResult:\n"
             "\n"
             "\nExamples:\n"
-            "\nCreate a transaction with no inputs\n" +
-            HelpExampleCli("createrawtransaction", "\"[]\" \"{\\\"myaddress\\\":0.01}\"") +
-            "\nAdd sufficient unsigned inputs to meet the output value\n" +
-            HelpExampleCli("fundrawtransaction", "\"rawtransactionhex\"") + "\nSign the transaction\n" +
-            HelpExampleCli("signrawtransaction", "\"fundedtransactionhex\"") + "\nSend the transaction\n" +
-            HelpExampleCli("sendrawtransaction", "\"signedtransactionhex\""));
+            "\nCreate a new token\n" +
+            HelpExampleCli("token", "new APPL apple") +
+            HelpExampleCli("token", "new nexa:nqtsq5g59472zwd85c2esgslh6wh025r0x43ttlv2xy98jd0 ORNGE orange") +
+            HelpExampleCli("token", "new nexa:nqtsq5g5ltvwgj6ga6vlyxcay22uh2m8zy0rxzp8sf884gp9 GRP grape http:/nexa.org"
+                                    "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63") +
+            "\nMint tokens\n" +
+            HelpExampleCli("token", "mint nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum "
+                                    "nexa:nqtsq5g553andqv5p33ylx7xyr76vu0mh56x5nlylhfzcyj2 30000") +
+            "\nMelt tokens\n" +
+            HelpExampleCli("token", "mint nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum 500") +
+            "\nGet wallet token balances\n" + HelpExampleCli("token", "balance") +
+            HelpExampleCli("token", "balance nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum") +
+            HelpExampleCli("token", "balance nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum "
+                                    "nexa:nqtsq5g553andqv5p33ylx7xyr76vu0mh56x5nlylhfzcyj2") +
+            "\nSend tokens\n" +
+            HelpExampleCli("token", "send nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum "
+                                    "nexa:nqtsq5g5swutfrulf565c6v42rk36gk9w9r8lwymly8ju76c 150") +
+            HelpExampleCli("token", "send nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum "
+                                    "nexa:nqtsq5g5swutfrulf565c6v42rk36gk9w9r8lwymly8ju76c 100 "
+                                    "nexa:nqtsq5g563td29kuumldxk0u6lsfrjyapxth5jqwmyepjmlw 300") +
+            "\nMake new authority\n" +
+            HelpExampleCli("token",
+                "authority create nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdu0 "
+                "nexa:nqtsq5g5t8hqv7gflfp3gshvck0srh2a0ktd53kzc97c26w0 mint melt nochild rescript") +
+            "\nMake subgroups\n " +
+            HelpExampleCli("token", "subgroup nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum 1"));
 
     std::string operation;
     std::string p0 = params[0].get_str();

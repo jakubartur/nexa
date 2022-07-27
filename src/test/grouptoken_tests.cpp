@@ -477,7 +477,7 @@ BOOST_AUTO_TEST_CASE(grouptoken_covenantfunctions)
 
     CGroupTokenID cgrp1(1, GroupTokenIdFlags::COVENANT);
     CGroupTokenID cgrp2(2, GroupTokenIdFlags::COVENANT);
-    CGroupTokenID cfgrp1(3, GroupTokenIdFlags::HOLDS_BCH | GroupTokenIdFlags::COVENANT);
+    CGroupTokenID cfgrp1(3, GroupTokenIdFlags::HOLDS_NEX | GroupTokenIdFlags::COVENANT);
 
     COutPoint bch1 = AddUtxo(p2pkh(u1), 10000, coins);
     COutPoint gutxo100 = AddUtxo(gp2pkh(cgrp1, u1, 100), 1000, coins);
@@ -602,7 +602,7 @@ BOOST_AUTO_TEST_CASE(grouptoken_covenantfunctions)
     BOOST_CHECK(!ok);
 
 
-    // All the covenant stuff should work exactly the same for fenced BCH
+    // All the covenant stuff should work exactly the same for fenced NEX
     // Since it ought to be the same implementation, every case above is not checked
 
     t = tx1x1(cfutxo100, gp2pkh(cfgrp1, u1, 0), 100);
@@ -653,8 +653,8 @@ BOOST_AUTO_TEST_CASE(grouptoken_fencefunctions)
     QuickAddress u1;
     QuickAddress u2;
 
-    CGroupTokenID fgrp1(1, GroupTokenIdFlags::HOLDS_BCH);
-    CGroupTokenID fgrp2(2, GroupTokenIdFlags::HOLDS_BCH);
+    CGroupTokenID fgrp1(1, GroupTokenIdFlags::HOLDS_NEX);
+    CGroupTokenID fgrp2(2, GroupTokenIdFlags::HOLDS_NEX);
 
     COutPoint bch1 = AddUtxo(p2pkh(u1), 10000, coins);
     COutPoint fencedBch = AddUtxo(gp2pkh(fgrp1, u1, 0), 20000, coins);
@@ -671,120 +671,120 @@ BOOST_AUTO_TEST_CASE(grouptoken_fencefunctions)
     CTransaction t;
     CValidationState state;
 
-    // Fenced BCH cannot have a token quantity
+    // Fenced NEX cannot have a token quantity
     t = tx1x1(fenceMint, gp2pkh(fgrp1, u1, 100000), 1000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // Since mint authority spent, BCH can move into the group
+    // Since mint authority spent, NEX can move into the group
     t = tx1x1(fenceMint, gp2pkh(fgrp1, u1, 0), 1000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
 
-    // BCH from other inputs can move into the group (but all of it does not have to)
+    // NEX from other inputs can move into the group (but all of it does not have to)
     t = tx2x1(bch1, fenceMint, gp2pkh(fgrp1, u1, 0), 5000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
 
-    // Wrong authority, BCH cannot move into the group
+    // Wrong authority, NEX cannot move into the group
     t = tx1x1(fenceMelt, gp2pkh(fgrp1, u1, 0), 1000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // BCH moved out of the group (from the melt authority itself)
+    // NEX moved out of the group (from the melt authority itself)
     t = tx1x1(fenceMelt, p2pkh(u1), 1000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
 
-    // BCH moved out of the group (from the melt authority and combined with another), plus some fees
+    // NEX moved out of the group (from the melt authority and combined with another), plus some fees
     t = tx2x1(fenceMelt, bch1, p2pkh(u1), 10010);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
 
-    // BCH moved out of the group (from the melt authority and combined with another), plus some fees
+    // NEX moved out of the group (from the melt authority and combined with another), plus some fees
     t = tx2x1(fenceMelt, fencedBch, p2pkh(u1), 20010);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
 
-    // only some BCH moved out of the group (from the melt authority and combined with another), plus some fees
+    // only some NEX moved out of the group (from the melt authority and combined with another), plus some fees
     t = tx2x2(fenceMelt, fencedBch, p2pkh(u1), 10010, gp2pkh(fgrp1, u1, 0), 10900);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
 
-    // incorrect BCH move into the group (no mint auth)
+    // incorrect NEX move into the group (no mint auth)
     t = tx1x1(bch1, gp2pkh(fgrp1, u1, 0), 1000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // incorrect BCH move into the group (no mint auth)
+    // incorrect NEX move into the group (no mint auth)
     t = tx2x1(fenceMelt, bch1, gp2pkh(fgrp1, u1, 0), 1000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // correct BCH and fenced BCH move (atomic swap of unfenced and fenced BCH)
+    // correct NEX and fenced NEX move (atomic swap of unfenced and fenced NEX)
     t = tx2x2(bch1, fencedBch, gp2pkh(fgrp1, u1, 0), 20000, p2pkh(u2), 10000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
-    // incorrect BCH and fenced BCH move (bad group quantity)
+    // incorrect NEX and fenced NEX move (bad group quantity)
     t = tx2x2(bch1, fencedBch, gp2pkh(fgrp1, u1, 1), 20000, p2pkh(u2), 10000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // incorrect BCH and fenced BCH move (quantities cause melt)
+    // incorrect NEX and fenced NEX move (quantities cause melt)
     t = tx2x2(bch1, fencedBch, gp2pkh(fgrp1, u1, 0), 19999, p2pkh(u2), 10001);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
-    // incorrect BCH and fenced BCH move (quantities cause mint)
+    // incorrect NEX and fenced NEX move (quantities cause mint)
     t = tx2x2(bch1, fencedBch, gp2pkh(fgrp1, u1, 0), 20001, p2pkh(u2), 9999);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
 
-    // correct fenced BCH split with big fee
+    // correct fenced NEX split with big fee
     t = tx2x2(bch1, fencedBch, gp2pkh(fgrp1, u1, 0), 10000, gp2pkh(fgrp1, u2, 0), 10000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
-    // incorrect fenced BCH split with big fee
+    // incorrect fenced NEX split with big fee
     t = tx2x2(bch1, fencedBch, gp2pkh(fgrp1, u1, 0), 10001, gp2pkh(fgrp1, u2, 0), 10000);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
-    // incorrect fenced BCH split with big fee
+    // incorrect fenced NEX split with big fee
     t = tx2x2(bch1, fencedBch, gp2pkh(fgrp1, u1, 0), 10000, gp2pkh(fgrp1, u2, 0), 9999);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // correct fenced BCH join
+    // correct fenced NEX join
     t = tx2x1(fencedBch2, fencedBch, gp2pkh(fgrp1, u1, 0), 20020);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
-    // incorrect fenced BCH join
+    // incorrect fenced NEX join
     t = tx2x1(fencedBch2, fencedBch, gp2pkh(fgrp1, u1, 0), 20021);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
-    // incorrect fenced BCH join
+    // incorrect fenced NEX join
     t = tx2x1(fencedBch2, fencedBch, gp2pkh(fgrp1, u1, 0), 20019);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // 2 Fenced BCH groups cannot exchange BCH
+    // 2 Fenced NEX groups cannot exchange NEX
     t = tx2x1(fencedGrp2Bch, fencedBch, gp2pkh(fgrp1, u1, 0), 20030);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
-    // 2 Fenced BCH groups cannot exchange BCH
+    // 2 Fenced NEX groups cannot exchange NEX
     t = tx2x1(fencedGrp2Bch, fencedBch, gp2pkh(fgrp2, u1, 0), 20030);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
 
-    // Fenced BCH group atomic exchange
+    // Fenced NEX group atomic exchange
     t = tx2x2(fencedGrp2Bch, fencedBch2, gp2pkh(fgrp1, u1, 0), 20, gp2pkh(fgrp2, u2, 0), 30);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(ok);
 
-    // Incorrect Fenced BCH group atomic exchange
+    // Incorrect Fenced NEX group atomic exchange
     t = tx2x2(fencedGrp2Bch, fencedBch2, gp2pkh(fgrp1, u1, 20), 0, gp2pkh(fgrp2, u2, 30), 0);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);
-    // Incorrect Fenced BCH group atomic exchange
+    // Incorrect Fenced NEX group atomic exchange
     t = tx2x2(fencedGrp2Bch, fencedBch2, gp2pkh(fgrp1, u1, 20), 20, gp2pkh(fgrp2, u2, 30), 30);
     ok = CheckGroupTokens(t, state, coins);
     BOOST_CHECK(!ok);

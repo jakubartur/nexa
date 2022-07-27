@@ -18,8 +18,8 @@ enum class GroupTokenIdFlags : uint16_t
 {
     NONE = 0,
     COVENANT = 1U, // covenants/ encumberances -- output script template must match input
-    HOLDS_BCH = 1U << 1, // group inputs and outputs must balance BCH, token quantity MUST be 0
-    GROUP_RESERVED_BITS = 0xFFFF & ~(COVENANT | HOLDS_BCH),
+    HOLDS_NEX = 1U << 1, // group inputs and outputs must balance NEX, token quantity MUST be 0
+    GROUP_RESERVED_BITS = 0xFFFF & ~(COVENANT | HOLDS_NEX),
     DEFAULT = 0
 };
 

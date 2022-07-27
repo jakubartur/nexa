@@ -239,7 +239,7 @@ BOOST_AUTO_TEST_CASE(groupauthoritypushtxstate)
 
     CGroupTokenID grp1(1);
     CGroupTokenID grp2(2);
-    CGroupTokenID fgrp1(3, GroupTokenIdFlags::HOLDS_BCH);
+    CGroupTokenID fgrp1(3, GroupTokenIdFlags::HOLDS_NEX);
     CGroupTokenID grpUnused(200);
     VchType grpTooSmall(31);
 
@@ -291,7 +291,7 @@ BOOST_AUTO_TEST_CASE(grouppushtxstate)
 
     CGroupTokenID grp1(1);
     CGroupTokenID grp2(2);
-    CGroupTokenID fgrp1(3, GroupTokenIdFlags::HOLDS_BCH);
+    CGroupTokenID fgrp1(3, GroupTokenIdFlags::HOLDS_NEX);
     CGroupTokenID grpUnused(200);
     VchType grpTooSmall(31);
 
