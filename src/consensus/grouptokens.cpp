@@ -135,12 +135,12 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
         if (tokenGrp.associatedGroup != NoGroup)
         {
             gBalance[tokenGrp.associatedGroup].numOutputs += 1;
-            if (tokenGrp.associatedGroup.hasFlag(GroupTokenIdFlags::HOLDS_BCH))
+            if (tokenGrp.associatedGroup.hasFlag(GroupTokenIdFlags::HOLDS_NEX))
             {
-                // If a group holds BCH, its quantity MUST be 0 (or be an authority so < 0)
+                // If a group holds NEX, its quantity MUST be 0 (or be an authority so < 0)
                 if (tokenGrp.quantity > 0)
                     return state.Invalid(false, REJECT_INVALID, "fenced groups must hold 0 tokens");
-                // Set the BCH group quantity to the BCH amount so subsequent logic uses BCH.
+                // Set the NEX group quantity to the NEX amount so subsequent logic uses NEX.
                 tokenGrp.quantity = outp.nValue;
             }
             if (tokenGrp.isAuthority()) // this is an authority output
@@ -187,9 +187,9 @@ bool CheckGroupTokens(const CTransaction &tx, CValidationState &state, const CCo
         if (tokenGrp.invalid)
             continue;
 
-        if (tokenGrp.associatedGroup.hasFlag(GroupTokenIdFlags::HOLDS_BCH))
+        if (tokenGrp.associatedGroup.hasFlag(GroupTokenIdFlags::HOLDS_NEX))
         {
-            // Set the BCH group quantity to the BCH amount so subsequent logic uses BCH.
+            // Set the NEX group quantity to the NEX amount so subsequent logic uses NEX.
             tokenGrp.quantity = coin->out.nValue;
         }
 
