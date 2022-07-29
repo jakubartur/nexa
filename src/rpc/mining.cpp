@@ -617,8 +617,11 @@ UniValue mkblocktemplate(const UniValue &params,
 
     if (!unsafeGetBlockTemplate.Value())
     {
-        if (vNodes.empty())
-            throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "full node is not connected to the larger network!");
+        {
+            LOCK(cs_vNodes);
+            if (vNodes.empty())
+                throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "full node is not connected to the larger network!");
+        }
 
         if (IsInitialBlockDownload())
             throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "full node is downloading blocks...");

@@ -1184,6 +1184,18 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
             HelpExampleCli("getminingcandidate", "null nexa:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q"));
     }
 
+    if (!unsafeGetBlockTemplate.Value())
+    {
+        {
+            LOCK(cs_vNodes);
+            if (vNodes.empty())
+                throw JSONRPCError(RPC_CLIENT_NOT_CONNECTED, "full node is not connected to the larger network!");
+        }
+
+        if (IsInitialBlockDownload())
+            throw JSONRPCError(RPC_CLIENT_IN_INITIAL_DOWNLOAD, "full node is downloading blocks...");
+    }
+
     CScript coinbaseScript;
     std::string destStr;
 
