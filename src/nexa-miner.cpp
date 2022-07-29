@@ -302,7 +302,7 @@ static UniValue CpuMineBlock(unsigned int searchDuration, bool &found, const Ran
     }
     if (!nBits)
     {
-        MilliSleep(100);
+        MilliSleep(1000);
         return ret;
     }
 
@@ -443,7 +443,7 @@ static UniValue RPCSubmitSolution(const UniValue &solution, int &nblocks)
     return reply;
 }
 
-static bool FoundNewBlock(bool fWait)
+static bool FoundNewBlock()
 {
     string strPrint;
     UniValue result;
@@ -461,7 +461,7 @@ static bool FoundNewBlock(bool fWait)
         {
             // Error
             int code = error["code"].get_int();
-            if (fWait && code == RPC_IN_WARMUP)
+            if (code == RPC_IN_WARMUP)
                 throw CConnectionFailed("server in warmup");
             strPrint = "error: " + error.write();
             if (error.isObject())
@@ -477,8 +477,8 @@ static bool FoundNewBlock(bool fWait)
             if (strPrint != "")
             {
                 fprintf(stderr, "%s: %s\n", now().c_str(), strPrint.c_str());
-                MilliSleep(1000);
             }
+            MilliSleep(1000);
         }
         else
         {
@@ -503,19 +503,14 @@ static bool FoundNewBlock(bool fWait)
     }
     catch (const CConnectionFailed &c)
     {
-        if (fWait)
-        {
-            printf("%s: Warning: %s\n", now().c_str(), c.what());
-            MilliSleep(1000);
-        }
-        else
-            throw;
+        printf("%s: Warning: %s\n", now().c_str(), c.what());
+        MilliSleep(1000);
     }
 
     return false;
 }
 
-static bool CheckForNewMiningCandidate(bool fWait)
+static bool CheckForNewMiningCandidate()
 {
     int coinbasesize = GetArg("-coinbasesize", 0);
     std::string address = GetArg("-address", "");
@@ -554,7 +549,7 @@ static bool CheckForNewMiningCandidate(bool fWait)
         {
             // Error
             int code = error["code"].get_int();
-            if (fWait && code == RPC_IN_WARMUP)
+            if (code == RPC_IN_WARMUP)
                 throw CConnectionFailed("server in warmup");
             strPrint = "error: " + error.write();
             if (error.isObject())
@@ -570,8 +565,8 @@ static bool CheckForNewMiningCandidate(bool fWait)
             if (strPrint != "")
             {
                 fprintf(stderr, "%s: %s\n", now().c_str(), strPrint.c_str());
-                MilliSleep(1000);
             }
+            MilliSleep(1000);
         }
         else
         {
@@ -595,21 +590,21 @@ static bool CheckForNewMiningCandidate(bool fWait)
                 }
                 const BlkInfo blkInfo = {headerCommitment.GetCheapHash(), nBits};
                 sharedBlkInfo.store(blkInfo);
+                return true;
             }
         }
     }
     catch (const CConnectionFailed &c)
     {
-        if (fWait)
-        {
-            printf("%s: Warning: %s\n", now().c_str(), c.what());
-            MilliSleep(1000);
-        }
-        else
-            throw;
+        printf("%s: Warning: %s\n", now().c_str(), c.what());
+        MilliSleep(1000);
     }
 
-    return fWait;
+    // Set the nBits to zero so that the miner threads will pause mining.
+    LOCK(cs_commitment);
+    g_nBits = 0;
+
+    return false;
 }
 
 int CpuMiner(int threadNum)
@@ -652,7 +647,6 @@ int CpuMiner(int threadNum)
         try
         {
             // Execute and handle connection failures with -rpcwait
-            bool fWait = true;
             do
             {
                 try
@@ -694,7 +688,7 @@ int CpuMiner(int threadNum)
                         {
                             // Error
                             int code = error["code"].get_int();
-                            if (fWait && code == RPC_IN_WARMUP)
+                            if (code == RPC_IN_WARMUP)
                                 throw CConnectionFailed("server in warmup");
                             strPrint = "error: " + error.write();
                             nRet = abs(code);
@@ -742,11 +736,12 @@ int CpuMiner(int threadNum)
                         else
                         {
                             // Update the new best block hash.
-                            FoundNewBlock(fWait);
+                            FoundNewBlock();
 
                             // Block submission was successfull so retrieve the new mining candidate
                             printf("%s: Getting new Candidate after successful block submission\n", now().c_str());
-                            fWait = CheckForNewMiningCandidate(fWait);
+                            if (!CheckForNewMiningCandidate())
+                                return 0;
                         }
                     }
 
@@ -755,15 +750,10 @@ int CpuMiner(int threadNum)
                 }
                 catch (const CConnectionFailed &c)
                 {
-                    if (fWait)
-                    {
-                        printf("%s: Warning: %s\n", now().c_str(), c.what());
-                        MilliSleep(1000);
-                    }
-                    else
-                        throw;
+                    printf("%s: Warning: %s\n", now().c_str(), c.what());
+                    MilliSleep(1000);
                 }
-            } while (fWait);
+            } while (true);
         }
         catch (const boost::thread_interrupted &)
         {
@@ -844,17 +834,16 @@ int main(int argc, char *argv[])
     deterministicStartCount = GetBoolArg("-deterministic", false);
 
     // Start loop which checks whether we have a new mining candidate
-    bool fWait = true;
     uint64_t nStartTime = 0;
     do
     {
         try
         {
             // only check for new candidates every 2 seconds, or if the bestblockhash has changed.
-            if ((GetTimeMillis() - nStartTime > 2000) || FoundNewBlock(fWait))
+            if ((GetTimeMillis() - nStartTime > 2000) || FoundNewBlock())
             {
                 nStartTime = GetTimeMillis();
-                fWait = CheckForNewMiningCandidate(fWait);
+                CheckForNewMiningCandidate();
             }
             MilliSleep(100);
         }
@@ -868,7 +857,7 @@ int main(int argc, char *argv[])
             PrintExceptionContinue(nullptr, "CommandLineRPC()");
             MilliSleep(1000);
         }
-    } while (fWait);
+    } while (true);
 
     return ret;
 }
