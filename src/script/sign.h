@@ -62,27 +62,6 @@ public:
     bool CreateSig(std::vector<unsigned char> &vchSig, const CKeyID &keyid, const CScript &scriptCode) const;
 };
 
-/** A signature creator for transactions. */
-class TransactionSignatureCreatorBTCBCH : public BaseSignatureCreator
-{
-    const CTransaction *txTo;
-    unsigned int nIn;
-    CAmount amount;
-    uint8_t sigHashType;
-    uint32_t nSigType;
-    const TransactionSignatureChecker checker;
-
-public:
-    TransactionSignatureCreatorBTCBCH(const CKeyStore *keystoreIn,
-        const CTransaction *txToIn,
-        unsigned int nInIn,
-        const CAmount &amountIn,
-        uint8_t sigHashTypeIn,
-        uint32_t nSigType = SIGTYPE_SCHNORR);
-    const BaseSignatureChecker &Checker() const { return checker; }
-    bool CreateSig(std::vector<unsigned char> &vchSig, const CKeyID &keyid, const CScript &scriptCode) const;
-};
-
 
 /** Pretends that all keys exist, but always returns the same dummy public key.  Used for sizing satisfier scripts,
     and for building the script, with "blanks" in the data fields.

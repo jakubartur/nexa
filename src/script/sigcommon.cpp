@@ -22,13 +22,44 @@
 
 #ifdef ANDROID // log sighash calculations
 #include <android/log.h>
-#define p(...) __android_log_print(ANDROID_LOG_DEBUG, "BU.sig", __VA_ARGS__)
+#define p(...)
+// __android_log_print(ANDROID_LOG_DEBUG, "BU.sig", __VA_ARGS__)
 #else
 #define p(...)
 // tinyformat::format(std::cout, __VA_ARGS__)
 #endif
 
 const SigHashType defaultSigHashType; // ALL/ALL is the default construction
+
+uint256 GetPrevoutHash(const SatoshiTransaction &txTo)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    for (unsigned int n = 0; n < txTo.vin.size(); n++)
+    {
+        ss << txTo.vin[n].prevout;
+    }
+    return ss.GetHash();
+}
+
+uint256 GetSequenceHash(const SatoshiTransaction &txTo)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    for (unsigned int n = 0; n < txTo.vin.size(); n++)
+    {
+        ss << txTo.vin[n].nSequence;
+    }
+    return ss.GetHash();
+}
+
+uint256 GetOutputsHash(const SatoshiTransaction &txTo)
+{
+    CHashWriter ss(SER_GETHASH, 0);
+    for (unsigned int n = 0; n < txTo.vout.size(); n++)
+    {
+        ss << txTo.vout[n];
+    }
+    return ss.GetHash();
+}
 
 uint256 GetPrevoutHashOf(const CTransaction &txTo, unsigned int n)
 {
@@ -112,10 +143,10 @@ uint256 GetOutputsHashOf(const CTransaction &txTo, unsigned int a, unsigned int 
  * Wrapper that serializes like CTransaction, but with the modifications
  *  required for the signature hash done in-place
  */
-class CTransactionSignatureSerializer
+class BitcoinTransactionSignatureSerializer
 {
 private:
-    const CTransaction &txTo; //! reference to the spending transaction (the one being serialized)
+    const SatoshiTransaction &txTo; //! reference to the spending transaction (the one being serialized)
     const CScript &scriptCode; //! output script being consumed
     const unsigned int nIn; //! input index of txTo being signed
     const bool fAnyoneCanPay; //! whether the hashtype has the BTCBCH_SIGHASH_ANYONECANPAY flag set
@@ -123,13 +154,14 @@ private:
     const bool fHashNone; //! whether the hashtype is BTCBCH_SIGHASH_NONE
 
 public:
-    CTransactionSignatureSerializer(const CTransaction &txToIn,
+    BitcoinTransactionSignatureSerializer(const SatoshiTransaction &txToIn,
         const CScript &scriptCodeIn,
         unsigned int nInIn,
-        uint8_t hashTypeIn)
+        uint8_t nHashTypeIn)
         : txTo(txToIn), scriptCode(scriptCodeIn), nIn(nInIn),
-          fAnyoneCanPay((hashTypeIn & BTCBCH_SIGHASH_ANYONECANPAY) != 0),
-          fHashSingle((hashTypeIn & BTCBCH_SIGHASH_SINGLE) != 0), fHashNone((hashTypeIn & BTCBCH_SIGHASH_NONE) != 0)
+          fAnyoneCanPay(!!(nHashTypeIn & BTCBCH_SIGHASH_ANYONECANPAY)),
+          fHashSingle((nHashTypeIn & 0x1f) == BTCBCH_SIGHASH_SINGLE),
+          fHashNone((nHashTypeIn & 0x1f) == BTCBCH_SIGHASH_NONE)
     {
     }
 
@@ -168,8 +200,6 @@ public:
         if (fAnyoneCanPay)
             nInput = nIn;
         // Serialize the prevout
-        ::Serialize(s, txTo.vin[nInput].type);
-        // Serialize the prevout
         ::Serialize(s, txTo.vin[nInput].prevout);
         // Serialize the script
         if (nInput != nIn)
@@ -183,7 +213,6 @@ public:
             ::Serialize(s, (int)0);
         else
             ::Serialize(s, txTo.vin[nInput].nSequence);
-        ::Serialize(s, txTo.vin[nInput].amount);
     }
 
     /** Serialize an output of txTo */
@@ -223,7 +252,7 @@ public:
 const uint256 SIGNATURE_HASH_ERROR(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
 
 uint256 SignatureHashBitcoin(const CScript &scriptCode,
-    const CTransaction &txTo,
+    const SatoshiTransaction &txTo,
     unsigned int nIn,
     const uint8_t nHashType,
     size_t *nHashedOut)
@@ -257,7 +286,7 @@ uint256 SignatureHashBitcoin(const CScript &scriptCode,
     }
 
     // Wrapper to serialize only the necessary parts of the transaction being signed
-    CTransactionSignatureSerializer txTmp(txTo, scriptCode, nIn, nHashType);
+    BitcoinTransactionSignatureSerializer txTmp(txTo, scriptCode, nIn, nHashType);
 
     // Serialize and hash
     CHashWriter ss(SER_GETHASH, 0);
@@ -269,7 +298,7 @@ uint256 SignatureHashBitcoin(const CScript &scriptCode,
 
 // ONLY to be called with BTCBCH_SIGHASH_FORKID set in nHashType!
 uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
-    const CTransaction &txTo,
+    const SatoshiTransaction &txTo,
     unsigned int nIn,
     const uint8_t nHashType,
     const CAmount &amount,
@@ -283,24 +312,22 @@ uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     p("Signature hash calculation with type: 0x%x\n", nHashType);
     if (!(nHashType & BTCBCH_SIGHASH_ANYONECANPAY))
     {
-        hashPrevouts = GetPrevoutHash(txTo, txTo.vin.size());
+        hashPrevouts = GetPrevoutHash(txTo);
         p("Hashing prevouts to: %s\n", hashPrevouts.GetHex().c_str());
-        hashInputAmounts = GetInputAmountHash(txTo, txTo.vin.size());
-        p("Hashing input amounts to: %s\n", hashInputAmounts.GetHex().c_str());
     }
 
     /* gets the hash of the sequence numbers of every input */
     if (!(nHashType & BTCBCH_SIGHASH_ANYONECANPAY) && (nHashType & 0x1f) != BTCBCH_SIGHASH_SINGLE &&
         (nHashType & 0x1f) != BTCBCH_SIGHASH_NONE)
     {
-        hashSequence = GetSequenceHash(txTo, txTo.vin.size());
+        hashSequence = GetSequenceHash(txTo);
         p("Hashing input sequence numbers to: %s\n", hashSequence.GetHex().c_str());
     }
 
     /* gets the hash of the serialization of every output */
     if ((nHashType & 0x1f) != BTCBCH_SIGHASH_SINGLE && (nHashType & 0x1f) != BTCBCH_SIGHASH_NONE)
     {
-        hashOutputs = GetOutputsHash(txTo, txTo.vout.size());
+        hashOutputs = GetOutputsHash(txTo);
         p("Hashing every output to: %s\n", hashOutputs.GetHex().c_str());
     }
     /* Or just serialize the output that corresponds to this input */
@@ -317,7 +344,6 @@ uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     ss << txTo.nVersion;
     // Input prevouts/nSequence (none/all, depending on flags)
     ss << hashPrevouts;
-    ss << hashInputAmounts;
     ss << hashSequence;
     // The input being signed (replacing the scriptSig with scriptCode +
     // amount). The prevout may already be contained in hashPrevout, and the
@@ -325,8 +351,8 @@ uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     ss << txTo.vin[nIn].prevout;
     ss << static_cast<const CScriptBase &>(scriptCode);
     p("ScriptCode: %s\n", scriptCode.GetHex().c_str());
-    ss << txTo.vin[nIn].amount;
-    p("Amount: %ld\n", (long int)txTo.vin[nIn].amount);
+    ss << amount;
+    p("Amount: %ld\n", (long int)amount);
     ss << txTo.vin[nIn].nSequence;
     p("This input sequence: %d\n", txTo.vin[nIn].nSequence);
     // Outputs (none/one/all, depending on flags)
@@ -335,7 +361,7 @@ uint256 SignatureHashBitcoinCash(const CScript &scriptCode,
     ss << txTo.nLockTime;
     p("Locktime: %d\n", txTo.nLockTime);
     // Sighash type
-    ss << nHashType;
+    ss << (uint32_t)nHashType;
     p("sigHashType: %x\n", nHashType);
 
     p("Num bytes hashed: %d\n", (int)ss.GetNumBytesHashed());
