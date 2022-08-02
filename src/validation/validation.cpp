@@ -1114,10 +1114,12 @@ bool CheckInputs(const CTransactionRef &tx,
             {
                 debugger->SetInputCheckResult(false);
                 debugger->AddInputCheckError(state.GetRejectReason());
-                debugger->FinishCheckInputSession();
             }
-            return state.DoS(0, false, REJECT_MALFORMED, "group-token-imbalance", false,
-                strprintf("Group token inputs and outputs do not balance"));
+            else
+            {
+                return state.DoS(0, false, REJECT_MALFORMED, "group-token-imbalance", false,
+                    strprintf("Group token inputs and outputs do not balance"));
+            }
         }
 
         if (pvChecks)
