@@ -1137,10 +1137,10 @@ static void AcceptConnection(const ListenSocket &hListenSocket)
         return;
     }
 
-    // BU - Moved locks below checks above as they may return without us ever having to take these locks (esp. IsBanned
+    // Moved locks below since the checks above as may return without us ever having to take these locks (esp. IsBanned
     // check)
-    // NOTE: BU added separate tracking of outbound nodes added via the "-addnode" option.  This means that you actually
-    //      may end up with up to 2 * nMaxOutConnections outbound connections due to the separate semaphores.
+    // NOTE: added separate tracking of outbound nodes added via the "-addnode" option.  This means that you actually
+    //       may end up with up to 2 * nMaxOutConnections outbound connections due to the separate semaphores.
     //
     // 1. Limit the number of possible "-addnode" outbounds to not exceed nMaxOutConnections
     //   Otherwise we waste inbound connection slots on outbound addnodes that are blocked waiting on the semaphore.
@@ -1170,7 +1170,6 @@ static void AcceptConnection(const ListenSocket &hListenSocket)
             if (pnode->fInbound)
                 nInbound++;
     }
-    // BU - end section
 
     if (nInbound >= nMaxInbound)
     {
@@ -1183,8 +1182,8 @@ static void AcceptConnection(const ListenSocket &hListenSocket)
         }
     }
 
-    // BU - add inbound connection to the ip tracker and increment counter
-    // If connection attempts exceeded within allowable timeframe then ban peer
+    // Add connection to the ip tracker and increment counter
+    // If connection attempts exceeded within allowable timeframe then disconnect the peer
     {
         double nConnections = 0;
         LOCK(cs_mapInboundConnectionTracker);
@@ -1219,16 +1218,11 @@ static void AcceptConnection(const ListenSocket &hListenSocket)
         LOG(EVICT, "Number of connection attempts is %f for %s\n", nConnections, addr.ToString());
         if (nConnections > 4 && !whitelisted && !addr.IsLocal()) // local connections are auto-whitelisted
         {
-            int nHoursToBan = 4;
-            std::string userAgent = mapInboundConnectionTracker[ipAddress].userAgent;
-            dosMan.Ban((CNetAddr)addr, userAgent, BanReasonTooManyConnectionAttempts, nHoursToBan * 60 * 60);
-            LOGA("Banning %s for %d hours: Too many connection attempts - connection dropped\n", addr.ToString(),
-                nHoursToBan);
+            LOG(EVICT, "Disconnecting %s: Too many connection attempts - connection dropped\n", addr.ToString());
             CloseSocket(hSocket);
             return;
         }
     }
-    // BU - end section
 
     CNode *pnode = new CNode(hSocket, addr, "", true);
     pnode->AddRef();
