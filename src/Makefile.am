@@ -60,9 +60,7 @@ LIBNEXA_ZMQ=libnexa_zmq.a
 endif
 
 if BUILD_NEXA_LIBS
-if TARGET_LINUX
 LIBBITCOINCASH=libnexa.la
-endif
 endif
 
 if ENABLE_WALLET
@@ -734,7 +732,6 @@ nexa_miner_LDADD += $(BOOST_LIBS) $(SSL_LIBS) $(CRYPTO_LIBS) $(EVENT_LIBS)
 
 # nexa library #
 if BUILD_NEXA_LIBS
-if TARGET_LINUX
 libnexa_la_SOURCES = $(libnexa_a_SOURCES) $(crypto_libnexa_crypto_a_SOURCES)
 
 if GLIBC_BACK_COMPAT
@@ -745,7 +742,6 @@ libnexa_la_LDFLAGS = $(AM_LDFLAGS) $(SSL_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) -no-
 libnexa_la_LIBADD = $(LIBSECP256K1)
 libnexa_la_CPPFLAGS = $(AM_CPPFLAGS) $(NEXA_INCLUDES) -I$(BOOST_CPPFLAGS) -I$(builddir)/obj -I$(srcdir)/secp256k1/include $(JNI_CXXFLAGS) -DBUILD_BITCOIN_INTERNAL
 libnexa_la_CXXFLAGS = $(AM_CXXFLAGS) $(PIE_FLAGS)
-endif
 endif
 #
 
