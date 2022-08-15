@@ -1,7 +1,7 @@
 // Copyright (c) 2019-2021 The Bitcoin Unlimited developers
 // Distributed under the MIT software license, see the accompanying
 // file COPYING or http://www.opensource.org/licenses/mit-license.php.
-#include "electrum/electrs.h"
+#include "electrum/rostrum.h"
 #include "chainparamsbase.h"
 #include "extversionkeys.h"
 #include "extversionmessage.h"
@@ -16,7 +16,7 @@
 
 #include <boost/filesystem.hpp>
 
-constexpr char ELECTRSCASH_BIN[] = "electrscash";
+constexpr char ROSTRUM_BIN[] = "rostrum";
 
 static std::string monitoring_port() { return GetArg("-electrum.monitoring.port", "4224"); }
 static std::string monitoring_host() { return GetArg("-electrum.monitoring.host", "127.0.0.1"); }
@@ -54,7 +54,7 @@ static std::string ws_port(const std::string &network)
 
 static bool is_public_host(const std::string &host)
 {
-    // Special case, CNetAddr treats "0.0.0.0" as local, but electrs
+    // Special case, CNetAddr treats "0.0.0.0" as local, but rostrum
     // treats it as listen on all IPs.
     if (host == "0.0.0.0")
     {
@@ -127,13 +127,13 @@ static void remove_conflicting_arg(std::vector<std::string> &args, const std::st
 }
 namespace electrum
 {
-std::string electrs_path()
+std::string rostrum_path()
 {
-    // look for electrs in same path as bitcoind
-    boost::filesystem::path bitcoind_dir(this_process_path());
-    bitcoind_dir = bitcoind_dir.remove_filename();
+    // look for rostrum in same path as nexad
+    boost::filesystem::path nexad_dir(this_process_path());
+    nexad_dir = nexad_dir.remove_filename();
 
-    auto default_path = bitcoind_dir / ELECTRSCASH_BIN;
+    auto default_path = nexad_dir / ROSTRUM_BIN;
     const std::string path = GetArg("-electrum.exec", default_path.string());
 
     if (path.empty())
@@ -150,8 +150,8 @@ std::string electrs_path()
     return path;
 }
 
-//! Arguments to start electrs server with
-std::vector<std::string> electrs_args(int rpcport, const std::string &network)
+//! Arguments to start rostrum server with
+std::vector<std::string> rostrum_args(int rpcport, const std::string &network)
 {
     std::vector<std::string> args;
 
@@ -161,7 +161,7 @@ std::vector<std::string> electrs_args(int rpcport, const std::string &network)
         args.push_back("-vvvv");
     }
 
-    // address to bitcoind rpc interface
+    // address to nexad rpc interface
     {
         rpcport = GetArg("-rpcport", rpcport);
         std::stringstream ss;
@@ -172,16 +172,16 @@ std::vector<std::string> electrs_args(int rpcport, const std::string &network)
     args.push_back("--electrum-rpc-addr=" + rpc_host() + ":" + rpc_port(network));
     args.push_back("--electrum-ws-addr=" + ws_host() + ":" + ws_port(network));
 
-    // bitcoind data dir (for cookie file)
+    // nexad data dir (for cookie file)
     args.push_back("--daemon-dir=" + GetDataDir(false).string());
 
-    // Where to store electrs database files.
-    const std::string defaultDir = (GetDataDir() / ELECTRSCASH_BIN).string();
+    // Where to store rostrum database files.
+    const std::string defaultDir = (GetDataDir() / ROSTRUM_BIN).string();
     args.push_back("--db-dir=" + GetArg("-electrum.dir", defaultDir));
 
-    // Tell electrs what network we're on
+    // Tell rostrum what network we're on
     const std::map<std::string, std::string> netmapping = {{"main", "bitcoin"}, {"test", "testnet"},
-        {"regtest", "regtest"}, {"test4", "testnet4"}, {"scale", "scalenet"}, {CBaseChainParams::NEXA, "testnet"}};
+        {"regtest", "regtest"}, {"test4", "testnet4"}, {"scale", "scalenet"}, {CBaseChainParams::NEXA, "bitcoin"}};
     if (!netmapping.count(network))
     {
         std::stringstream ss;
@@ -214,7 +214,7 @@ std::vector<std::string> electrs_args(int rpcport, const std::string &network)
     return args;
 }
 
-std::map<std::string, int64_t> fetch_electrs_info()
+std::map<std::string, int64_t> fetch_rostrum_info()
 {
     if (!GetBoolArg("-electrum", false))
     {
