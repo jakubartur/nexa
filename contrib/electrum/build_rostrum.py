@@ -4,8 +4,8 @@ import logging
 import os
 import sys
 import shutil
-PROJECT_NAME = "ElectrsCash"
-GIT_REPO = "https://github.com/BitcoinUnlimited/{}.git".format(PROJECT_NAME)
+PROJECT_NAME = "rostrum"
+GIT_REPO = "https://gitlab.com/BitcoinUnlimited/{}.git".format(PROJECT_NAME)
 # When released put a tag here 'v2.0.0'
 # When in development, put 'master' here.
 GIT_BRANCH = "master"
@@ -15,8 +15,8 @@ EXPECT_HEAD = None
 
 ROOT_DIR = os.path.realpath(
         os.path.join(os.path.dirname(__file__), os.pardir, os.pardir))
-ELECTRS_DIR = os.path.join(ROOT_DIR, PROJECT_NAME)
-ELECTRS_BIN = "electrscash"
+ROSTRUM_DIR = os.path.join(ROOT_DIR, PROJECT_NAME)
+ROSTRUM_BIN = "rostrum"
 
 parser = argparse.ArgumentParser()
 parser.add_argument('--allow-modified', help='Allow building modified/dirty repo',
@@ -71,18 +71,18 @@ def check_dependencies():
 
 def clone_repo():
     import git
-    logging.info("Cloning %s to %s", GIT_REPO, ELECTRS_DIR)
-    repo = git.Repo.clone_from(GIT_REPO, ELECTRS_DIR, branch=GIT_BRANCH)
+    logging.info("Cloning %s to %s", GIT_REPO, ROSTRUM_DIR)
+    repo = git.Repo.clone_from(GIT_REPO, ROSTRUM_DIR, branch=GIT_BRANCH)
 
 def verify_repo(allow_modified):
     import git
-    repo = git.Repo(ELECTRS_DIR)
+    repo = git.Repo(ROSTRUM_DIR)
     if repo.is_dirty():
-        logging.error("Validation failed - %s has local modifications. Use `--allow-modified` if you wanted to build from a dirty repository", ELECTRS_DIR)
+        logging.error("Validation failed - %s has local modifications. Use `--allow-modified` if you wanted to build from a dirty repository", ROSTRUM_DIR)
         allow_modified or bail("Bailing")
 
     if EXPECT_HEAD == None:
-        logging.warning("ElectrsCash is not fixed to a specific revision.  Please assign the EXPECT_HEAD variable in build_electrs.py before releasing.")
+        logging.warning("Rostrum is not fixed to a specific revision.  Please assign the EXPECT_HEAD variable in build_rostrum.py before releasing.")
     if EXPECT_HEAD != None and repo.head.object.hexsha != EXPECT_HEAD:
         # TODO: Add command line option to reset HEAD to GIT_BRANCH at EXPECT_HEAD
         logging.error("Validation failed - %s HEAD differs from expected (%s vs %s)",
@@ -111,7 +111,7 @@ def cargo_run(args):
     if 'CARGO_HOME' in cargo_env:
         logging.info("CARGO_HOME is set to {}".format(cargo_env['CARGO_HOME']))
 
-    p = subprocess.Popen(args, cwd = ELECTRS_DIR,
+    p = subprocess.Popen(args, cwd = ROSTRUM_DIR,
         stdout = subprocess.PIPE, stderr = subprocess.PIPE,
         env = cargo_env)
 
@@ -155,7 +155,7 @@ def get_target(makefile_target):
 
 check_dependencies()
 
-if not os.path.exists(ELECTRS_DIR):
+if not os.path.exists(ROSTRUM_DIR):
     clone_repo()
 verify_repo(args.allow_modified)
 
@@ -167,8 +167,8 @@ def build_flags(debug, target, builddir):
         return flags
     return flags + ["--release"]
 
-cargo_run(["build", "--verbose", "--locked"] + build_flags(args.debug, args.target, args.builddir))
-cargo_run(["test", "--verbose", "--locked"] + build_flags(args.debug, args.target, args.builddir))
+cargo_run(["build", "--verbose", "--locked", "--features=nexa"] + build_flags(args.debug, args.target, args.builddir))
+cargo_run(["test", "--verbose", "--locked", "--features=nexa"] + build_flags(args.debug, args.target, args.builddir))
 
 def build_type_dir(debug):
     if debug:
@@ -177,12 +177,12 @@ def build_type_dir(debug):
 
 def binary_dir(target, debug, builddir):
     """
-    The directory where the electrscash binaries are built.
+    The directory where the rostrum binaries are built.
     """
-    root = builddir if builddir is not None else os.path.join(ELECTRS_DIR, "target")
+    root = builddir if builddir is not None else os.path.join(ROSTRUM_DIR, "target")
     return os.path.join(root, get_target(target), build_type_dir(debug))
 
-src = os.path.join(binary_dir(args.target, args.debug, args.builddir), ELECTRS_BIN)
+src = os.path.join(binary_dir(args.target, args.debug, args.builddir), ROSTRUM_BIN)
 logging.info("Copying %s to %s", src, args.dst)
 shutil.copy(src, args.dst)
 

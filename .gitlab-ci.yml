@@ -162,7 +162,7 @@ build-ubuntu:
             - ./src/test/*.log
             - ./src/test-suite.log
 
-build-ubuntu-electrscash:
+build-debian-rostrum:
     extends: .ubuntu_base
     stage: build
     cache:
@@ -192,14 +192,14 @@ build-ubuntu-electrscash:
         - ../configure --cache-file=config.cache
             --prefix=$PWD/../depends/x86_64-unknown-linux-gnu > /dev/null
 
-        - make electrscash
+        - make rostrum
 
     dependencies:
         - build-ubuntu-deps
 
     artifacts:
         paths:
-            - ./build/src/electrscash
+            - ./build/src/rostrum
 
 test-ubuntu-benchmarks:
     extends: .ubuntu_base
