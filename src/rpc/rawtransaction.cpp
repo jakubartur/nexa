@@ -1471,9 +1471,9 @@ UniValue signrawtransaction(const UniValue &params, bool fHelp)
 
 UniValue sendrawtransaction(const UniValue &params, bool fHelp)
 {
-    if (fHelp || params.size() < 1 || params.size() > 4)
+    if (fHelp || params.size() < 1 || params.size() > 5)
         throw runtime_error(
-            "sendrawtransaction \"hexstring\" ( allowhighfees, allownonstandard )\n"
+            "sendrawtransaction \"hexstring\" ( allowhighfees, allownonstandard, verbose )\n"
             "\nSubmits raw transaction (serialized, hex-encoded) to local node and network.\n"
             "This API does not return until the transaction has been fully validated, and raises\n"
             "an exception if submission was unsuccessful.\n"
@@ -1484,6 +1484,7 @@ UniValue sendrawtransaction(const UniValue &params, bool fHelp)
             "3. allownonstandard (string 'standard', 'nonstandard', 'default', optional, default='default')\n"
             "                    Force standard or nonstandard transaction check\n"
             "4. alloworphans    (boolean, optional, default=false) Allow orphans and store them in the orphan pool\n"
+            "5. verbose         (boolean, optional, default=false) Return dictionary with additional information\n"
             "\nResult:\n"
             "\"hex\"             (string) The transaction hash in hex\n"
             "\nExamples:\n"
@@ -1505,6 +1506,7 @@ UniValue sendrawtransaction(const UniValue &params, bool fHelp)
     bool fOverrideFees = false;
     TransactionClass txClass = TransactionClass::DEFAULT;
     bool fAllowOrphans = false;
+    bool fVerbose = false;
 
     // 2nd parameter allows high fees
     if (params.size() > 1)
@@ -1523,6 +1525,10 @@ UniValue sendrawtransaction(const UniValue &params, bool fHelp)
     if (params.size() > 3)
     {
         fAllowOrphans = params[3].get_bool();
+    }
+    if (params.size() > 4)
+    {
+        fVerbose = params[4].get_bool();
     }
 
     CCoinsViewCache &view = *pcoinsTip;
@@ -1571,6 +1577,13 @@ UniValue sendrawtransaction(const UniValue &params, bool fHelp)
     else if (fHaveChain)
     {
         throw JSONRPCError(RPC_TRANSACTION_ALREADY_IN_CHAIN, "transaction already in block chain");
+    }
+    if (fVerbose)
+    {
+        UniValue res(UniValue::VOBJ);
+        res.pushKV("txidem", idemTx.GetHex());
+        res.pushKV("txid", idTx.GetHex());
+        return res;
     }
     return idemTx.GetHex();
 }
