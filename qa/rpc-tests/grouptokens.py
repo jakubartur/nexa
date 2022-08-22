@@ -58,6 +58,29 @@ class GroupTokensTest (BitcoinTestFramework):
                     assert bytes.fromhex(asm[4]).decode() == url
                     assert bytes.fromhex(asm[5])[::-1] == bytes.fromhex(sha)
 
+    def checkTokenInfo(self, node, grpId, name="", ticker="", url="", url_hash="", balance="0"):
+        info = node.token("info")
+        if (grpId not in info):
+            raise Exception("Group Id not found")
+
+        assert_equal(info[grpId]['name'], name)
+        assert_equal(info[grpId]['ticker'], ticker)
+        assert_equal(info[grpId]['url'], url)
+        assert_equal(info[grpId]['hash'], url_hash)
+        assert_equal(info[grpId]['balance'], balance)
+
+        info = node.token("info", grpId)
+        if (len(info) != 1):
+            raise Exception("Incorrect number of elements returned")
+        if (grpId not in info):
+            raise Exception("Group Id not found")
+
+        assert_equal(info[grpId]['name'], name)
+        assert_equal(info[grpId]['ticker'], ticker)
+        assert_equal(info[grpId]['url'], url)
+        assert_equal(info[grpId]['hash'], url_hash)
+        assert_equal(info[grpId]['balance'], balance)
+
 
     def examineTx(self, tx, node):
         txjson = node.decoderawtransaction(node.gettransaction(tx)["hex"])
@@ -71,7 +94,6 @@ class GroupTokensTest (BitcoinTestFramework):
           print("\n")
           pprint.pprint(txjson, indent=2, width=200)
           print("\n")
-
 
     def subgroupTest(self):
         logging.info("subgroup test")
@@ -173,19 +195,23 @@ class GroupTokensTest (BitcoinTestFramework):
         t = self.nodes[0].token("new")
         self.checkGroupNew(self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"]))
         grpId = t["groupIdentifier"]
+        self.checkTokenInfo(self.nodes[0], grpId)
 
         # Create a group to a specific authority address
         t = self.nodes[0].token("new", auth0Addr)
         self.checkGroupNew(self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"]))
         grp0Id = t["groupIdentifier"]
+        self.checkTokenInfo(self.nodes[0], grp0Id)
 
         t = self.nodes[0].token("new", auth0Addr, "TICK", "NameGoesHere", "https://www.nexa.org", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
         raw = self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"])
         self.checkGroupNew(raw,"TICK", "NameGoesHere", "https://www.nexa.org", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
+        self.checkTokenInfo(self.nodes[0], t["groupIdentifier"], "TICK", "NameGoesHere", "https://www.nexa.org", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
 
         t = self.nodes[0].token("new", "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
         self.checkGroupNew(self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"]),
         "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
+        self.checkTokenInfo(self.nodes[0], t["groupIdentifier"], "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing", "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63")
 
         try:
             t = self.nodes[0].token("new", "TICK2", "AnotherNameGoesHere", "https://www.nexa.org/smthing")
@@ -221,10 +247,26 @@ class GroupTokensTest (BitcoinTestFramework):
         t = self.nodes[0].token("new", auth1Addr)
         self.checkGroupNew(self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"]))
         grp1Id = t["groupIdentifier"]
+        self.nodes[0].generate(1)
+        self.sync_blocks()
+        self.checkTokenInfo(self.nodes[1], grp1Id)
+        try:
+            self.checkTokenInfo(self.nodes[0], grp1Id)
+            assert False
+        except:
+            pass
 
         t = self.nodes[0].token("new", auth2Addr)
         self.checkGroupNew(self.nodes[0].decoderawtransaction(self.nodes[0].gettransaction(t["transaction"])["hex"]))
         grp2Id = t["groupIdentifier"]
+        self.nodes[0].generate(1)
+        self.sync_blocks()
+        self.checkTokenInfo(self.nodes[2], grp2Id)
+        try:
+            self.checkTokenInfo(self.nodes[0], grp2Id)
+            assert False
+        except:
+            pass
 
         mint0_0 = self.nodes[0].getnewaddress()
         mint0_1 = self.nodes[0].getnewaddress()
@@ -232,12 +274,16 @@ class GroupTokensTest (BitcoinTestFramework):
         mint2_0 = self.nodes[2].getnewaddress()
         # mint to a local address
         self.nodes[0].token("mint", grpId, mint0_0, 1000)
+        self.checkTokenInfo(self.nodes[0], grpId, "", "", "", "", 1000)
+
         # mint to a local address
         self.nodes[0].token("mint", grpId, mint0_0, 1000)
         assert(self.nodes[0].token("balance", grpId) == 2000)
+        self.checkTokenInfo(self.nodes[0], grpId, "", "", "", "", 2000)
         # mint to a foreign address
         self.nodes[0].token("mint", grpId, mint1_0, 1000)
         assert(self.nodes[0].token("balance", grpId) == 2000)
+        self.checkTokenInfo(self.nodes[0], grpId,"","","","", 2000)
 
         # mint but node does not have authority
         try:
@@ -259,14 +305,33 @@ class GroupTokensTest (BitcoinTestFramework):
 
         tx = self.nodes[2].token("mint", grp2Id, mint0_0, 100)
         assert(self.nodes[2].token("balance", grp2Id) == 1000)  # check proper token balance
+        self.checkTokenInfo(self.nodes[2], grp2Id, "","","","", 1000)
         self.sync_all()  # node 0 has to be able to see the mint tx that node 2 made
         assert(self.nodes[0].token("balance", grp2Id) == 100)   # on both nodes
+        # This should fail because the grp2Id was created for an address on node[2]
+        try:
+            self.checkTokenInfo(self.nodes[0], grp2Id, "","","","", 100)
+            assert False
+        except:
+            pass
         tx = self.nodes[2].token("mint", grp2Id, mint0_0, 100)
         self.sync_all()  # node 0 has to be able to see the mint tx that node 2 made
         assert(self.nodes[0].token("balance", grp2Id, mint0_0) == 200)
+        # This should fail because the grp2Id was created for an address on node[2]
+        try:
+            self.checkTokenInfo(self.nodes[0], grp2Id, "","","","", 200)
+            assert False
+        except:
+            pass
         # check that a different token group doesn't count toward balance
         tx = self.nodes[0].token("mint", grpId, mint0_0, 1000)
         assert(self.nodes[0].token("balance", grp2Id, mint0_0) == 200)
+        # This should fail because the grp2Id was created for an address on node[2]
+        try:
+            self.checkTokenInfo(self.nodes[0], grp2Id, "","","","", 200)
+            assert False
+        except:
+            pass
 
         try:  # melt without authority
             self.nodes[0].token("melt", grp2Id, 200)  # I should not be able to melt without authority
@@ -296,6 +361,13 @@ class GroupTokensTest (BitcoinTestFramework):
         self.sync_all()
         assert(self.nodes[0].token("balance", grp2Id, mint0_0) == 300)
         assert(self.nodes[2].token("balance", grp2Id) == 800)
+        # This should fail because the grp2Id was created for an address on node[2]
+        try:
+            self.checkTokenInfo(self.nodes[0], grp2Id, "","","","", 300)
+            assert False
+        except:
+            pass
+        self.checkTokenInfo(self.nodes[2], grp2Id, "","","","", 800)
 
         self.nodes[0].generate(1)
         self.sync_blocks()
@@ -304,6 +376,20 @@ class GroupTokensTest (BitcoinTestFramework):
         assert(self.nodes[2].token("balance", grp2Id) == 800)
         assert(self.nodes[0].token("balance", grpId) == 3000)
         assert(self.nodes[1].token("balance", grpId) == 1000)
+        # This should fail because the grp2Id was created for an address on node[2]
+        try:
+            self.checkTokenInfo(self.nodes[0], grp2Id, "","","","", 300)
+            assert False
+        except:
+            pass
+        self.checkTokenInfo(self.nodes[2], grp2Id, "","","","", 800)
+        self.checkTokenInfo(self.nodes[0], grpId, "","","","", 3000)
+        # This should fail because the grp2Id was created for an address on node[0]
+        try:
+            self.checkTokenInfo(self.nodes[1], grpId, "","","","", 1000)
+            assert False
+        except:
+            pass
 
         try: # not going to work because this wallet has 0 native crypto
             self.nodes[1].token("send", grpId, mint2_0, 10)
@@ -318,6 +404,19 @@ class GroupTokensTest (BitcoinTestFramework):
         assert(self.nodes[0].token("balance", grp0Id) == 10)
         assert(self.nodes[1].token("balance", grp0Id) == 120)
         assert(self.nodes[2].token("balance", grp0Id) == 230)
+        self.checkTokenInfo(self.nodes[0], grp0Id, "","","","", 10)
+        # This should fail because the grp2Id was created for an address on node[0]
+        try:
+            self.checkTokenInfo(self.nodes[1], grp0Id, "","","","", 120)
+            assert False
+        except:
+            pass
+        # This should fail because the grp2Id was created for an address on node[0]
+        try:
+            self.checkTokenInfo(self.nodes[2], grp0Id, "","","","", 230)
+            assert False
+        except:
+            pass
 
         n2addr = self.nodes[2].getnewaddress()
         logging.info("melt authority")

@@ -1536,4 +1536,62 @@ BOOST_FIXTURE_TEST_CASE(grouptoken_blockchain, TestChain100Setup)
 }
 #endif
 
+BOOST_AUTO_TEST_CASE(grouptoken_descriptions)
+{
+    // Test that all labels can be encoded in OP_RETURN and retrieved successfully.
+    std::string name = "NexaToken";
+    std::string ticker = "NEXT";
+    std::string url = "http://nexa.org";
+    std::string urlHex = "a0b0123489c8";
+
+    std::vector<std::vector<unsigned char> > desc;
+    desc.push_back(std::vector<unsigned char>(name.begin(), name.end()));
+    desc.push_back(std::vector<unsigned char>(ticker.begin(), ticker.end()));
+    desc.push_back(std::vector<unsigned char>(url.begin(), url.end()));
+    desc.push_back(std::vector<unsigned char>(urlHex.begin(), urlHex.end()));
+
+    CScript opretScript;
+    opretScript = BuildTokenDescScript(desc);
+
+    std::vector<std::string> vLabels;
+    vLabels = GetTokenDescription(opretScript);
+    BOOST_CHECK_EQUAL(name, vLabels[0]);
+    BOOST_CHECK_EQUAL(ticker, vLabels[1]);
+    BOOST_CHECK_EQUAL(url, vLabels[2]);
+    BOOST_CHECK_EQUAL(urlHex, vLabels[3]);
+
+    // Test that OP_RETURN must have 88888888 as group id or it will return empty labels
+    // see https: github.com/bitcoincashorg/bitcoincash.org/blob/master/etc/protocols.csv
+    uint32_t OpRetGroupId = 99999999;
+
+    CScript ret1;
+    ret1 << OP_RETURN << OpRetGroupId;
+    for (auto &d : desc)
+    {
+        ret1 << d;
+    }
+    vLabels = GetTokenDescription(ret1);
+    BOOST_CHECK(vLabels.empty());
+
+    // Test that OP_RETURN must be present in the script
+    OpRetGroupId = 88888888;
+
+    CScript ret2;
+    ret2 << OP_NOP << OpRetGroupId;
+    for (auto &d : desc)
+    {
+        ret2 << d;
+    }
+    vLabels = GetTokenDescription(ret2);
+    BOOST_CHECK(vLabels.empty());
+
+    // Test that not data returns empty
+    OpRetGroupId = 88888888;
+
+    CScript ret3;
+    ret3 << OP_RETURN << OpRetGroupId;
+    vLabels = GetTokenDescription(ret3);
+    BOOST_CHECK(vLabels.empty());
+}
+
 BOOST_AUTO_TEST_SUITE_END()

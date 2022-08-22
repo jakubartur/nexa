@@ -9,6 +9,7 @@
 #include "consensus/grouptokens.h"
 #include "consensus/validation.h"
 #include "dstencode.h"
+#include "prevector.h"
 #include "primitives/transaction.h"
 #include "pubkey.h"
 #include "random.h"
@@ -42,6 +43,8 @@ CAmount GROUPED_SATOSHI_AMT = 0;
 
 // Approximate size of signature in a script -- used for guessing fees
 const unsigned int TX_SIG_SCRIPT_LEN = 80 + 32; // sig + pubkey
+
+const unsigned int DEFAULT_OP_RETURN_GROUP_ID = 88888888;
 
 /* Grouped transactions look like this:
 
@@ -146,6 +149,106 @@ public:
         return true;
     }
 };
+
+std::vector<std::string> GetTokenDescription(const CScript &script)
+{
+    std::vector<std::string> vTokenDesc;
+
+    CScript::const_iterator pc = script.begin();
+    opcodetype op;
+    std::vector<unsigned char> vchRet;
+
+    // Check we have an op_return
+    script.GetOp(pc, op, vchRet);
+    if (op != OP_RETURN)
+        return {};
+
+    // Check for correct group id
+    script.GetOp(pc, op, vchRet);
+    uint32_t grpId;
+    std::stringstream ss;
+    std::reverse(vchRet.begin(), vchRet.end());
+    ss << std::hex << HexStr(vchRet);
+    ss >> grpId;
+    if (grpId != DEFAULT_OP_RETURN_GROUP_ID)
+        return {};
+
+    // Get labels
+    while (script.GetOp(pc, op, vchRet))
+    {
+        if (op != OP_0)
+        {
+            std::string s(vchRet.begin(), vchRet.end());
+            vTokenDesc.push_back(s);
+        }
+        else
+            vTokenDesc.push_back("");
+    }
+
+    return vTokenDesc;
+}
+
+CScript BuildTokenDescScript(const std::vector<std::vector<unsigned char> > &desc)
+{
+    // see https: github.com/bitcoincashorg/bitcoincash.org/blob/master/etc/protocols.csv
+    CScript ret;
+    ret << OP_RETURN << DEFAULT_OP_RETURN_GROUP_ID;
+    for (auto &d : desc)
+    {
+        ret << d;
+    }
+
+    return ret;
+}
+
+void GetAllGroupDescriptions(const CWallet *wallet,
+    std::unordered_map<CGroupTokenID, std::vector<std::string> > &desc,
+    const CGroupTokenID &grpID)
+{
+    // Find all the coins that have a groupID
+    std::vector<COutput> vCoins;
+    {
+        LOCK(wallet->cs_wallet);
+        for (auto &iter : wallet->mapWallet)
+        {
+            const COutput &coin = iter.second;
+            if (coin.isNull() || coin.txOnly())
+                continue;
+            CGroupTokenInfo tg(coin.GetScriptPubKey());
+            if ((tg.associatedGroup != NoGroup) && tg.isAuthority())
+            {
+                if (grpID != NoGroup && tg.associatedGroup != grpID)
+                    continue;
+                vCoins.push_back(coin);
+            }
+        }
+    }
+
+    // parse through the transaction to find any op_returns, strip out the labels, and associated them with the groupIDs
+    for (COutput &coin : vCoins)
+    {
+        // Get transaction
+        const CWalletTxRef &wtx = coin.tx;
+        CGroupTokenInfo tg(coin.GetScriptPubKey());
+        bool fOpReturn = false;
+        for (const CTxOut &out : wtx->vout)
+        {
+            // find op_return associated with the tx if there is one
+            if (out.scriptPubKey[0] == OP_RETURN)
+            {
+                fOpReturn = true;
+                desc[tg.associatedGroup] = GetTokenDescription(out.scriptPubKey);
+                break;
+            }
+        }
+
+        // If there is no OP_RETURN then just return empty strings for the token descriptions
+        if (!fOpReturn)
+        {
+            desc[tg.associatedGroup] = std::vector<std::string>({"", "", "", ""});
+        }
+    }
+}
 
 void GetAllGroupBalances(const CWallet *wallet, std::unordered_map<CGroupTokenID, CAmount> &balances)
 {
@@ -672,19 +775,6 @@ std::vector<std::vector<unsigned char> > ParseGroupDescParams(const UniValue &pa
     return ret;
 }
 
-CScript BuildTokenDescScript(const std::vector<std::vector<unsigned char> > &desc)
-{
-    CScript ret;
-    std::vector<unsigned char> data;
-    // github.com/bitcoincashorg/bitcoincash.org/blob/master/etc/protocols.csv
-    uint32_t OpRetGroupId = 88888888; // see https:
-    ret << OP_RETURN << OpRetGroupId;
-    for (auto &d : desc)
-    {
-        ret << d;
-    }
-    return ret;
-}
 
 CGroupTokenID findGroupId(const COutPoint &input,
     CScript opRetTokDesc,
@@ -722,8 +812,10 @@ extern UniValue token(const UniValue &params, bool fHelp)
 
     if (fHelp || params.size() < 1)
         throw std::runtime_error(
-            "token [new, mint, melt, send] \n"
+            "token [info, new, mint, melt, send] \n"
             "\nToken functions.\n"
+            "'info' returns a list of all tokens with their groupId and associated token-name token-ticker "
+            "and descUrl or descHash, but only for tokens created for addresses in this wallet\n"
             "'new' creates a new token type. args: [address] [token-ticker token-name [descUrl descHash]]\n"
             "'mint' creates new tokens. args: groupId address quantity\n"
             "'melt' removes tokens from circulation. args: groupId quantity\n"
@@ -743,10 +835,11 @@ extern UniValue token(const UniValue &params, bool fHelp)
             "\nResult:\n"
             "\n"
             "\nExamples:\n"
-            "\nCreate a new token\n" +
-            HelpExampleCli("token", "new APPL apple") +
+            "\nGet token info\n" +
+            HelpExampleCli("token", "info") + "\nCreate a new token\n" + HelpExampleCli("token", "new APPL apple") +
             HelpExampleCli("token", "new nexa:nqtsq5g59472zwd85c2esgslh6wh025r0x43ttlv2xy98jd0 ORNGE orange") +
-            HelpExampleCli("token", "new nexa:nqtsq5g5ltvwgj6ga6vlyxcay22uh2m8zy0rxzp8sf884gp9 GRP grape http:/nexa.org"
+            HelpExampleCli("token", "new nexa:nqtsq5g5ltvwgj6ga6vlyxcay22uh2m8zy0rxzp8sf884gp9 GRP grape "
+                                    "http://nexa.org "
                                     "1296fdd732e34fa750256095bb68dcd78091c49ab9382a35dce89ea15e055a63") +
             "\nMint tokens\n" +
             HelpExampleCli("token", "mint nexa:tpyte9hwr6ew0agt67a0y2fnnccc0d8r62lwryq44rfhzmv7ngqqqza82qdum "
@@ -1182,6 +1275,78 @@ extern UniValue token(const UniValue &params, bool fHelp)
         ConstructTx(wtx, chosenCoins, outputs, totalBchAvailable, totalBchNeeded, 0, 0, grpID, wallet);
         childAuthorityKey.KeepKey();
         return wtx.GetIdem().GetHex();
+    }
+    else if (operation == "info")
+    {
+        if (params.size() >= 3)
+        {
+            throw std::runtime_error("Invalid number of arguments for token info");
+        }
+
+        if (params.size() > 0 && params.size() <= 2)
+        {
+            CGroupTokenID grpID;
+            if (params.size() == 2)
+            {
+                grpID = DecodeGroupToken(params[1].get_str());
+                if (!grpID.isUserGroup())
+                {
+                    throw JSONRPCError(RPC_INVALID_PARAMS, "Invalid parameter 1: No group specified");
+                }
+            }
+
+            std::unordered_map<CGroupTokenID, std::vector<std::string> > desc;
+            GetAllGroupDescriptions(wallet, desc, grpID);
+
+            std::vector<COutput> coins;
+            std::unordered_map<CGroupTokenID, CAmount> balances;
+            wallet->FilterCoins(coins,
+                [&balances](const COutput &coin)
+                {
+                    CGroupTokenInfo tg(coin.GetScriptPubKey());
+                    if (tg.associatedGroup != NoGroup && !tg.isAuthority())
+                    {
+                        if (tg.quantity > std::numeric_limits<CAmount>::max() - balances[tg.associatedGroup])
+                            balances[tg.associatedGroup] = std::numeric_limits<CAmount>::max();
+                        else
+                            balances[tg.associatedGroup] += tg.quantity;
+                    }
+                    return false; // I don't want to actually filter anything
+                });
+
+            UniValue ret(UniValue::VOBJ);
+            for (const auto &item : desc)
+            {
+                UniValue entry(UniValue::VOBJ);
+                if (desc[item.first].size() >= 4)
+                {
+                    entry.pushKV("name", desc[item.first][0]);
+                    entry.pushKV("ticker", desc[item.first][1]);
+                    entry.pushKV("url", desc[item.first][2]);
+
+                    std::string s = desc[item.first][3];
+                    if (s.size() != 32)
+                    {
+                        entry.pushKV("hash", "");
+                    }
+                    else
+                    {
+                        std::vector<unsigned char> vHash(s.begin(), s.end());
+                        uint256 dochash(vHash);
+                        if (!dochash.IsNull())
+                            entry.pushKV("hash", dochash.ToString());
+                    }
+                }
+
+                if (balances.count(item.first))
+                    entry.pushKV("balance", balances[item.first]);
+                else
+                    entry.pushKV("balance", "0");
+
+                ret.pushKV(EncodeGroupToken(item.first), entry);
+            }
+            return ret;
+        }
     }
     else if (operation == "balance")
     {
