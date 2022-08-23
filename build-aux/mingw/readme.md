@@ -153,12 +153,12 @@ NOTE: The `SET_ENV_VARS.bat` file uses MS-DOS style comments.  Any line that
    the build of dependencies.
 12. `STRIP` is enabled by default.  This will strip out debugging symbols from
    the generated executables, greatly reducing the file size.
-13. `SKIP_AUTOGEN` is disabled by default.  This is a convenience feature that
+13. `AUTOGEN` is enabled by default.  This is a convenience feature that
    should only be used when rebuilding Nexa, not while doing the initial
    development environment configuration.  This is merely a convenience feature
    for when you know you will be rebuilding without any changes to autogen file
    settings.  **If in doubt, leave this commented out.**
-14. `SKIP_CONFIGURE` is disabled by default.  This is a convenience feature that
+14. `CONFIGURE` is enabled by default.  This is a convenience feature that
    should only be used when rebuilding Nexa, not while doing the initial
    development environment configuration.  This is merely a convenience feature
    for when you know you will be rebuilding without needing to re-evaluate the

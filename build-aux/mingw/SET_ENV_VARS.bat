@@ -73,13 +73,13 @@ REM    3. Build cores disabled (means make without the -jN parameter)
 REM    4. Tests disabled
 REM    5. Clean disabled
 REM    6. Strip enabled
-REM    7. Skip Nexa autogen.sh step disabled (useful for rebuilding local changes only)
-REM    8. Skip Nexa configure step disbled (useful for rebuilding local changes only)
+REM    7. Nexa autogen.sh step enabled (useful for rebuilding local changes only)
+REM    8. Nexa configure step enabled (useful for rebuilding local changes only)
 REM
 REM NOTE: If you set to build both 32-bit and 64-bit at the same time:
 REM    1. Clean will be enabled
-REM    2. Skip autogen.sh will be disabled
-REM    3. Skip configure will be disabled
+REM    2. autogen.sh will be enabled
+REM    3. configure will be enabled
 REM ##################################################################################################
 
 REM Following will set up the tool-chain and build dependencies with 32-bit outputs
@@ -100,7 +100,8 @@ REM If you want to run tests ("make check" and "rpc-tests" you must uncomment be
 REM NOTE: Many of the RPC tests will not run on Windows due to a depencency not available in Windows
 REM SET ENABLE_TESTS=YES
 
-REM If you want to remove any previous build outputs and configurations uncomment the line below.
+REM If you want to remove any previous build outputs and configurations uncomment the line below and
+REM set the value to YES.
 REM NOTE: If you are switching between the 32-bit and 64-bit tool chains, you should clean old
 REM       build outputs with this switch, otherwise you may run into linker issues.
 REM SET CLEAN_BUILD=YES
@@ -110,15 +111,17 @@ REM This will, however, make it more difficult to debug any issues that may occu
 REM If you want to keep debug symbols in the generated nexa executables, uncomment the line below.
 SET STRIP=YES
 
-REM If you want to skip running "./autogen.sh" when building nexa uncomment the line below.
+REM If you want to skip running "./autogen.sh" when building nexa then comment out the line below
+REM or set the value to NO.
 REM This is useful to turn off if you have already run this once and not changed the toolchain
 REM or autogen configuration files, as it eleminates a redundant build step.
 REM NOTE: This only affects the build of the nexa executables, not any of the dependencies.
 REM       Additionally, this does not perform a check to see if autogen.sh has been run before
 REM       so if you turn this on but have not previously run autogen.sh you will run into errors.
-REM SET SKIP_AUTOGEN=YES
+SET AUTOGEN=YES
 
-REM If you want to skip running "./configure" when building nexa uncomment the line below.
+REM If you want to skip running "./configure" when building nexa comment out the line below
+REM or set the value to NO.
 REM This is useful to turn off if you have already run this once and not changed the toolchain
 REM or build configuration, as it eleminates a redundant build step.
 REM NOTE: This only affects the build of the nexa executables, not any of the dependencies.
@@ -126,4 +129,4 @@ REM       Additionally, this does not perform a check to see if configure has be
 REM       so if you turn this on but have not previously run configure you will run into errors.
 REM
 REM       If this setting is turned on, then SKIP_AUTOGEN is also automatically turned on too.
-REM SET SKIP_CONFIGURE=YES
+SET CONFIGURE=YES
