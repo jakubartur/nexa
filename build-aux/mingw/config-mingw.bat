@@ -23,8 +23,8 @@ REM  1. Force a clean build
 REM  2. Don't skip autogen.sh or configure steps
 REM ##################################################################################################
 set CLEAN_BUILD=YES
-set SKIP_AUTOGEN=
-set SKIP_CONFIGURE=
+set AUTOGEN=YES
+set CONFIGURE=YES
 
 REM Build necessary paths based on this information
 set "INST_DIR=%CD%"

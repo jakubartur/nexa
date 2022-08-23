@@ -25,8 +25,8 @@ REM ############################################################################
 if "%BUILD_32_BIT%" NEQ "" (
   if "%BUILD_64_BIT%" NEQ "" (
     set CLEAN_BUILD=YES
-    set SKIP_AUTOGEN=
-    set SKIP_CONFIGURE=
+    set AUTOGEN=YES
+    set CONFIGURE=YES
   )
 )
 

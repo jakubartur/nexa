@@ -66,16 +66,24 @@ then
 		exit -1
 	fi
 fi
-CHECK_PATH="$PATH_DEPS/Qt/5.7.1/lib/libQt5Core.a"
+CHECK_PATH="$PATH_DEPS/Qt-5.9.9/5.9.9/lib/libQt5Core.a"
 if [ ! -e "$CHECK_PATH" ]
 then
 	echo Qt dependency is missing.  Please run config-mingw.bat.
 	exit -1
 fi
 
-#If skip configure is set, then skip autogen MUST be set
-if [ -n "$SKIP_CONFIGURE" ]; then
-	SKIP_AUTOGEN=YES
+CHECK_PATH="/d/msys64/mingw64/lib/libzmq.a"
+if [ ! -e "$CHECK_PATH" ]
+then
+	echo Lib zmq dependency is missing
+	exit -1
+fi
+
+#If autogen is set, then configure MUST be set
+if [ "$AUTOGEN" = "YES" ]
+then
+	CONFIGURE=YES
 fi
 
 # Build Nexa
@@ -85,15 +93,21 @@ cd "$NEXA_GIT_ROOT"
 #executing ./configure (this may include `make clean`) depending on current system state
 export BOOST_ROOT="$PATH_DEPS/boost_1_68_0"
 
+
 #if the clean parameter was passed call clean prior to make
-if [ -n "$CLEAN_BUILD" ]; then
+if [ "$CLEAN_BUILD" = "YES" ]; then
 	echo 'Cleaning build...'
 	make clean
 	make distclean
+
+        AUTOGEN=YES
+        CONFIGURE=YES
 fi
 
-#skip autogen (improve build speed if this step isn't necessary)
-if [ -z "$SKIP_AUTOGEN" ]; then
+
+#autogen (improve build speed if this step isn't necessary)
+if [ "$AUTOGEN" = "YES" ]
+then
 	echo 'Running autogen...'
 	./autogen.sh
 fi
@@ -101,7 +115,7 @@ fi
 # NOTE: If you want to run tests (make check and rpc-tests) you must
 #       1. Have built boost with the --with-tests flag (in config-mingw.bat)
 #       2. Have built a Hexdump equivalent for mingw (included by default in install-deps.sh)
-if [ -z "$SKIP_CONFIGURE" ]; then
+if [ "$CONFIGURE" = "YES" ]; then
 	echo 'Running configure...'
 	# By default build without tests
 	DISABLE_TESTS="--disable-tests"
@@ -118,6 +132,7 @@ if [ -z "$SKIP_CONFIGURE" ]; then
 	#ENABLE_DEBUG="--enable-debug"
 
 	CPPFLAGS="-I$PATH_DEPS/db-5.3.21/build_unix \
+	-I/d/msys64/mingw64/include \
 	-I$PATH_DEPS/openssl-1.0.2o/include \
 	-I$PATH_DEPS/libevent-2.0.22/include \
 	-I$PATH_DEPS \
@@ -126,6 +141,7 @@ if [ -z "$SKIP_CONFIGURE" ]; then
 	-I$PATH_DEPS/qrencode-4.0.2 \
 	-I$PATH_DEPS/gmp-6.2.0+dfsg" \
 	LDFLAGS="-L$PATH_DEPS/db-5.3.21/build_unix \
+	-L/d/msys64/mingw64/lib \
 	-L$PATH_DEPS/openssl-1.0.2o \
 	-L$PATH_DEPS/libevent-2.0.22/.libs \
 	-L$PATH_DEPS/miniupnpc \
@@ -147,6 +163,11 @@ if [ -z "$SKIP_CONFIGURE" ]; then
 	--with-protoc-bindir="$PATH_DEPS/protobuf-2.6.1/src"
 fi
 
+# Default to 2 threads if nothing has been set
+if [ -z $MAKE_CORES ]; then
+        MAKE_CORES=-j2
+fi
+echo "making with $MAKE_CORES threads"
 make $MAKE_CORES
 
 # Optinally run make check tests (REVISIT: currently not working due to issues with python3 scripts)
