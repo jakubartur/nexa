@@ -18,13 +18,12 @@
 
 constexpr char ROSTRUM_BIN[] = "rostrum";
 
-static std::string monitoring_port() { return GetArg("-electrum.monitoring.port", "4224"); }
+static std::string monitoring_port() { return GetArg("-electrum.monitoring.port", "3224"); }
 static std::string monitoring_host() { return GetArg("-electrum.monitoring.host", "127.0.0.1"); }
 static std::string rpc_host() { return GetArg("-electrum.host", "0.0.0.0"); }
 static std::string rpc_port(const std::string &network)
 {
-    std::map<std::string, std::string> portmap = {{"main", "50001"}, {"test", "60001"}, {"regtest", "60401"},
-        {"test4", "62001"}, {"scale", "63001"}, {CBaseChainParams::NEXA, "7229"}};
+    std::map<std::string, std::string> portmap = {{"nexa", "20001"}, {"testnet", "30001"}, {"regtest", "30403"}};
 
     auto defaultPort = portmap.find(network);
     if (defaultPort == end(portmap))
@@ -39,8 +38,7 @@ static std::string rpc_port(const std::string &network)
 static std::string ws_host() { return GetArg("-electrum.ws.host", "0.0.0.0"); }
 static std::string ws_port(const std::string &network)
 {
-    const std::map<std::string, std::string> portmap = {{"main", "50003"}, {"test", "60003"}, {"regtest", "60403"},
-        {"test4", "62003"}, {"scale", "63003"}, {CBaseChainParams::NEXA, "7230"}};
+    const std::map<std::string, std::string> portmap = {{"nexa", "20003"}, {"testnet", "30003"}, {"regtest", "30404"}};
 
     auto defaultPort = portmap.find(network);
     if (defaultPort == end(portmap))
@@ -180,8 +178,8 @@ std::vector<std::string> rostrum_args(int rpcport, const std::string &network)
     args.push_back("--db-dir=" + GetArg("-electrum.dir", defaultDir));
 
     // Tell rostrum what network we're on
-    const std::map<std::string, std::string> netmapping = {{"main", "bitcoin"}, {"test", "testnet"},
-        {"regtest", "regtest"}, {"test4", "testnet4"}, {"scale", "scalenet"}, {CBaseChainParams::NEXA, "bitcoin"}};
+    const std::map<std::string, std::string> netmapping = {
+        {"nexa", "bitcoin"}, {"testnet", "testnet"}, {"regtest", "regtest"}};
     if (!netmapping.count(network))
     {
         std::stringstream ss;

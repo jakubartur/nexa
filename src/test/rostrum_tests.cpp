@@ -18,7 +18,7 @@ using namespace electrum;
 
 BOOST_FIXTURE_TEST_SUITE(rostrum_tests, BasicTestingSetup)
 
-static bool rostrum_args_has(const std::string &arg, const std::string &network = "main")
+static bool rostrum_args_has(const std::string &arg, const std::string &network = "nexa")
 {
     const std::vector<std::string> args = rostrum_args(42, network);
     return std::find(begin(args), end(args), arg) != end(args);
@@ -29,7 +29,7 @@ BOOST_AUTO_TEST_CASE(issue_1700)
 {
     UnsetArg("-electrum.port");
     SetArg("-electrum.host", "foo");
-    BOOST_CHECK(rostrum_args_has("--electrum-rpc-addr=foo:50001"));
+    BOOST_CHECK(rostrum_args_has("--electrum-rpc-addr=foo:20001"));
 
     UnsetArg("-electrum.host");
     SetArg("-electrum.port", "24");
@@ -41,8 +41,8 @@ BOOST_AUTO_TEST_CASE(issue_1700)
 
     UnsetArg("-electrum.host");
     UnsetArg("-electrum.port");
-    BOOST_CHECK(rostrum_args_has("--electrum-rpc-addr=0.0.0.0:50001"));
-    BOOST_CHECK(rostrum_args_has("--electrum-rpc-addr=0.0.0.0:60001", "test"));
+    BOOST_CHECK(rostrum_args_has("--electrum-rpc-addr=0.0.0.0:20001"));
+    BOOST_CHECK(rostrum_args_has("--electrum-rpc-addr=0.0.0.0:30001", "testnet"));
 }
 
 BOOST_AUTO_TEST_CASE(rawargs)
@@ -80,7 +80,7 @@ BOOST_AUTO_TEST_CASE(rawargs_verboseness)
 
 static void call_setter(std::unique_ptr<CExtversionMessage> &ver)
 {
-    constexpr char network[] = "main";
+    constexpr char network[] = "nexa";
     ver.reset(new CExtversionMessage);
     set_extversion_flags(*ver, network);
 }
