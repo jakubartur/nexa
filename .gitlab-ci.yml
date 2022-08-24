@@ -468,7 +468,7 @@ build-osx:
             - depends/x86_64-apple-darwin19/share/config.site
 
 ######################################################
-######## Ubuntu base settings
+######## Debian base settings
 ######################################################
 .debian_base:
     image: bchunlimited/gitlabci:debian11
