@@ -26,12 +26,17 @@ stages:
     - static_checks
     - build_depends
     - build
+    - build_tests
+    - qa_tests
     - benchmark_tests
 
 cache: &global_cache_settings
     paths:
         - ccache/
 
+######################################################
+######## Ubuntu base settings
+######################################################
 .ubuntu_base:
     image: bchunlimited/nexa:ubuntu20.04
 
@@ -44,7 +49,9 @@ cache: &global_cache_settings
         - export CCACHE_COMPILERCHECK=content
         - ccache --zero-stats || true
 
-# Linting
+######################################################
+######## Linting
+######################################################
 .ubuntu_cache-linting:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -60,7 +67,9 @@ check-formatting:
         - ./configure --with-incompatible-bdb --enable-glibc-back-compat --enable-reduce-exports
         - make check-formatting
 
-# x86_64 Linux + deps as via system lib
+######################################################
+######## x86_64 Linux + deps as via system lib
+######################################################
 .cache-ubuntu-nodeps:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -77,7 +86,6 @@ build-ubuntu-nodeps:
         - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
         - make -j `nproc`
         - ccache --show-stats
-        - make check
     artifacts:
         when: always
         paths:
@@ -108,7 +116,19 @@ build-ubuntu-nodeps-qt:
             - ./build/src/nexa-miner
             - ./build/src/nexa-tx
 
-# Linux 64 bit, source deps
+build-ubuntu-tests-nodeps:
+    stage: build_tests
+    extends: .cache-ubuntu-nodeps
+    needs: ["build-ubuntu-nodeps"]
+    script:
+        - (cd build/src; ./test/test_nexa)
+    dependencies:
+        - build-ubuntu-nodeps
+
+
+######################################################
+######## Linux 64 bit, source deps
+######################################################
 .cache-ubuntu:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -140,16 +160,11 @@ build-ubuntu:
         - mkdir build; cd build
         - ../configure --enable-shared --enable-debug --enable-zmq --enable-glibc-back-compat --enable-reduce-exports --cache-file=config.cache --prefix=$PWD/../depends/x86_64-unknown-linux-gnu CPPFLAGS=-DDEBUG_LOCKORDER
         - make -j `nproc`
-        - make -j `nproc` check
         - ccache --show-stats
-        - mkdir -p $CI_PROJECT_DIR/cores
-        - mkdir -p $CI_PROJECT_DIR/saved-cores
-        - echo $CI_PROJECT_DIR/cores/core.%e.%p.%h.%t | tee /proc/sys/kernel/core_pattern
-        - ./qa/pull-tester/rpc-tests.py --coverage --no-ipv6-rpc-listen --gitlab
     dependencies:
         - build-ubuntu-deps
     artifacts:
-        when: on_failure
+        when: always
         paths:
             - ./build/src/nexad
             - ./build/src/nexa-cli
@@ -158,11 +173,13 @@ build-ubuntu:
             - ./build/src/test/
             - ./build/src/test/test_nexa
             - ./build/src/bench/bench_nexa
+            - ./build/qa/*
             - ./build/src/test/*.log
             - ./src/test/*.log
             - ./src/test-suite.log
+            - ./build/src/.libs/libnexa.*
 
-build-debian-rostrum:
+build-ubuntu-rostrum:
     extends: .ubuntu_base
     stage: build
     cache:
@@ -185,7 +202,6 @@ build-debian-rostrum:
     script:
         # add cargo to PATH
         - export PATH=$PATH:`pwd`/depends/x86_64-unknown-linux-gnu/native/bin
-
         # Prepare make file
         - ./autogen.sh > /dev/null
         - cd build
@@ -201,17 +217,51 @@ build-debian-rostrum:
         paths:
             - ./build/src/rostrum
 
+build-ubuntu-tests:
+    stage: build_tests
+    extends: .cache-ubuntu
+    needs: ["build-ubuntu"]
+    script:
+        - (cd build/src; ./test/test_nexa)
+    artifacts:
+        when: on_failure
+        paths:
+            - ./build/src/test/
+    dependencies:
+        - build-ubuntu
+
+test-ubuntu-qa:
+    stage: qa_tests
+    extends: .cache-ubuntu
+    needs: ["build-ubuntu"]
+    script:
+        - mkdir -p $CI_PROJECT_DIR/cores
+        - mkdir -p $CI_PROJECT_DIR/saved-cores
+        - echo $CI_PROJECT_DIR/cores/core.%e.%p.%h.%t | tee /proc/sys/kernel/core_pattern
+        - cd build;
+        - ./qa/pull-tester/rpc-tests.py --coverage --no-ipv6-rpc-listen --gitlab
+    dependencies:
+        - build-ubuntu
+    artifacts:
+        when: on_failure
+        paths:
+            - ./qa/qa_tests/
+            - $CI_PROJECT_DIR/saved-cores
+            - ./build/src/nexad
+            - ./build/ctorout.txt
+
 test-ubuntu-benchmarks:
     extends: .ubuntu_base
     stage: benchmark_tests
-    #extends: .cache-ubuntu
     needs: ["build-ubuntu-nodeps"]
     script:
         - (./build/src/bench/bench_nexa -evals=1)
     dependencies:
         - build-ubuntu-nodeps
 
-# nexad clang (no depend, only system lib installed via apt)
+######################################################
+######## nexad clang (no depend, only system lib installed via apt)
+######################################################
 .cache-ubuntu-clang:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -234,7 +284,6 @@ build-ubuntu-clang:
         - ../configure --cache-file=config.cache --enable-zmq --with-gui=qt5 --with-incompatible-bdb CPPFLAGS=-DDEBUG_LOCKORDER
         - make -j `nproc`
         - ccache --show-stats
-        - make check
     artifacts:
         paths:
             - ./build/src/nexad
@@ -247,7 +296,22 @@ build-ubuntu-clang:
             - ./src/test/*.log
             - ./src/test-suite.log
 
-# ARM64
+build-ubuntu-tests-clang:
+    stage: build_tests
+    extends: .ubuntu-clang-env
+    needs: ["build-ubuntu-clang"]
+    script:
+        - (cd build/src; ./test/test_nexa)
+    artifacts:
+        when: on_failure
+        paths:
+            - ./build/src/test/
+    dependencies:
+        - build-ubuntu-clang
+
+######################################################
+######## ARM64
+######################################################
 .cache-arm-64:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -282,7 +346,9 @@ build-arm-64:
     dependencies:
         - build-arm-depends-64
 
-# ARM32
+######################################################
+######## ARM32
+######################################################
 .cache-arm-32:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -317,7 +383,9 @@ build-arm-32:
     dependencies:
         - build-arm-depends-32
 
-# Win64
+######################################################
+######## Win64
+######################################################
 .cache-win-64:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -352,7 +420,9 @@ build-win-64:
     dependencies:
         - build-win-64-depends
 
-# OSX
+######################################################
+######## OSX
+######################################################
 .cache-osx:
     extends: .ubuntu_ccache_scripts
     cache:
@@ -397,9 +467,9 @@ build-osx:
             - build/config.log
             - depends/x86_64-apple-darwin19/share/config.site
 
-
-###### Debian CI tests
-
+######################################################
+######## Ubuntu base settings
+######################################################
 .debian_base:
     image: bchunlimited/gitlabci:debian11
 
@@ -412,7 +482,9 @@ build-osx:
         - export CCACHE_COMPILERCHECK=content
         - ccache --zero-stats || true
 
- # x86_64 Debian + deps as via system lib
+######################################################
+######## x86_64 Debian + deps as via system lib
+######################################################
 .cache-debian-nodeps:
     extends: .debian_ccache_scripts
     cache:
@@ -429,7 +501,6 @@ build-debian-nodeps:
         - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
         - make -j `nproc`
         - ccache --show-stats
-        - make check
     artifacts:
         when: always
         paths:
