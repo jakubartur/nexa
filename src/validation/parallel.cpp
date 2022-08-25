@@ -600,7 +600,8 @@ void HandleBlockMessageThread(CNodeRef noderef, const string strCommand, ConstCB
             ProcessNewBlock(state, chainparams, pfrom, pblock, forceProcessing, nullptr, false);
         }
 
-        if (!state.IsInvalid())
+        // Once the chain is synced we can start tracking thindata and also start writing to the debug log.
+        if (!state.IsInvalid() && IsChainSyncd())
         {
             double nValidationTime = (double)(GetStopwatchMicros() - startTime) / 1000000.0;
             if ((strCommand != NetMsgType::BLOCK) &&
