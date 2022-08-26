@@ -7,7 +7,7 @@ from test_framework.util import assert_equal, assert_raises
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.loginit import logging
 from test_framework.electrumutil import (ElectrumConnection,
-    address_to_scripthash, bitcoind_electrum_args, sync_electrum_height,
+    bitcoind_electrum_args, sync_electrum_height,
     wait_for_electrum_mempool)
 
 ADDRESS_SUBSCRIBE = 'blockchain.address.subscribe'
@@ -16,8 +16,15 @@ ADDRESS_UNSUBSCRIBE = 'blockchain.address.unsubscribe'
 SCRIPTHASH_SUBSCRIBE = 'blockchain.scripthash.subscribe'
 SCRIPTHASH_UNSUBSCRIBE = 'blockchain.scripthash.unsubscribe'
 
-def address_to_address(a):
+async def address_to_address(a):
     return a
+
+async def address_to_scripthash(address):
+    cli = ElectrumConnection()
+    await cli.connect()
+    scripthash = await cli.call('blockchain.address.get_scripthash', address)
+    cli.disconnect()
+    return scripthash
 
 class ElectrumSubscriptionsTest(BitcoinTestFramework):
 
@@ -58,14 +65,14 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
         cli = ElectrumConnection()
         await cli.connect()
         addr = n.getnewaddress()
-        _, queue = await cli.subscribe(subscribe, addr_converter(addr))
+        _, queue = await cli.subscribe(subscribe, await addr_converter(addr))
 
         # Verify that we're receiving notifications
         n.sendtoaddress(addr, 10)
         subscription_name, _ = await asyncio.wait_for(queue.get(), timeout = 10)
-        assert_equal(addr_converter(addr), subscription_name)
+        assert_equal(await addr_converter(addr), subscription_name)
 
-        ok = await cli.call(unsubscribe, addr_converter(addr))
+        ok = await cli.call(unsubscribe, await addr_converter(addr))
         assert(ok)
 
         # Verify that we're no longer receiving notifications
@@ -77,7 +84,7 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
             pass
 
         # Unsubscribing from a hash we're not subscribed to should return false
-        ok = await cli.call(unsubscribe, addr_converter(n.getnewaddress()))
+        ok = await cli.call(unsubscribe, await addr_converter(n.getnewaddress()))
         assert(not ok)
 
 
@@ -97,7 +104,7 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
 
         logging.info("Testing scripthash subscription")
         addr = n.getnewaddress()
-        statushash, queue = await cli.subscribe(subscribe, addr_converter(addr))
+        statushash, queue = await cli.subscribe(subscribe, await addr_converter(addr))
 
         logging.info("Unused address should not have a statushash")
         assert_equal(None, statushash)
@@ -105,22 +112,22 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
         logging.info("Check notification on receiving coins")
         n.sendtoaddress(addr, 10)
         subscription_name, new_statushash1 = await asyncio.wait_for(queue.get(), timeout = 10)
-        assert_equal(addr_converter(addr), subscription_name)
+        assert_equal(await addr_converter(addr), subscription_name)
         assert(new_statushash1 != None and len(new_statushash1) == 64)
 
         logging.info("Check notification on block confirmation")
-        assert(len(n.getrawmempool()) == 1)
+        assert(len(n.getrawtxpool()) == 1)
         n.generate(1)
-        assert(len(n.getrawmempool()) == 0)
+        assert(len(n.getrawtxpool()) == 0)
         subscription_name, new_statushash2 = await asyncio.wait_for(queue.get(), timeout = 10)
-        assert_equal(addr_converter(addr), subscription_name)
+        assert_equal(await addr_converter(addr), subscription_name)
         assert(new_statushash2 != new_statushash1)
         assert(new_statushash2 != None)
 
         logging.info("Check that we get notification when spending funds from address")
         n.sendtoaddress(n.getnewaddress(), n.getbalance(), "", "", True)
         subscription_name, new_statushash3 = await asyncio.wait_for(queue.get(), timeout = 10)
-        assert_equal(addr_converter(addr), subscription_name)
+        assert_equal(await addr_converter(addr), subscription_name)
         assert(new_statushash3 != new_statushash2)
         assert(new_statushash3 != None)
 
@@ -160,7 +167,7 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
         addresses = [ n.getnewaddress() for _ in range(0, num_clients) ]
 
         # Send coins so the addresses, so they get a statushash
-        [ n.sendtoaddress(addresses[i], 1) for i in range(0, num_clients) ]
+        [ n.sendtoaddress(addresses[i], 10) for i in range(0, num_clients) ]
 
         wait_for_electrum_mempool(n, count = num_clients)
 
@@ -169,7 +176,7 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
         for i in range(0, num_clients):
             cli = clients[i]
             addr = addresses[i]
-            scripthash = address_to_scripthash(addr)
+            scripthash = await address_to_scripthash(addr)
             statushash, queue = await cli.subscribe(SCRIPTHASH_SUBSCRIBE, scripthash)
 
             # should be unique
@@ -179,14 +186,14 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
             queues.append(queue)
 
         # Send new coin to all, observe that all clients get a notification
-        [ n.sendtoaddress(addresses[i], 1) for i in range(0, num_clients) ]
+        [ n.sendtoaddress(addresses[i], 10) for i in range(0, num_clients) ]
 
         for i in range(0, num_clients):
             q = queues[i]
             old_statushash = statushashes[i]
 
             scripthash, new_statushash = await asyncio.wait_for(q.get(), timeout = 10)
-            assert_equal(scripthash, address_to_scripthash(addresses[i]))
+            assert_equal(scripthash, await address_to_scripthash(addresses[i]))
             assert(new_statushash != None)
             assert(new_statushash != old_statushash)
 

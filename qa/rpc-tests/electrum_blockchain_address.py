@@ -9,10 +9,12 @@ from test_framework.util import waitForAsync, assert_equal, assert_raises_async
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.loginit import logging
 from test_framework.electrumutil import compare, bitcoind_electrum_args, \
-    address_to_scripthash, sync_electrum_height, ElectrumConnection
+    sync_electrum_height, ElectrumConnection, get_txid_from_idem
 from test_framework.nodemessages import COIN, CTransaction, ToHex, CTxIn, COutPoint
 from test_framework.connectrum.exc import ElectrumErrorResponse
 
+async def address_to_scripthash(cli, address):
+    return await cli.call('blockchain.address.get_scripthash', address)
 
 class ElectrumBlockchainAddress(BitcoinTestFramework):
     """
@@ -78,16 +80,15 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
 
     async def sendtoaddr(self, n, cli, addr, amount):
         utxo = n.listunspent().pop()
-        inputs = [{
-            "txid": utxo["txid"],
-            "vout": utxo["vout"]}]
+        inputs = [{ "outpoint": utxo["outpoint"], "amount": utxo["amount"] }]
         outputs = {
             addr: utxo['amount'],
         }
+        print(f"inputs {inputs} outputs {outputs} utxo {utxo}")
         tx = n.createrawtransaction(inputs, outputs)
         signed = n.signrawtransaction(tx)
-        txid = await cli.call("blockchain.transaction.broadcast", signed['hex'])
-        return txid
+        txidem = await cli.call("blockchain.transaction.broadcast", signed['hex'])
+        return txidem
 
     async def test_get_frist_use(self, n):
         cli = ElectrumConnection()
@@ -95,6 +96,7 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
 
         # New address that has never received coins. Should return an error.
         addr = n.getnewaddress()
+        scripthash = await address_to_scripthash(cli, addr)
         await assert_raises_async(
             ElectrumErrorResponse,
             cli.call,
@@ -102,10 +104,11 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
         await assert_raises_async(
             ElectrumErrorResponse,
             cli.call,
-            "blockchain.scripthash.get_first_use", address_to_scripthash(addr))
+            "blockchain.scripthash.get_first_use", scripthash)
 
         # Send coin to the new address
-        txid = await self.sendtoaddr(n, cli, addr, 1)
+        txidem = await self.sendtoaddr(n, cli, addr, 1)
+        txid = get_txid_from_idem(n, txidem)
 
         # Wait for electrum server to see the utxo.
         async def wait_for_utxo():
@@ -118,7 +121,7 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
         # Observe that get_first_use returns the tx when it's in the mempool
         res = await cli.call("blockchain.address.get_first_use", addr)
         res2 = await cli.call("blockchain.scripthash.get_first_use",
-                address_to_scripthash(addr))
+                await address_to_scripthash(cli, addr))
         assert_equal(res, res2)
         assert_equal(
             "0000000000000000000000000000000000000000000000000000000000000000",
@@ -131,7 +134,7 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
         sync_electrum_height(n)
         res = await cli.call("blockchain.address.get_first_use", addr)
         res2 = await cli.call("blockchain.scripthash.get_first_use",
-                address_to_scripthash(addr))
+                await address_to_scripthash(cli, addr))
         assert_equal(res, res2)
         assert_equal(n.getbestblockhash(), res['block_hash'])
         assert_equal(n.getblockcount(), res['height'])
@@ -153,7 +156,8 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
         utxo = await cli.call("blockchain.address.listunspent", addr)
         assert_equal(0, len(utxo))
 
-        txid = n.sendtoaddress(addr, 21)
+        txidem = n.sendtoaddress(addr, 21)
+        txid = get_txid_from_idem(n, txidem)
         async def fetch_utxo():
             utxo = await cli.call("blockchain.address.listunspent", addr)
             if len(utxo) > 0:
@@ -177,7 +181,8 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
 
     async def test_get_history(self, n, cli):
         addr = n.getnewaddress()
-        txid = n.sendtoaddress(addr, 11)
+        txidem = n.sendtoaddress(addr, 11)
+        txid = get_txid_from_idem(n, txidem)
         async def fetch_history():
             h = await cli.call("blockchain.address.get_history", addr)
             if len(h) > 0:

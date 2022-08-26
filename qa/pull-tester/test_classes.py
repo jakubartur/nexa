@@ -137,7 +137,7 @@ def WhenElectrumFound(test_name, custom_electrum_path):
         electrum_path = custom_electrum_path
 
     if os.path.exists(electrum_path):
-        return f"{test_name} --electrum.exec={custom_electrum_path}"
+        return f"{test_name} --electrum.exec={electrum_path}"
     return Disabled(test_name, f"Electrum server path {electrum_path} does not exist. Electrum test disabled.")
 
 if __name__ == "__main__":

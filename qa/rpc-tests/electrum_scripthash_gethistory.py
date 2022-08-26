@@ -51,7 +51,7 @@ class ElectrumScripthashGetHistory(ElectrumTestFramework):
         res = await cli.call(GET_HISTORY, scripthash)
         assert_equal(1, len(res))
         assert_equal(n.getblockcount(), res[0]['height'])
-        assert_equal(tx.hash, res[0]['tx_hash'])
+        assert_equal(tx.GetRpcHexId(), res[0]['tx_hash'])
 
 
 if __name__ == '__main__':

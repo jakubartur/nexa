@@ -61,16 +61,13 @@ class ElectrumMempoolChain(ElectrumTestFramework):
         tx1 = create_transaction(unspent,
                 n = 0, value = unspent.vout[0].nValue,
                 sig = CScript([OP_TRUE]), out = scriptpubkey)
-        pad_tx(tx1)
         big_fee = 1
         tx2 = create_transaction(tx1,
                 n = 0, value = unspent.vout[0].nValue - big_fee,
                 sig = CScript([OP_TRUE]), out = scriptpubkey)
-        pad_tx(tx2)
         tx3 = create_transaction(tx2,
                 n = 0, value = unspent.vout[0].nValue - big_fee,
                 sig = CScript([OP_TRUE]), out = scriptpubkey)
-        pad_tx(tx3)
 
         self.p2p.send_txs_and_test([tx1, tx2, tx3], n)
         wait_for_electrum_mempool(n, count = 3)
@@ -84,9 +81,9 @@ class ElectrumMempoolChain(ElectrumTestFramework):
                     return tx
             assert(not "tx not in result")
 
-        assert_equal(0, get_tx(tx1.hash)['height'])
-        assert_equal(-1, get_tx(tx2.hash)['height'])
-        assert_equal(-1, get_tx(tx3.hash)['height'])
+        assert_equal(0, get_tx(tx1.GetRpcHexId())['height'])
+        assert_equal(-1, get_tx(tx2.GetRpcHexId())['height'])
+        assert_equal(-1, get_tx(tx3.GetRpcHexId())['height'])
 
         # Confirm tx1, see that
         # tx1: gets tipheight
@@ -97,16 +94,16 @@ class ElectrumMempoolChain(ElectrumTestFramework):
             res = await cli.call(call, scripthash)
 
             if call == GET_HISTORY:
-                assert_equal(n.getblockcount(), get_tx(tx1.hash)['height'])
+                assert_equal(n.getblockcount(), get_tx(tx1.GetRpcHexId())['height'])
             else:
-                assert(tx['tx_hash'] != tx1.hash for tx in res)
-            assert_equal(0, get_tx(tx2.hash)['height'])
-            assert_equal(-1, get_tx(tx3.hash)['height'])
+                assert(tx['tx_hash'] != tx1.GetRpcHexId() for tx in res)
+            assert_equal(0, get_tx(tx2.GetRpcHexId())['height'])
+            assert_equal(-1, get_tx(tx3.GetRpcHexId())['height'])
 
         # cleanup mempool for next test
         self.mine_blocks(n, 1, [tx2, tx3])
         sync_electrum_height(n)
-        assert(len(n.getrawmempool()) == 0)
+        assert(len(n.getrawtxpool()) == 0)
 
     async def test_chain_to_from_one_scripthash(self, n, cli, unspent):
         """
@@ -129,13 +126,13 @@ class ElectrumMempoolChain(ElectrumTestFramework):
             CHAIN_LENGTH, NUM_OUTPUTS)
 
         # Check mempool
-        assert(len(n.getrawmempool()) == 0)
+        assert(len(n.getrawtxpool()) == 0)
         self.p2p.send_txs_and_test(tx_chain, n)
         wait_for_electrum_mempool(n, count = len(tx_chain), timeout = 20)
 
         res = await cli.call(GET_HISTORY, scripthash)
         assert_equal(len(tx_chain), len(res))
-        assert(all([ has_tx(res, tx.hash) for tx in tx_chain ]))
+        assert(all([ has_tx(res, tx.GetRpcHexId()) for tx in tx_chain ]))
 
         res_mempool = await cli.call(GET_MEMPOOL, scripthash)
         assert_equal(res, res_mempool)
@@ -145,7 +142,7 @@ class ElectrumMempoolChain(ElectrumTestFramework):
         sync_electrum_height(n)
         res = await cli.call(GET_HISTORY, scripthash)
         assert_equal(len(tx_chain), len(res))
-        assert(all([ has_tx(res, tx.hash) for tx in tx_chain ]))
+        assert(all([ has_tx(res, tx.GetRpcHexId()) for tx in tx_chain ]))
         assert_equal(0, len(await cli.call(GET_MEMPOOL, scripthash)))
 
     def _create_tx_chain(self, unspent, scriptpubkey, chain_len, num_outputs):

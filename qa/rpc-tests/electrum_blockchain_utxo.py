@@ -3,7 +3,7 @@
 import asyncio
 from test_framework.script import CScript, OP_TRUE, OP_DROP, OP_NOP, OP_FALSE
 from test_framework.util import assert_equal
-from test_framework.blocktools import create_transaction, pad_tx
+from test_framework.blocktools import create_transaction
 from test_framework.util import assert_equal
 from test_framework.loginit import logging
 from test_framework.electrumutil import (
@@ -13,6 +13,7 @@ from test_framework.electrumutil import (
         ElectrumTestFramework,
         assert_response_error,
         script_to_scripthash,
+        get_txid_from_idem,
 )
 
 GET_UTXO = "blockchain.utxo.get"
@@ -29,7 +30,6 @@ class ElectrumUtxoTests(ElectrumTestFramework):
             self.cli = ElectrumConnection(loop)
             await self.cli.connect()
 
-            await self.test_invalid_txid(),
             await self.test_invalid_output(coinbases.pop(0))
             await self.test_two_tx_chain(coinbases.pop(0))
 
@@ -38,21 +38,15 @@ class ElectrumUtxoTests(ElectrumTestFramework):
         loop = asyncio.get_event_loop()
         loop.run_until_complete(async_tests(loop))
 
-    async def test_invalid_txid(self):
-        txid = "0000000000000000000000000000000000000000000000000000000000000042"
-        await assert_response_error(
-                lambda: self.cli.call(GET_UTXO, txid, 0),
-                ERROR_CODE_INVALID_PARAMS,
-                "No such mempool transaction")
-
     async def test_invalid_output(self, unspent):
+        outpointhash = "0000000000000000000000000000000000000000000000000000000000000042"
         await assert_response_error(
-                lambda: self.cli.call(GET_UTXO, unspent.rehash(), 420),
+                lambda: self.cli.call(GET_UTXO, outpointhash),
                 ERROR_CODE_INVALID_PARAMS,
-                "out_n 420 does not exist on tx")
+                "Outpoint not found")
 
     async def test_two_tx_chain(self, unspent):
-        res = await self.cli.call(GET_UTXO, unspent.rehash(), 0)
+        res = await self.cli.call(GET_UTXO, unspent.OutpointAt(0).rpcHex())
         assert_equal(res["status"], "unspent")
 
         original_amount = unspent.vout[0].nValue
@@ -66,20 +60,19 @@ class ElectrumUtxoTests(ElectrumTestFramework):
                 sig = CScript([OP_TRUE]),
                 out = scriptpubkey1,
                 value = original_amount - 1000)
-        pad_tx(tx1)
         tx2 = create_transaction(tx1, n = 0,
                 sig = CScript([OP_TRUE]),
                 out = scriptpubkey2,
                 value = original_amount - 2000)
-        pad_tx(tx2)
 
-        tx1_id = await self.cli.call(TX_BROADCAST, tx1.toHex())
-        tx2_id = await self.cli.call(TX_BROADCAST, tx2.toHex())
+        n = self.nodes[0]
+        tx1_id = get_txid_from_idem(n, await self.cli.call(TX_BROADCAST, tx1.toHex()))
+        tx2_id = get_txid_from_idem(n, await self.cli.call(TX_BROADCAST, tx2.toHex()))
         self.wait_for_mempool_count(count = 2)
 
         async def check_utxo(confirmation_height):
-            tx1_utxo = await self.cli.call(GET_UTXO, tx1_id, 0)
-            tx2_utxo = await self.cli.call(GET_UTXO, tx2_id, 0)
+            tx1_utxo = await self.cli.call(GET_UTXO, tx1.OutpointAt(0).rpcHex())
+            tx2_utxo = await self.cli.call(GET_UTXO, tx2.OutpointAt(0).rpcHex())
 
             assert_equal(tx1_utxo['status'], 'spent')
             assert_equal(tx1_utxo['amount'], original_amount - 1000)

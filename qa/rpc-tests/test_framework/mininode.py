@@ -584,6 +584,7 @@ class P2PDataStore(SingleNodeConnCB):
         else:
             unexpected_msgs.append(BAN_MSG)
         with node.assert_debug_log(expected_msgs = expected_msgs, unexpected_msgs = unexpected_msgs):
+
             self.send_message(msg_headers(to_headers(blocks)))
 
             if request_block:
@@ -598,14 +599,14 @@ class P2PDataStore(SingleNodeConnCB):
 
             if success:
                 ok = wait_until(lambda: node.getbestblockhash() ==
-                           blocks[-1].hash, timeout=timeout)
+                           blocks[-1].gethash(), timeout=timeout)
                 assert ok, "node failed to sync to block {}".format(blocks[-1].gethash('hex'))
             else:
-                ct = waitForBlockInChainTips(node, blockHash, timeout)
+                ct = waitForBlockInChainTips(node, blocks[-1].gethash(), timeout)
                 assert ct["status"] == 'invalid'  # Was expecting failure but block is not invalid
                 gbbh = node.getbestblockhash()
-                print(gbbh, blocks[-1].hash)
-                assert gbbh != blocks[-1].hash
+                print(gbbh, blocks[-1].gethash())
+                assert gbbh != blocks[-1].gethash()
 
     def send_txs_and_test(self, txs, node, *, success=True, expect_ban=False, reject_reason=None, timeout=60):
         """Send txs to test node and test whether they're accepted to the mempool.

@@ -9,7 +9,7 @@ from test_framework.util import waitFor, assert_equal, assert_raises_async, wait
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.loginit import logging
 from test_framework.electrumutil import compare, bitcoind_electrum_args, \
-    ElectrumConnection, address_to_scripthash
+    ElectrumConnection
 from test_framework.nodemessages import COIN, CTransaction, ToHex, CTxIn, COutPoint
 
 
@@ -44,12 +44,12 @@ class ElectrumBasicTests(BitcoinTestFramework):
         waitFor(10, lambda: compare(n, "mempool_count", 0, True))
 
         logging.info("Check that mempool is communicated")
-        n.sendtoaddress(n.getnewaddress(), 1)
-        assert_equal(1, len(n.getrawmempool()))
+        n.sendtoaddress(n.getnewaddress(), 10)
+        assert_equal(1, len(n.getrawtxpool()))
         waitFor(10, lambda: compare(n, "mempool_count", 1, True))
 
         n.generate(1)
-        assert_equal(0, len(n.getrawmempool()))
+        assert_equal(0, len(n.getrawtxpool()))
         waitFor(10, lambda: compare(n, "index_height", n.getblockcount()))
         waitFor(10, lambda: compare(n, "mempool_count", 0, True))
         waitFor(10, lambda: compare(n, "index_txns", n.getblockcount() + 2, True))
@@ -91,8 +91,8 @@ class ElectrumBasicTests(BitcoinTestFramework):
         # invalid tx
         try:
             tx = CTransaction()
-            tx.calc_sha256()
-            tx.vin = [CTxIn(COutPoint(0xbeef, 1))]
+            tx.vin = [CTxIn(COutPoint().fromIdemAndIdx(0xf00d, 0))]
+            tx.rehash()
             await electrum_client.call("blockchain.transaction.broadcast", ToHex(tx))
         except Exception as e:
             print("ERROR: " + str(e))
@@ -103,20 +103,18 @@ class ElectrumBasicTests(BitcoinTestFramework):
 
     async def test_address_balance(self, n, electrum_client):
         addr = n.getnewaddress()
-        txhash = n.sendtoaddress(addr, 1)
-
-        scripthash = address_to_scripthash(addr)
+        txhash = n.sendtoaddress(addr, 10)
 
         async def check_address(address, unconfirmed = 0, confirmed = 0):
-            res = await electrum_client.call("blockchain.scripthash.get_balance",
-                    address_to_scripthash(addr))
+            res = await electrum_client.call("blockchain.address.get_balance", addr)
+            print(res)
 
             return res["unconfirmed"] == unconfirmed * COIN \
                 and res["confirmed"] == confirmed * COIN
 
-        await waitForAsync(10, lambda: check_address(scripthash, unconfirmed = 1))
+        await waitForAsync(10, lambda: check_address(addr, unconfirmed = 10))
         n.generate(1)
-        await waitForAsync(10, lambda: check_address(scripthash, confirmed = 1))
+        await waitForAsync(10, lambda: check_address(addr, confirmed = 10))
 
 
 

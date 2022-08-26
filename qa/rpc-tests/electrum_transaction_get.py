@@ -74,7 +74,7 @@ class ElectrumTransactionGet(ElectrumTestFramework):
             await cli.connect()
 
             return await asyncio.gather(
-                self.test_verbose(n, cli, nonstandard_tx.hash, p2sh_tx.hash, p2pkh_tx.hash, unconfirmed_tx.hash),
+                self.test_verbose(n, cli, nonstandard_tx.GetRpcHexId(), p2sh_tx.GetRpcHexId(), p2pkh_tx.GetRpcHexId(), unconfirmed_tx.GetRpcHexId()),
                 self.test_non_verbose(cli, coinbases, unconfirmed_tx)
             )
 
@@ -84,7 +84,7 @@ class ElectrumTransactionGet(ElectrumTestFramework):
 
     async def test_non_verbose(self, cli, coinbases, unconfirmed):
         for tx in coinbases + [unconfirmed]:
-            assert_equal(ToHex(tx), await cli.call(TX_GET, tx.hash))
+            assert_equal(ToHex(tx), await cli.call(TX_GET, tx.GetRpcHexId()))
 
     async def test_verbose(self, n, cli, nonstandard_tx, p2sh_tx, p2pkh_tx, unconfirmed_tx):
         """
@@ -100,14 +100,14 @@ class ElectrumTransactionGet(ElectrumTestFramework):
         # All confirmed transactions are confirmed in the tip
         block = n.getbestblockhash()
         tipheight = n.getblockcount()
-        coinbase_tx = n.getblock(block)['tx'][0]
+        coinbase_tx = n.getblock(block, 1)['txid'][0]
 
 
         async def check_tx(txid, is_confirmed = True, check_output_type = False):
             electrum = await cli.call(TX_GET, txid, True)
             bitcoind = n.getrawtransaction(txid, True, block)
 
-            is_coinbase = 'coinbase' in bitcoind['vin'][0]
+            is_coinbase = len(bitcoind['vin']) == 0
 
             if not is_confirmed:
                 # Transaction is unconfirmed. We handle this slightly different
@@ -139,12 +139,10 @@ class ElectrumTransactionGet(ElectrumTestFramework):
                     assert_equal(bitcoind['vin'][i]['sequence'], electrum['vin'][i]['sequence'])
                     continue
 
+                print(bitcoind)
                 assert_equal(
-                        bitcoind['vin'][i]['txid'],
-                        electrum['vin'][i]['txid'])
-                assert_equal(
-                        bitcoind['vin'][i]['vout'],
-                        electrum['vin'][i]['vout'])
+                        bitcoind['vin'][i]['outpoint'],
+                        electrum['vin'][i]['outpoint'])
                 assert_equal(
                         bitcoind['vin'][i]['sequence'],
                         electrum['vin'][i]['sequence'])
@@ -178,12 +176,8 @@ class ElectrumTransactionGet(ElectrumTestFramework):
                         electrum['vout'][i]['scriptPubKey']['hex'])
                 assert('asm' in electrum['vout'][i]['scriptPubKey'])
 
-                if 'addresses' in bitcoind['vout'][i]['scriptPubKey']:
-                    assert_equal(
-                            bitcoind['vout'][i]['scriptPubKey']['addresses'],
-                            electrum['vout'][i]['scriptPubKey']['addresses'])
-                else:
-                    assert_equal([], electrum['vout'][i]['scriptPubKey']['addresses'])
+                # Address from script is NYI for nexa
+                assert_equal([], electrum['vout'][i]['scriptPubKey']['addresses'])
 
                 if check_output_type:
                     assert_equal(
@@ -191,7 +185,7 @@ class ElectrumTransactionGet(ElectrumTestFramework):
                         electrum['vout'][i]['scriptPubKey']['type'])
 
         await asyncio.gather(
-                # ElectrsCash cannot tell if it's nonstandard
+                # rostrum cannot tell if it's nonstandard
                 check_tx(nonstandard_tx, check_output_type = False),
                 check_tx(p2sh_tx),
                 check_tx(p2pkh_tx),
