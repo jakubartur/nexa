@@ -47,6 +47,8 @@ cache: &global_cache_settings
         - export CCACHE_BASEDIR=${PWD}
         - export CCACHE_DIR=${PWD}/ccache
         - export CCACHE_COMPILERCHECK=content
+        # Limit ccache to 3 GB (from default 5 GB).
+        - ccache -M 3G
         - ccache --zero-stats || true
 
 ######################################################
@@ -120,6 +122,7 @@ build-ubuntu-tests-nodeps:
     stage: build_tests
     extends: .cache-ubuntu-nodeps
     needs: ["build-ubuntu-nodeps"]
+    cache: {}
     script:
         - (cd build/src; ./test/test_nexa)
     dependencies:
@@ -221,6 +224,7 @@ build-ubuntu-tests:
     stage: build_tests
     extends: .cache-ubuntu
     needs: ["build-ubuntu"]
+    cache: {}
     script:
         - (cd build/src; ./test/test_nexa)
     artifacts:
@@ -300,6 +304,7 @@ build-ubuntu-tests-clang:
     stage: build_tests
     extends: .ubuntu-clang-env
     needs: ["build-ubuntu-clang"]
+    cache: {}
     script:
         - (cd build/src; ./test/test_nexa)
     artifacts:
