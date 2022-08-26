@@ -26,8 +26,8 @@ class ElectrumReorgTests(BitcoinTestFramework):
 
         waitFor(10, lambda: compare(n, "index_height", n.getblockcount()))
         waitFor(10, lambda: compare(n, "mempool_count", 0, True))
-        n.sendtoaddress(n.getnewaddress(), 1)
-        assert_equal(1, len(n.getrawmempool()))
+        n.sendtoaddress(n.getnewaddress(), 10)
+        assert_equal(1, len(n.getrawtxpool()))
         waitFor(10, lambda: compare(n, "mempool_count", 1, True))
 
         blocks = n.generate(50)

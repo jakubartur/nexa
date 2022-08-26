@@ -259,6 +259,28 @@ test-ubuntu-benchmarks:
     dependencies:
         - build-ubuntu-nodeps
 
+test-ubuntu-qa-rostrum:
+    extends: .ubuntu_base
+    stage: qa_tests
+    needs: ["build-ubuntu", "build-ubuntu-rostrum"]
+    script:
+        - mkdir -p $CI_PROJECT_DIR/cores
+        - mkdir -p $CI_PROJECT_DIR/saved-cores
+        - echo $CI_PROJECT_DIR/cores/core.%e.%p.%h.%t | tee /proc/sys/kernel/core_pattern
+        - (cd build;
+            ./qa/pull-tester/rpc-tests.py --electrum-only --no-ipv6-rpc-listen --gitlab)
+    dependencies:
+        - build-ubuntu
+        - build-ubuntu-rostrum
+    artifacts:
+        when: on_failure
+        paths:
+            - ./qa/qa_tests/
+            - $CI_PROJECT_DIR/saved-cores
+            - ./build/src/nexad
+            - ./build/src/rostrum
+            - ./build/ctorout.txt
+
 ######################################################
 ######## nexad clang (no depend, only system lib installed via apt)
 ######################################################

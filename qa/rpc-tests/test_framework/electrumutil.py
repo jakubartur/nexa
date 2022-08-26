@@ -8,7 +8,7 @@ from . import cashaddr
 from .script import *
 from test_framework.connectrum.client import StratumClient
 from test_framework.connectrum.svr_info import ServerInfo
-from test_framework.util import waitFor
+from test_framework.util import waitFor, rpcHexToUint256
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.mininode import (
     P2PDataStore,
@@ -16,8 +16,7 @@ from test_framework.mininode import (
     NetworkThread,
 )
 from test_framework.util import assert_equal, p2p_port
-from test_framework.blocktools import create_coinbase, create_block, \
-    create_transaction, pad_tx
+from test_framework.blocktools import create_coinbase, create_block, getAncHash, ancestorHeight
 from test_framework.portseed import electrum_rpc_port
 import time
 
@@ -36,6 +35,9 @@ class ElectrumTestFramework(BitcoinTestFramework):
         self.num_nodes = 1
         self.extra_args = [bitcoind_electrum_args()]
 
+        # Cached to speed up mining
+        self.hash_at_height = {}
+
     def bootstrap_p2p(self):
         """Add a P2P connection to the node."""
         self.p2p = P2PDataStore()
@@ -49,16 +51,32 @@ class ElectrumTestFramework(BitcoinTestFramework):
         """
         Mine a block without using bitcoind
         """
+        genesis_block_hash = rpcHexToUint256(n.getblockheader(0)['hash'])
+
         prev = n.getblockheader(n.getbestblockhash())
         prev_height = prev['height']
         prev_hash = prev['hash']
         prev_time = max(prev['time'] + 1, int(time.time()))
+        prev_chainwork = rpcHexToUint256(prev['chainwork'])
+
         blocks = [ ]
         for i in range(num_blocks):
-            coinbase = create_coinbase(prev_height + 1)
+            height = prev_height + 1
+            ancestor_height = ancestorHeight(height)
+            if ancestor_height == 0:
+                ancestor_hash = genesis_block_hash
+            else:
+                ancestor_hash = self.hash_at_height.get(ancestor_height, None)
+                if ancestor_hash is None:
+                    ancestor_hash = getAncHash(ancestor_height, n)
+
+            coinbase = create_coinbase(height)
             b = create_block(
                     hashprev = prev_hash,
+                    chainwork = prev_chainwork + 2,
+                    height = height,
                     coinbase = coinbase,
+                    hashAncestor = ancestor_hash,
                     txns = txns,
                     nTime = prev_time + 1)
             txns = None
@@ -67,11 +85,12 @@ class ElectrumTestFramework(BitcoinTestFramework):
 
             prev_time = b.nTime
             prev_height += 1
-            prev_hash = b.hash
+            prev_hash = b.gethash()
+            prev_chainwork = b.chainWork
+            self.hash_at_height[height] = b.gethash()
 
         self.p2p.send_blocks_and_test(blocks, n)
         assert_equal(blocks[-1].hash, n.getbestblockhash())
-
         self.sync_height()
 
         # Return coinbases for spending later
@@ -91,17 +110,17 @@ def compare(node, key, expected, is_debug_data = False):
     info = node.getelectruminfo()
     if is_debug_data:
         info = info['debuginfo']
-        key = "electrscash_" + key
+        key = "rostrum_" + key
     logging.debug("expecting %s == %s from %s", key, expected, info)
     if key not in info:
         return False
     return info[key] == expected
 
 def bitcoind_electrum_args():
-    import random
     return ["-electrum=1", "-debug=electrum", "-debug=rpc",
             "-electrum.rawarg=--cashaccount-activation-height=1",
-            "-electrum.rawarg=--wait-duration-secs=1"]
+            "-electrum.rawarg=--wait-duration-secs=1",
+            ]
 
 class TestClient(StratumClient):
     is_connected = False
@@ -161,13 +180,6 @@ def script_to_scripthash(script):
     return scripthash.hex()
 
 
-# To look up an address with the electrum protocol, you need the hash
-# of the locking script (scriptpubkey). Assumes P2PKH.
-def address_to_scripthash(addr):
-    _, _, hash160 = cashaddr.decode(addr)
-    script = CScript([OP_DUP, OP_HASH160, hash160, OP_EQUALVERIFY, OP_CHECKSIG])
-    return script_to_scripthash(script)
-
 def sync_electrum_height(node, timeout = 10):
     waitFor(timeout, lambda: compare(node, "index_height", node.getblockcount()))
 
@@ -175,8 +187,11 @@ def wait_for_electrum_mempool(node, *, count, timeout = 10):
     try:
         waitFor(timeout, lambda: compare(node, "mempool_count", count, True))
     except Exception as e:
-        print("Waited for {} txs, had {}".format(count, node.getelectruminfo()['debuginfo']['electrscash_mempool_count']))
+        print("Waited for {} txs, had {}".format(count, node.getelectruminfo()['debuginfo']['rostrum_mempool_count']))
         raise
+
+def get_txid_from_idem(n, txidem):
+    return n.getrawtransaction(txidem, True)['txid']
 
 """
 Asserts that function call throw a electrum error, optionally testing for

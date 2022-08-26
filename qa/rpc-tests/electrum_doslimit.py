@@ -6,13 +6,16 @@ import time
 from test_framework.util import assert_raises_async, waitFor
 from test_framework.test_framework import BitcoinTestFramework
 from test_framework.loginit import logging
-from test_framework.electrumutil import (ElectrumConnection,
-    address_to_scripthash, bitcoind_electrum_args)
+from test_framework.electrumutil import (ElectrumConnection, bitcoind_electrum_args)
 from test_framework.connectrum.exc import ElectrumErrorResponse
 
 MAX_RPC_CONNECTIONS = 5
 MAX_SCRIPTHASH_SUBSCRIPTIONS = 5
-SCRIPTHASH_ALIAS_BYTES_LIMIT = 54 * 2 # two bitcoin cash addresses
+SCRIPTHASH_ALIAS_BYTES_LIMIT = 56 * 2 # two nexa addresses
+
+async def get_scripthash(cli, address):
+    return await cli.call('blockchain.address.get_scripthash', address)
+
 
 class ElectrumDoSLimitTest(BitcoinTestFramework):
 
@@ -50,12 +53,12 @@ class ElectrumDoSLimitTest(BitcoinTestFramework):
         # Subscribe up to limit
         scripthashes = []
         for i in range(0, MAX_SCRIPTHASH_SUBSCRIPTIONS):
-            s = address_to_scripthash(n.getnewaddress())
+            s = await get_scripthash(cli, n.getnewaddress())
             await cli.subscribe('blockchain.scripthash.subscribe', s)
             scripthashes.append(s)
 
         # Next subscription should fail
-        s = address_to_scripthash(n.getnewaddress())
+        s = await get_scripthash(cli, n.getnewaddress())
 
         await assert_raises_async(
                 ElectrumErrorResponse,
@@ -80,7 +83,7 @@ class ElectrumDoSLimitTest(BitcoinTestFramework):
         # ... and also enforce the limit again
         await assert_raises_async(ElectrumErrorResponse, cli.call,
                 'blockchain.scripthash.subscribe',
-                address_to_scripthash(n.getnewaddress()))
+                await get_scripthash(cli, n.getnewaddress()))
 
         cli.disconnect();
 
