@@ -97,9 +97,7 @@ build-ubuntu-nodeps:
             - ./build/src/nexa-tx
             - ./build/src/test/test_nexa
             - ./build/src/bench/bench_nexa
-            - ./build/src/test/*.log
-            - ./src/test/*.log
-            - ./src/test-suite.log
+            - ./build/config.log #in case of configure failure
 
 build-ubuntu-nodeps-qt:
     stage: build
@@ -112,11 +110,9 @@ build-ubuntu-nodeps-qt:
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
+        when: on_failure
         paths:
-            - ./build/src/nexad
-            - ./build/src/nexa-cli
-            - ./build/src/nexa-miner
-            - ./build/src/nexa-tx
+            - ./build/config.log
 
 build-ubuntu-tests-nodeps:
     stage: build_tests
@@ -372,6 +368,10 @@ build-arm-64:
         - ccache --show-stats
     dependencies:
         - build-arm-depends-64
+    artifacts:
+        when: on_failure
+        paths:
+            - ./build/config.log
 
 ######################################################
 ######## ARM32
@@ -409,6 +409,10 @@ build-arm-32:
         - ccache --show-stats
     dependencies:
         - build-arm-depends-32
+    artifacts:
+        when: on_failure
+        paths:
+            - ./build/config.log
 
 ######################################################
 ######## Win64
@@ -491,11 +495,11 @@ build-osx:
     artifacts:
         when: on_failure
         paths:
-            - build/config.log
-            - depends/x86_64-apple-darwin19/share/config.site
+            - ./build/config.log
+            - ./depends/x86_64-apple-darwin19/share/config.site
 
 ######################################################
-######## Ubuntu base settings
+######## Debian base settings
 ######################################################
 .debian_base:
     image: bchunlimited/gitlabci:debian11
@@ -529,17 +533,9 @@ build-debian-nodeps:
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
-        when: always
+        when: on_failure
         paths:
-            - ./build/src/nexad
-            - ./build/src/nexa-cli
-            - ./build/src/nexa-miner
-            - ./build/src/nexa-tx
-            - ./build/src/test/test_nexa
-            - ./build/src/bench/bench_nexa
-            - ./build/src/test/*.log
-            - ./src/test/*.log
-            - ./src/test-suite.log
+            - ./build/config.log
 
 build-debian-nodeps-qt:
     stage: build
@@ -552,8 +548,6 @@ build-debian-nodeps-qt:
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
+        when: on_failure
         paths:
-            - ./build/src/nexad
-            - ./build/src/nexa-cli
-            - ./build/src/nexa-miner
-            - ./build/src/nexa-tx
+            - build/config.log
