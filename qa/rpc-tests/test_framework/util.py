@@ -424,7 +424,7 @@ def initialize_datadir(dirname, n, bitcoinConfDict=None, wallet=None, bins=None)
                 "relay.minRelayTxFee":0,
                 "relay.limitFreeRelay":15,
                 "electrum.port": electrum_rpc_port(n),
-#                "electrum.ws.port": electrum_ws_port(n),
+                "electrum.ws.port": electrum_ws_port(n),
                 "electrum.monitoring.port": electrum_monitoring_port(n)
                 }
 
