@@ -27,17 +27,15 @@ class ElectrumGetMerkle(BitcoinTestFramework):
 
         n.generate(110)
 
-        async def async_tests(loop):
-            cli = ElectrumConnection(loop)
+        async def async_tests():
+            cli = ElectrumConnection()
             await cli.connect()
 
             await self.test_basic(n, cli)
 
-            #await cli.disconnect();
-            # TODO: Test the merkle proof
+            cli.disconnect();
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests(loop))
+        asyncio.run(async_tests())
 
     async def test_basic(self, n, cli):
         txid = n.sendtoaddress(n.getnewaddress(), 1)

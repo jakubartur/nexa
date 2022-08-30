@@ -42,8 +42,8 @@ class ElectrumBlockchainAddress(BitcoinTestFramework):
             await self.test_get_balance(n, cli)
             await self.test_get_history(n, cli)
             await self.test_list_unspent(n, cli)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests())
+
+        asyncio.run(async_tests())
 
     def setup_network(self, dummy = None):
         self.nodes = self.setup_nodes()

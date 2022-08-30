@@ -36,13 +36,12 @@ class ElectrumDoSLimitTest(BitcoinTestFramework):
         n = self.nodes[0]
         n.generate(1)
 
-        async def async_tests(loop):
-            await self.test_connection_limit(loop)
+        async def async_tests():
+            await self.test_connection_limit()
             await self.test_subscribe_limit(n)
             await self.test_scripthash_alias_limit(n)
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests(loop))
+        asyncio.run(async_tests())
 
     async def test_subscribe_limit(self, n):
         cli = ElectrumConnection()
@@ -123,7 +122,7 @@ class ElectrumDoSLimitTest(BitcoinTestFramework):
 
         cli.disconnect();
 
-    async def test_connection_limit(self, loop):
+    async def test_connection_limit(self):
         connections = []
         for i in range(MAX_RPC_CONNECTIONS):
             c = ElectrumConnection()
