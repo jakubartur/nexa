@@ -1767,19 +1767,6 @@ bool CheckBlock(const Consensus::Params &consensusParams,
         return state.DoS(100, error("CheckBlock(): size limits failed"), REJECT_INVALID, "bad-blk-length");
     }
 
-    // First transaction must be coinbase, the rest must not be
-    if (pblock->vtx.empty() || !pblock->vtx[0]->IsCoinBase())
-    {
-        return state.DoS(100, error("CheckBlock(): first tx is not coinbase"), REJECT_INVALID, "bad-cb-missing");
-    }
-    for (unsigned int i = 1; i < pblock->vtx.size(); i++)
-    {
-        if (pblock->vtx[i]->IsCoinBase())
-        {
-            return state.DoS(100, error("CheckBlock(): more than one coinbase"), REJECT_INVALID, "bad-cb-multiple");
-        }
-    }
-
     // Did not commit to the correct # of transactions
     if (pblock->txCount != pblock->vtx.size())
     {
@@ -1793,11 +1780,30 @@ bool CheckBlock(const Consensus::Params &consensusParams,
     }
 
     // Check transactions
-    for (const auto &tx : pblock->vtx)
+    if (pblock->vtx.empty())
     {
-        if (!CheckTransaction(tx, state))
+        return state.DoS(100, error("CheckBlock(): no coinbase"), REJECT_INVALID, "bad-cb-missing");
+    }
+    for (unsigned int i = 0; i < pblock->vtx.size(); i++)
+    {
+        // First transaction must be coinbase, the rest must not be
+        if (i == 0)
         {
-            return error("CheckBlock(): CheckTransaction of %s failed with %s", tx->GetId().ToString(),
+            if (!pblock->vtx[i]->IsCoinBase())
+                return state.DoS(
+                    100, error("CheckBlock(): first tx is not coinbase"), REJECT_INVALID, "bad-cb-missing");
+        }
+        else
+        {
+            if (pblock->vtx[i]->IsCoinBase())
+            {
+                return state.DoS(100, error("CheckBlock(): more than one coinbase"), REJECT_INVALID, "bad-cb-multiple");
+            }
+        }
+
+        if (!CheckTransaction(pblock->vtx[i], state))
+        {
+            return error("CheckBlock(): CheckTransaction of %s failed with %s", pblock->vtx[i]->GetId().ToString(),
                 FormatStateMessage(state));
         }
     }
