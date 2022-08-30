@@ -48,8 +48,7 @@ class ElectrumSubscriptionsTest(BitcoinTestFramework):
             await self.test_subscribe_headers(n)
             await self.test_multiple_client_subs(n)
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests())
+        asyncio.run(async_tests())
 
     async def test_unsubscribe_scripthash(self, n):
         return await self.test_unsubscribe(n,

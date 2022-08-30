@@ -38,8 +38,8 @@ class ElectrumBasicTests(BitcoinTestFramework):
             assert(versiontuple(res['protocol_min']) >= versiontuple("1.4"))
             assert(versiontuple(res['protocol_max']) >= versiontuple("1.4"))
             assert(len(res['server_version']))
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests())
+
+        asyncio.run(async_tests())
 
 if __name__ == '__main__':
     ElectrumBasicTests().main()

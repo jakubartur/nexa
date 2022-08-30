@@ -26,8 +26,8 @@ class ElectrumUtxoTests(ElectrumTestFramework):
 
         coinbases = self.mine_blocks(self.nodes[0], 101)
 
-        async def async_tests(loop):
-            self.cli = ElectrumConnection(loop)
+        async def async_tests():
+            self.cli = ElectrumConnection()
             await self.cli.connect()
 
             await self.test_invalid_output(coinbases.pop(0))
@@ -35,8 +35,7 @@ class ElectrumUtxoTests(ElectrumTestFramework):
 
             self.cli.disconnect()
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests(loop))
+        asyncio.run(async_tests())
 
     async def test_invalid_output(self, unspent):
         outpointhash = "0000000000000000000000000000000000000000000000000000000000000042"

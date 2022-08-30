@@ -69,8 +69,8 @@ class ElectrumTransactionGet(ElectrumTestFramework):
         self.wait_for_mempool_count(count = 1)
 
 
-        async def async_tests(loop):
-            cli = ElectrumConnection(loop)
+        async def async_tests():
+            cli = ElectrumConnection()
             await cli.connect()
 
             return await asyncio.gather(
@@ -79,8 +79,7 @@ class ElectrumTransactionGet(ElectrumTestFramework):
             )
 
 
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests(loop))
+        asyncio.run(async_tests())
 
     async def test_non_verbose(self, cli, coinbases, unconfirmed):
         for tx in coinbases + [unconfirmed]:

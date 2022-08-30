@@ -34,8 +34,7 @@ class ElectrumBasicTests(BitcoinTestFramework):
             await self.test_unknown_method(electrum_client)
             await self.test_invalid_args(electrum_client)
             await self.test_address_balance(n, electrum_client)
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(async_tests())
+        asyncio.run(async_tests())
 
     def test_mempoolsync(self, n):
         # waitFor throws on timeout, failing the test
