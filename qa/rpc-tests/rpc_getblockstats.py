@@ -176,12 +176,12 @@ class GetblockstatsTest(BitcoinTestFramework):
 
         # Mainchain's genesis block shouldn't be found on regtest
         assert_raises_rpc_error(-5, 'Block not found', self.nodes[0].getblockstats,
-                                '000000000019d6689c085ae165831e934ff763ae46a2a6c172b3f1b60a8ce26f')
+                                'edc7144fe1ba4edd0edf35d7eea90f6cb1dba42314aa85da8207e97c5339c801')
 
         # check genesis block stats
         gb = self.nodes[0].getblock("0")
         gbstats = self.nodes[0].getblockstats(gb["hash"])
-        # dont know yet: assert_equal(gbstats['blockhash'], 'genesis block hash here')
+        assert_equal(gbstats['blockhash'], 'd71ee431e307d12dfef31a6b21e071f1d5652c0eb6155c04e3222612c9d0b371')
         assert_equal(gbstats['txs'], 1)
         assert_equal(gbstats['utxo_increase'], 1)
         assert_equal(gbstats['utxo_size_inc'], 48)
