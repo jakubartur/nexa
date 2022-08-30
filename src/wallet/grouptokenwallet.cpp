@@ -489,8 +489,6 @@ void ConstructTx(CWalletTx &wtxNew,
     CReserveKey feeChangeKeyReservation(wallet);
 
     {
-        if (GetRandInt(10) == 0)
-            tx.nLockTime = std::max(0, (int)tx.nLockTime - GetRandInt(100));
         assert(tx.nLockTime <= (unsigned int)chainActive.Height());
         assert(tx.nLockTime < LOCKTIME_THRESHOLD);
         unsigned int approxSize = 4 * 4; // serialize nVersion, nLockTime, vector size for inputs and outputs
