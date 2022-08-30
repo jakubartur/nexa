@@ -2358,15 +2358,17 @@ UniValue getchaintxstats(const UniValue &params, bool fHelp)
     }
 
     {
-        LOCK(cs_main);
         if (havehash)
         {
-            auto it = mapBlockIndex.find(hash);
-            if (it == mapBlockIndex.end())
             {
-                throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+                READLOCK(cs_mapBlockIndex);
+                auto it = mapBlockIndex.find(hash);
+                if (it == mapBlockIndex.end())
+                {
+                    throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found");
+                }
+                pindex = it->second;
             }
-            pindex = it->second;
             if (!chainActive.Contains(pindex))
             {
                 throw JSONRPCError(RPC_INVALID_PARAMETER, "Block is not in main chain");

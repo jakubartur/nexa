@@ -519,6 +519,14 @@ public:
     CBlockIndex *Next(const CBlockIndex *pindex) const
     {
         READLOCK(cs_chainLock);
+        return _Next(pindex);
+    }
+
+    /** Lock Free - Find the successor of a block in this chain, or nullptr if the given index is not found or is the
+     * tip.
+     */
+    CBlockIndex *_Next(const CBlockIndex *pindex) const
+    {
         if (_Contains(pindex))
             return _idx(pindex->height() + 1);
         else

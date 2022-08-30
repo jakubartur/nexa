@@ -98,9 +98,9 @@ std::atomic<int64_t> nCoinCacheMaxSize{0};
 // our unit testing and checking for dirty vs non-dirty states.
 std::atomic<bool> fMempoolTests{false};
 
-CCriticalSection cs_main;
-CChain chainActive; // chainActive.Tip() is lock free, other APIs take an internal lock
+CChain chainActive; // chainActive.Tip() is lock free, other APIs take the internal lock cs_chainLock
 
+CCriticalSection cs_main;
 CFeeRate minRelayTxFee GUARDED_BY(cs_main) = CFeeRate(DEFAULT_MIN_RELAY_TX_FEE);
 /** A cache to store headers that have arrived but can not yet be connected **/
 CCriticalSection csUnconnectedHeaders;
