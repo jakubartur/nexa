@@ -148,7 +148,7 @@ class UtilOptions:
     no_ipv6_rpc_listen = False
     electrumexec = None
 
-BITCOIND_PROC_WAIT_TIMEOUT = 60
+NEXAD_PROC_WAIT_TIMEOUT = 60
 
 #Set Mocktime default to OFF.
 #MOCKTIME is only needed for scripts that use the
@@ -449,11 +449,11 @@ def initialize_datadir(dirname, n, bitcoinConfDict=None, wallet=None, bins=None)
     if bins:
         if BCD_HUB_PATH in bins[n]:
             defaults = filterUnsupportedParams(defaults)
-            file = BITCOIN_CONF
+            file = NEXA_CONF
     else:
         if hub_is_running(n):
             defaults = filterUnsupportedParams(defaults)
-            file = BITCOIN_CONF
+            file = NEXA_CONF
 
     config_file_path = os.path.join(datadir, file)
 
@@ -770,7 +770,7 @@ def stop_node(node, i):
         node.stop()
     except http.client.CannotSendRequest as e:
         print("WARN: Unable to stop node: " + repr(e))
-    bitcoind_processes[i].wait(timeout=BITCOIND_PROC_WAIT_TIMEOUT)
+    bitcoind_processes[i].wait(timeout=NEXAD_PROC_WAIT_TIMEOUT)
     del bitcoind_processes[i]
 
 def stop_nodes(nodes):
@@ -790,10 +790,10 @@ def set_node_times(nodes, t):
 def wait_bitcoinds():
     # Wait for all bitcoinds to cleanly exit
     for bitcoind in bitcoind_processes.values():
-        bitcoind.wait(timeout=BITCOIND_PROC_WAIT_TIMEOUT)
+        bitcoind.wait(timeout=NEXAD_PROC_WAIT_TIMEOUT)
     bitcoind_processes.clear()
 
-def wait_bitcoind_exit(i, timeout=BITCOIND_PROC_WAIT_TIMEOUT):
+def wait_bitcoind_exit(i, timeout=NEXAD_PROC_WAIT_TIMEOUT):
     # Wait for all bitcoinds to cleanly exit
     bitcoind_processes[i].wait(timeout=timeout)
 
