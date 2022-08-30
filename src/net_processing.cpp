@@ -54,7 +54,10 @@ static const uint32_t MAX_TXN_BATCH_SIZE = 10000;
 
 extern std::string DebuggerToString(CValidationDebugger &debugger);
 
-// Requires cs_main
+// Used for serializing calls to ReqestNextBlocksToDownload() so that only
+// one thread at a time can execute this function.
+CCriticalSection cs_requestNextBlocks;
+
 bool CanDirectFetch(const Consensus::Params &consensusParams)
 {
     return chainActive.Tip()->GetBlockTime() > GetAdjustedTime() - consensusParams.nPowTargetSpacing * 20;
@@ -78,7 +81,6 @@ void UpdatePreferredDownload(CNode *node)
     nPreferredDownload.fetch_add(state->fPreferredDownload);
 }
 
-// Requires cs_main
 bool PeerHasHeader(const CNodeState *state, CBlockIndex *pindex)
 {
     if (pindex == nullptr)
@@ -120,7 +122,6 @@ void static ProcessGetData(CNode *pfrom, const Consensus::Params &consensusParam
             {
                 bool fSend = false;
                 {
-                    LOCK(cs_main);
                     if (chainActive.Contains(mi))
                     {
                         fSend = true;
@@ -1385,8 +1386,6 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
             // updated.
             if (IsInitialBlockDownload())
             {
-                // To maintain locking order with cs_main we have to addrefs for each node and then release
-                // the lock on cs_vNodes before aquiring cs_main further down.
                 std::vector<CNode *> vNodesCopy;
                 {
                     LOCK(cs_vNodes);
@@ -2850,9 +2849,9 @@ bool SendMessages(CNode *pto)
         CBlockIndex *pBestInvalid = pindexBestInvalid.load();
         if (!IsChainSyncd() || (pBestInvalid && pTip && pBestInvalid->chainWork() > pTip->chainWork()))
         {
-            TRY_LOCK(cs_main, locked);
+            TRY_LOCK(cs_requestNextBlocks, locked);
             if (locked)
-            { // I don't need to deal w/ blocks as often as tx and this is time consuming
+            {
                 // Request the next blocks. Mostly this will get executed during IBD but sometimes even
                 // when the chain is syncd a block will get request via this method.
                 requester.RequestNextBlocksToDownload(pto);

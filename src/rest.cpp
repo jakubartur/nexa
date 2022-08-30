@@ -157,13 +157,13 @@ static bool rest_headers(HTTPRequest *req, const std::string &strURIPart)
     headers.reserve(count);
     {
         const CBlockIndex *pindex = LookupBlockIndex(hash);
-        LOCK(cs_main);
-        while (pindex != nullptr && chainActive.Contains(pindex))
+        READLOCK(chainActive.cs_chainLock);
+        while (pindex != nullptr && chainActive._Contains(pindex))
         {
             headers.push_back(pindex);
             if (headers.size() == (unsigned long)count)
                 break;
-            pindex = chainActive.Next(pindex);
+            pindex = chainActive._Next(pindex);
         }
     }
 

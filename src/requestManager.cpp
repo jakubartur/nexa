@@ -1028,8 +1028,6 @@ void CRequestManager::UpdateBlockAvailability(NodeId nodeid, const uint256 &hash
 
 void CRequestManager::RequestNextBlocksToDownload(CNode *pto)
 {
-    AssertLockHeld(cs_main);
-
     uint64_t nBlocksInFlight = 0;
     {
         LOCK(cs_objDownloader);
@@ -1105,7 +1103,6 @@ void CRequestManager::FindNextBlocksToDownload(CNode *node, size_t count, std::v
     CNodeStateAccessor state(nodestate, nodeid);
     DbgAssert(state != nullptr, return );
 
-    LOCK(cs_main);
     if (state->pindexBestKnownBlock == nullptr ||
         state->pindexBestKnownBlock->chainWork() < chainActive.Tip()->chainWork())
     {
@@ -1167,6 +1164,7 @@ void CRequestManager::FindNextBlocksToDownload(CNode *node, size_t count, std::v
                 // us from re-adding a source for the same peer and possibly downloading two duplicate blocks.
                 // This edge condition can typically happen when we were only connected to only one peer and we
                 // exceed the download timeout causing us to re-request the same block from the same peer.
+                LOCK(cs_objDownloader);
                 std::map<uint256, std::map<NodeId, std::list<QueuedBlock>::iterator> >::iterator itInFlight =
                     mapBlocksInFlight.find(blockHash);
                 if (itInFlight != mapBlocksInFlight.end() && !itInFlight->second.count(nodeid))

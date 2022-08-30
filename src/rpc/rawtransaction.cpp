@@ -888,12 +888,8 @@ UniValue verifytxoutproof(const UniValue &params, bool fHelp)
         return res;
 
     auto *pindex = LookupBlockIndex(merkleBlock.header.GetHash());
-
-    {
-        LOCK(cs_main);
-        if (!pindex || !chainActive.Contains(pindex))
-            throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found in chain");
-    }
+    if (!pindex || !chainActive.Contains(pindex))
+        throw JSONRPCError(RPC_INVALID_ADDRESS_OR_KEY, "Block not found in chain");
 
     for (const uint256 &hash : vMatch)
         res.push_back(hash.GetHex());
