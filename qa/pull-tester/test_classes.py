@@ -132,7 +132,7 @@ def WhenElectrumFound(test_name, custom_electrum_path):
     import os
     if custom_electrum_path is None:
         # Default to an electrum server in the same dir as bitcoind
-        electrum_path = os.path.join(os.path.dirname(os.environ["BITCOIND"]), "rostrum")
+        electrum_path = os.path.join(os.path.dirname(os.environ["NEXAD"]), "rostrum")
     else:
         electrum_path = custom_electrum_path
 
