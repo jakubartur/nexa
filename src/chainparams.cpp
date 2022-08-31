@@ -485,7 +485,21 @@ public:
         fMineBlocksOnDemand = false;
         fTestnetToBeDeprecatedFieldRPC = true;
 
+        // clang-format off
+        // checkpoint related to various network upgrades need to be the first block
+        // for which the new rules are enforced, hence activation height + 1, where activation
+        // height is the first block for which MTP <= upgrade activation time
         checkpointData = CCheckpointData();
+        MapCheckpoints &checkpoints = checkpointData.mapCheckpoints;
+        checkpoints[100000] = uint256S("0x0acb69c056c86b62bc788bab58f5ed95f7c8cda63326b23e1d8cb349e1b5257f");
+        // clang-format on
+
+        // * UNIX timestamp of last checkpoint block
+        checkpointData.nTimeLastCheckpoint = 1661700138;
+        // * total number of transactions between genesis and last checkpoint
+        checkpointData.nTransactionsLastCheckpoint = 100000;
+        // * estimated number of transactions per day after checkpoint
+        checkpointData.fTransactionsPerDay = 720.0;
     }
 };
 
@@ -584,7 +598,21 @@ public:
         fMineBlocksOnDemand = false;
         fTestnetToBeDeprecatedFieldRPC = false;
 
+        // clang-format off
+        // checkpoint related to various network upgrades need to be the first block
+        // for which the new rules are enforced, hence activation height + 1, where activation
+        // height is the first block for which MTP <= upgrade activation time
         checkpointData = CCheckpointData();
+        MapCheckpoints &checkpoints = checkpointData.mapCheckpoints;
+        checkpoints[57000] = uint256S("0xdda01c756107f5016e88aa9dc1b1896e616462b750dbcbbc91214237f557cb89");
+        // clang-format on
+
+        // * UNIX timestamp of last checkpoint block
+        checkpointData.nTimeLastCheckpoint = 1661829976;
+        // * total number of transactions between genesis and last checkpoint
+        checkpointData.nTransactionsLastCheckpoint = 57174;
+        // * estimated number of transactions per day after checkpoint
+        checkpointData.fTransactionsPerDay = 720.0;
     }
 };
 
