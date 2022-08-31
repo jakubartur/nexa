@@ -1,14 +1,13 @@
-Bitcoin Unlimited version x.y.z.k is now available from:
+Nexa x.y.z.k is now available from:
 
-  <https://bitcoinunlimited.info/download>
+  <https://gitlab.com/nexa/nexa/-/releases/>
 
 This is a new minor version release, including ........,
 various bugfixes and updated translations.
 
-<<<<<<< HEAD
-Please report bugs using the issue tracker at github:
+Please report bugs using the issue tracker at gitlab:
 
-  <https://github.com/BitcoinUnlimited/BitcoinUnlimited/issues>
+  <https://gitlab.com/nexa/nexa/-/issues>
 
 Upgrading and downgrading
 =========================
@@ -17,19 +16,6 @@ How to Upgrade
 --------------
 
 ....
-
-Downgrade warning
------------------
-
-### Downgrade to a version < 0.12.0
-
-Because release 0.12.0 and later will obfuscate the chainstate on every
-fresh sync or reindex, the chainstate is not backwards-compatible with
-pre-0.12 versions of Bitcoin Core or other software.
-
-If you want to downgrade after you have done a reindex with 0.12.0 or later,
-you will need to reindex when you first start Bitcoin Core version 0.11 or
-earlier.
 
 Notable changes
 ===============
@@ -49,8 +35,6 @@ Notable changes
 
 ### Wallet
 
-Add support for the new cashaddr format. The `-usecashaddr` flag can be used to select which format is used when presenting addresses to users. By default, This client will keep using the old format until Jan, 14 and then switch to the new format. Both format are now accepted as input.
-
 ### GUI
 
 ### Tests and QA
@@ -63,4 +47,4 @@ Credits
 Thanks to everyone who directly contributed to this release:
 
 
-As well as everyone that helped translating on [Transifex](https://www.transifex.com/projects/p/bitcoin/).
+
