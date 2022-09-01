@@ -22,9 +22,9 @@ packages:
 - "bsdmainutils"
 - "ca-certificates"
 - "python"
-- "python3-git" # building electrscash
-- "clang" # for rocksdb in electrscash
-- "cmake" # for rocksdb in electrscash
+- "python3-git" # building Rostrum
+- "clang" # for rocksdb in Rostrum
+- "cmake" # for rocksdb in Rostrum
 
 reference_datetime: "2020-08-20 00:00:00"
 remotes:
@@ -125,23 +125,19 @@ script: |
     mkdir -p ${INSTALLPATH}
     tar --strip-components=1 -xf ../$SOURCEDIST
     CONFIG_SITE=${BASEPREFIX}/${i}/share/config.site ./configure --prefix=/ --disable-ccache --disable-maintainer-mode --disable-dependency-tracking ${CONFIGFLAGS} CFLAGS="${HOST_CFLAGS}" CXXFLAGS="${HOST_CXXFLAGS}" LDFLAGS="${HOST_LDFLAGS}"
-    # TODO: uncomment once we have electrum (rostrum) support for nexa
-    #if [ "$i" = "x86_64-linux-gnu" ]; then
-    #    # Scope of electrscash support is for servers running linux.
-    #    # We'll support x86_64 only for now.
-    #    make ${MAKEOPTS} electrscash
-    #fi
+    if [ "$i" = "x86_64-linux-gnu" ]; then
+        # Scope of rostrum support is for servers running linux.
+        # We'll support x86_64 only for now.
+        make ${MAKEOPTS} rostrum
+    fi
     make ${MAKEOPTS}
     make ${MAKEOPTS} -C src check-security
     make ${MAKEOPTS} -C src check-symbols
     make install DESTDIR=${INSTALLPATH}
-    # FIXME: electrscash is goin to be rename to Rotrsum
-    # and also need to be changed to be compatible with
-    # nexa blockchan
-    if [ -f src/electrscash ]; then
-        cp src/electrscash ${OUTDIR}/electrscash-${i}.debug
-        strip src/electrscash
-        cp src/electrscash ${INSTALLPATH}/bin/electrscash
+    if [ -f src/rostrum ]; then
+        cp src/rostrum ${OUTDIR}/rostrum-${i}.debug
+        strip src/rostrum
+        cp src/rostrum ${INSTALLPATH}/bin/rostrum
     fi
     # BU save the executables with debug symbols
     cp -f src/nexad ${OUTDIR}/nexad-${i}.debug
