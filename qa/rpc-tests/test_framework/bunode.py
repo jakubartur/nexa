@@ -142,7 +142,6 @@ class BUProtocolHandler(NodeConnCB):
             self.parent.on_xthinblock(self, message)
 
     def on_getdata(self, conn, message):
-        print("on_getdata")
         self.last_getdata.append(message)
 
     def on_reject(self, conn, message):
