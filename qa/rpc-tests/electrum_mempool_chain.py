@@ -127,7 +127,7 @@ class ElectrumMempoolChain(ElectrumTestFramework):
         # Check mempool
         assert(len(n.getrawtxpool()) == 0)
         self.p2p.send_txs_and_test(tx_chain, n)
-        wait_for_electrum_mempool(n, count = len(tx_chain), timeout = 20)
+        wait_for_electrum_mempool(n, count = len(tx_chain))
 
         res = await cli.call(GET_HISTORY, scripthash)
         assert_equal(len(tx_chain), len(res))

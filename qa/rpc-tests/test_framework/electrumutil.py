@@ -101,7 +101,7 @@ class ElectrumTestFramework(BitcoinTestFramework):
             n = self.nodes[0]
         sync_electrum_height(n)
 
-    def wait_for_mempool_count(self, n = None, *, count, timeout = 10):
+    def wait_for_mempool_count(self, n = None, *, count, timeout = 40):
         if n is None:
             n = self.nodes[0]
         wait_for_electrum_mempool(n, count = count, timeout = timeout)
@@ -180,10 +180,10 @@ def script_to_scripthash(script):
     return scripthash.hex()
 
 
-def sync_electrum_height(node, timeout = 10):
+def sync_electrum_height(node, timeout = 40):
     waitFor(timeout, lambda: compare(node, "index_height", node.getblockcount()))
 
-def wait_for_electrum_mempool(node, *, count, timeout = 10):
+def wait_for_electrum_mempool(node, *, count, timeout = 40):
     try:
         waitFor(timeout, lambda: compare(node, "mempool_count", count, True))
     except Exception as e:
