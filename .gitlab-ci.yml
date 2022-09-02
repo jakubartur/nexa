@@ -66,7 +66,7 @@ check-formatting:
     needs: []
     script:
         - ./autogen.sh
-        - ./configure --with-incompatible-bdb --enable-glibc-back-compat --enable-reduce-exports
+        - ./configure --enable-glibc-back-compat --enable-reduce-exports
         - make check-formatting
 
 ######################################################
@@ -85,7 +85,7 @@ build-ubuntu-nodeps:
     script:
         - ./autogen.sh
         - mkdir build; cd build
-        - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
+        - ../configure --cache-file=config.cache --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
@@ -106,7 +106,7 @@ build-ubuntu-nodeps-qt:
     script:
         - ./autogen.sh
         - mkdir build; cd build
-        - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-tests
+        - ../configure --cache-file=config.cache --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-tests
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
@@ -303,7 +303,7 @@ build-ubuntu-clang:
     script:
         - ./autogen.sh
         - mkdir build; cd build
-        - ../configure --cache-file=config.cache --enable-zmq --with-gui=qt5 --with-incompatible-bdb CPPFLAGS=-DDEBUG_LOCKORDER
+        - ../configure --cache-file=config.cache --enable-zmq --with-gui=qt5 CPPFLAGS=-DDEBUG_LOCKORDER
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
@@ -529,7 +529,7 @@ build-debian-nodeps:
     script:
         - ./autogen.sh
         - mkdir build; cd build
-        - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
+        - ../configure --cache-file=config.cache --with-gui=no --enable-glibc-back-compat --enable-reduce-exports
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
@@ -544,7 +544,7 @@ build-debian-nodeps-qt:
     script:
         - ./autogen.sh
         - mkdir build; cd build
-        - ../configure --cache-file=config.cache --with-incompatible-bdb --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-tests
+        - ../configure --cache-file=config.cache --with-gui=qt5 --enable-glibc-back-compat --enable-reduce-exports --disable-bench --disable-tests
         - make -j `nproc`
         - ccache --show-stats
     artifacts:
