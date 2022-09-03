@@ -2088,11 +2088,13 @@ BOOST_AUTO_TEST_CASE(MempoolSizeLimitTest)
 
     // Create a chain of transactions with varying fees applied to the descendants. This will create a chain
     // of descendant packages.
+    uint256 lastHash;
     for (unsigned int i = 1; i <= 9; ++i)
     {
         int nFee = 1000;
         tx.vout[0].nValue -= nFee;
         hash = tx.GetIdem();
+        lastHash = tx.GetId();
         bool spendsCoinbase = false;
         pool.addUnchecked(entry.Fee(nFee).Time(GetTime() + i).SpendsCoinbase(spendsCoinbase).SigOps(1).FromTx(tx));
         tx.vin[0].prevout = COutPoint(hash, 0);
@@ -2100,7 +2102,7 @@ BOOST_AUTO_TEST_CASE(MempoolSizeLimitTest)
     BOOST_CHECK(pool.size() == 10);
     pool.TrimToSize(pool.DynamicMemoryUsage() - 1, &vNoSpendsRemaining, false);
     BOOST_CHECK(pool.size() == 9); // only the 10nth should be trimmed from the pool
-    BOOST_CHECK(!pool.exists(tx.GetId())); // last hash should not exist
+    BOOST_CHECK(!pool.exists(lastHash)); // last hash should not exist
 
     // Add a chain of 100 txns and trim. At most the very last 4 txns in the chain should be removed
     pool.clear();
@@ -2139,7 +2141,123 @@ BOOST_AUTO_TEST_CASE(MempoolSizeLimitTest)
     BOOST_CHECK(pool.size() >= 90 && pool.size() < 100);
     for (size_t i = 0; i < (vHashes.size() - 10); i++) // first 90 hashes should exist
         BOOST_CHECK(pool.exists(vHashes[i]));
-    BOOST_CHECK(!pool.exists(tx.GetId())); // at minimum the last hash should not exist
+    BOOST_CHECK(!pool.exists(vHashes[vHashes.size() - 1])); // at minimum the last hash should not exist
+
+    // Create a chain of transactions with varying fees applied to the descendants. This will create a chain
+    // of descendant packages.
+    //
+    // Then prioritise the very last transaction.  Result: no transactions should be trimmed
+    pool.clear();
+    vHashes.clear();
+
+    // Make a txn we can used for chaining
+    tx.vin.resize(1);
+    tx.vin[0].scriptSig = CScript();
+    tx.vin[0].prevout = tx1.OutpointAt(0);
+    tx.vout.resize(1);
+    tx.vout[0].nValue = 5000000000LL;
+
+    for (unsigned int i = 1; i <= 100; ++i)
+    {
+        int nFee = 1000;
+        tx.vout[0].nValue -= nFee;
+        hash = tx.GetIdem();
+        vHashes.push_back(tx.GetId());
+        bool spendsCoinbase = false;
+        pool.addUnchecked(entry.Fee(nFee).Time(GetTime() + i).SpendsCoinbase(spendsCoinbase).SigOps(1).FromTx(tx));
+        tx.vin[0].prevout = COutPoint(hash, 0);
+    }
+    // prioritise the last transaction so that no transactions will be removed when trimmed
+    pool.PrioritiseTransaction(vHashes[99], 0, 1000);
+
+    BOOST_CHECK_EQUAL(pool.size(), 100);
+    pool.TrimToSize(0, &vNoSpendsRemaining, false);
+
+    // nothing should have been removed
+    BOOST_CHECK_EQUAL(pool.size(), 100);
+    for (size_t i = 0; i < vHashes.size(); i++) // all hashes should exist
+        BOOST_CHECK(pool.exists(vHashes[i]));
+
+    // remove the priority
+    pool.PrioritiseTransaction(vHashes[99], 0, -1000);
+    BOOST_CHECK_EQUAL(pool.size(), 100);
+    pool.TrimToSize(pool.DynamicMemoryUsage() - 1, &vNoSpendsRemaining, false);
+
+    // without the priority the chain will now be seen as just any chain and so last hash should have been removed
+    for (size_t i = 0; i < (vHashes.size() - 10); i++) // first 90 hashes should exist
+        BOOST_CHECK(pool.exists(vHashes[i]));
+    BOOST_CHECK(!pool.exists(vHashes[vHashes.size() - 1])); // at minimum the last hash should not exist
+
+
+    // Prioritise a few transactions (by fee) in the chain  and make sure they still remain after the trim.
+    // After trimming txpool to zero make sure that all txns after the last prioritised txn are removed.
+    pool.PrioritiseTransaction(vHashes[50], 0, 1000);
+    pool.PrioritiseTransaction(vHashes[40], 0, 5000);
+    pool.PrioritiseTransaction(vHashes[30], 0, 3000);
+    pool.TrimToSize(0, &vNoSpendsRemaining, false);
+    BOOST_CHECK_EQUAL(pool.size(), 51);
+    for (size_t i = 0; i <= 50; i++) // should exist
+        BOOST_CHECK(pool.exists(vHashes[i]));
+    for (size_t i = 51; i < vHashes.size(); i++) // should not exist
+        BOOST_CHECK(!pool.exists(vHashes[i]));
+    vHashes.erase(vHashes.begin() + 50, vHashes.end());
+
+    // remove the priorities
+    pool.PrioritiseTransaction(vHashes[50], 0, -1000);
+    pool.PrioritiseTransaction(vHashes[40], 0, -5000);
+    pool.PrioritiseTransaction(vHashes[30], 0, -3000);
+    BOOST_CHECK_EQUAL(pool.size(), 51);
+    pool.TrimToSize(pool.DynamicMemoryUsage() - 1, &vNoSpendsRemaining, false);
+
+    // without the priority the chain will now be seen as just any chain and so last hash should have been removed
+    for (size_t i = 0; i < (vHashes.size() - 5); i++)
+        BOOST_CHECK(pool.exists(vHashes[i]));
+    BOOST_CHECK(!pool.exists(vHashes[vHashes.size() - 1])); // at minimum the last hash should not exist
+
+    pool.clear();
+    vHashes.clear();
+
+    // Make a txn we can used for chaining
+    tx.vin.resize(1);
+    tx.vin[0].scriptSig = CScript();
+    tx.vin[0].prevout = tx1.OutpointAt(0);
+    tx.vout.resize(1);
+    tx.vout[0].nValue = 5000000000LL;
+
+    for (unsigned int i = 1; i <= 100; ++i)
+    {
+        int nFee = 1000;
+        tx.vout[0].nValue -= nFee;
+        hash = tx.GetIdem();
+        vHashes.push_back(tx.GetId());
+        bool spendsCoinbase = false;
+        pool.addUnchecked(entry.Fee(nFee).Time(GetTime() + i).SpendsCoinbase(spendsCoinbase).SigOps(1).FromTx(tx));
+        tx.vin[0].prevout = COutPoint(hash, 0);
+    }
+
+    // Prioritise a few transactions (by priority delta) in the chain  and make sure they still remain after the trim.
+    // After trimming txpool to zero make sure that all txns after the last prioritised txn are removed.
+    pool.PrioritiseTransaction(vHashes[95], 1e10, 0);
+    pool.PrioritiseTransaction(vHashes[20], 1e11, 0);
+    pool.TrimToSize(0, &vNoSpendsRemaining, false);
+    BOOST_CHECK_EQUAL(pool.size(), 96);
+    for (size_t i = 0; i <= 95; i++) // should exist
+        BOOST_CHECK(pool.exists(vHashes[i]));
+    for (size_t i = 96; i < vHashes.size(); i++) // should not exist
+        BOOST_CHECK(!pool.exists(vHashes[i]));
+    vHashes.erase(vHashes.begin() + 95, vHashes.end());
+
+    // remove the priorities
+    pool.PrioritiseTransaction(vHashes[95], -1e10, 0);
+    pool.PrioritiseTransaction(vHashes[20], -1e11, 0);
+    BOOST_CHECK_EQUAL(pool.size(), 96);
+    pool.TrimToSize(pool.DynamicMemoryUsage() - 1, &vNoSpendsRemaining, false);
+
+    // without the priority the chain will now be seen as just any chain and so last hash should have been removed
+    vHashes.erase(vHashes.begin() + 95, vHashes.end());
+    for (size_t i = 0; i < (vHashes.size() - 10); i++)
+        BOOST_CHECK(pool.exists(vHashes[i]));
+    BOOST_CHECK(!pool.exists(vHashes[vHashes.size() - 1])); // at minimum the last hash should not exist
 }
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -306,7 +306,7 @@ UniValue prioritisetransaction(const UniValue &params, bool fHelp)
 
     uint256 hash = ParseHashStr(params[0].get_str(), "tx id or idem");
     CAmount nAmount = params[2].get_int64();
-    return mempool.PrioritiseTransaction(hash, params[0].get_str(), params[1].get_real(), nAmount);
+    return mempool.PrioritiseTransaction(hash, params[1].get_real(), nAmount);
 }
 
 
