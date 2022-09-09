@@ -1071,8 +1071,6 @@ UniValue gettxout(const UniValue &params, bool fHelp)
                             HelpExampleCli("gettxout", "\"txid\" 1") + "\nAs a json rpc call\n" +
                             HelpExampleRpc("gettxout", "\"txid\", 1"));
 
-    LOCK(cs_main); // for pcoinsTip
-
     UniValue ret(UniValue::VOBJ);
 
     std::string strHash = params[0].get_str();
