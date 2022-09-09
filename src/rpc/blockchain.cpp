@@ -634,8 +634,6 @@ UniValue getblockhash(const UniValue &params, bool fHelp)
                             "\nExamples:\n" +
                             HelpExampleCli("getblockhash", "1000") + HelpExampleRpc("getblockhash", "1000"));
 
-    LOCK(cs_main);
-
     int nHeight = params[0].get_int();
     if (nHeight < 0 || nHeight > chainActive.Height())
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Block height out of range");
