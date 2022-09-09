@@ -363,8 +363,6 @@ UniValue getrawtxpool(const UniValue &params, bool fHelp)
             "\nExamples\n" +
             HelpExampleCli("getrawtxpool", "true") + HelpExampleRpc("getrawtxpool", "true"));
 
-    LOCK(cs_main);
-
     bool idem = true;
     bool fVerbose = false;
     if (params.size() > 0)
@@ -412,8 +410,6 @@ UniValue getrawtxpoolbyid(const UniValue &params, bool fHelp)
             "}\n"
             "\nExamples\n" +
             HelpExampleCli("getrawtxpool", "true") + HelpExampleRpc("getrawtxpool", "true"));
-
-    LOCK(cs_main);
 
     bool fVerbose = false;
     bool idem = true;
