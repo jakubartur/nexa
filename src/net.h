@@ -548,7 +548,7 @@ public:
     // Best measured round-trip time.
     int64_t nMinPingUsecTime;
     // Whether a ping is requested.
-    bool fPingQueued;
+    std::atomic<bool> fPingQueued;
     // Whether an ADDR was requested.
     std::atomic<bool> fGetAddr;
 
