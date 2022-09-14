@@ -2169,9 +2169,9 @@ UniValue gettransaction(const UniValue &params, bool fHelp)
     if (fHelp || params.size() < 1 || params.size() > 2)
         throw runtime_error(
             "gettransaction \"txid\" ( includeWatchonly )\n"
-            "\nGet detailed information about in-wallet transaction <txid>\n"
+            "\nGet detailed information about in-wallet transaction <txid/txidem>\n"
             "\nArguments:\n"
-            "1. \"txid\"    (string, required) The transaction id\n"
+            "1. \"txid or txidem\"    (string, required) The transaction id or transaction idem\n"
             "2. \"includeWatchonly\"    (bool, optional, default=false) Whether to include watchonly addresses in "
             "balance calculation and details[]\n"
             "\nResult:\n"
@@ -2183,7 +2183,8 @@ UniValue gettransaction(const UniValue &params, bool fHelp)
             "  \"blockhash\" : \"hash\",    (string) The block hash\n"
             "  \"blockindex\" : xx,       (numeric) The index of the transaction in the block that includes it\n"
             "  \"blocktime\" : ttt,       (numeric) The time in seconds since epoch (1 Jan 1970 GMT)\n"
-            "  \"txid\" : \"transactionid\",   (string) The transaction id.\n"
+            "  \"txid\" : \"transaction id\",   (string) The transaction id.\n"
+            "  \"txidem\" : \"transaction idem\",   (string) The transaction idem.\n"
             "  \"time\" : ttt,            (numeric) The transaction time in seconds since epoch (1 Jan 1970 GMT)\n"
             "  \"timereceived\" : ttt,    (numeric) The time received in seconds since epoch (1 Jan 1970 GMT)\n"
             "  \"bip125-replaceable\": \"yes|no|unknown\"  (string) Whether this transaction could be replaced due to "
