@@ -823,7 +823,7 @@ int main(int argc, char *argv[])
     if (nThreads > 256)
     {
         nThreads = 256;
-        printf("%s: Number of threads reduced to the maximum allowed value.\n", now().c_str(), nThreads);
+        printf("%s: Number of threads reduced to the maximum allowed value: %d.\n", now().c_str(), nThreads);
     }
     std::vector<std::thread> minerThreads;
     printf("%s: Running %d threads.\n", now().c_str(), nThreads);
