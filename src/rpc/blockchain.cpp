@@ -363,8 +363,6 @@ UniValue getrawtxpool(const UniValue &params, bool fHelp)
             "\nExamples\n" +
             HelpExampleCli("getrawtxpool", "true") + HelpExampleRpc("getrawtxpool", "true"));
 
-    LOCK(cs_main);
-
     bool idem = true;
     bool fVerbose = false;
     if (params.size() > 0)
@@ -412,8 +410,6 @@ UniValue getrawtxpoolbyid(const UniValue &params, bool fHelp)
             "}\n"
             "\nExamples\n" +
             HelpExampleCli("getrawtxpool", "true") + HelpExampleRpc("getrawtxpool", "true"));
-
-    LOCK(cs_main);
 
     bool fVerbose = false;
     bool idem = true;
@@ -637,8 +633,6 @@ UniValue getblockhash(const UniValue &params, bool fHelp)
                             "\"hash\"         (string) The block hash\n"
                             "\nExamples:\n" +
                             HelpExampleCli("getblockhash", "1000") + HelpExampleRpc("getblockhash", "1000"));
-
-    LOCK(cs_main);
 
     int nHeight = params[0].get_int();
     if (nHeight < 0 || nHeight > chainActive.Height())
@@ -1076,8 +1070,6 @@ UniValue gettxout(const UniValue &params, bool fHelp)
                             HelpExampleCli("listunspent", "") + "\nView the details\n" +
                             HelpExampleCli("gettxout", "\"txid\" 1") + "\nAs a json rpc call\n" +
                             HelpExampleRpc("gettxout", "\"txid\", 1"));
-
-    LOCK(cs_main); // for pcoinsTip
 
     UniValue ret(UniValue::VOBJ);
 

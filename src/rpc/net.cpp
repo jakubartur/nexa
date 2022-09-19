@@ -68,8 +68,7 @@ UniValue getconnectioncount(const UniValue &params, bool fHelp)
                             "\nExamples:\n" +
                             HelpExampleCli("getconnectioncount", "") + HelpExampleRpc("getconnectioncount", ""));
 
-    LOCK2(cs_main, cs_vNodes);
-
+    LOCK(cs_vNodes);
     return (int)vNodes.size();
 }
 
@@ -85,8 +84,7 @@ UniValue ping(const UniValue &params, bool fHelp)
                             HelpExampleCli("ping", "") + HelpExampleRpc("ping", ""));
 
     // Request that each node send a ping during next message processing pass
-    LOCK2(cs_main, cs_vNodes);
-
+    LOCK(cs_vNodes);
     for (CNode *pNode : vNodes)
     {
         pNode->fPingQueued = true;
@@ -167,7 +165,7 @@ UniValue getpeerinfo(const UniValue &params, bool fHelp)
 
     UniValue ret(UniValue::VARR);
     CNodeRef node;
-    if (params.size() > 0) // BU allow params to this RPC call
+    if (params.size() > 0)
     {
         string nodeName = params[0].get_str();
         node = FindLikelyNode(nodeName);
