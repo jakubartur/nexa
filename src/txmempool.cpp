@@ -1415,10 +1415,7 @@ std::vector<TxMempoolInfo> CTxMemPool::AllTxMempoolInfo() const
     return vInfo;
 }
 
-bool CTxMemPool::PrioritiseTransaction(const uint256 h,
-    const string strHash,
-    double dPriorityDelta,
-    const CAmount &nFeeDelta)
+bool CTxMemPool::PrioritiseTransaction(const uint256 h, double dPriorityDelta, const CAmount &nFeeDelta)
 {
     {
         WRITELOCK(cs_txmempool);
@@ -1453,7 +1450,8 @@ bool CTxMemPool::PrioritiseTransaction(const uint256 h,
             return false;
         }
     }
-    LOGA("PrioritiseTransaction: %s priority += %f, fee += %d\n", strHash, dPriorityDelta, FormatMoney(nFeeDelta));
+    LOGA("PrioritiseTransaction: %s priority += %f, fee += %d\n", h.ToString().c_str(), dPriorityDelta,
+        FormatMoney(nFeeDelta));
     return true;
 }
 
@@ -1700,6 +1698,7 @@ void CTxMemPool::TrimToSize(size_t sizelimit, std::vector<COutPoint> *pvNoSpends
     WRITELOCK(cs_txmempool);
     unsigned nTxnRemoved = 0;
 
+    uint16_t attempts = 0;
     FastRandomContext insecure_rand(fDeterministic);
     while (_DynamicMemoryUsage() > sizelimit)
     {
@@ -1717,15 +1716,15 @@ void CTxMemPool::TrimToSize(size_t sizelimit, std::vector<COutPoint> *pvNoSpends
             std::advance(it, nEntryToDelete);
             DbgAssert(it != mapTx.get<entry_time>().end(), return );
 
-            // Delete the entry and any descendants
+            // Select the entry and any descendants
             _CalculateDescendants(mapTx.project<0>(it), stage);
-
-            // If the descendant chain to remove is more than 10% of the total
-            // chain size, then iterate through the setEntries to find a transaction
-            // that be <= 10% of the total. In this way we don't remove an entire
-            // chain that may be 100's or 1000's of txns long.
             nAncestors = it->GetCountWithAncestors();
         }
+
+        // If the descendant chain to remove is more than 10% of the total
+        // chain size, then iterate through the setEntries to find a transaction
+        // that be <= 10% of the total. In this way we don't remove an entire
+        // chain that may be 100's or 1000's of txns long.
         uint64_t nSizeOfTxnChain = nAncestors + stage.size();
         if (nSizeOfTxnChain >= 10 && (double)nAncestors <= ((double)nSizeOfTxnChain * 0.90))
         {
@@ -1741,6 +1740,51 @@ void CTxMemPool::TrimToSize(size_t sizelimit, std::vector<COutPoint> *pvNoSpends
         }
         nTxnRemoved += stage.size();
 
+        // We do not want to remove priority transactions so we must remove any
+        // part of the chain which we've selected for removal and that has contains a
+        // priority transaction, along with that transactions ancestors.
+        setEntries setPriorityTx;
+        for (TxIdIter iter : stage)
+        {
+            auto deltaIter = mapDeltas.find(iter->GetSharedTx()->GetId());
+            if (deltaIter != mapDeltas.end())
+            {
+                // has either the priority or feedelta been modified
+                if (deltaIter->second.first != 0 || deltaIter->second.second != 0)
+                {
+                    setPriorityTx.insert(iter);
+                }
+            }
+        }
+        setEntries setPriorityAncestors;
+        for (TxIdIter iter : setPriorityTx)
+        {
+            std::string dummy;
+            setEntries setAncestors;
+            uint64_t nNoLimit = std::numeric_limits<uint64_t>::max();
+            _CalculateMemPoolAncestors(*iter, setAncestors, nNoLimit, nNoLimit, dummy);
+            setPriorityAncestors.insert(setAncestors.begin(), setAncestors.end());
+        }
+        for (auto iter : setPriorityTx)
+            stage.erase(iter);
+        for (auto iter : setPriorityAncestors)
+            stage.erase(iter);
+
+        // Prevent us from getting into an infinite loop if all transactions were removed.
+        if (stage.empty())
+        {
+            if (attempts++ < 10)
+                continue;
+            else
+                return;
+        }
+        else
+        {
+            attempts = 0;
+        }
+
+        // Remove the transactions, and if applicable, also remove the coins from the coinscache associated
+        // with the transactions we just removed.
         std::vector<CTransactionRef> vTxn;
         if (pvNoSpendsRemaining)
         {
@@ -1893,7 +1937,7 @@ bool LoadTxPool(void)
             CAmount amountdelta = nFeeDelta;
             if (amountdelta)
             {
-                mempool.PrioritiseTransaction(tx.GetId(), tx.GetId().ToString(), prioritydummy, amountdelta);
+                mempool.PrioritiseTransaction(tx.GetId(), prioritydummy, amountdelta);
             }
             if (nTime + nExpiryTimeout > nNow)
             {
@@ -1915,7 +1959,7 @@ bool LoadTxPool(void)
 
         for (const auto &i : mapDeltas)
         {
-            mempool.PrioritiseTransaction(i.first, i.first.ToString(), prioritydummy, i.second);
+            mempool.PrioritiseTransaction(i.first, prioritydummy, i.second);
         }
     }
     catch (const std::exception &e)

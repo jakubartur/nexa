@@ -154,6 +154,7 @@ public:
     uint64_t GetRuntimeSigOpCount() const { return runtimeSigOpCount; }
     uint64_t GetRuntimeSighashBytes() const { return runtimeSighashBytes; }
     int64_t GetModifiedFee() const { return nFee + feeDelta; }
+    int64_t GetFeeDelta() const { return feeDelta; }
     size_t DynamicMemoryUsage() const { return nUsageSize; }
     const LockPoints &GetLockPoints() const { return lockPoints; }
     // Increments the ancestor state values
@@ -542,7 +543,9 @@ private:
 public:
     // Connects an output to the transaction that spends it.
     std::map<COutPoint, CInPoint> mapNextTx;
-    std::map<uint256, std::pair<double, CAmount> > mapDeltas; // uint256 is txId
+
+    // Keeps track of prioritized transactions as a map of priority and fee deltas
+    std::map<uint256, std::pair<double, CAmount> > mapDeltas; // uint256 is txId or idem
 
     // Map an outpoint to the transaction that created it
     typedef std::map<COutPoint, std::pair<uint256, size_t> > OutpointMap;
@@ -643,10 +646,7 @@ public:
     bool HasNoInputsOf(const CTransactionRef &tx) const;
 
     /** Affect CreateNewBlock prioritisation of transactions */
-    bool PrioritiseTransaction(const uint256 hash,
-        const std::string strHash,
-        double dPriorityDelta,
-        const CAmount &nFeeDelta);
+    bool PrioritiseTransaction(const uint256 hash, double dPriorityDelta, const CAmount &nFeeDelta);
     /** These functions don't actually APPLY the deltas.  They just look them up */
     void ApplyDeltas(const uint256 hash, double &dPriorityDelta, CAmount &nFeeDelta) const;
     void _ApplyDeltas(const uint256 hash, double &dPriorityDelta, CAmount &nFeeDelta) const;
