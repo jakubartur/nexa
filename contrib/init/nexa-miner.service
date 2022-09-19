@@ -1,0 +1,22 @@
+[Unit]
+Description=Nexa Miner
+After=nexa.service
+Requires=nexa.service
+
+[Service]
+User=nexa
+Group=nexa
+
+Type=simple
+PIDFile=/home/nexa/.nexa/nexa-miner.pid
+ExecStart=/home/nexa/nexa/bin/nexa-miner -conf=/home/nexa/.nexa/nexa.conf -cpus=8
+
+Restart=always
+PrivateTmp=true
+TimeoutStopSec=60s
+TimeoutStartSec=2s
+StartLimitInterval=120s
+StartLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

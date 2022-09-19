@@ -1,5 +1,5 @@
 [Unit]
-Description=Nexa Node Daemon
+Description=Nexa Full Node Daemon
 After=network.target
 
 [Service]
@@ -7,9 +7,9 @@ User=nexa
 Group=nexa
 
 Type=forking
-PIDFile=/var/lib/nexad/nexad.pid
-ExecStart=/usr/bin/nexad -daemon -pid=/var/lib/nexad/nexad.pid \
--conf=/etc/nexa/nexa.conf -datadir=/var/lib/nexad -disablewallet
+PIDFile=/home/nexa/.nexa/nexa.pid
+ExecStart=/home/nexa/nexa/bin/nexad -conf=/home/nexa/.nexa/nexa.conf -daemon
+ExecStop=/home/nexa/nexa/bin/nexa-cli -conf=/home/nexa/.nexa/nexa.conf stop
 
 Restart=always
 PrivateTmp=true
