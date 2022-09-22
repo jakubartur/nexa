@@ -1393,10 +1393,13 @@ std::set<CBlockIndex *, CompareBlocksByHeight> GetChainTips()
     std::set<CBlockIndex *> setOrphans;
     std::set<CBlockIndex *> setPrevs;
 
-    AssertLockHeld(cs_main); // for chainActive
     READLOCK(cs_mapBlockIndex);
     for (const std::pair<const uint256, CBlockIndex *> &item : mapBlockIndex)
     {
+        DbgAssert(item.second != nullptr, );
+        if (!item.second)
+            continue;
+
         if (!chainActive.Contains(item.second))
         {
             setOrphans.insert(item.second);
@@ -1447,8 +1450,6 @@ UniValue getchaintips(const UniValue &params, bool fHelp)
             "5.  \"active\"                This is the tip of the active main chain, which is certainly valid\n"
             "\nExamples:\n" +
             HelpExampleCli("getchaintips", "") + HelpExampleRpc("getchaintips", ""));
-
-    LOCK(cs_main);
 
     // Get the set of chaintips
     std::set<CBlockIndex *, CompareBlocksByHeight> setTips;
