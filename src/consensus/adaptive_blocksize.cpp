@@ -4,33 +4,148 @@
 
 #include "consensus/adaptive_blocksize.h"
 
+CCriticalSection cs_median;
+std::vector<uint64_t> vSizesShortWindow GUARDED_BY(cs_median);
+std::vector<uint64_t> vSizesLongWindow GUARDED_BY(cs_median);
+std::deque<uint64_t> vSizesShortWindow_Unsorted GUARDED_BY(cs_median);
+std::deque<uint64_t> vSizesLongWindow_Unsorted GUARDED_BY(cs_median);
+bool fRunOnceLongWindow GUARDED_BY(cs_median) = true;
+bool fRunOnceShortWindow GUARDED_BY(cs_median) = true;
+static CBlockIndex *pindexTip_ShortWindow GUARDED_BY(cs_median) = nullptr;
+static CBlockIndex *pindexTip_LongWindow GUARDED_BY(cs_median) = nullptr;
+
+
 uint64_t CalculateMedian(std::vector<uint64_t> &vData)
 {
-    if (!(vData.size() % 2))
+    LOCK(cs_median);
+
+    if (!(vData.size() % 2) || vData.empty())
         throw std::runtime_error("Data size does not contain an odd number of elements");
 
-    std::sort(vData.begin(), vData.end());
-    return *(vData.begin() + ((vData.size() - 1) / 2));
+    // Assert that data must already be sorted before we try to add another element. This takes
+    // so only run this in debug mode.
+    DbgAssert(std::is_sorted(vData.begin(), vData.end()), );
+
+    std::vector<uint64_t>::iterator it = vData.begin();
+    std::advance(it, (vData.size() - 1) / 2);
+    return *it;
 }
 
-static bool CalculateMedianSize(CBlockIndex *pindex, uint64_t nBlockSize, uint64_t nWindow, uint64_t &nMedianSize)
+void InsertInSortedOrder(uint64_t nBlockSize, std::vector<uint64_t> &vData)
 {
-    std::vector<uint64_t> vSizes;
-    vSizes.push_back(nBlockSize);
-    for (uint64_t i = 0; i < nWindow; i++)
+    // This feature is used to quickly add a new data element to an already sorted list
+    // while preserving the sort order after the insert is complete.
+
+    LOCK(cs_median);
+
+    // Assert that data must already be sorted before we try to add another element. This takes
+    // time so only run this in debug mode.
+    DbgAssert(std::is_sorted(vData.begin(), vData.end()), );
+
+    auto it = std::lower_bound(vData.begin(), vData.end(), nBlockSize);
+    vData.insert(it, nBlockSize);
+
+    // Make sure the data is still sorted (Only run in debug mode).
+    DbgAssert(std::is_sorted(vData.begin(), vData.end()), );
+}
+
+bool CalculateMedianSize(CBlockIndex *pindexNew,
+    uint64_t nBlockSize,
+    uint64_t nWindow,
+    std::vector<uint64_t> &vSizes,
+    std::deque<uint64_t> &vSizes_Unsorted,
+    CBlockIndex **pindexTip,
+    bool &fRunOnce,
+    uint64_t &nMedianSize)
+{
+    LOCK(cs_median);
+
+    // If we don't have the same previous blockindex then we must have switched
+    // chains so we need to rebuild the data for the entire window if it exists.
+    if (pindexNew && pindexNew->pprev != *pindexTip)
     {
-        vSizes.push_back(pindex->GetBlockSize());
-        if (!pindex->pprev)
+        vSizes.clear();
+        vSizes_Unsorted.clear();
+
+        vSizes.insert(vSizes.begin(), nBlockSize);
+        vSizes_Unsorted.push_front(nBlockSize);
+
+        if (pindexNew->pprev)
         {
-            break;
+            CBlockIndex *pindex = pindexNew->pprev;
+            for (uint64_t i = 1; i <= nWindow; i++)
+            {
+                vSizes.insert(vSizes.begin(), pindex->GetBlockSize());
+                vSizes_Unsorted.push_front(pindex->GetBlockSize());
+
+                if (!pindex->pprev)
+                {
+                    break;
+                }
+                pindex = pindex->pprev;
+            }
         }
-        pindex = pindex->pprev;
+
+        // Once we rebuild the data then sort it just this once. Any
+        // more data that gets added will get added in sorted order.
+        std::sort(vSizes.begin(), vSizes.end());
     }
+    else
+    {
+        // We make the cutoff here at nWindow-1 rather than nWindow.
+        if (vSizes.size() < nWindow)
+        {
+            vSizes.push_back(nBlockSize);
+        }
+        else
+        {
+            // Just sort the first time calling this function. After the first sort all data
+            // should be inserted in sorted order.
+            if (fRunOnce)
+            {
+                assert(vSizes.size() == nWindow);
+                std::sort(vSizes.begin(), vSizes.end());
+                fRunOnce = false;
+            }
+
+            InsertInSortedOrder(nBlockSize, vSizes);
+        }
+
+        vSizes_Unsorted.push_back(nBlockSize);
+    }
+
+    // update *pindexTip for the next call to CaculateMedianSize()
+    *pindexTip = pindexNew;
+
+    // Calculate the median value if we've met our window target
+    assert(vSizes_Unsorted.size() == vSizes.size());
+    assert(vSizes.size() <= nWindow + 1);
     if (vSizes.size() == nWindow + 1)
     {
-        nMedianSize = CalculateMedian(vSizes);
+        try
+        {
+            nMedianSize = CalculateMedian(vSizes);
+        }
+        catch (...)
+        {
+            assert("Incorrect number of elements for median size calculation");
+        }
+
+        // remove the oldest value
+        uint64_t nSizeToRemove = vSizes_Unsorted.front();
+        auto it = std::find(vSizes.begin(), vSizes.end(), nSizeToRemove);
+        assert(it != vSizes.end());
+        {
+            vSizes.erase(it);
+            vSizes_Unsorted.pop_front();
+        }
+
+        assert(vSizes.size() == nWindow);
+        assert(vSizes_Unsorted.size() == nWindow);
+
         return true;
     }
+
     return false;
 }
 
@@ -45,11 +160,11 @@ uint64_t CalculateNextMaxBlockSize(CBlockIndex *pindexPrev, uint64_t nBlockSize)
     // Find the median blocksize values for both long and short windows. Whichever median is highest we will use to
     // determine the next max blocksize.
     uint64_t nMedianShortWindow = 0;
-    bool fShortWindow =
-        CalculateMedianSize(pindexPrev, nBlockSize, Params().GetConsensus().nShortBlockWindow, nMedianShortWindow);
+    bool fShortWindow = CalculateMedianSize(pindexPrev, nBlockSize, Params().GetConsensus().nShortBlockWindow,
+        vSizesShortWindow, vSizesShortWindow_Unsorted, &pindexTip_ShortWindow, fRunOnceShortWindow, nMedianShortWindow);
     uint64_t nMedianLongWindow = 0;
-    bool fLongWindow =
-        CalculateMedianSize(pindexPrev, nBlockSize, Params().GetConsensus().nLongBlockWindow, nMedianLongWindow);
+    bool fLongWindow = CalculateMedianSize(pindexPrev, nBlockSize, Params().GetConsensus().nLongBlockWindow,
+        vSizesLongWindow, vSizesLongWindow_Unsorted, &pindexTip_LongWindow, fRunOnceLongWindow, nMedianLongWindow);
 
     // In general we will have both the long and short window median values, however during the initial mining
     // of the new chain we may not yet have either the short window or both short and long window median values.
