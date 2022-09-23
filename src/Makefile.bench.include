@@ -17,6 +17,7 @@ bench_bench_nexa_SOURCES = \
   test/testutil.h \
   test/testutil.cpp \
   $(RAW_BENCH_FILES) \
+  bench/adaptive_blocksize.cpp \
   bench/bench_constants.h \
   bench/bench_nexa.cpp \
   bench/bench.cpp \

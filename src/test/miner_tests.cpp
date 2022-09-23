@@ -24,11 +24,47 @@
 
 #include "test/test_nexa.h"
 
+#include <algorithm>
 #include <boost/test/unit_test.hpp>
+#include <random>
+
 extern void dbgPrintBlock(CBlock &blk);
 extern void dbgPrintMempool(CTxMemPool &pool);
 extern CTweak<bool> xvalTweak;
 extern CTweak<bool> enforceMinTxSize;
+
+static uint64_t CalculateMedian_OldCode(std::vector<uint64_t> &vData)
+{
+    if (!(vData.size() % 2))
+        throw std::runtime_error("Data size does not contain an odd number of elements");
+
+    std::sort(vData.begin(), vData.end());
+    return *(vData.begin() + ((vData.size() - 1) / 2));
+}
+
+static bool CalculateMedianSize_OldCode(CBlockIndex *pindex,
+    uint64_t nBlockSize,
+    uint64_t nWindow,
+    uint64_t &nMedianSize)
+{
+    std::vector<uint64_t> vSizes;
+    vSizes.push_back(nBlockSize);
+    for (uint64_t i = 0; i < nWindow; i++)
+    {
+        vSizes.push_back(pindex->GetBlockSize());
+        if (!pindex->pprev)
+        {
+            break;
+        }
+        pindex = pindex->pprev;
+    }
+    if (vSizes.size() == nWindow + 1)
+    {
+        nMedianSize = CalculateMedian_OldCode(vSizes);
+        return true;
+    }
+    return false;
+}
 
 BOOST_FIXTURE_TEST_SUITE(miner_tests, TestingSetup)
 
@@ -448,8 +484,8 @@ void GenerateBlocks(const CChainParams &chainparams,
 
     printf("mempool size : %ld\n", mempool.size());
     printf("mempool mapTx size : %ld\n", mempool.mapTx.size());
-    printf("Avg Block Size %ld Expected Avg Block Size %lu\n", nTotalBlockSize / nBlockCount,
-        (uint64_t)(nTotalExpectedBlockSize / nBlockCount));
+    printf("Avg Block Size %lu Expected Avg Block Size %lu\n", nTotalBlockSize / (uint64_t)nBlockCount,
+        (nTotalExpectedBlockSize / (uint64_t)nBlockCount));
     printf("Block fill ratio %5.2f\n",
         (double)(nTotalBlockSize / nBlockCount) * 100 / (nTotalExpectedBlockSize / nBlockCount));
     printf("Total mining time: %5.2f\n", (double)nTotalMine / 1000000);
@@ -1079,27 +1115,131 @@ BOOST_AUTO_TEST_CASE(CreateNewBlock_validity)
 
 BOOST_AUTO_TEST_CASE(AdaptiveBlockSize)
 {
-    // Test median calculation
-    std::vector<uint64_t> vSizes1 = {12, 0, 5, 7, 9, 4, 8, 1000, 98};
+    // Test median calculation after randomly shuffling the data each iteration.
+    std::vector<uint64_t> vData = {12, 1, 5, 7, 9, 4, 8, 1000, 98, 2, 9, 3, 9, 1, 9, 1234567890, 7, 8, 8};
+
+    FastRandomContext seed(false);
+    std::vector<uint64_t> vSizes1;
+    for (int j = 1; j <= 20; j++)
+    {
+        vSizes1.clear();
+        std::shuffle(vData.begin(), vData.end(), std::default_random_engine(seed.rand32()));
+        for (uint64_t i : vData)
+            InsertInSortedOrder(i, vSizes1);
+        BOOST_CHECK_EQUAL(CalculateMedian(vSizes1), 8);
+    }
+
+    // Add data items to the front and back of the data range
+    InsertInSortedOrder(12345678900, vSizes1);
+    InsertInSortedOrder(12, vSizes1);
+    BOOST_CHECK_EQUAL(CalculateMedian(vSizes1), 8);
+    InsertInSortedOrder(0, vSizes1);
+    InsertInSortedOrder(1, vSizes1);
     BOOST_CHECK_EQUAL(CalculateMedian(vSizes1), 8);
 
-    std::vector<uint64_t> vSizes1a = {12, 0, 5, 7, 9, 4, 8, 1000, 98, 44, 1234567890};
-    BOOST_CHECK_EQUAL(CalculateMedian(vSizes1a), 9);
+    vData.clear();
+    for (int j = 0; j <= 1000; j++)
+        vData.push_back(j);
+    for (int j = 1; j <= 100; j++)
+    {
+        std::shuffle(vData.begin(), vData.end(), std::default_random_engine(seed.rand32()));
+        std::vector<uint64_t> vSizes;
+        for (auto &i : vData)
+            InsertInSortedOrder(i, vSizes);
+        BOOST_CHECK_EQUAL(CalculateMedian(vSizes), 500);
+        /* Good bit of debugging code if ever its needed to debug the InsertInSortedOrder() function
+        if (CalculateMedian(vSizes) != 500)
+        {
+            for (auto d : vData)
+               printf("vData sizes %ld size: %ld\n", vData.size(), d);
 
-    std::vector<uint64_t> vSizes1b = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
-    BOOST_CHECK_EQUAL(CalculateMedian(vSizes1b), 6);
+            for (auto d : vSizes)
+               printf("vsizes %ld size: %ld\n", vSizes.size(), d);
+            assert(0);
+        }
+        */
+    }
 
-    std::vector<uint64_t> vSizes1c = {1};
-    BOOST_CHECK_EQUAL(CalculateMedian(vSizes1c), 1);
+    // Check Single element
+    std::vector<uint64_t> vSizes1a = {1};
+    BOOST_CHECK_EQUAL(CalculateMedian(vSizes1a), 1);
 
     // Check we have an odd number of elements
-    std::vector<uint64_t> vSizes2 = {12, 0, 5, 7, 9, 4, 8, 1000, 98, 44};
+    std::vector<uint64_t> vSizes2;
     BOOST_CHECK_EXCEPTION(CalculateMedian(vSizes2), std::runtime_error,
         HasReason("Data size does not contain an odd number of elements"));
 
-    std::vector<uint64_t> vSizes2a = {12, 0};
+    std::vector<uint64_t> vSizes2a = {12, 0, 5, 7, 9, 4, 8, 1000, 98, 44};
+    std::sort(vSizes2a.begin(), vSizes2a.end());
     BOOST_CHECK_EXCEPTION(CalculateMedian(vSizes2a), std::runtime_error,
         HasReason("Data size does not contain an odd number of elements"));
+
+    std::vector<uint64_t> vSizes2b = {12, 0};
+    std::sort(vSizes2b.begin(), vSizes2b.end());
+    BOOST_CHECK_EXCEPTION(CalculateMedian(vSizes2b), std::runtime_error,
+        HasReason("Data size does not contain an odd number of elements"));
+
+
+    // Create a blockindex which has random block sizes and multiple forks and
+    // then test the old code vs the new code in regards to median blocksize calculation.
+    std::vector<uint64_t> vSizes;
+    std::deque<uint64_t> vSizes_Unsorted;
+    bool fRunOnce = true;
+    CBlockIndex *pindexTip = nullptr;
+    uint64_t nWindow = 500;
+    uint64_t nMultiplyer = 0;
+
+    BlockMap mapIndex;
+    CBlockIndex *pprev = nullptr;
+    for (uint64_t nHeight = 1; nHeight <= 10000; nHeight++)
+    {
+        CBlockIndex *pindex = new CBlockIndex();
+        uint64_t nBlockSize = ((nMultiplyer + 1) * 1000000) + (InsecureRandRange(256) * 1000 * 1000);
+        if (InsecureRandRange(50) == 0)
+            nMultiplyer = InsecureRandRange(100);
+        pindex->header.height = nHeight;
+        pindex->header.size = nBlockSize;
+        pindex->pprev = pprev;
+        pprev = pindex;
+        mapIndex.emplace(pindex->header.GetHash(), pindex);
+
+        if (!pindex->pprev)
+            continue;
+
+        uint64_t nMedian1 = 0;
+        uint64_t nMedian2 = 0;
+        bool fMedian1 =
+            CalculateMedianSize(pindex, nBlockSize, nWindow, vSizes, vSizes_Unsorted, &pindexTip, fRunOnce, nMedian1);
+        bool fMedian2 = CalculateMedianSize_OldCode(pindex->pprev, nBlockSize, nWindow, nMedian2);
+        BOOST_CHECK_EQUAL(fMedian1, fMedian2);
+        BOOST_CHECK_EQUAL(nMedian1, nMedian2);
+
+        // Every once in a while create a new fork
+        if (InsecureRandRange(10) == 0)
+        {
+            CBlockIndex *pindexFork = new CBlockIndex();
+            uint64_t nBlockSizeFork = (nMultiplyer * 1000000) + (InsecureRandRange(256) * 1000 * 1000);
+            pindexFork->header.height = nHeight;
+            pindexFork->header.size = nBlockSizeFork;
+            pindexFork->pprev = pindex->pprev;
+            pprev = pindexFork;
+            mapIndex.emplace(pindexFork->header.GetHash(), pindexFork);
+
+            uint64_t nMedianFork1 = 0;
+            uint64_t nMedianFork2 = 0;
+            bool fMedianFork1 = CalculateMedianSize(
+                pindexFork, nBlockSizeFork, nWindow, vSizes, vSizes_Unsorted, &pindexTip, fRunOnce, nMedianFork1);
+            bool fMedianFork2 = CalculateMedianSize_OldCode(pindexFork->pprev, nBlockSizeFork, nWindow, nMedianFork2);
+            BOOST_CHECK_EQUAL(fMedianFork1, fMedianFork2);
+            BOOST_CHECK_EQUAL(nMedianFork1, nMedianFork2);
+        }
+    }
+
+    // clean up the block index
+    for (auto it : mapIndex)
+    {
+        delete it.second;
+    }
 }
 
 

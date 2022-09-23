@@ -628,7 +628,13 @@ static bool IsMessageOversized(CNetMessage &msg)
 static bool IsPriorityMsg(std::string strCommand)
 {
     if (!IsChainNearlySyncd())
-        return false;
+    {
+        // make sure when we're syncing the chain that headers can be downloaded as fast as possible
+        if (strCommand == NetMsgType::GETHEADERS || strCommand == NetMsgType::HEADERS)
+            return true;
+        else
+            return false;
+    }
 
     // Most traffic is INV, TX or GETDATA so check that first to prevent us from having to
     // to evaluate, for every message, the long if statement that follows this one.
