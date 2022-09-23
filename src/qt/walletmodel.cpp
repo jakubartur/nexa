@@ -598,9 +598,10 @@ void WalletModel::listCoins(std::map<QString, std::vector<COutput> > &mapCoins) 
 
         while (wallet->IsChange(cout.tx->vout[cout.i]) && cout.tx->vin.size() > 0 && wallet->IsMine(cout.tx->vin[0]))
         {
-            if (!wallet->mapWallet.count(cout.tx->vin[0].prevout))
+            auto prior = wallet->mapWallet.find(cout.tx->vin[0].prevout);
+            if (prior == wallet->mapWallet.end())
                 break;
-            cout = COutput(wallet->mapWallet[cout.tx->vin[0].prevout].tx, cout.i, isminetype::ISMINE_SPENDABLE);
+            cout = COutput(prior->second.tx, prior->second.i, isminetype::ISMINE_SPENDABLE);
         }
 
         CTxDestination address;

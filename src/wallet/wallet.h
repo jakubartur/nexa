@@ -484,11 +484,11 @@ class COutput
 public:
     uint256 txid; // debugging do not use
 public:
-    CWalletTxRef tx; //*< transaction
+    CWalletTxRef tx = nullptr; //*< transaction
     int i = -1; //*< index of this output in transaction's vout
     isminetype mine = isminetype::ISMINE_NO;
 
-    COutput() { tx = nullptr; }
+    COutput() {}
 
     COutput(CWalletTxRef txIn, int iIn, isminetype mineIn)
     {
