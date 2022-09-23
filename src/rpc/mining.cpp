@@ -252,30 +252,35 @@ UniValue getmininginfo(const UniValue &params, bool fHelp)
             "\nReturns a json object containing mining-related information."
             "\nResult:\n"
             "{\n"
-            "  \"blocks\": nnn,             (numeric) The current block\n"
-            "  \"currentblocksize\": nnn,   (numeric) The last block size\n"
-            "  \"currentblocktx\": nnn,     (numeric) The last block transaction\n"
+            "  \"blocks\": nnn,             (numeric) The number of blocks in the chain\n"
+            "  \"currentblocksize\": nnn,   (numeric) The current block template reserved size\n"
+            "  \"currentblocktx\": nnn,     (numeric) The current block template transaction count\n"
+            "  \"maxblocksize\": nnn,       (numeric) The current maximum block size possible\n"
             "  \"difficulty\": xxx.xxxxx    (numeric) The current difficulty\n"
             "  \"errors\": \"...\"          (string) Current errors\n"
-            "  \"pooledtx\": n              (numeric) The size of the mem pool\n"
-            "  \"testnet\": true|false      (boolean) If using testnet or not\n"
+            "  \"pooledtx\": n              (numeric) The size of the transaction pool\n"
             "  \"chain\": \"xxxx\",         (string) current network name as defined in BIP70 (main, test, regtest)\n"
             "}\n"
             "\nExamples:\n" +
             HelpExampleCli("getmininginfo", "") + HelpExampleRpc("getmininginfo", ""));
 
 
-    LOCK(cs_main);
-
     UniValue obj(UniValue::VOBJ);
-    obj.pushKV("blocks", (int)chainActive.Height());
-    obj.pushKV("currentblocksize", (uint64_t)nLastBlockSize);
-    obj.pushKV("currentblocktx", (uint64_t)nLastBlockTx);
-    obj.pushKV("difficulty", (double)GetDifficulty());
-    obj.pushKV("errors", GetWarnings("statusbar"));
-    obj.pushKV("networkhashps", getnetworkhashps(params, false));
-    obj.pushKV("pooledtx", (uint64_t)mempool.size());
-    obj.pushKV("testnet", Params().TestnetToBeDeprecatedFieldRPC());
+    {
+        LOCK(cs_main);
+        CBlockIndex *pindex = chainActive.Tip();
+        obj.pushKV("blocks", (int)pindex->height());
+        obj.pushKV("currentblocksize", (uint64_t)nLastBlockSize);
+        obj.pushKV("currentblocktx", (uint64_t)nLastBlockTx);
+        obj.pushKV("currentmaxblocksize", pindex->GetNextMaxBlockSize());
+        obj.pushKV("difficulty", (double)GetDifficulty());
+        obj.pushKV("errors", GetWarnings("statusbar"));
+        obj.pushKV("networkhashps", getnetworkhashps(params, false));
+    }
+    {
+        READLOCK(mempool.cs_txmempool);
+        obj.pushKV("pooledtx", (uint64_t)mempool.size());
+    }
     obj.pushKV("chain", Params().NetworkIDString());
     return obj;
 }
