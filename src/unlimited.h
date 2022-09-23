@@ -277,4 +277,21 @@ public:
 extern CCriticalSection csMiningCandidates;
 
 extern std::map<int64_t, CMiningCandidate> miningCandidatesMap;
+
+class MinerTracker
+{
+public:
+    int64_t lastRequest = 0; // in epoch seconds
+
+    MinerTracker() {}
+    MinerTracker(int64_t lr) : lastRequest(lr) {}
+};
+
+extern CStatHistory<uint64_t> miningBlocks; //("mining/blocks");
+extern CStatHistory<uint64_t> miningOrphanBlocks; //("mining/orphans");
+extern CStatHistory<uint64_t, MinValMax<uint64_t> > miningNumMiners; //("mining/miners");
+extern CCriticalSection csMinerTracker;
+extern std::map<std::string, MinerTracker> minerTracker GUARDED_BY(csMinerTracker);
+
+
 #endif

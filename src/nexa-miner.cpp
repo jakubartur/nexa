@@ -58,6 +58,8 @@ bool deterministicStartCount = false;
 CCriticalSection cs_blockhash;
 uint256 bestBlockHash;
 
+std::string minerName;
+
 int CpuMiner(int threadNum);
 
 using namespace std;
@@ -106,6 +108,8 @@ public:
             .addArg("address=<string>", ::AllowedArgs::requiredStr,
                 _("The address to send the newly generated nexa to. If omitted, will default to an address in the "
                   "nexa daemon's wallet."))
+            .addArg("name=<string>", ::AllowedArgs::requiredStr,
+                _("Name for this mining machine for statistics tracking in the full node"))
             .addArg("deterministic[=boolean]", ::AllowedArgs::optionalBool,
                 _("Instead of starting at a random nonce, start with 0x0N000001, where N is the thread number."
                   "  Default is false."));
@@ -537,6 +541,13 @@ static bool CheckForNewMiningCandidate()
                 }
                 // this must be in position 1
                 params.push_back(UniValue(address));
+                params.push_back(minerName);
+            }
+            else if (!minerName.empty())
+            {
+                params.push_back(UniValue());
+                params.push_back("");
+                params.push_back(minerName);
             }
             replyAttempt = CallRPC("getminingcandidate", params);
         }
@@ -817,6 +828,8 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
     }
     SelectParams(ChainNameFromCommandLine());
+
+    minerName = GetArg("-name", "");
 
     // Launch miner threads
     int nThreads = GetArg("-cpus", 1);
