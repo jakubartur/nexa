@@ -158,8 +158,6 @@ UniValue getpeerinfo(const UniValue &params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getpeerinfo", "") + HelpExampleRpc("getpeerinfo", ""));
 
-    LOCK(cs_main);
-
     vector<CNodeStats> vstats;
     CopyNodeStats(vstats);
 
@@ -601,7 +599,6 @@ UniValue getnetworkinfo(const UniValue &params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getnetworkinfo", "") + HelpExampleRpc("getnetworkinfo", ""));
 
-    LOCK(cs_main);
 
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("version", CLIENT_VERSION);
@@ -613,7 +610,10 @@ UniValue getnetworkinfo(const UniValue &params, bool fHelp)
     obj.pushKV("timeoffset", GetTimeOffset());
     obj.pushKV("connections", (int)vNodes.size());
     obj.pushKV("networks", GetNetworksInfo());
-    obj.pushKV("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK()));
+    {
+        LOCK(cs_main);
+        obj.pushKV("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK()));
+    }
     obj.pushKV("limitfreerelay", strprintf("%ld", limitFreeRelay.Value()));
     UniValue localAddresses(UniValue::VARR);
     {
