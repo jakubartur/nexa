@@ -942,7 +942,6 @@ UniValue createrawtransaction(const UniValue &params, bool fHelp)
             HelpExampleRpc("createrawtransaction",
                 "\"[{\\\"outpoint\\\":\\\"myid\\\",\\\"amount\\\":10}]\", \"{\\\"data\\\":\\\"00010203\\\"}\""));
 
-    LOCK(cs_main);
     RPCTypeCheck(params, {UniValue::VARR, UniValue::VOBJ, UniValue::VNUM}, true);
     if (params[0].isNull() || params[1].isNull())
         throw JSONRPCError(RPC_INVALID_PARAMETER, "Invalid parameter, arguments 1 and 2 must be non-null");
@@ -1095,7 +1094,6 @@ UniValue decoderawtransaction(const UniValue &params, bool fHelp)
                             HelpExampleCli("decoderawtransaction", "\"hexstring\"") +
                             HelpExampleRpc("decoderawtransaction", "\"hexstring\""));
 
-    LOCK(cs_main);
     RPCTypeCheck(params, {UniValue::VSTR});
 
     CTransaction tx;
