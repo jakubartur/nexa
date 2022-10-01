@@ -43,7 +43,7 @@ class RawTransactionsTest(BitcoinTestFramework):
         # This test is not meant to test fee estimation and we'd like
         # to be sure all txs are sent at a consistent desired feerate
         for node in self.nodes:
-            node.settxfee(min_relay_tx_fee)
+            node.settxfee(Decimal(min_relay_tx_fee/100))
 
         # if the fee's positive delta is higher than this value tests will fail,
         # neg. delta always fail the tests.

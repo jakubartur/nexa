@@ -101,7 +101,7 @@ class MiningTest (BitcoinTestFramework):
         self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100)
         self.nodes[0].sendtoaddress(self.nodes[1].getnewaddress(), 100)
         self.sync_all()
-        assert_equal(str(self.nodes[0].getnetworkinfo()["relayfee"]), "0.00")
+        assert_equal(str(self.nodes[0].getnetworkinfo()["relayfee"]), "0")
         assert_equal(self.nodes[0].gettxpoolinfo()["size"], 2)
         assert_equal(self.nodes[0].gettxpoolinfo()["txpoolminfee"], 0)
         self.nodes[0].generate(1);
@@ -130,7 +130,7 @@ class MiningTest (BitcoinTestFramework):
 
         assert_equal(self.nodes[0].gettxpoolinfo()["size"], 4)
         assert_equal(self.nodes[1].gettxpoolinfo()["size"], 4)
-        assert_equal(str(self.nodes[0].getnetworkinfo()["relayfee"]), "10.00")
+        assert_equal(str(self.nodes[0].getnetworkinfo()["relayfee"]), "1000")
 
         #only tx1 and tx2 should have been mined since there is not enough space
         # in the priority area for all 4 free txns.

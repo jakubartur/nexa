@@ -34,7 +34,7 @@ class PrioritiseTransactionTest(BitcoinTestFramework):
     def run_test(self):
         utxo_count = 90
         utxos = create_confirmed_utxos(self.relayfee, self.nodes[0], utxo_count)
-        base_fee = self.relayfee*100 # our transactions are smaller than 100kb
+        base_fee = decimal.Decimal(self.relayfee)
         txids = []
 
         # Create 3 batches of transactions at 3 different fee rate levels

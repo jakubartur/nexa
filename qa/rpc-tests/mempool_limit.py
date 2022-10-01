@@ -36,7 +36,7 @@ class MempoolLimitTest(BitcoinTestFramework):
 
         # create a lot of txns up to but not exceeding the maxtxpool
         relayfee = node.getnetworkinfo()['relayfee']
-        base_fee = relayfee*10
+        base_fee = decimal.Decimal(relayfee/10)
         for i in range (2):
             txids.append([])
             txids[i] = create_lots_of_big_transactions(node, self.txouts, utxos[33*i:33*i+33], 33, decimal.Decimal(i)/COIN+base_fee)
@@ -50,7 +50,7 @@ class MempoolLimitTest(BitcoinTestFramework):
         tries = 0
         i = 2
         while tries < 10:
-            new_txn = create_lots_of_big_transactions(node, self.txouts, utxos[33*i:33*i+33], 1, (i+1)*base_fee/10 + Decimal(0.1*tries))[0] # Adding tries to the fee changes the transaction (we are reusing the prev UTXOs)
+            new_txn = create_lots_of_big_transactions(node, self.txouts, utxos[33*i:33*i+33], 1, (i+1)*decimal.Decimal(base_fee/10) + Decimal(0.1*tries))[0] # Adding tries to the fee changes the transaction (we are reusing the prev UTXOs)
             assert(node.gettxpoolinfo()["usage"] < node.gettxpoolinfo()["maxtxpool"])
 
             # make sure the txpool count did not change much (an eviction could put a smaller tx in, which could then allow another in)

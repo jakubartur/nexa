@@ -148,6 +148,11 @@ bool CheckBlockHeader(const Consensus::Params &consensusParams,
     CValidationState &state,
     bool fCheckPOW)
 {
+    // Block size can not be zero
+    if (block.size == 0)
+    {
+        return state.DoS(100, error("%s: block size can not be zero", __func__), REJECT_INVALID, "bad-size");
+    }
     // Must be above GetMiningHash which asserts if nonce is too big
     if (block.nonce.size() > CBlockHeader::MAX_NONCE_SIZE)
     {
