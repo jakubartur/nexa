@@ -599,20 +599,21 @@ UniValue getnetworkinfo(const UniValue &params, bool fHelp)
             "\nExamples:\n" +
             HelpExampleCli("getnetworkinfo", "") + HelpExampleRpc("getnetworkinfo", ""));
 
-
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("version", CLIENT_VERSION);
-    // BUIP005: special subversion
     obj.pushKV("subversion", FormatSubVersion(CLIENT_NAME, CLIENT_VERSION, BUComments));
     obj.pushKV("protocolversion", PROTOCOL_VERSION);
     obj.pushKV("localservices", strprintf("%016x", nLocalServices));
     obj.pushKV("localservicesnames", GetServicesNames(nLocalServices));
     obj.pushKV("timeoffset", GetTimeOffset());
-    obj.pushKV("connections", (int)vNodes.size());
+    {
+        LOCK(cs_vNodes);
+        obj.pushKV("connections", (int)vNodes.size());
+    }
     obj.pushKV("networks", GetNetworksInfo());
     {
         LOCK(cs_main);
-        obj.pushKV("relayfee", ValueFromAmount(::minRelayTxFee.GetFeePerK()));
+        obj.pushKV("relayfee", ::minRelayTxFee.GetFeePerK());
     }
     obj.pushKV("limitfreerelay", strprintf("%ld", limitFreeRelay.Value()));
     UniValue localAddresses(UniValue::VARR);

@@ -47,7 +47,7 @@ uint256 GetMiningHash(const uint256 &headerCommitment, const std::vector<unsigne
 
 uint256 CBlockHeader::GetHash() const
 {
-    assert(size != 0); // Size must be properly calculated before we can figure out the hash
+    DbgAssert(size != 0, ); // Size must be properly calculated before we can figure out the hash
 
     // The hash is calculated similarly to the mining header commitment, except that the nonce is included in the
     // extended header.  This means that a very-light client can keep a very small header for uninteresting blocks
@@ -67,7 +67,7 @@ uint256 CBlockHeader::GetHash() const
 
 uint256 CBlockHeader::GetMiningHash() const
 {
-    assert(size != 0); // Size must be properly calculated before we can figure out the hash
+    DbgAssert(size != 0, ); // Size must be properly calculated before we can figure out the hash
     return ::GetMiningHash(GetMiningHeaderCommitment(), nonce);
 }
 
