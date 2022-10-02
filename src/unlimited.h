@@ -181,7 +181,6 @@ extern bool IsChainNearlySyncd();
 extern bool IsChainSyncd();
 extern void IsChainNearlySyncdInit();
 extern void IsChainNearlySyncdSet(bool fSync);
-extern int GetBlockchainHeight();
 
 // BUIP010 Xtreme Thinblocks: begin
 // Xpress Validation: begin
