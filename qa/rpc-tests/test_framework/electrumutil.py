@@ -120,6 +120,7 @@ def bitcoind_electrum_args():
     return ["-electrum=1", "-debug=electrum", "-debug=rpc",
             "-electrum.rawarg=--cashaccount-activation-height=1",
             "-electrum.rawarg=--wait-duration-secs=1",
+            #"-printtoconsole"
             ]
 
 class TestClient(StratumClient):

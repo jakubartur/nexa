@@ -509,7 +509,6 @@ class P2PDataStore(SingleNodeConnCB):
 
     def on_getdata(self, conn, message):
         """Check for the tx/block in our stores and if found, reply with an inv message."""
-        print("mininode on_getdata")
         for inv in message.inv:
             self.getdata_requests.append(inv.hash)
             if inv.type == CInv.MSG_TX and inv.hash in self.tx_store.keys():
