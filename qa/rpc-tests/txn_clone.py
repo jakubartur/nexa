@@ -32,7 +32,7 @@ class TxnCloneTest(BitcoinTestFramework):
             assert_equal(self.nodes[i].getbalance(), starting_balance)
             self.nodes[i].getnewaddress("p2pkt","")  # bug workaround, coins generated assigned to first getnewaddress!
 
-        self.nodes[0].settxfee(100)
+        self.nodes[0].set("wallet.payTxFee=100")
         FooAmt = COINBASE_REWARD*25 - 31000000
 
         node0_address_foo = self.nodes[0].getnewaddress("p2pkt","foo")

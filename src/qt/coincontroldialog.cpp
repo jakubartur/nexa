@@ -664,8 +664,9 @@ void CoinControlDialog::updateLabels(WalletModel *model, QDialog *dialog)
 
     // how many satoshis the estimated fee can vary per byte we guess wrong
     double dFeeVary;
-    if (payTxFee.GetFeePerK() > 0)
-        dFeeVary = (double)std::max(CWallet::GetRequiredFee(1000), payTxFee.GetFeePerK()) / 1000;
+    auto nPayTxFeePerK = CFeeRate(payTxFeeTweak.Value()).GetFeePerK();
+    if (nPayTxFeePerK > 0)
+        dFeeVary = (double)std::max(CWallet::GetRequiredFee(1000), nPayTxFeePerK) / 1000;
     else
     {
         dFeeVary =

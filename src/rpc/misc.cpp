@@ -117,7 +117,7 @@ UniValue getinfo(const UniValue &params, bool fHelp)
     }
     if (pwalletMain && pwalletMain->IsCrypted())
         obj.pushKV("unlocked_until", nWalletUnlockTime);
-    obj.pushKV("paytxfee", payTxFee.GetFeePerK());
+    obj.pushKV("paytxfee", CFeeRate(payTxFeeTweak.Value()).GetFeePerK());
 #endif
     obj.pushKV("relayfee", ::minRelayTxFee.GetFeePerK());
     obj.pushKV("status", statusStrings.GetPrintable());

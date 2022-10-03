@@ -29,6 +29,7 @@
 #include <QTextDocument>
 
 extern CTweak<uint32_t> dataCarrierSize;
+extern CTweak<CAmount> payTxFeeTweak;
 
 SendCoinsDialog::SendCoinsDialog(const PlatformStyle *_platformStyle, QWidget *parent)
     : QDialog(parent), ui(new Ui::SendCoinsDialog), clientModel(0), model(0), fNewRecipientAllowed(true),
@@ -659,12 +660,12 @@ void SendCoinsDialog::updateGlobalFeeVariables()
     if (ui->radioSmartFee->isChecked())
     {
         nTxConfirmTarget = defaultConfirmTarget - ui->sliderSmartFee->value();
-        payTxFee = CFeeRate(0);
+        payTxFeeTweak.Set(CFeeRate(0).GetFeePerK());
     }
     else
     {
         nTxConfirmTarget = defaultConfirmTarget;
-        payTxFee = CFeeRate(ui->customFee->value());
+        payTxFeeTweak.Set(CFeeRate(ui->customFee->value()).GetFeePerK());
 
         // if user has selected to set a minimum absolute fee, pass the value to coincontrol
         // set nMinimumTotalFee to 0 in case of user has selected that the fee is per KB
@@ -709,9 +710,10 @@ void SendCoinsDialog::updateSmartFeeLabel()
     CFeeRate feeRate = mempool.estimateFee(nBlocksToConfirm);
     if (feeRate <= CFeeRate(0)) // not enough data => minfee
     {
-        ui->labelSmartFee->setText(BitcoinUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(),
-                                       std::max(CWallet::fallbackFee.GetFeePerK(), CWallet::GetRequiredFee(1000))) +
-                                   "/kB");
+        ui->labelSmartFee->setText(
+            BitcoinUnits::formatWithUnit(model->getOptionsModel()->getDisplayUnit(),
+                std::max(CFeeRate(fallbackFeeTweak.Value()).GetFeePerK(), CWallet::GetRequiredFee(1000))) +
+            "/kB");
         ui->labelSmartFee2->show(); // (Smart fee not initialized yet. This usually takes a few blocks...)
         ui->labelFeeEstimation->setText("");
     }
