@@ -1155,19 +1155,15 @@ bool CheckInputs(const CTransactionRef &tx,
                 const CScript &scriptSig = tx->vin[i].scriptSig;
                 CoinAccessor coin(inputs, prevout);
 
-                if (debugger)
+                if (coin->IsSpent())
                 {
-                    if (coin->IsSpent())
+                    if (debugger)
                     {
                         debugger->SetInputCheckResult(false);
                         debugger->AddInputCheckError(strprintf("COutPoint %s is spent", prevout.ToString().c_str()));
                         debugger->FinishCheckInputSession();
-                        return false;
                     }
-                }
-                else
-                {
-                    assert(!coin->IsSpent());
+                    return false;
                 }
 
                 // We very carefully only pass in things to CScriptCheck which
