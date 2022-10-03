@@ -93,6 +93,7 @@ UniValue blockheaderToJSON(const CBlockIndex *blockindex, UniValue &result)
     result.pushKV("confirmations", confirmations);
     result.pushKV("height", (uint64_t)blockindex->height());
     result.pushKV("size", blockindex->header.size);
+    result.pushKV("txcount", blockindex->header.txCount);
     result.pushKV("feePoolAmt", blockindex->header.feePoolAmt);
     result.pushKV("merkleroot", blockindex->hashMerkleRoot().GetHex());
     result.pushKV("time", (int64_t)blockindex->time());
@@ -657,16 +658,22 @@ UniValue getblockheader(const UniValue &params, bool fHelp)
             "  \"confirmations\" : n,   (numeric) The number of confirmations, or -1 if the block is not on the main "
             "chain\n"
             "  \"height\" : n,          (numeric) The block height or index\n"
+            "  \"size\" : n,            (numeric) The size of the block\n"
+            "  \"txcount\" : n,         (numeric) The number of transactions in the block\n"
+            "  \"feePoolAmt\" : n,      (numeric) The fee pool amount\n"
             "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
             "  \"time\" : ttt,          (numeric) The block time in seconds since epoch (Jan 1 1970 GMT)\n"
             "  \"mediantime\" : ttt,    (numeric) The median block time in seconds since epoch (Jan 1 1970 GMT)\n"
             "  \"nonce\" : n,           (numeric) The nonce\n"
-            "  \"bits\" : \"1d00ffff\", (string) The bits\n"
+            "  \"bits\" : \"1d00ffff\", (string)  The bits\n"
             "  \"difficulty\" : x.xxx,  (numeric) The difficulty\n"
-            "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
-            "  \"nextblockhash\" : \"hash\",      (string) The hash of the next block\n"
             "  \"chainwork\" : \"0000...1f3\"     (string) Expected number of hashes required to produce the current "
             "chain (in hex)\n"
+            "  \"utxoCommitment\" : n,  (hash)    The utxo commitment\n"
+            "  \"minerdata\" : \"xxxx\",        (string) A hex string identifier that the miner provides\n"
+            "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
+            "  \"ancestorblockhash\" : \"hash\",  (string) The hash of the ancestor block\n"
+            "  \"nextblockhash\" : \"hash\",      (string) The hash of the next block\n"
             "}\n"
             "\nResult (for verbose=false):\n"
             "\"data\"             (string) A string that is serialized, hex-encoded data for block 'hash'.\n"
@@ -820,6 +827,8 @@ static UniValue getblock(const UniValue &params, bool fHelp)
             "chain\n"
             "  \"size\" : n,            (numeric) The block size\n"
             "  \"height\" : n,          (numeric) The block height or index\n"
+            "  \"txcount\" : n,         (numeric) The number of transactions in the block\n"
+            "  \"feePoolAmt\" : n,      (numeric) The fee pool amount\n"
             "  \"version\" : n,         (numeric) The block version\n"
             "  \"versionHex\" : \"00000000\", (string) The block version formatted in hexadecimal\n"
             "  \"merkleroot\" : \"xxxx\", (string) The merkle root\n"
@@ -834,7 +843,10 @@ static UniValue getblock(const UniValue &params, bool fHelp)
             "  \"difficulty\" : x.xxx,  (numeric) The difficulty\n"
             "  \"chainwork\" : \"xxxx\",  (string) Expected number of hashes required to produce the chain up to this "
             "block (in hex)\n"
+            "  \"utxoCommitment\" : n,  (hash)    The utxo commitment\n"
+            "  \"minerdata\" : \"xxxx\",        (string) A hex string identifier that the miner provides\n"
             "  \"previousblockhash\" : \"hash\",  (string) The hash of the previous block\n"
+            "  \"ancestorblockhash\" : \"hash\",  (string) The hash of the ancestor block\n"
             "  \"nextblockhash\" : \"hash\"       (string) The hash of the next block\n"
             "}\n"
             "\nResult (for verbosity = 2, tx_count = false):\n"
