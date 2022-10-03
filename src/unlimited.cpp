@@ -783,13 +783,6 @@ bool IsChainSyncd()
     return pindexBestHeader.load() == chainActive.Tip();
 }
 
-/** Returns the block height of the current active chain tip. **/
-int GetBlockchainHeight()
-{
-    LOCK(cs_main);
-    return chainActive.Height();
-}
-
 void LoadFilter(CNode *pfrom, CBloomFilter *filter)
 {
     if (!filter->IsWithinSizeConstraints())
@@ -1040,12 +1033,11 @@ static int64_t lastMiningCandidateId = 0;
 static void RmOldMiningCandidates()
 {
     LOCK(csMiningCandidates);
-    unsigned int height = GetBlockchainHeight();
 
     // Clean out mining candidates that are the same height as a discovered block.
     for (auto it = miningCandidatesMap.cbegin(); it != miningCandidatesMap.cend();)
     {
-        if ((it->second.block == nullptr) || (it->second.block->GetHeight() <= height))
+        if ((it->second.block == nullptr) || (it->second.block->GetHeight() <= chainActive.Height()))
         {
             it = miningCandidatesMap.erase(it);
         }

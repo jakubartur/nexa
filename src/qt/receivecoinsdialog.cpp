@@ -151,7 +151,7 @@ void ReceiveCoinsDialog::on_freezeDialog_hide()
         if (nFreezeLockTime.getint64() < LOCKTIME_THRESHOLD)
 
         {
-            uint64_t height = GetBlockchainHeight();
+            uint64_t height = chainActive.Height();
             uint64_t freezeHeight = nFreezeLockTime.getint64();
             uint64_t approxTimeMs =
                 ((freezeHeight - height) * 10 * 60 * 1000) + QDateTime::currentDateTime().toMSecsSinceEpoch();
