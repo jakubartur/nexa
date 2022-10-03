@@ -2713,31 +2713,6 @@ UniValue listlockunspent(const UniValue &params, bool fHelp)
     return ret;
 }
 
-UniValue settxfee(const UniValue &params, bool fHelp)
-{
-    if (!EnsureWalletIsAvailable(fHelp))
-        return NullUniValue;
-
-    if (fHelp || params.size() < 1 || params.size() > 1)
-        throw runtime_error("settxfee amount\n"
-                            "\nSet the transaction fee in sat/KB. Overwrites the paytxfee parameter.\n"
-                            "\nArguments:\n"
-                            "1. amount         (numeric or sting, required) The transaction fee in "
-                            "sat/KB\n"
-                            "\nResult\n"
-                            "true|false        (boolean) Returns true if successful\n"
-                            "\nExamples:\n" +
-                            HelpExampleCli("settxfee", "1050") + HelpExampleRpc("settxfee", "1050"));
-
-    LOCK(pwalletMain->cs_wallet);
-
-    // Amount
-    CAmount nAmount = AmountFromValue(params[0]);
-
-    payTxFee = CFeeRate(nAmount, 1000);
-    return true;
-}
-
 UniValue getwalletinfo(const UniValue &params, bool fHelp)
 {
     if (!EnsureWalletIsAvailable(fHelp))
@@ -2789,7 +2764,7 @@ UniValue getwalletinfo(const UniValue &params, bool fHelp)
     obj.pushKV("keypoolsize", (int)pwalletMain->GetKeyPoolSize());
     if (pwalletMain->IsCrypted())
         obj.pushKV("unlocked_until", nWalletUnlockTime);
-    obj.pushKV("paytxfee", payTxFee.GetFeePerK());
+    obj.pushKV("paytxfee", CFeeRate(payTxFeeTweak.Value()).GetFeePerK());
     CKeyID masterKeyID = pwalletMain->GetHDChain().masterKeyID;
     if (!masterKeyID.IsNull())
         obj.pushKV("hdmasterkeyid", masterKeyID.GetHex());
@@ -3085,7 +3060,6 @@ static const CRPCCommand commands[] = {
     {"wallet",                "sendmany",                 &sendmany,                 false},
     {"wallet",                "sendtoaddress",            &sendtoaddress,            false},
     {"wallet",                "setaccount",               &setaccount,               true},
-    {"wallet",                "settxfee",                 &settxfee,                 true},
     {"wallet",                "signmessage",              &signmessage,              true},
     {"wallet",                "signdata",                 &signdata,                 true},
     {"wallet",                "walletlock",               &walletlock,               true},

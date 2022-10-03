@@ -39,7 +39,6 @@ extern CWallet *pwalletMain;
 /**
  * Settings
  */
-extern CFeeRate payTxFee;
 extern unsigned int nTxConfirmTarget;
 extern bool bSpendZeroConfChange;
 extern bool fSendFreeTransactions;
@@ -53,12 +52,8 @@ extern CTweak<CAmount> payTxFeeTweak;
 
 
 static const unsigned int DEFAULT_KEYPOOL_SIZE = 100;
-//! -wallet.payTxFee default
+//! payTxFeeTweak default
 static const CAmount DEFAULT_TRANSACTION_FEE = 0;
-//! -wallet.fallbackFee default
-static const CAmount DEFAULT_FALLBACK_FEE = 1000;
-//! -wallet.minTxFee default
-static const CAmount DEFAULT_TRANSACTION_MINFEE = 1000;
 //! minimum change amount
 static const CAmount MIN_CHANGE = COIN;
 //! Default for -spendzeroconfchange
@@ -1000,7 +995,6 @@ public:
 
     bool AddAccountingEntry(const CAccountingEntry &, CWalletDB &pwalletdb);
 
-    static CFeeRate minTxFee;
     static CFeeRate fallbackFee;
     /**
      * Estimate the minimum fee considering user set parameters

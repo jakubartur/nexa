@@ -46,8 +46,6 @@
 using namespace std;
 
 CWallet *pwalletMain = nullptr;
-/** Transaction fee set by the user */
-CFeeRate payTxFee(DEFAULT_TRANSACTION_FEE);
 unsigned int nTxConfirmTarget = DEFAULT_TX_CONFIRM_TARGET;
 bool bSpendZeroConfChange = DEFAULT_SPEND_ZEROCONF_CHANGE;
 bool fSendFreeTransactions = DEFAULT_SEND_FREE_TRANSACTIONS;
@@ -56,18 +54,6 @@ const unsigned int P2PKH_LEN = 34;
 const unsigned int MIN_BYTES_IN_TX = 185;
 
 const char *DEFAULT_WALLET_DAT = "wallet.dat";
-
-/**
- * Fees smaller than this (in satoshi) are considered zero fee (for transaction creation)
- * Override with -wallet.minTxFee
- */
-CFeeRate CWallet::minTxFee = CFeeRate(DEFAULT_TRANSACTION_MINFEE);
-/**
- * If fee estimation does not have enough data to provide estimates, use this fee instead.
- * Has no effect if not using fee estimation
- * Override with -fallbackfee
- */
-CFeeRate CWallet::fallbackFee = CFeeRate(DEFAULT_FALLBACK_FEE);
 
 const uint256 CMerkleTx::ABANDON_HASH(uint256S("0000000000000000000000000000000000000000000000000000000000000001"));
 
@@ -3422,20 +3408,20 @@ bool CWallet::AddAccountingEntry(const CAccountingEntry &acentry, CWalletDB &pwa
 
 CAmount CWallet::GetRequiredFee(unsigned int nTxBytes)
 {
-    return std::max(minTxFee.GetFee(nTxBytes), ::minRelayTxFee.GetFee(nTxBytes));
+    return std::max(CFeeRate(minTxFeeTweak.Value()).GetFee(nTxBytes), ::minRelayTxFee.GetFee(nTxBytes));
 }
 
 CAmount CWallet::GetMinimumFee(unsigned int nTxBytes, unsigned int nConfirmTarget, const CTxMemPool &pool)
 {
     // payTxFee is user-set "I want to pay this much"
-    CAmount nFeeNeeded = payTxFee.GetFee(nTxBytes);
+    CAmount nFeeNeeded = CFeeRate(payTxFeeTweak.Value()).GetFee(nTxBytes);
     // User didn't set: use -txconfirmtarget to estimate...
     if (nFeeNeeded == 0)
     {
         nFeeNeeded = pool.estimateFee(nConfirmTarget).GetFee(nTxBytes);
         // ... unless we don't have enough txpool data for estimatefee, then use fallbackFee
         if (nFeeNeeded == 0)
-            nFeeNeeded = fallbackFee.GetFee(nTxBytes);
+            nFeeNeeded = CFeeRate(fallbackFeeTweak.Value()).GetFee(nTxBytes);
     }
 
     // prevent user from paying a fee below minRelayTxFee or minTxFee
@@ -4352,34 +4338,29 @@ bool CWallet::InitLoadWallet()
 
 bool CWallet::ParameterInteraction()
 {
-    // minTxFee
-    CWallet::minTxFee = CFeeRate(minTxFeeTweak.Value());
-
-    // fallbackFee
+    // check fallbackFee
     if (fallbackFeeTweak.Value() > HIGH_TX_FEE_PER_KB)
         InitWarning(
             _("-wallet.fallbackFee is set very high! This is the transaction fee you may pay when fee estimates "
               "are not available."));
-    CWallet::fallbackFee = CFeeRate(fallbackFeeTweak.Value());
 
-    // payTxFee
+    // check payTxFee
     if (payTxFeeTweak.Value() > 0)
     {
         if (payTxFeeTweak.Value() > HIGH_TX_FEE_PER_KB)
             InitWarning(_("-wallet.payTxFee is set very high! This is the transaction fee you will pay if you send a "
                           "transaction."));
-        payTxFee = CFeeRate(payTxFeeTweak.Value(), 1000);
+        CFeeRate payTxFee = CFeeRate(payTxFeeTweak.Value(), 1000);
         if (payTxFee < ::minRelayTxFee)
         {
             return InitError(strprintf(_("Invalid amount for -wallet.payTxFee=<amount>: '%u' (must be at least %s)"),
-                payTxFeeTweak.Value(), ::minRelayTxFee.ToString()));
+                payTxFee.ToString(), ::minRelayTxFee.ToString()));
         }
     }
 
-    // maxTxFee
+    // check maxTxFee
     {
-        CAmount nMaxFee = maxTxFeeTweak.Value();
-        if (nMaxFee > HIGH_MAX_TX_FEE)
+        if (maxTxFeeTweak.Value() > HIGH_MAX_TX_FEE)
             InitWarning(_("-wallet.maxTxFee is set very high! Fees this large could be paid on a single transaction."));
         if (CFeeRate(maxTxFeeTweak.Value(), 1000) < ::minRelayTxFee)
         {

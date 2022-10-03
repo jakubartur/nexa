@@ -472,15 +472,15 @@ CTweak<CAmount> maxTxFeeTweak("wallet.maxTxFee",
  * wallet */
 CTweak<CAmount> minTxFeeTweak("wallet.minTxFee",
     strprintf("Fees (in sat/KB) smaller than this are considered zero fee for transaction creation (default: %s)",
-        DEFAULT_TRANSACTION_MINFEE),
-    DEFAULT_TRANSACTION_MINFEE);
+        DEFAULT_MIN_RELAY_TX_FEE),
+    DEFAULT_MIN_RELAY_TX_FEE);
 
 
 /** A fee rate (in sat/kB) that will be used when fee estimation has insufficient data */
 CTweak<CAmount> fallbackFeeTweak("wallet.fallbackFee",
     strprintf("A fee rate (in sat/KB) that will be used when fee estimation has insufficient data (default: %s)",
-        DEFAULT_FALLBACK_FEE),
-    DEFAULT_FALLBACK_FEE);
+        DEFAULT_MIN_RELAY_TX_FEE),
+    DEFAULT_MIN_RELAY_TX_FEE);
 
 // A fee you add to every transaction */
 CTweak<CAmount> payTxFeeTweak("wallet.payTxFee",
