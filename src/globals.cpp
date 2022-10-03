@@ -100,11 +100,13 @@ std::atomic<bool> fMempoolTests{false};
 
 CChain chainActive; // chainActive.Tip() is lock free, other APIs take the internal lock cs_chainLock
 
-CCriticalSection cs_main;
-CFeeRate minRelayTxFee GUARDED_BY(cs_main) = CFeeRate(DEFAULT_MIN_RELAY_TX_FEE);
+CFeeRate minRelayTxFee = CFeeRate(DEFAULT_MIN_RELAY_TX_FEE); // lock free - has an internal atomic value
+
 /** A cache to store headers that have arrived but can not yet be connected **/
 CCriticalSection csUnconnectedHeaders;
 std::map<uint256, std::pair<CBlockHeader, int64_t> > mapUnConnectedHeaders GUARDED_BY(csUnconnectedHeaders);
+
+CCriticalSection cs_main;
 /**
  * Every received block is assigned a unique and increasing identifier, so we
  * know which one to give priority in case of a fork.

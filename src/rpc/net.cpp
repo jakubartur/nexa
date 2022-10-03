@@ -611,10 +611,7 @@ UniValue getnetworkinfo(const UniValue &params, bool fHelp)
         obj.pushKV("connections", (int)vNodes.size());
     }
     obj.pushKV("networks", GetNetworksInfo());
-    {
-        LOCK(cs_main);
-        obj.pushKV("relayfee", ::minRelayTxFee.GetFeePerK());
-    }
+    obj.pushKV("relayfee", ::minRelayTxFee.GetFeePerK());
     obj.pushKV("limitfreerelay", strprintf("%ld", limitFreeRelay.Value()));
     UniValue localAddresses(UniValue::VARR);
     {
