@@ -17,53 +17,25 @@
 #include <boost/filesystem/path.hpp>
 #include <boost/test/unit_test.hpp>
 
-bool read_block(const std::string &filename, CBlock &block)
-{
-    namespace fs = boost::filesystem;
-    fs::path testFile = fs::current_path() / "data" / filename;
-#ifdef TEST_DATA_DIR
-    if (!fs::exists(testFile))
-    {
-        testFile = fs::path(BOOST_PP_STRINGIZE(TEST_DATA_DIR)) / filename;
-    }
-#endif
-    FILE *fp = fopen(testFile.string().c_str(), "rb");
-    if (!fp)
-        return false;
-
-    fseek(fp, 8, SEEK_SET); // skip msgheader/size
-
-    CAutoFile filein(fp, SER_DISK, CLIENT_VERSION);
-    if (filein.IsNull())
-        return false;
-
-    filein >> block;
-    return true;
-}
-
 bool LockAndContextualCheckBlock(const ConstCBlockRef pblock, CValidationState &state)
 {
     LOCK(cs_main);
     return ContextualCheckBlock(pblock, state, nullptr);
 }
 
-BOOST_FIXTURE_TEST_SUITE(checkblock_tests, BasicTestingSetup) // BU harmonize suite name with filename
+BOOST_FIXTURE_TEST_SUITE(checkblock_tests, BasicTestingSetup)
 
 
 BOOST_AUTO_TEST_CASE(TestBlock)
 {
-#if 0 // TODO: removed until we get block format solidifies
-    CBlock block;
-    bool fReadBlock = read_block("testblock.dat", block);
-    BOOST_CHECK_MESSAGE(fReadBlock, "Failed to read testblock.dat");
-    ConstCBlockRef testblock = std::make_shared<const CBlock>(block);
-    if (fReadBlock)
-    {
-        CValidationState state;
-        BOOST_CHECK_MESSAGE(CheckBlock(testblock, state, false, false), "Basic CheckBlock failed");
-        BOOST_CHECK_MESSAGE(LockAndContextualCheckBlock(testblock, state), "Contextual CheckBlock failed");
-    }
-#endif
+    CBlock block = TestBlock1();
+    CBlockRef pblock = MakeBlockRef(block);
+    CValidationState state;
+    BOOST_CHECK_MESSAGE(CheckBlock(Params().GetConsensus(), pblock, state), "Basic CheckBlock failed");
+    // TODO: to re-enable checking of contextualblockcheck we need a pindexPrev which we can not do in this test
+    //       using a random block from the mainnet blockchain. To re-enable this test we would have to modify
+    //       ContextualCheckBlock such that we pass in the params that are derived from the block index.
+    // BOOST_CHECK_MESSAGE(LockAndContextualCheckBlock(pblock, state, pindexPrev), "Contextual CheckBlock failed");
 }
 
 BOOST_AUTO_TEST_SUITE_END()
