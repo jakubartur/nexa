@@ -27,6 +27,9 @@
 #include "utilstrencodings.h"
 #include "validation/validation.h"
 #include "validationinterface.h"
+#ifdef ENABLE_WALLET
+#include "wallet/wallet.h"
+#endif
 
 #include <chrono>
 #include <cstdlib>
@@ -257,9 +260,15 @@ UniValue getmininginfo(const UniValue &params, bool fHelp)
             "  \"currentblocktx\": nnn,     (numeric) The current block template transaction count\n"
             "  \"maxblocksize\": nnn,       (numeric) The current maximum block size possible\n"
             "  \"difficulty\": xxx.xxxxx    (numeric) The current difficulty\n"
-            "  \"errors\": \"...\"          (string) Current errors\n"
+            "  \"errors\": \"...\"            (string) Current errors\n"
             "  \"pooledtx\": n              (numeric) The size of the transaction pool\n"
-            "  \"chain\": \"xxxx\",         (string) current network name as defined in BIP70 (main, test, regtest)\n"
+            "  \"chain\": \"xxxx\",           (string) Current network name as defined in BIP70 (main, test, regtest)\n"
+            "  \"miners\": {                (object) Miner information\n"
+            "    \"name\" : {               (object) Name reported by the miner\n"
+            "      \"lastrequest\" : nnn,   (numeric) Epoch time in seconds of this miner's last request\n"
+            "      }\n"
+            "      ...\n"
+            "  }\n"
             "}\n"
             "\nExamples:\n" +
             HelpExampleCli("getmininginfo", "") + HelpExampleRpc("getmininginfo", ""));
@@ -277,11 +286,21 @@ UniValue getmininginfo(const UniValue &params, bool fHelp)
         obj.pushKV("errors", GetWarnings("statusbar"));
         obj.pushKV("networkhashps", getnetworkhashps(params, false));
     }
-    {
-        READLOCK(mempool.cs_txmempool);
-        obj.pushKV("pooledtx", (uint64_t)mempool.size());
-    }
+
+    obj.pushKV("pooledtx", (uint64_t)mempool.size()); // .size takes the mempool read lock internally
     obj.pushKV("chain", Params().NetworkIDString());
+
+    UniValue miners(UniValue::VOBJ);
+    {
+        LOCK(csMinerTracker);
+        for (auto &it : minerTracker)
+        {
+            UniValue minerStats(UniValue::VOBJ);
+            minerStats.pushKV("lastrequest", it.second.lastRequest);
+            miners.pushKV(it.first, minerStats);
+        }
+    }
+    obj.pushKV("miners", miners);
     return obj;
 }
 
@@ -920,6 +939,7 @@ UniValue SubmitBlock(ConstCBlockRef pblock)
 
     if (fBlockPresent)
     {
+        miningOrphanBlocks += 1;
         if (fAccepted && !sc.found)
             return "duplicate-inconclusive";
         return "duplicate";
@@ -927,14 +947,52 @@ UniValue SubmitBlock(ConstCBlockRef pblock)
     if (fAccepted)
     {
         if (!sc.found)
+        {
+            miningOrphanBlocks += 1;
             return "inconclusive";
+        }
         state = sc.state;
     }
+
+    // Move to a new address if a block is found on an address that is owned by this wallet
+#ifdef ENABLE_WALLET
+    if (pwalletMain)
+    {
+        auto coinbase = pblock->vtx[0];
+        if (coinbase->IsCoinBase())
+        {
+            // This code assumes that the wallet is returning the same key every time reservekey is called.
+            // This is how the the wallet should behave since it does not want to churn thru keys unless
+            // they are actually used.  However, if the wallet is someday changed to (for example) return a
+            // random key from a pool of "in play" keys, then this code won't work.
+
+            // However, this code won't churn thru keys even if the miner uses getnewaddress *from this wallet*
+            // and uses it as a configured mining address.
+            CReserveKey reservekey(pwalletMain);
+            CPubKey pubkey;
+            reservekey.GetReservedKey(pubkey);
+            CScript p2pkOut = CScript() << ToByteVector(pubkey) << OP_CHECKSIG;
+            CScript p2pkhOut = CScript() << OP_DUP << OP_HASH160 << ToByteVector(pubkey.GetID()) << OP_EQUALVERIFY
+                                         << OP_CHECKSIG;
+            CScript p2pktOut = P2pktOutput(pubkey);
+            for (const auto &out : coinbase->vout)
+            {
+                if (out.scriptPubKey == p2pktOut || out.scriptPubKey == p2pkhOut || out.scriptPubKey == p2pkOut)
+                {
+                    reservekey.KeepKey();
+                    break;
+                }
+            }
+            // If KeepKey() is not called, the key is released back to the wallet when in CReserveKey destructor
+        }
+    }
+#endif
+
     UniValue ret(UniValue::VOBJ);
-    ;
     ret.pushKV("height", (int64_t)pblock->GetHeight());
     ret.pushKV("hash", blockhash.GetHex());
     ret.pushKV("result", BIP22ValidationResult(state));
+    miningBlocks += 1;
     return ret;
 }
 

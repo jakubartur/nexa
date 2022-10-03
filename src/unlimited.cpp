@@ -76,6 +76,11 @@ static std::atomic<bool> fIsInitialBlockDownload{true};
 
 int64_t nMaxTipAge = DEFAULT_MAX_TIP_AGE;
 
+// Forget about a miner after it has not contacted for this long
+static const int64_t MINER_TRACKER_AGE_OUT = 60 * 60 * 24; // 1 full day in seconds
+// A miner has to contact the node within this time to be counted in mining/miners
+static const int64_t MINER_TRACKER_ACTIVE_MINER = 4 * 60; // 2 average block times
+
 bool IsTrafficShapingEnabled();
 UniValue validateblocktemplate(const UniValue &params, bool fHelp);
 UniValue validatechainhistory(const UniValue &params, bool fHelp);
@@ -344,6 +349,36 @@ void UnlimitedPushTxns(CNode *dest)
         dest->PushMessage("inv", vInv);
 }
 
+std::thread periodicStuff;
+
+void periodicTasks()
+{
+    while (!shutdown_threads.load())
+    {
+        // As additional periodic tasks are added, this loop should get a lot more sophisticated, for example,
+        // tracking a heap of wakeup objects rather than creating an individual thread for every period or object.
+
+        // But for now, we have 1 thing...
+        {
+            LOCK(csMinerTracker);
+            auto now = GetTime();
+            int activeMiners = 0;
+            for (auto it = minerTracker.cbegin(); it != minerTracker.cend();)
+            {
+                // Mark the miner as active if they've contacted us within 4 minutes
+                if (it->second.lastRequest + MINER_TRACKER_ACTIVE_MINER >= now)
+                    activeMiners++;
+                if (it->second.lastRequest + MINER_TRACKER_AGE_OUT < now)
+                    it = minerTracker.erase(it);
+                else
+                    ++it;
+            }
+            miningNumMiners() = activeMiners;
+        }
+        MilliSleep(10 * 1000);
+    }
+}
+
 void UnlimitedSetup(void)
 {
     blockVersion = GetArg("-blockversion", blockVersion);
@@ -375,6 +410,9 @@ void UnlimitedSetup(void)
     poolSize.init("txpool/size", STAT_OP_AVE | STAT_KEEP);
     recvAmt.init("net/recv/total");
     recvAmt.init("net/send/total");
+    miningBlocks.init("mining/blocks");
+    miningOrphanBlocks.init("mining/orphans");
+    miningNumMiners.init("mining/miners", STAT_OP_AVE | STAT_KEEP | STAT_KEEP_COUNT);
     std::vector<std::string> msgTypes = getAllNetMessageTypes();
 
     for (std::vector<std::string>::const_iterator i = msgTypes.begin(); i != msgTypes.end(); ++i)
@@ -382,6 +420,9 @@ void UnlimitedSetup(void)
         mallocedStats.push_front(new CStatHistory<uint64_t>("net/recv/msg/" + *i));
         mallocedStats.push_front(new CStatHistory<uint64_t>("net/send/msg/" + *i));
     }
+
+    periodicStuff = std::thread(periodicTasks);
+    periodicStuff.detach();
 }
 
 FILE *blockReceiptLog = nullptr;
@@ -392,6 +433,9 @@ void UnlimitedCleanup()
     poolSize.Stop();
     recvAmt.Stop();
     sendAmt.Stop();
+    miningBlocks.Stop();
+    miningNumMiners.Stop();
+    miningOrphanBlocks.Stop();
     nTxValidationTime.Stop();
     {
         LOCK(cs_blockvalidationtime);
@@ -1161,7 +1205,7 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
     CMiningCandidate candid;
     int64_t coinbaseSize = -1; // If -1 then not used to set coinbase size
 
-    if (fHelp || params.size() > 2)
+    if (fHelp || params.size() > 3)
     {
         throw runtime_error(
             "getminingcandidate"
@@ -1170,10 +1214,13 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
             "1. \"coinbasesize\" (int, optional) Get a fixed size coinbase transaction.\n"
             "                                  Default: null (null indicates unspecified / use daemon defaults)\n"
             "2. \"address\"      (string, optional) The address to send the newly generated coins to.\n"
-            "                                     Default: an address in daemon's wallet.\n" +
+            "                                     Default: an address in daemon's wallet.\n"
+            "3. \"name\"      (string, optional) The identity of the mining node (for statistics).\n"
+            "                                     Default: all unnamed nodes are counted as 1 node\n" +
             HelpExampleCli("getminingcandidate", "") + HelpExampleCli("getminingcandidate", "1000") +
             HelpExampleCli("getminingcandidate", "1000 nexa:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q") +
-            HelpExampleCli("getminingcandidate", "null nexa:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q"));
+            HelpExampleCli("getminingcandidate", "null nexa:qq9rw090p2eu9drv6ptztwx4ghpftwfa0gyqvlvx2q") +
+            HelpExampleCli("getminingcandidate", "null null miner1"));
     }
 
     if (!unsafeGetBlockTemplate.Value())
@@ -1190,6 +1237,7 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
 
     CScript coinbaseScript;
     std::string destStr;
+    std::string nameStr = "unnamed";
 
     // we accept: param1, param2 or just param1 by itself or null,param2 to only specify param2
     if (params.size() >= 1 && !params[0].isNull() && !params[0].getValStr().empty())
@@ -1208,6 +1256,26 @@ UniValue getminingcandidate(const UniValue &params, bool fHelp)
     if (params.size() == 2)
     {
         destStr = params[1].get_str();
+    }
+    if (params.size() == 3)
+    {
+        destStr = params[1].get_str();
+        if (destStr == "null")
+            destStr = "";
+        nameStr = params[2].get_str();
+    }
+
+    {
+        LOCK(csMinerTracker);
+        auto elem = minerTracker.find(nameStr);
+        if (elem == minerTracker.end())
+        {
+            minerTracker.emplace(nameStr, MinerTracker(GetTime()));
+        }
+        else
+        {
+            elem->second.lastRequest = GetTime();
+        }
     }
 
     RmOldMiningCandidates();

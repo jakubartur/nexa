@@ -708,6 +708,15 @@ CStatHistory<uint64_t> nTxValidationTime("txValidationTime", STAT_OP_MAX | STAT_
 CCriticalSection cs_blockvalidationtime;
 CStatHistory<uint64_t> nBlockValidationTime("blockValidationTime", STAT_OP_MAX | STAT_INDIVIDUAL);
 
+// Mining
+CCriticalSection csMinerTracker;
+std::map<std::string, MinerTracker> minerTracker GUARDED_BY(csMinerTracker);
+
+CStatHistory<uint64_t> miningBlocks; //("mining/blocks");
+CStatHistory<uint64_t> miningOrphanBlocks; //("mining/orphans");
+CStatHistory<uint64_t, MinValMax<uint64_t> > miningNumMiners; //("mining/miners");
+
+
 // Single classes for gather thin type block relay statistics
 CThinBlockData thindata;
 CGrapheneBlockData graphenedata;

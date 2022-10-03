@@ -22,6 +22,7 @@ SOFTWARE.
 #include "iblt.h"
 #include "hashwrapper.h"
 #include "iblt_params.h"
+#include "util.h"
 #include <cassert>
 #include <iostream>
 #include <list>
@@ -323,7 +324,8 @@ bool CIblt::listEntries(std::set<std::pair<uint64_t, std::vector<uint8_t> > > &p
 CIblt CIblt::operator-(const CIblt &other) const
 {
     // IBLT's must be same params/size:
-    assert(hashTable.size() == other.hashTable.size());
+    DbgAssert(hashTable.size() == other.hashTable.size(),
+        throw std::runtime_error("IBLT subtraction of unequal sized tables"));
 
     CIblt result(*this);
     for (size_t i = 0; i < hashTable.size(); i++)
