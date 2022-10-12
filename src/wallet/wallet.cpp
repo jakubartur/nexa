@@ -3179,13 +3179,35 @@ bool CWallet::CreateTransaction(const vector<CRecipient> &vecSend,
                         }
                     }
 
+                    // Check input and output limits
+                    if ((txNew.vout.size() > MAX_TX_NUM_VOUT) && (txNew.vin.size() > MAX_TX_NUM_VIN))
+                    {
+                        strFailReason = strprintf("Transaction has %d inputs and %d outputs. Maximum inputs allowed "
+                                                  "are %d and maximum outputs are %d",
+                            txNew.vin.size(), txNew.vout.size(), MAX_TX_NUM_VIN, MAX_TX_NUM_VOUT);
+                        return false;
+                    }
+                    if (txNew.vout.size() > MAX_TX_NUM_VOUT)
+                    {
+                        strFailReason = strprintf("Transaction has %d outputs. Maximum outputs allowed is %d",
+                            txNew.vout.size(), MAX_TX_NUM_VOUT);
+                        return false;
+                    }
+                    if (txNew.vin.size() > MAX_TX_NUM_VIN)
+                    {
+                        strFailReason = strprintf("Transaction has %d inputs. Maximum inputs allowed is %d",
+                            txNew.vin.size(), MAX_TX_NUM_VIN);
+                        return false;
+                    }
+
                     // Embed the constructed transaction data in wtxNew.
                     *static_cast<CTransaction *>(&wtxNew) = CTransaction(txNew);
 
                     // Limit size
                     if (nBytes > MAX_STANDARD_TX_SIZE)
                     {
-                        strFailReason = _("Transaction too large");
+                        strFailReason = strprintf("Transaction of %d bytes is too large. Maximum allowed is %d bytes",
+                            nBytes, MAX_STANDARD_TX_SIZE);
                         return false;
                     }
 
