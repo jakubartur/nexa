@@ -119,14 +119,26 @@ UniValue settweak(const UniValue &params, bool fHelp)
     {
         throw runtime_error(
             "set"
-            "\nSets the value of a configuration option.  Parameters must be of the format name=value, with no spaces "
+            "\nSets the value of a configuration option.  Parameters must be of the format name=value "
             "(use name=\"the value\" for strings)\n"
             "\nArguments: <configuration setting name>=<value> <configuration setting name2>=<value2>...\n"
             "\nResult:\n"
-            "nothing or error string\n"
+            "the new settings or error string\n"
             "\nExamples:\n" +
-            HelpExampleCli("set a 5", "") + HelpExampleRpc("get a b", ""));
+            HelpExampleCli("set mining.blockSize=50000", "") +
+            HelpExampleRpc("set mining.blockSize=50000 set mining.coinbaseReserve=2000", ""));
     }
+
+    // Make sure there is an "=" somewhere in the parameters
+    bool fFound = false;
+    for (unsigned int i = 0; i < params.size(); i++)
+    {
+        string s = params[i].get_str();
+        if (s.find("=") != std::string::npos)
+            fFound = true;
+    }
+    if (!fFound)
+        throw runtime_error("Invalid assignment format, missing =");
 
     std::string result;
     // First validate all the parameters that are being set
@@ -146,6 +158,8 @@ UniValue settweak(const UniValue &params, bool fHelp)
                 split = s.find("=");
             }
         }
+        if (split == s.length() - 1)
+            throw runtime_error("Missing parameter assignment");
 
         // If we haven't found the "=" then combine the strings.
         if (split == std::string::npos)

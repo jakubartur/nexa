@@ -32,6 +32,42 @@ class TweakTest (BitcoinTestFramework):
         # check basic set/get access
         node.set("mining.blockSize=100000")
         assert node.get("mining.blockSize")["mining.blockSize"] == 100000
+        node.set("mining.blockSize= 100001")
+        assert node.get("mining.blockSize")["mining.blockSize"] == 100001
+        node.set("mining.blockSize", "=100002")
+        assert node.get("mining.blockSize")["mining.blockSize"] == 100002
+        node.set("mining.blockSize", "= 100003")
+        assert node.get("mining.blockSize")["mining.blockSize"] == 100003
+        node.set("mining.blockSize", "=  100004")
+        assert node.get("mining.blockSize")["mining.blockSize"] == 100004
+        node.set("mining.blockSize","=", " 100005")
+        assert node.get("mining.blockSize")["mining.blockSize"] == 100005
+
+        # check basic error messages
+        try:
+            node.set("mining.blockSize=")
+            assert 0
+        except JSONRPCException as e:
+            assert ("Missing parameter assignment" in e.error["message"])
+
+        try:
+            node.set("mining.blockSize","2000")
+            assert 0
+        except JSONRPCException as e:
+            assert ("Invalid assignment format, missing =" in e.error["message"])
+
+        try:
+            node.set("mining.blockSize","=20000", "9")
+            assert 0
+        except JSONRPCException as e:
+            assert ("Invalid assignment format, missing =" in e.error["message"])
+
+        try:
+            node.set("mining.blockSize","20000", "9")
+            assert 0
+        except JSONRPCException as e:
+            assert ("Invalid assignment format, missing =" in e.error["message"])
+
 
         # check double set and then double get
         node.set("mining.blockSize=200000","mining.comment=slartibartfast dug here")
