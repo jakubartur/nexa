@@ -211,16 +211,16 @@ class MempoolPersistTest(BitcoinTestFramework):
             self.nodes[1].capd("send", "this is the message")
 
         logging.info("Verify that node0 and node1 have 5 transactions in their msgpools")
-        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 5)
-        waitFor(10, lambda: self.nodes[1].capd("info")["count"] == 5)
+        waitFor(30, lambda: self.nodes[0].capd("info")["count"] == 5)
+        waitFor(30, lambda: self.nodes[1].capd("info")["count"] == 5)
 
         logging.info("Stop-start node0 and node1. Verify that node0 has the messages in its msgpool and node1 does not.")
         stop_nodes(self.nodes)
         wait_bitcoinds()
         node_args = [[ ], ['-cache.maxCapdPool=0']]
         self.nodes = start_nodes(2, self.options.tmpdir, node_args)
-        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 5)
-        waitFor(10, lambda: self.nodes[1].capd("info")["count"] == 0)
+        waitFor(30, lambda: self.nodes[0].capd("info")["count"] == 5)
+        waitFor(30, lambda: self.nodes[1].capd("info")["count"] == 0)
 
         logging.info("Stop-start node0 with -cache.maxCapdPool=0. Verify that it doesn't load its msgpool.dat file.")
         stop_nodes(self.nodes)
@@ -229,13 +229,13 @@ class MempoolPersistTest(BitcoinTestFramework):
         self.nodes = start_nodes(1, self.options.tmpdir, node_args)
         # Give bitcoind a second to reload the msgpool
         time.sleep(1)
-        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 0)
+        waitFor(30, lambda: self.nodes[0].capd("info")["count"] == 0)
 
         logging.info("Stop-start node0. Verify that it has the transactions in its msgpool.")
         stop_nodes(self.nodes)
         wait_bitcoinds()
         self.nodes = start_nodes(1, self.options.tmpdir)
-        waitFor(10, lambda: self.nodes[0].capd("info")["count"] == 5)
+        waitFor(30, lambda: self.nodes[0].capd("info")["count"] == 5)
 
         msgpooldat0 = os.path.join(self.options.tmpdir, 'node0', 'regtest', 'msgpool.dat')
         msgpooldat1 = os.path.join(self.options.tmpdir, 'node1', 'regtest', 'msgpool.dat')
@@ -249,7 +249,7 @@ class MempoolPersistTest(BitcoinTestFramework):
         stop_nodes(self.nodes)
         wait_bitcoinds()
         self.nodes = start_nodes(2, self.options.tmpdir)
-        waitFor(10, lambda: self.nodes[1].capd("info")["count"] == 5)
+        waitFor(30, lambda: self.nodes[1].capd("info")["count"] == 5)
 
         logging.info("Prevent nexad from writing msgpool.dat to disk. Verify that `savemsgpool` fails")
         # try to dump txpool content on a directory rather than a file
