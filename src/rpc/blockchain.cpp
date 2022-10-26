@@ -85,6 +85,9 @@ double GetDifficulty(const CBlockIndex *blockindex)
 
 UniValue blockheaderToJSON(const CBlockIndex *blockindex, UniValue &result)
 {
+    if (!blockindex)
+        throw std::runtime_error("No entry found in the block index");
+
     result.pushKV("hash", blockindex->GetBlockHash().GetHex());
     int confirmations = -1;
     // Only report confirmations if the block is on the main chain
@@ -739,13 +742,12 @@ UniValue getblockheader(const UniValue &params, bool fHelp)
         DbgAssert(pindex && pindex->height() == height, throw std::runtime_error(__func__));
     }
 
-    DbgAssert(pindex != nullptr, throw std::runtime_error(__func__));
-
     bool fVerbose = true;
     if (params.size() > 1)
         fVerbose = params[1].get_bool();
 
-
+    if (!pindex)
+        throw std::runtime_error("No entry found in the block index");
     if (!fVerbose)
     {
         CDataStream ssBlock(SER_NETWORK, PROTOCOL_VERSION);
@@ -753,8 +755,8 @@ UniValue getblockheader(const UniValue &params, bool fHelp)
         std::string strHex = HexStr(ssBlock.begin(), ssBlock.end());
         return strHex;
     }
-
-    return blockheaderToJSON(pindex);
+    else
+        return blockheaderToJSON(pindex);
 }
 
 // Allows passing int instead of bool
@@ -969,7 +971,7 @@ static bool GetUTXOStats(CCoinsView *view, CCoinsStats &stats)
     stats.nTotalAmount = 0;
 
     CBlockIndex *pindex = LookupBlockIndex(stats.hashBlock);
-    stats.nHeight = pindex->height();
+    stats.nHeight = (pindex ? pindex->height() : -1);
     ss << stats.hashBlock;
     COutPoint prevkey;
     while (pcursor->Valid())
@@ -1318,23 +1320,26 @@ UniValue getblockchaininfo(const UniValue &params, bool fHelp)
 
     LOCK(cs_main);
 
+    CBlockIndex *tip = chainActive.Tip();
+    if (!tip)
+        throw runtime_error("No Chain Tip");
+
     UniValue obj(UniValue::VOBJ);
     obj.pushKV("chain", Params().NetworkIDString());
     obj.pushKV("blocks", (int)chainActive.Height());
     obj.pushKV("headers", pindexBestHeader ? pindexBestHeader.load()->height() : -1);
-    obj.pushKV("bestblockhash", chainActive.Tip()->GetBlockHash().GetHex());
+    obj.pushKV("bestblockhash", tip->GetBlockHash().GetHex());
     obj.pushKV("difficulty", (double)GetDifficulty());
-    obj.pushKV("mediantime", (int64_t)chainActive.Tip()->GetMedianTimePast());
+    obj.pushKV("mediantime", (int64_t)tip->GetMedianTimePast());
     obj.pushKV("verificationprogress",
-        Checkpoints::GuessVerificationProgress(Params().Checkpoints(), chainActive.Tip(), !fCheckpointsEnabled));
+        Checkpoints::GuessVerificationProgress(Params().Checkpoints(), tip, !fCheckpointsEnabled));
     obj.pushKV("initialblockdownload", IsInitialBlockDownload());
-    obj.pushKV("chainwork", chainActive.Tip()->chainWork().GetHex());
+    obj.pushKV("chainwork", tip->chainWork().GetHex());
     obj.pushKV("size_on_disk", CalculateCurrentUsage());
     obj.pushKV("pruned", fPruneMode);
     if (fPruneMode)
     {
-        CBlockIndex *block = chainActive.Tip();
-        assert(block);
+        CBlockIndex *block = tip;
         {
             READLOCK(cs_mapBlockIndex);
             while (block && block->pprev && (block->pprev->nStatus & BLOCK_HAVE_DATA))
