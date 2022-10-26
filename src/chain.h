@@ -149,6 +149,7 @@ enum BlockStatus : uint32_t
     BLOCK_FAILED_CHILD = 128, //! descends from failed block
     BLOCK_FAILED_MASK = BLOCK_FAILED_VALID | BLOCK_FAILED_CHILD,
     BLOCK_PROCESSED = 256, //! block was processed (maybe pruned, maybe good, maybe bad)
+    BLOCK_LINKED = 512, //! block has been linked to the previous one in the chain
 };
 
 /** The block chain is a tree shaped structure starting with the
@@ -195,6 +196,10 @@ public:
 
     //! Return true if this block has been processed */
     bool processed() const { return ((nStatus & BLOCK_PROCESSED) != 0); }
+
+    //! Return true if this block was linked to the previous one in the chain and therefore
+    //! no longer has an entry in unlinked blocks map.
+    bool IsLinked() const { return ((nStatus & BLOCK_LINKED) != 0); }
 
     //! (memory only) Number of transactions in the chain up to and including this block.
     //! This value will be non-zero only if and only if transactions for this block and all its parents are available.
