@@ -591,7 +591,7 @@ bool LoadBlockIndexDB()
         {
             if (pindex->pprev)
             {
-                if (pindex->pprev->nChainTx)
+                if (pindex->pprev->IsLinked())
                 {
                     pindex->nChainTx = pindex->pprev->nChainTx + pindex->txCount();
                 }
@@ -616,7 +616,7 @@ bool LoadBlockIndexDB()
             // if the parent is invalid I am too
             pindex->nStatus |= BLOCK_FAILED_CHILD;
         }
-        if (pindex->IsValid(BLOCK_VALID_TRANSACTIONS) && (pindex->nChainTx || pindex->pprev == nullptr))
+        if (pindex->IsValid(BLOCK_VALID_TRANSACTIONS) && (pindex->IsLinked() || pindex->pprev == nullptr))
             setBlockIndexCandidates.insert(pindex);
         CBlockIndex *pBestInvalid = pindexBestInvalid.load();
         if (pindex->nStatus & BLOCK_FAILED_MASK && (!pBestInvalid || pindex->chainWork() > pBestInvalid->chainWork()))
@@ -892,7 +892,7 @@ void CheckBlockIndex(const Consensus::Params &consensusParams)
             assert(pindex == chainActive.Genesis()); // The current active chain's genesis block must be this block.
         }
         // nSequenceId can't be set for blocks that aren't linked
-        if (pindex->nChainTx == 0)
+        if (!pindex->IsLinked())
             assert(pindex->nSequenceId == 0);
         // VALID_TRANSACTIONS is equivalent to nTx > 0 for all nodes (whether or not pruning has occurred).
         // HAVE_DATA is only equivalent to nTx > 0 (or VALID_TRANSACTIONS) if no pruning has occurred.
@@ -910,11 +910,10 @@ void CheckBlockIndex(const Consensus::Params &consensusParams)
             assert(pindex->nStatus & BLOCK_HAVE_DATA);
         // This is pruning-independent.
         assert(((pindex->nStatus & BLOCK_VALID_MASK) >= BLOCK_VALID_TRANSACTIONS) == pindex->processed());
-        // All parents having had data (at some point) is equivalent to all parents being VALID_TRANSACTIONS, which is
-        // equivalent to nChainTx being set.
-        // nChainTx != 0 is used to signal that all parent blocks have been processed (but may have been pruned).
-        assert((pindexFirstNeverProcessed != nullptr) == (pindex->nChainTx == 0));
-        assert((pindexFirstNotTransactionsValid != nullptr) == (pindex->nChainTx == 0));
+        // IsLinked() is true, is used to signal that all parent blocks have been processed and linked (but
+        // may have been pruned).
+        assert((pindexFirstNeverProcessed != nullptr) == (!pindex->IsLinked()));
+        assert((pindexFirstNotTransactionsValid != nullptr) == (!pindex->IsLinked()));
         assert(pindex->height() == nHeight); // nHeight must be consistent.
         // For every block except the genesis block, the chainwork must be larger than the parent's.
         assert(pindex->pprev == nullptr || pindex->chainWork() >= pindex->pprev->chainWork());
@@ -1331,7 +1330,7 @@ bool ReconsiderBlock(CValidationState &state, CBlockIndex *pindex)
         {
             it->second->nStatus &= ~BLOCK_FAILED_MASK;
             setDirtyBlockIndex.insert(it->second);
-            if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx &&
+            if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->IsLinked() &&
                 setBlockIndexCandidates.value_comp()(chainActive.Tip(), it->second))
             {
                 setBlockIndexCandidates.insert(it->second);
@@ -1482,7 +1481,7 @@ CBlockIndex *FindMostWorkChain()
         // follow the chain all the way back to where it joins the current active chain.
         while (pindexTest && !chainActive.Contains(pindexTest))
         {
-            assert(pindexTest->nChainTx || pindexTest->height() == 0);
+            assert(pindexTest->IsLinked() || pindexTest->height() == 0);
 
             // Pruned nodes may have entries in setBlockIndexCandidates for
             // which block files have been deleted.  Remove those as candidates
@@ -1575,7 +1574,7 @@ bool InvalidateBlock(CValidationState &state, const Consensus::Params &consensus
         BlockMap::iterator it = mapBlockIndex.begin();
         while (it != mapBlockIndex.end())
         {
-            if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->nChainTx &&
+            if (it->second->IsValid(BLOCK_VALID_TRANSACTIONS) && it->second->IsLinked() &&
                 !setBlockIndexCandidates.value_comp()(it->second, chainActive.Tip()))
             {
                 setBlockIndexCandidates.insert(it->second);
@@ -1839,7 +1838,7 @@ bool ReceivedBlockTransactions(ConstCBlockRef pblock,
     pindexNew->RaiseValidity(BLOCK_VALID_TRANSACTIONS);
     setDirtyBlockIndex.insert(pindexNew);
 
-    if (pindexNew->pprev == nullptr || pindexNew->pprev->nChainTx)
+    if (pindexNew->pprev == nullptr || pindexNew->pprev->IsLinked())
     {
         // If pindexNew is the genesis block or all parents are BLOCK_VALID_TRANSACTIONS.
         std::deque<CBlockIndex *> queue;
@@ -1866,6 +1865,7 @@ bool ReceivedBlockTransactions(ConstCBlockRef pblock,
                 range.first++;
                 mapBlocksUnlinked.erase(it);
             }
+            pindex->nStatus |= BLOCK_LINKED;
         }
     }
     else

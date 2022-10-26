@@ -1481,7 +1481,7 @@ UniValue getchaintips(const UniValue &params, bool fHelp)
             // This block or one of its ancestors is invalid.
             status = "invalid";
         }
-        else if (block->nChainTx == 0)
+        else if (!block->IsLinked())
         {
             // This block cannot be connected because full block data for it or one of its parents is missing.
             status = "headers-only";
