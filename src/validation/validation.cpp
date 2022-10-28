@@ -591,9 +591,12 @@ bool LoadBlockIndexDB()
         {
             if (pindex->pprev)
             {
-                if (pindex->pprev->IsLinked())
+                // TODO: once we have a network upgrade we can swap nChainTx for IsLinked() and take out
+                //       the update to nStatus with BLOCK_LINKED.
+                if (pindex->pprev->nChainTx)
                 {
                     pindex->nChainTx = pindex->pprev->nChainTx + pindex->txCount();
+                    pindex->nStatus |= BLOCK_LINKED;
                 }
                 else
                 {
@@ -604,6 +607,7 @@ bool LoadBlockIndexDB()
             else
             {
                 pindex->nChainTx = pindex->txCount();
+                pindex->nStatus |= BLOCK_LINKED;
             }
         }
         if (fCheckpointsEnabled && !CheckAgainstCheckpoint(pindex->height(), *pindex->phashBlock, chainparams))
