@@ -421,8 +421,7 @@ void UnlimitedSetup(void)
         mallocedStats.push_front(new CStatHistory<uint64_t>("net/send/msg/" + *i));
     }
 
-    periodicStuff = std::thread(periodicTasks);
-    periodicStuff.detach();
+    threadGroup.create_thread(&periodicTasks);
 }
 
 FILE *blockReceiptLog = nullptr;
