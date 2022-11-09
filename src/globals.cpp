@@ -91,6 +91,10 @@ BlockMap mapBlockIndex GUARDED_BY(cs_mapBlockIndex);
 std::atomic<CBlockIndex *> pindexBestHeader{nullptr};
 std::atomic<CBlockIndex *> pindexBestInvalid{nullptr};
 
+// This value (the number of transactions in the chain) is loaded at startup the the blocktree
+// database if we're reindexing. It is needed to determine the amount of work we have to do for the reindex.
+std::atomic<uint64_t> nTotalChainTx{0};
+
 // The max allowed size of the in memory UTXO cache.
 std::atomic<int64_t> nCoinCacheMaxSize{0};
 

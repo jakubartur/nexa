@@ -201,6 +201,8 @@ public:
     bool FindBlockIndex(uint256 blockhash, CDiskBlockIndex *index);
     bool LoadBlockIndexGuts();
     bool GetSortedHashIndex(std::vector<std::pair<int, CDiskBlockIndex> > &hashesByHeight);
+    uint64_t GetBestBlockHeaderChainTx() const;
+    bool WriteBestBlockHeaderChainTx(const uint64_t nChainTx);
 };
 
 /** Global variable that points to the coins database */

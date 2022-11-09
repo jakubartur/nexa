@@ -18,15 +18,16 @@ extern CTweak<uint64_t> maxAllowedNetMessage;
 extern CTweak<uint64_t> nextMaxBlockSize;
 
 static const unsigned int ONE_MEGABYTE = 1000000;
+static const unsigned int ONE_DAY_OF_BLOCKS = 144 * 5; // average number of blocks mined per day
 
 /** Adaptive block size params */
 static const uint64_t DEFAULT_NEXT_MAX_BLOCK_SIZE = 100000; // 100KB
-static const uint64_t SHORT_BLOCK_WINDOW = 12960 * 5; // 90 days of blocks with 2 minute block intervals
-static const uint64_t LONG_BLOCK_WINDOW = 52550 * 5; // 365 days of blocks with 2 minute block intervals
+static const uint64_t SHORT_BLOCK_WINDOW = ONE_DAY_OF_BLOCKS * 90; // 90 days of blocks
+static const uint64_t LONG_BLOCK_WINDOW = ONE_DAY_OF_BLOCKS * 365; // 365 days of blocks
 static const uint64_t SHORT_BLOCK_WINDOW_REGTEST = 150; // used for testing only!
 static const uint64_t LONG_BLOCK_WINDOW_REGTEST = 300; // used for testing only!
-static const uint64_t SHORT_BLOCK_WINDOW_TESTNET = 144 * 5 * 7; // 7 days of blocks - used for testing only!
-static const uint64_t LONG_BLOCK_WINDOW_TESTNET = 144 * 5 * 14; // 14 days of blocks - used for testing only!
+static const uint64_t SHORT_BLOCK_WINDOW_TESTNET = ONE_DAY_OF_BLOCKS * 7; // 7 days of blocks - used for testing only!
+static const uint64_t LONG_BLOCK_WINDOW_TESTNET = ONE_DAY_OF_BLOCKS * 14; // 14 days of blocks - used for testing only!
 static const uint64_t BLOCK_SIZE_MULTIPLIER = 10;
 
 /** Largest block possible */

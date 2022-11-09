@@ -192,8 +192,8 @@ public:
         fMineBlocksOnDemand = true;
         fTestnetToBeDeprecatedFieldRPC = false;
 
-        checkpointData = (CCheckpointData){
-            {{0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")}}, 0, 0, 0};
+        checkpointData =
+            (CCheckpointData){{{0, uint256S("0f9188f13cb7b2c71f2a335e3a4fc328bf5beb436012afca590b1a11466e2206")}}, 0};
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<uint8_t>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<uint8_t>(1, 196);
         base58Prefixes[SECRET_KEY] = std::vector<uint8_t>(1, 239);
@@ -270,8 +270,6 @@ public:
         // 0000000019df558b6686b1a1c3e7aee0535c38052651b711f84eebafc0cc4b5e
         // (height 5677)
         checkpointData.nTimeLastCheckpoint = 1599886634;
-        checkpointData.nTransactionsLastCheckpoint = 7432;
-        checkpointData.fTransactionsPerDay = 1.3;
     }
 };
 
