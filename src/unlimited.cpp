@@ -1081,7 +1081,7 @@ static void RmOldMiningCandidates()
     // Clean out mining candidates that are the same height as a discovered block.
     for (auto it = miningCandidatesMap.cbegin(); it != miningCandidatesMap.cend();)
     {
-        if ((it->second.block == nullptr) || (it->second.block->GetHeight() <= chainActive.Height()))
+        if ((it->second.block == nullptr) || (it->second.block->GetHeight() <= (uint64_t)chainActive.Height()))
         {
             it = miningCandidatesMap.erase(it);
         }
