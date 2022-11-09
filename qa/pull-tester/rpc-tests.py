@@ -309,15 +309,20 @@ testScriptsExt = [ RpcTest(t) for t in [
 testScriptsElectrum = [ RpcTest(WhenElectrumFound(t, CUSTOM_ELECTRUM_PATH)) for t in [
     'electrum_basics',
     'electrum_blockchain_address',
+    'electrum_blockchain_utxo',
+    'electrum_doslimit',
+    'electrum_mempool_chain',
     'electrum_reorg',
     'electrum_scripthash_gethistory',
     'electrum_server_features',
     'electrum_shutdownonerror',
     'electrum_subscriptions',
+    'electrum_token_genesis_info',
+    'electrum_token_getbalance',
+    'electrum_token_history',
+    'electrum_token_listunspent',
+    'electrum_token_transaction_gethistory',
     'electrum_transaction_get',
-    'electrum_doslimit',
-    'electrum_mempool_chain',
-    'electrum_blockchain_utxo',
 ] ]
 
 #Enable ZMQ tests

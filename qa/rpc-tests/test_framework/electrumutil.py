@@ -101,10 +101,37 @@ class ElectrumTestFramework(BitcoinTestFramework):
             n = self.nodes[0]
         sync_electrum_height(n)
 
+    def sync_mempool_count(self, n = None):
+        if n is None:
+            n = self.nodes[0]
+        mempool_count = len(n.getrawtxpool())
+        return self.wait_for_mempool_count(n, count = lambda: len(n.getrawtxpool()))
+
     def wait_for_mempool_count(self, n = None, *, count, timeout = 40):
         if n is None:
             n = self.nodes[0]
         wait_for_electrum_mempool(n, count = count, timeout = timeout)
+
+    async def create_token(self, *args, n = None, to_addr, mint_amount):
+        if n is None:
+            n = self.nodes[0]
+        token = self.n.token("new", *args)
+        group_id_encoded = token["groupIdentifier"]
+        txidem_mint = self.n.token("mint", group_id_encoded, to_addr, mint_amount)
+
+        # Return group ID hex encoded
+        # TODO: Decode group_id cashaddr encoded or support cashaddr in rostrum.
+        self.sync_mempool_count()
+        tx = await self.cli.call(
+                "blockchain.transaction.get",
+                get_txid_from_idem(self.n, txidem_mint), True)
+        for o in tx['vout']:
+            try:
+                return group_id_encoded, o["scriptPubKey"]["groupTokenID"]
+            except KeyError:
+                pass
+
+        assert False
 
 def compare(node, key, expected, is_debug_data = False):
     info = node.getelectruminfo()
@@ -185,8 +212,13 @@ def sync_electrum_height(node, timeout = 40):
     waitFor(timeout, lambda: compare(node, "index_height", node.getblockcount()))
 
 def wait_for_electrum_mempool(node, *, count, timeout = 40):
+    import types
     try:
-        waitFor(timeout, lambda: compare(node, "mempool_count", count, True))
+
+        if isinstance(count, types.LambdaType):
+            waitFor(timeout, lambda: compare(node, "mempool_count", count(), True))
+        else:
+            waitFor(timeout, lambda: compare(node, "mempool_count", count, True))
     except Exception as e:
         print("Waited for {} txs, had {}".format(count, node.getelectruminfo()['debuginfo']['rostrum_mempool_count']))
         raise
