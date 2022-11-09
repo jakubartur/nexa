@@ -89,6 +89,7 @@ class ElectrumMempoolChain(ElectrumTestFramework):
         # tx2: gets height 0, tx3 keeps height -1
         self.mine_blocks(n, 1, [tx1])
         sync_electrum_height(n)
+        self.sync_mempool_count()
         for call in [GET_HISTORY, GET_MEMPOOL]:
             res = await cli.call(call, scripthash)
 
