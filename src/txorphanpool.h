@@ -113,6 +113,6 @@ public:
 };
 extern CTxOrphanPool orphanpool;
 
-void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue);
+uint64_t ProcessOrphans(const std::vector<CTransactionRef> &vWorkQueue);
 
 #endif

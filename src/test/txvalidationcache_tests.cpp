@@ -26,8 +26,6 @@
 extern CTweak<uint32_t> minRelayFee;
 extern void LimitMempoolSize(CTxMemPool &pool, size_t limit, unsigned long age);
 
-void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue);
-
 BOOST_AUTO_TEST_SUITE(txvalidationcache_tests) // BU harmonize suite name with filename
 
 static bool ToMemPool(CMutableTransaction &tx, std::string rejectReason = "")

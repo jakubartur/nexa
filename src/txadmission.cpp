@@ -54,10 +54,10 @@ std::atomic<uint64_t> avgCommitBatchSize(0);
 Snapshot txHandlerSnap;
 
 void ThreadCommitToMempool();
-void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue);
 
 CTransactionRef CommitQGet(uint256 hash)
 {
+    // search by transaction id
     std::unique_lock<std::mutex> lock(csCommitQ);
     std::map<uint256, CTxCommitData>::iterator it = txCommitQ->find(hash);
     if (it == txCommitQ->end())
@@ -93,7 +93,6 @@ void StopTxAdmission()
 {
     cvTxInQ.notify_all();
     cvCommitQ.notify_all();
-    // cvCommitted.notify_all();
 }
 
 void FlushTxAdmission()
@@ -118,7 +117,6 @@ void FlushTxAdmission()
             {
                 cvCommitQ.wait_for(lock, std::chrono::milliseconds(100));
             } while (!txCommitQ->empty());
-            // cvCommitted.notify_all();
         }
 
         { // block everything and check
@@ -296,7 +294,7 @@ void CommitTxToMempool()
         // These transactions have already been validated so store them directly into the mempool.
         for (auto &it : *txCommitQFinal)
         {
-            CTxCommitData &data = it.second;
+            const CTxCommitData &data = it.second;
             mempool._addUnchecked(data.entry, !IsInitialBlockDownload());
             vWhatChanged.push_back(data.entry.GetSharedTx());
 
@@ -307,7 +305,7 @@ void CommitTxToMempool()
 #ifdef ENABLE_WALLET
     for (auto &it : *txCommitQFinal)
     {
-        CTxCommitData &data = it.second;
+        const CTxCommitData &data = it.second;
         SyncWithWallets(data.entry.GetSharedTx(), nullptr, -1);
     }
 #endif
@@ -586,7 +584,7 @@ bool AcceptToMemoryPool(CTxMemPool &pool,
         res = ParallelAcceptToMemoryPool(txHandlerSnap, pool, state, tx, fLimitFree, &missingInputs, fRejectAbsurdFee,
             allowedTx, vCoinsToUncache, &isRespend, nullptr);
 
-        // Uncache any coins for txns that failed to enter the mempool but were NOT orphan txns
+        // Uncache any coins for txns that failed to enter the mempool and were NOT orphan txns
         if (isRespend || (!res && !missingInputs))
         {
             for (const COutPoint &remove : vCoinsToUncache)
@@ -1177,24 +1175,29 @@ TransactionClass ParseTransactionClass(const std::string &s)
 }
 
 
-void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue)
+uint64_t ProcessOrphans(const std::vector<CTransactionRef> &vWorkQueue)
 {
     // Recursively process any orphan transactions that depended on this one.
     // NOTE: you must not return early since EraseOrphansByTime() must always be checked
-    std::map<uint256, CTxInputData> mapEnqueue;
+    std::vector<CTxInputData> vEnqueue;
     {
         READLOCK(orphanpool.cs_orphanpool);
-        for (unsigned int i = 0; i < vWorkQueue.size(); i++)
+        if (orphanpool.mapOrphanTransactions.empty())
         {
-            CTransactionRef tx = vWorkQueue[i];
+            DbgAssert(orphanpool.mapOrphanTransactionsByPrev.empty(), );
+            return 0;
+        }
+
+        for (auto tx : vWorkQueue)
+        {
             for (unsigned int j = 0; j < tx->vout.size(); j++)
             {
                 std::map<uint256, std::set<uint256> >::iterator itByPrev =
                     orphanpool.mapOrphanTransactionsByPrev.find(tx->OutpointAt(j).hash);
                 if (itByPrev == orphanpool.mapOrphanTransactionsByPrev.end())
+                {
                     continue;
-                //            for (std::set<uint256>::iterator mi = itByPrev->second.begin(); mi !=
-                //            itByPrev->second.end(); ++mi)
+                }
                 for (const auto &orphanHash : itByPrev->second)
                 {
                     // Make sure we actually have an entry on the orphan cache. While this should never fail because
@@ -1207,13 +1210,14 @@ void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue)
                     if (!fOk)
                         continue;
 
+                    // Add the orphan to be enqueued later
                     {
                         CTxInputData txd;
                         txd.tx = iter->second.ptx;
                         txd.nodeId = iter->second.fromPeer;
                         txd.nodeName = "orphan";
                         LOG(MEMPOOL, "Resubmitting orphan tx: %s\n", orphanHash.ToString());
-                        mapEnqueue.emplace(std::move(orphanHash), std::move(txd));
+                        vEnqueue.push_back(std::move(txd));
                     }
                 }
             }
@@ -1223,21 +1227,23 @@ void ProcessOrphans(std::vector<CTransactionRef> &vWorkQueue)
     // First delete the orphans before enqueuing them otherwise we may end up putting them
     // in the queue twice.
     orphanpool.EraseOrphansByTime();
-    if (!mapEnqueue.empty())
+    if (!vEnqueue.empty())
     {
         {
             WRITELOCK(orphanpool.cs_orphanpool);
-            for (auto it = mapEnqueue.begin(); it != mapEnqueue.end(); it++)
+            for (auto it = vEnqueue.begin(); it != vEnqueue.end(); it++)
             {
                 // If the orphan was not erased then it must already have been erased/enqueued by another thread
                 // so do not enqueue this orphan again.
-                if (!orphanpool.EraseOrphanTx(it->first))
-                    it = mapEnqueue.erase(it);
+                if (!orphanpool.EraseOrphanTx(it->tx->GetId()))
+                    it = vEnqueue.erase(it);
             }
         }
-        for (auto &it : mapEnqueue)
-            EnqueueTxForAdmission(it.second);
+        for (auto &txd : vEnqueue)
+            EnqueueTxForAdmission(txd);
     }
+
+    return orphanpool.GetOrphanPoolSize();
 }
 
 

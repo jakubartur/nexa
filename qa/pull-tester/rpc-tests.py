@@ -236,6 +236,7 @@ testScripts = [ RpcTest(t) for t in [
     'mempool_spendcoinbase',
     'mempool_reorg',
     'mempool_limit',
+    'mempool_packages',
     'mempool_persist',
     'mempool_validate',
     'mempoolsync',
@@ -302,7 +303,6 @@ testScriptsExt = [ RpcTest(t) for t in [
     'smartfees',
     Disabled('maxblocksinflight', "needs a rewrite and is already somewhat tested in sendheaders.py"),
     'p2p-acceptblock',
-    'mempool_packages',
     'maxuploadtarget'
 ] ]
 

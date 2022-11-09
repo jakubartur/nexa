@@ -440,7 +440,7 @@ UniValue sendtoaddress(const UniValue &params, bool fHelp)
             "                             The recipient will receive less coins than you enter in the amount "
             "field.\n"
             "\nResult:\n"
-            "\"transactionid\"  (string) The transaction id.\n"
+            "\"txidem\"  (string) The txidem.\n"
             "\nExamples:\n" +
             HelpExampleCli("sendtoaddress", "\"nexa:qpnfq7r98lkm2h7jksy0h5mqpwvttxlc3q6zkwmcha\" 10.81") +
             HelpExampleCli("sendtoaddress",

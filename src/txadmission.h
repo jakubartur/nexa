@@ -142,7 +142,7 @@ extern CConditionVariable cvCommitQ;
 // extern CConditionVariable cvCommitted;  // notified whenever txes are committed.
 extern std::map<uint256, CTxCommitData> *txCommitQ;
 
-// returns a transaction ref, if it exists in the commitQ
+// returns a transaction ref, if the transaction id exists in the commitQ
 CTransactionRef CommitQGet(uint256 hash);
 
 /** Initialize the transaction mempool admission state */

@@ -3056,24 +3056,41 @@ bool ConnectTip(CValidationState &state,
         orphanpool.RemoveForBlock(pblock->vtx);
 
         // Search orphan queue for anything that is no longer an orphan due to tx in this block
-        // or any tx that has a parent in the mempool, since commited tx may now make that tx available
-        // for mempool admission based on a reduction of mempool ancestors.
-        std::vector<CTransactionRef> vWhatChanged;
-        mempool.queryTxs(vWhatChanged);
-        vWhatChanged.reserve(vWhatChanged.size() + pblock->vtx.size());
-        for (const CTransactionRef &tx : pblock->vtx)
+        uint64_t nOrphansRemaining = 0;
+        nOrphansRemaining = ProcessOrphans(pblock->vtx);
+
+        // Continue processing orphans only if there are any orphans remaining.
+        if (nOrphansRemaining > 0)
         {
-            vWhatChanged.push_back(tx);
+            // If there are still orphans in the orphanpool then process against the previous block as well.
+            //
+            // In this case the previous block will be the current chaintip because we have not yet updated the
+            // tip for the current block being processed.
+            const ConstCBlockRef prevBlock = ReadBlockFromDisk(chainActive.Tip(), Params().GetConsensus());
+            if (prevBlock)
+            {
+                nOrphansRemaining = ProcessOrphans(prevBlock->vtx);
+            }
+
+            // Lastly, process the entire mempool against the orphanpool if there are still any orphans remaining.
+            // This should be infrequent since the orphanpool is generally empty.
+            if (nOrphansRemaining > 0)
+            {
+                std::vector<CTransactionRef> vWhatChanged;
+                mempool.queryTxs(vWhatChanged);
+                ProcessOrphans(vWhatChanged);
+            }
         }
-        ProcessOrphans(vWhatChanged);
     }
     else
     {
         mempool.clear();
         orphanpool.clear();
     }
+
     // Update chainActive & related variables.
     UpdateTip(pindexNew);
+
 
     // Write the chain state to disk, if necessary. This should be done after UpdateTip to make sure the tip
     // is set correctly when calling FlushStateToDisk(); this is because the automatic -dbcache adjustment
