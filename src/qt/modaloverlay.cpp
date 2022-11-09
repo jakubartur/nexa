@@ -135,8 +135,17 @@ void ModalOverlay::tipUpdate(int count, const QDateTime &blockDate, double nVeri
     }
     else
     {
-        ui->amountOfBlocksLeft->setText(tr("Unknown. Syncing Headers (%1)...").arg(pindexBestHeader.load()->height()));
-        ui->expectedTimeLeft->setText(tr("Unknown. Syncing Headers..."));
+        if (fReindex)
+        {
+            ui->amountOfBlocksLeft->setText(tr("Unknown. Reindexing (%1)...").arg(pindexBestHeader.load()->height()));
+            ui->expectedTimeLeft->setText(tr("Unknown. Reindexing..."));
+        }
+        else
+        {
+            ui->amountOfBlocksLeft->setText(
+                tr("Unknown. Syncing Headers (%1)...").arg(pindexBestHeader.load()->height()));
+            ui->expectedTimeLeft->setText(tr("Unknown. Syncing Headers..."));
+        }
     }
 }
 

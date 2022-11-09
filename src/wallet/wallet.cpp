@@ -1720,7 +1720,6 @@ int CWallet::ScanForWalletTransactions(CBlockIndex *pindexStart, bool fUpdate)
 
     int ret = 0;
     int64_t nNow = GetTime();
-    const CChainParams &chainParams = Params();
 
     CBlockIndex *pindex = pindexStart;
     {
@@ -1742,17 +1741,15 @@ int CWallet::ScanForWalletTransactions(CBlockIndex *pindexStart, bool fUpdate)
 
         // show rescan progress in GUI as dialog or on splashscreen, if -rescan on startup
         ShowProgress(_("Rescanning..."), 0);
-        double dProgressStart = Checkpoints::GuessVerificationProgress(chainParams.Checkpoints(), pindex, false);
-        double dProgressTip =
-            Checkpoints::GuessVerificationProgress(chainParams.Checkpoints(), chainActive.Tip(), false);
+        double dProgressStart = Checkpoints::GuessVerificationProgress(pindex, false);
+        double dProgressTip = Checkpoints::GuessVerificationProgress(chainActive.Tip(), false);
         while (pindex)
         {
             if (pindex->height() % 100 == 0 && dProgressTip - dProgressStart > 0.0)
-                ShowProgress(
-                    _("Rescanning..."), std::max(1, std::min(99, (int)((Checkpoints::GuessVerificationProgress(
-                                                                            chainParams.Checkpoints(), pindex, false) -
-                                                                           dProgressStart) /
-                                                                       (dProgressTip - dProgressStart) * 100))));
+                ShowProgress(_("Rescanning..."),
+                    std::max(
+                        1, std::min(99, (int)((Checkpoints::GuessVerificationProgress(pindex, false) - dProgressStart) /
+                                              (dProgressTip - dProgressStart) * 100))));
 
             const ConstCBlockRef pblock = ReadBlockFromDisk(pindex, Params().GetConsensus());
             if (!pblock)
@@ -1774,7 +1771,7 @@ int CWallet::ScanForWalletTransactions(CBlockIndex *pindexStart, bool fUpdate)
                 nNow = GetTime();
                 if (pindex) // if pindex is nullptr we are done anyway so no need to show the log
                     LOGA("Still rescanning. At block %d. Progress=%f\n", pindex->height(),
-                        Checkpoints::GuessVerificationProgress(chainParams.Checkpoints(), pindex, false));
+                        Checkpoints::GuessVerificationProgress(pindex, false));
             }
         }
         ShowProgress(_("Rescanning..."), 100); // hide progress dialog in GUI

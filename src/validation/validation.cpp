@@ -36,6 +36,7 @@
 #include <unordered_set>
 
 extern CTweak<int> maxReorgDepth;
+extern std::atomic<uint64_t> nTotalChainTx;
 static bool FinalizeBlockInternal(CValidationState &state, const CBlockIndex *pindex);
 static const CBlockIndex *FindBlockToFinalize(const CBlockIndex *pindexNew);
 
@@ -408,6 +409,7 @@ CBlockIndex *AddToBlockIndex(const CChainParams &chainparams, const CBlockHeader
             pindexNew->nStatus |= BLOCK_FAILED_CHILD;
     }
     pindexNew->nNextMaxBlockSize = CalculateNextMaxBlockSize(pindexNew->pprev, block.size);
+    pindexNew->nChainTx = (pindexNew->pprev ? pindexNew->pprev->nChainTx : 0) + block.txCount;
 
     auto expectedWork =
         ArithToUint256((pindexNew->pprev ? pindexNew->pprev->chainWork() : 0) + GetBlockProof(*pindexNew));
@@ -442,6 +444,11 @@ CBlockIndex *AddToBlockIndex(const CChainParams &chainparams, const CBlockHeader
         (pBestHeader == nullptr || pBestHeader->chainWork() < pindexNew->chainWork()))
     {
         pindexBestHeader.store(pindexNew);
+    }
+    if (!fReindex)
+    {
+        nTotalChainTx.store(pindexBestHeader.load()->nChainTx);
+        pblocktree->WriteBestBlockHeaderChainTx(nTotalChainTx.load());
     }
 
     // Update the ui if the best header has changed.
@@ -694,7 +701,7 @@ bool LoadBlockIndexDB()
 
     LOGA("%s: hashBestChain=%s height=%d date=%s progress=%f\n", __func__, chainActive.Tip()->GetBlockHash().ToString(),
         chainActive.Height(), FormatISO8601DateTime(chainActive.Tip()->GetBlockTime()),
-        Checkpoints::GuessVerificationProgress(chainparams.Checkpoints(), chainActive.Tip(), !fCheckpointsEnabled));
+        Checkpoints::GuessVerificationProgress(chainActive.Tip(), !fCheckpointsEnabled));
 
     return true;
 }
@@ -1830,7 +1837,6 @@ bool ReceivedBlockTransactions(ConstCBlockRef pblock,
         pindexNew->nStatus |= BLOCK_FAILED_VALID;
     }
     pindexNew->nStatus |= BLOCK_PROCESSED;
-    pindexNew->nChainTx = 0;
     pindexNew->nFile = pos.nFile;
     pindexNew->nDataPos = pos.nPos;
     pindexNew->nUndoPos = 0;
@@ -1849,7 +1855,6 @@ bool ReceivedBlockTransactions(ConstCBlockRef pblock,
         {
             CBlockIndex *pindex = queue.front();
             queue.pop_front();
-            pindex->nChainTx = (pindex->pprev ? pindex->pprev->nChainTx : 0) + pindex->txCount();
             pindex->nSequenceId = ++nBlockSequenceId;
             if (chainActive.Tip() == nullptr || !setBlockIndexCandidates.value_comp()(pindex, chainActive.Tip()))
             {
@@ -2522,8 +2527,9 @@ bool ConnectBlock(ConstCBlockRef pblock,
         if (fReindex || fImporting)
             fScriptChecks = !fCheckpointsEnabled || pblock->nTime > timeBarrier;
         else
-            fScriptChecks = !fCheckpointsEnabled || pblock->nTime > timeBarrier ||
-                            (uint32_t)pindex->height() > pBestHeader->height() - (144 * checkScriptDays.Value());
+            fScriptChecks =
+                !fCheckpointsEnabled || pblock->nTime > timeBarrier ||
+                (uint32_t)pindex->height() > pBestHeader->height() - (ONE_DAY_OF_BLOCKS * checkScriptDays.Value());
     }
 
     CAmount nFees = 0;
@@ -2840,7 +2846,7 @@ void UpdateTip(CBlockIndex *pindexNew)
         __func__, chainActive.Tip()->GetBlockHash().ToString(), chainActive.Height(), chainActive.Tip()->tgtBits(),
         log(chainActive.Tip()->chainWork().getdouble()) / log(2.0), (unsigned long)chainActive.Tip()->nChainTx,
         FormatISO8601DateTime(chainActive.Tip()->GetBlockTime()),
-        Checkpoints::GuessVerificationProgress(chainParams.Checkpoints(), chainActive.Tip(), !fCheckpointsEnabled),
+        Checkpoints::GuessVerificationProgress(chainActive.Tip(), !fCheckpointsEnabled),
         pcoinsTip->DynamicMemoryUsage() * (1.0 / (1 << 20)), pcoinsTip->GetCacheSize());
 
     if (!IsInitialBlockDownload())

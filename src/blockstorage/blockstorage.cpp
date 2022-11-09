@@ -23,6 +23,8 @@ extern CCriticalSection cs_LastBlockFile;
 extern std::set<int> setDirtyFileInfo;
 extern std::multimap<CBlockIndex *, CBlockIndex *> mapBlocksUnlinked;
 extern CTweak<uint64_t> pruneIntervalTweak;
+extern std::atomic<uint64_t> nTotalChainTx;
+
 
 CDatabaseAbstract *pblockdb = nullptr;
 uint64_t blockfile_chunk_size = DEFAULT_BLOCKFILE_CHUNK_SIZE;
@@ -40,7 +42,22 @@ void InitializeBlockStorage(const int64_t &_nBlockTreeDBCache,
     blockcache.Init();
     if (BLOCK_DB_MODE == SEQUENTIAL_BLOCK_FILES) // BLOCK_DB_MODE 0
     {
-        pblocktree = new CBlockTreeDB(_nBlockTreeDBCache, "blocks", false, fReindex);
+        if (fReindex)
+        {
+            // Startup the database with the reindex (wipe database) flag set to false and get the value of nChainTx
+            pblocktree = new CBlockTreeDB(_nBlockTreeDBCache, "blocks", false, false);
+            const uint64_t nChainTx = pblocktree->GetBestBlockHeaderChainTx();
+            delete pblocktree;
+
+            // now restart the database and wipe the data but re-add the nChainTx after restart.
+            pblocktree = new CBlockTreeDB(_nBlockTreeDBCache, "blocks", false, true);
+            pblocktree->WriteBestBlockHeaderChainTx(nChainTx);
+            nTotalChainTx.store(nChainTx);
+        }
+        else
+        {
+            pblocktree = new CBlockTreeDB(_nBlockTreeDBCache, "blocks", false, false);
+        }
         delete pblockdb;
         pblockdb = nullptr;
     }

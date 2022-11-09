@@ -304,15 +304,11 @@ public:
         // for which the new rules are enforced, hence activation height + 1, where activation
         // height is the first block for which MTP <= upgrade activation time
         checkpointData = (CCheckpointData){
-            {{0, consensus.hashGenesisBlock }}, 0, 0, 0};
+            {{0, consensus.hashGenesisBlock }}, 0};
         // clang-format on
 
         // * UNIX timestamp of last checkpoint block
         checkpointData.nTimeLastCheckpoint = 1573825449;
-        // * total number of transactions between genesis and last checkpoint
-        checkpointData.nTransactionsLastCheckpoint = 281198294;
-        // * estimated number of transactions per day after checkpoint (~3.5 TPS)
-        checkpointData.fTransactionsPerDay = 280000.0;
     }
 };
 
@@ -387,7 +383,7 @@ public:
         fMineBlocksOnDemand = true;
         fTestnetToBeDeprecatedFieldRPC = false;
 
-        checkpointData = (CCheckpointData){{{0, consensus.hashGenesisBlock}}, 0, 0, 0};
+        checkpointData = (CCheckpointData){{{0, consensus.hashGenesisBlock}}, 0};
         base58Prefixes[PUBKEY_ADDRESS] = std::vector<uint8_t>(1, 111);
         base58Prefixes[SCRIPT_ADDRESS] = std::vector<uint8_t>(1, 196);
         base58Prefixes[SECRET_KEY] = std::vector<uint8_t>(1, 239);
@@ -496,10 +492,6 @@ public:
 
         // * UNIX timestamp of last checkpoint block
         checkpointData.nTimeLastCheckpoint = 1661700138;
-        // * total number of transactions between genesis and last checkpoint
-        checkpointData.nTransactionsLastCheckpoint = 100000;
-        // * estimated number of transactions per day after checkpoint
-        checkpointData.fTransactionsPerDay = 720.0;
     }
 };
 
@@ -609,10 +601,6 @@ public:
 
         // * UNIX timestamp of last checkpoint block
         checkpointData.nTimeLastCheckpoint = 1661829976;
-        // * total number of transactions between genesis and last checkpoint
-        checkpointData.nTransactionsLastCheckpoint = 57174;
-        // * estimated number of transactions per day after checkpoint
-        checkpointData.fTransactionsPerDay = 720.0;
     }
 };
 

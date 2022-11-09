@@ -1331,8 +1331,7 @@ UniValue getblockchaininfo(const UniValue &params, bool fHelp)
     obj.pushKV("bestblockhash", tip->GetBlockHash().GetHex());
     obj.pushKV("difficulty", (double)GetDifficulty());
     obj.pushKV("mediantime", (int64_t)tip->GetMedianTimePast());
-    obj.pushKV("verificationprogress",
-        Checkpoints::GuessVerificationProgress(Params().Checkpoints(), tip, !fCheckpointsEnabled));
+    obj.pushKV("verificationprogress", Checkpoints::GuessVerificationProgress(tip, !fCheckpointsEnabled));
     obj.pushKV("initialblockdownload", IsInitialBlockDownload());
     obj.pushKV("chainwork", tip->chainWork().GetHex());
     obj.pushKV("size_on_disk", CalculateCurrentUsage());

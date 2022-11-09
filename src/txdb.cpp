@@ -31,7 +31,7 @@ static const char DB_BEST_BLOCK = 'B';
 static const char DB_FLAG = 'F';
 static const char DB_REINDEX_FLAG = 'R';
 static const char DB_LAST_BLOCK = 'l';
-
+static const char DB_BEST_BLOCKHEADER_CHAINTX = 'c';
 
 namespace
 {
@@ -288,6 +288,19 @@ bool CBlockTreeDB::ReadReindexing(bool &fReindexing)
 {
     fReindexing = Exists(DB_REINDEX_FLAG);
     return true;
+}
+
+uint64_t CBlockTreeDB::GetBestBlockHeaderChainTx() const
+{
+    uint64_t nChainTx = 0;
+    if (!Read(DB_BEST_BLOCKHEADER_CHAINTX, nChainTx))
+        return 1;
+    return nChainTx;
+}
+
+bool CBlockTreeDB::WriteBestBlockHeaderChainTx(const uint64_t nChainTx)
+{
+    return Write(DB_BEST_BLOCKHEADER_CHAINTX, nChainTx);
 }
 
 bool CBlockTreeDB::ReadLastBlockFile(int &nFile) { return Read(DB_LAST_BLOCK, nFile); }

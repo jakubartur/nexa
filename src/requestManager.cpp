@@ -1181,7 +1181,7 @@ void CRequestManager::FindNextBlocksToDownload(CNode *node, size_t count, std::v
             }
             if (pindex->nStatus & BLOCK_HAVE_DATA || chainActive.Contains(pindex))
             {
-                if (pindex->nChainTx)
+                if (pindex->IsLinked())
                     state->pindexLastCommonBlock = pindex;
             }
             else

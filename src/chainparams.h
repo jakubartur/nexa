@@ -61,8 +61,6 @@ struct CCheckpointData
 {
     MapCheckpoints mapCheckpoints;
     int64_t nTimeLastCheckpoint;
-    uint64_t nTransactionsLastCheckpoint;
-    double fTransactionsPerDay;
 };
 
 enum
