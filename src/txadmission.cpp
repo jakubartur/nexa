@@ -1231,12 +1231,15 @@ uint64_t ProcessOrphans(const std::vector<CTransactionRef> &vWorkQueue)
     {
         {
             WRITELOCK(orphanpool.cs_orphanpool);
-            for (auto it = vEnqueue.begin(); it != vEnqueue.end(); it++)
+            auto it = vEnqueue.begin();
+            while (it != vEnqueue.end())
             {
                 // If the orphan was not erased then it must already have been erased/enqueued by another thread
                 // so do not enqueue this orphan again.
                 if (!orphanpool.EraseOrphanTx(it->tx->GetId()))
                     it = vEnqueue.erase(it);
+                else
+                    it++;
             }
         }
         for (auto &txd : vEnqueue)
