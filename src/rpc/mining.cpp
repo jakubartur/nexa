@@ -49,10 +49,11 @@ using namespace std;
  */
 UniValue GetNetworkHashPS(int lookup, int height)
 {
+    READLOCK(chainActive.cs_chainLock);
     CBlockIndex *pb = chainActive.Tip();
 
     if (height >= 0 && height < chainActive.Height())
-        pb = chainActive[height];
+        pb = chainActive._idx(height);
 
     if (pb == nullptr || !pb->height())
         return 0;
@@ -95,16 +96,15 @@ UniValue getnetworkhashps(const UniValue &params, bool fHelp)
             "Pass in [blocks] to override # of blocks.\n"
             "Pass in [height] to estimate the network speed at the time when a certain block was found.\n"
             "\nArguments:\n"
-            "1. blocks     (numeric, optional, default=120) The number of blocks.\n"
+            "1. blocks     (numeric, optional, default=600) The number of blocks (20 hours).\n"
             "2. height     (numeric, optional, default=-1) To estimate at the time of the given height.\n"
             "\nResult:\n"
             "x             (numeric) Hashes per second estimated\n"
             "\nExamples:\n" +
             HelpExampleCli("getnetworkhashps", "") + HelpExampleRpc("getnetworkhashps", ""));
 
-    LOCK(cs_main);
     return GetNetworkHashPS(
-        params.size() > 0 ? params[0].get_int() : 120, params.size() > 1 ? params[1].get_int() : -1);
+        params.size() > 0 ? params[0].get_int() : 600, params.size() > 1 ? params[1].get_int() : -1);
 }
 
 UniValue generateBlocks(boost::shared_ptr<CReserveScript> coinbaseScript,
