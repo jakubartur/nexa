@@ -1821,7 +1821,7 @@ extern "C" JNIEXPORT jstring JNICALL Java_bitcoinunlimited_libbitcoincash_GroupI
         triggerJavaIllegalStateException(env, "Unknown blockchain selection");
         return nullptr;
     }
-    std::string addrAsStr(EncodeGroupToken(grp));
+    std::string addrAsStr(EncodeGroupToken(grp, *cp));
     return env->NewStringUTF(addrAsStr.c_str());
 }
 
