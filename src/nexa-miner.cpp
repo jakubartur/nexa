@@ -241,6 +241,7 @@ static bool CpuMineBlockHasherNextChain(int &ntries,
     return found;
 }
 
+/* this is target inf float number rather than hex */
 static double GetDifficulty(uint32_t nBits)
 {
     int nShift = (nBits >> 24) & 0xff;
