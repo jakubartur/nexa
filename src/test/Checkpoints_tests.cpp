@@ -38,7 +38,6 @@ BOOST_AUTO_TEST_CASE(sanity)
     checkpoints2.mapCheckpoints[2] = hash2;
     checkpoints2.mapCheckpoints[3] = hash_last_checkpoint;
 
-    READLOCK(cs_mapBlockIndex);
     CBlockIndex *pindex2 = Checkpoints::GetLastCheckpoint(checkpoints2);
     BOOST_CHECK(pindex2 != nullptr);
     if (pindex2)

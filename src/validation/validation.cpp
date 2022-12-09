@@ -258,7 +258,7 @@ bool ContextualCheckBlockHeader(const CChainParams &chainparams,
                     block.GetHash().ToString()),
                 REJECT_CHECKPOINT, "bad-header-at-checkpoint");
         }
-        READLOCK(cs_mapBlockIndex);
+
         const CBlockIndex *pindexMainChain = chainActive[nHeight];
         if (pindexMainChain && pindexMainChain->GetBlockHeader() == block)
         {

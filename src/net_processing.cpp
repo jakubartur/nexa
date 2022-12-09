@@ -916,7 +916,6 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
 
             if (inv.type == MSG_BLOCK)
             {
-                LOCK(cs_main);
                 bool fAlreadyHaveBlock = AlreadyHaveBlock(inv);
                 LOG(NET, "got BLOCK inv: %s  %s peer=%d\n", inv.ToString(), fAlreadyHaveBlock ? "have" : "new",
                     pfrom->id);
@@ -1052,8 +1051,6 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
         uint256 hashStop;
         vRecv >> locator >> hashStop;
 
-        LOCK(cs_main);
-
         // Find the last block the caller has in the main chain
         CBlockIndex *pindex = FindForkInGlobalIndex(chainActive, locator);
 
@@ -1113,7 +1110,6 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
 
         std::vector<CBlockHeader> vHeaders;
         {
-            LOCK(cs_main); // for chainActive
             if (!locator.IsNull())
             {
                 // Find the last block the caller has in the main chain
@@ -1125,7 +1121,8 @@ bool ProcessMessage(CNode *pfrom, std::string strCommand, CDataStream &vRecv, in
             int nLimit = MAX_HEADERS_RESULTS;
             LOG(NET, "getheaders height %d for block %s from peer %s\n", (pindex ? pindex->height() : -1),
                 hashStop.ToString(), pfrom->GetLogName());
-            for (; pindex; pindex = chainActive.Next(pindex))
+            READLOCK(chainActive.cs_chainLock);
+            for (; pindex; pindex = chainActive._Next(pindex))
             {
                 vHeaders.push_back(pindex->GetBlockHeader());
                 if (--nLimit <= 0 || pindex->GetBlockHash() == hashStop)
