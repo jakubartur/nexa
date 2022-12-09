@@ -309,6 +309,9 @@ public:
 
         // * UNIX timestamp of last checkpoint block
         checkpointData.nTimeLastCheckpoint = 1573825449;
+
+        // Size of each new blockfile where all the blocks are stored to disk
+        nBlockFileSize = 16ULL * 0x8000000ULL; // 2GB
     }
 };
 
@@ -392,6 +395,9 @@ public:
         base58Prefixes[SCRIPT_TEMPLATE_ADDRESS] = std::vector<unsigned char>(1, 8);
 
         cashaddrPrefix = "nexareg";
+
+        // Size of each new blockfile where all the blocks are stored to disk
+        nBlockFileSize = 0x2000000ULL; // 32MiB
     }
 };
 static CRegTestParams regTestParams;
@@ -492,6 +498,9 @@ public:
 
         // * UNIX timestamp of last checkpoint block
         checkpointData.nTimeLastCheckpoint = 1661700138;
+
+        // Size of each new blockfile where all the blocks are stored to disk
+        nBlockFileSize = 0x8000000ULL; // 128MiB
     }
 };
 
@@ -601,6 +610,9 @@ public:
 
         // * UNIX timestamp of last checkpoint block
         checkpointData.nTimeLastCheckpoint = 1661829976;
+
+        // Size of each new blockfile where all the blocks are stored to disk
+        nBlockFileSize = 16ULL * 0x8000000ULL; // 2GB
     }
 };
 
