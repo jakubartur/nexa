@@ -39,6 +39,18 @@ void InitializeBlockStorage(const int64_t &_nBlockTreeDBCache,
     const int64_t &_nBlockDBCache,
     const int64_t &_nBlockUndoDBCache)
 {
+    // If not pruning then raise the pre-allocation level to the maximum size. This keeps pruned nodes
+    // from allocating very large files when they are not needed yet.
+    if (!GetArg("-prune", 0))
+    {
+        // raise preallocation size of block and undo files
+        blockfile_chunk_size = Params().nBlockFileSize;
+        // multiply by 8 as this is the same difference between default and max blockfile size
+        // we do not have a define max undofile size
+        if (Params().NetworkIDString() != CBaseChainParams::REGTEST)
+            undofile_chunk_size = undofile_chunk_size * 8;
+    }
+
     blockcache.Init();
     if (BLOCK_DB_MODE == SEQUENTIAL_BLOCK_FILES) // BLOCK_DB_MODE 0
     {
@@ -870,7 +882,8 @@ bool FindBlockPos(CValidationState &state,
 
     if (!fKnown)
     {
-        while ((vinfoBlockFile[nFile].nSize != 0) && (vinfoBlockFile[nFile].nSize + nAddSize >= max_blockfile_size))
+        while (
+            (vinfoBlockFile[nFile].nSize != 0) && (vinfoBlockFile[nFile].nSize + nAddSize >= Params().nBlockFileSize))
         {
             nFile++;
             if (vinfoBlockFile.size() <= nFile)
@@ -913,7 +926,7 @@ bool FindBlockPos(CValidationState &state,
                 fCheckForPruning = true;
             }
             // Don't preallocate on regtest because we want it to run space efficiently for quick tests
-            if (blockfile_chunk_size > MAX_BLOCKFILE_SIZE_REGTEST)
+            if (Params().NetworkIDString() != CBaseChainParams::REGTEST)
             {
                 if (CheckDiskSpace(nNewChunks * blockfile_chunk_size - pos.nPos))
                 {
@@ -966,7 +979,7 @@ bool FindUndoPos(CValidationState &state, int nFile, CDiskBlockPos &pos, uint64_
         {
             fCheckForPruning = true;
         }
-        if (blockfile_chunk_size > MAX_BLOCKFILE_SIZE_REGTEST)
+        if (Params().NetworkIDString() != CBaseChainParams::REGTEST)
         {
             if (CheckDiskSpace(nNewChunks * undofile_chunk_size - pos.nPos))
             {
