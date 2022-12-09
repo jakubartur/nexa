@@ -83,8 +83,9 @@ int GetTotalBlocksEstimate(const CCheckpointData &data)
 
 CBlockIndex *GetLastCheckpoint(const CCheckpointData &data)
 {
-    AssertLockHeld(cs_mapBlockIndex);
     const MapCheckpoints &checkpoints = data.mapCheckpoints;
+
+    READLOCK(cs_mapBlockIndex);
     for (auto i = checkpoints.rbegin(); i != checkpoints.rend(); i++)
     {
         const uint256 &hash = i->second;
